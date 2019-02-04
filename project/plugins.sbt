@@ -1,0 +1,8 @@
+addSbtPlugin("com.lucidchart"     % "sbt-scalafmt"             % "1.16")
+addSbtPlugin("io.crashbox"        % "sbt-gpg"                  % "0.2.0")
+addSbtPlugin("com.github.gseitz"  % "sbt-release"              % "1.0.11")
+addSbtPlugin("org.xerial.sbt"     % "sbt-sonatype"             % "2.4")
+addSbtPlugin("de.heikoseeberger"  % "sbt-header"               % "5.1.0")
+addSbtPlugin("io.spray"           % "sbt-boilerplate"          % "0.6.1")
+addSbtPlugin("org.scala-js"       % "sbt-scalajs"              % "0.6.26")
+addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.6.0")

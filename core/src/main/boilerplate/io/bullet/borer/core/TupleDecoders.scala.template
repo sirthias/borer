@@ -1,0 +1,25 @@
+/*
+ * Copyright (c) 2019 Mathias Doenitz
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
+package io.bullet.borer.core
+
+abstract class TupleDecoders {
+
+  [#implicit def forTuple1[By, [#P1#]](implicit [#d1: Decoder[By, P1]#]): Decoder[By, Tuple1[[#P1#]]] =
+    Decoder[By, Tuple1[[#P1#]]](r ⇒ close(r, open(r, 1), Tuple1([#r[P1]#])))#
+
+  ]
+
+  private def open[Bytes, T](r: Reader[Bytes], arity: Int): Boolean =
+    r.tryReadArrayHeader(arity) || { r.readArrayStart(); false }
+
+  private def close[Bytes, T](r: Reader[Bytes], bounded: Boolean, tuple: T): T = {
+    if (!bounded) r.readBreak()
+    tuple
+  }
+}
