@@ -10,7 +10,13 @@ package io.bullet.borer.core
 
 abstract class DecoderFuncsFromApply {
 
-  [#implicit def fromApply1[[#P1#], T, By](apply: ([#P1#]) ⇒ T)(implicit [#d1: Decoder[By, P1]#]): Reader[By] => T =
+  implicit def fromApply0[T, By](apply: () ⇒ T): Reader[By] => T =
+    { r ⇒ r.readArrayHeader(0); apply() }
+
+  implicit def fromApply1[P1, T, By](apply: P1 ⇒ T)(implicit d1: Decoder[By, P1]): Reader[By] => T =
+    { r ⇒ apply(r[P1]) }
+
+  [2..#implicit def fromApply1[[#P1#], T, By](apply: ([#P1#]) ⇒ T)(implicit [#d1: Decoder[By, P1]#]): Reader[By] => T =
       { r ⇒ r.readArrayHeader(1); apply([#r[P1]#]) }#
 
   ]

@@ -15,8 +15,8 @@ object MiscSpec extends BorerSpec.Default {
   case class Foo(int: Int, string: String, doubleOpt: Option[java.lang.Double])
   case class Bar(foo: Foo, optFoo: Option[Foo], stringSeq: Seq[String])
 
-  implicit val fooCodec: Codec.Universal[Foo] = Codec.of[Foo].from(Foo.unapply, Foo.apply)
-  implicit val barCodec: Codec.Universal[Bar] = Codec.of[Bar].from(Bar.unapply, Bar.apply)
+  implicit val fooCodec: Codec.Universal[Foo] = Codec.of[Foo].from(Foo.unapply _, Foo.apply _)
+  implicit val barCodec: Codec.Universal[Bar] = Codec.of[Bar].from(Bar.unapply _, Bar.apply _)
 
   val tests = Tests {
 
@@ -30,6 +30,20 @@ object MiscSpec extends BorerSpec.Default {
         Bar(Foo(10000, "CBOR roxx", Some(-12345678.9012345)), Some(Foo(0, "0", None)), Vector("yes", "no"))
       )
     )
+
+    "Zero-Member Case Class" - {
+      case class Qux()
+      implicit val quxCodec: Codec.Universal[Qux] = Codec.of[Qux].from(Qux.unapply _, Qux.apply _)
+
+      roundTrip("80", Qux())
+    }
+
+    "Single-Member Case Class" - {
+      case class Qux(i: Int)
+      implicit val quxCodec: Codec.Universal[Qux] = Codec.of[Qux].from(Qux.unapply _, Qux.apply _)
+
+      roundTrip("182A", Qux(42))
+    }
 
     "BigInts" - {
       roundTrip("00", BigInt(0))

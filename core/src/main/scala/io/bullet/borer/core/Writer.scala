@@ -137,4 +137,7 @@ object Writer {
   implicit def encoderFuncFromUnapply[T, Tuple](unapply: T ⇒ Option[Tuple])(
       implicit tupleEncoder: Encoder[Nothing, Tuple]): (Writer.Universal, T) ⇒ Unit =
     (w, x) ⇒ tupleEncoder.write(w, unapply(x).get)
+
+  implicit def encoderFuncFromUnapply0[T](unapply: T ⇒ Boolean): (Writer.Universal, T) ⇒ Unit =
+    (w, x) ⇒ if (unapply(x)) w.writeArrayHeader(0) else sys.error("Unapply unexpectedly failed: " + unapply)
 }

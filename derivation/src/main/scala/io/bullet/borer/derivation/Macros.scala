@@ -20,7 +20,8 @@ object Macros {
   def deriveCaseClassCodecImpl[T: c.WeakTypeTag](c: blackbox.Context): c.universe.Tree = {
     import c.universe._
     val tpe       = weakTypeOf[T]
-    val companion = tpe.typeSymbol.name.toTermName
-    q"_root_.io.bullet.borer.core.Codec.of[$tpe].from($companion.unapply, $companion.apply)"
+    val companion = tpe.typeSymbol.companion
+    if (companion == NoSymbol) c.abort(c.enclosingPosition, s"`$tpe` is not a case class")
+    q"_root_.io.bullet.borer.core.Codec.of[$tpe].from($companion.unapply _, $companion.apply _)"
   }
 }
