@@ -76,6 +76,8 @@ object scodec {
     def copy: ByteVectorInput = super.clone().asInstanceOf[ByteVectorInput]
   }
 
+  implicit def newByteVectorOutput: ByteVectorOutput = new ByteVectorOutput
+
   /**
     * Mutable [[Output]] implementation for serializing to [[ByteVector]].
     */

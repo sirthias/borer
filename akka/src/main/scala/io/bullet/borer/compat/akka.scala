@@ -78,6 +78,8 @@ object akka {
     def copy: ByteStringInput = super.clone().asInstanceOf[ByteStringInput]
   }
 
+  implicit def newByteStringOutput: ByteStringOutput = new ByteStringOutput
+
   /**
     * Mutable [[Output]] implementation for serializing to [[ByteString]].
     */

@@ -36,10 +36,10 @@ object DerivationSpec extends TestSuite {
         implicit val fooEncoder   = deriveEncoder[Foo]
         implicit val fooDecoder   = deriveDecoder[Foo]
 
-        val foo            = Foo()
-        val Right(encoded) = Cbor.encode(foo)
+        val foo     = Foo()
+        val encoded = Cbor.encode(foo).to[Array[Byte]].bytes
 
-        Cbor.decode[Dom.Element].from(encoded).right.get._1 ==> {
+        Cbor.decode(encoded).to[Dom.Element].value ==> {
           import Dom.Element._
           Array(
             Value.Int(120),
@@ -57,7 +57,7 @@ object DerivationSpec extends TestSuite {
             ))
         }
 
-        Cbor.decode[Foo].from(encoded).right.get._1 ==> foo
+        Cbor.decode(encoded).to[Foo].value ==> foo
       }
 
       "simple map-based roundtrip" - {
@@ -68,10 +68,10 @@ object DerivationSpec extends TestSuite {
         implicit val fooEncoder   = deriveEncoder[Foo]
         implicit val fooDecoder   = deriveDecoder[Foo]
 
-        val foo            = Foo()
-        val Right(encoded) = Cbor.encode(foo)
+        val foo     = Foo()
+        val encoded = Cbor.encode(foo).to[Array[Byte]].bytes
 
-        Cbor.decode[Dom.Element].from(encoded).right.get._1 ==> {
+        Cbor.decode(encoded).to[Dom.Element].value ==> {
           import Dom.Element._
           Map(
             "char"   → Value.Int(120),
@@ -89,7 +89,7 @@ object DerivationSpec extends TestSuite {
             ))
         }
 
-        Cbor.decode[Foo].from(encoded).right.get._1 ==> foo
+        Cbor.decode(encoded).to[Foo].value ==> foo
       }
 
       "ADT" - {
@@ -110,9 +110,9 @@ object DerivationSpec extends TestSuite {
           Mouse(true)
         )
 
-        val Right(encoded) = Cbor.encode(animals)
+        val encoded = Cbor.encode(animals).to[Array[Byte]].bytes
 
-        Cbor.decode[Dom.Element].from(encoded).right.get._1 ==> {
+        Cbor.decode(encoded).to[Dom.Element].value ==> {
           import Dom.Element._
           Array(
             Array(Value.String("Dog"), Array(Value.Int(12), Value.String("Fred"))),
@@ -121,7 +121,7 @@ object DerivationSpec extends TestSuite {
             Array(Value.Int(42), Value.Bool(true)))
         }
 
-        Cbor.decode[List[Animal]].from(encoded).right.get._1 ==> animals
+        Cbor.decode(encoded).to[List[Animal]].value ==> animals
       }
 
       "ADT TypeId Collision" - {

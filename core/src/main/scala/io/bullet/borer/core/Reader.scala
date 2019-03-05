@@ -17,12 +17,14 @@ import scala.util.control.NonFatal
   *
   * @tparam Bytes The abstraction for byte chunks that the wrapped [[Input]] provides.
   */
-final class Reader[+Bytes](startInput: Input[Bytes], config: Reader.Config, wrapper: Receiver.Applier[Input, Bytes])(
-    implicit byteAccess: ByteAccess[Bytes]) {
+final class Reader[+Bytes](startInput: Input[Bytes],
+                           config: Reader.Config,
+                           validationApplier: Receiver.Applier[Input, Bytes])(implicit byteAccess: ByteAccess[Bytes]) {
 
-  private[this] var _input: Input[Bytes]                    = startInput
-  private[this] var receptacle                              = new BufferingReceiver[Input[Bytes], Bytes]
-  private[this] var receiver: Receiver[Input[Bytes], Bytes] = wrapper(Validation.creator(config.validation), receptacle)
+  private[this] var _input: Input[Bytes] = startInput
+  private[this] var receptacle           = new BufferingReceiver[Input[Bytes], Bytes]
+  private[this] var receiver: Receiver[Input[Bytes], Bytes] =
+    validationApplier(Validation.creator(config.validation), receptacle)
 
   def input: Input[Bytes] = _input
   def dataItem: Int       = receptacle.dataItem

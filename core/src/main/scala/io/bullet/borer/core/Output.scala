@@ -35,6 +35,8 @@ object Output {
     def writeLong(value: Long): Output[Bytes]   = writeInt((value >> 32).toInt).writeInt(value.toInt)
   }
 
+  implicit def newToByteArray: ToByteArray = new ToByteArray
+
   /**
     * Default, mutable implementation for serializing to plain byte arrays.
     */
@@ -82,5 +84,4 @@ object Output {
 
     private def overflow() = throw new Cbor.Error.Overflow(this, "Cannot output to byte array with > 2^31 bytes")
   }
-
 }

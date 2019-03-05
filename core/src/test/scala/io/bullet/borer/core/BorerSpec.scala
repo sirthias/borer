@@ -9,13 +9,11 @@
 package io.bullet.borer.core
 
 import java.util
-
-import io.bullet.borer.core
 import utest._
 
 abstract class BorerSpec[Bytes](implicit byteAccess: ByteAccess[Bytes]) extends TestSuite {
 
-  def newOutput: Output[Bytes]
+  implicit def newOutput: Output[Bytes]
   def newInput(bytes: Array[Byte]): Input[Bytes]
 
   def roundTrip[T](hexString: String, decodedValue: T)(implicit e: Encoder[Bytes, T], d: Decoder[Bytes, T]): Unit =
@@ -29,8 +27,8 @@ abstract class BorerSpec[Bytes](implicit byteAccess: ByteAccess[Bytes]) extends 
 
   def encode[T](value: T, hexString: String)(implicit e: Encoder[Bytes, T]): Unit = {
     val bytes          = hexBytes(hexString)
-    val encodingResult = Cbor.generalEncode(value, newOutput).fold(throw _, identity)
-    val encoded        = byteAccess.toByteArray(encodingResult.result())
+    val encodingResult = Cbor.encode(value).to[Bytes].bytes
+    val encoded        = byteAccess.toByteArray(encodingResult)
     if (!util.Arrays.equals(encoded, bytes)) {
       throw new java.lang.AssertionError(s"[$value] encodes to [${toHexString(encoded)}] rather than [$hexString]")
     }
@@ -38,7 +36,7 @@ abstract class BorerSpec[Bytes](implicit byteAccess: ByteAccess[Bytes]) extends 
 
   def decode[T](hexString: String, value: T)(implicit d: Decoder[Bytes, T]): Unit = {
     val bytes   = hexBytes(hexString)
-    val decoded = Cbor.decode[T].from[Bytes](newInput(bytes)).fold(throw _, _._1)
+    val decoded = Cbor.decode(newInput(bytes)).to[T].value
     if (!equals(decoded, value)) {
       throw new java.lang.AssertionError(s"[$hexString] decodes to [$decoded] rather than [$value]")
     }
@@ -65,7 +63,7 @@ abstract class BorerSpec[Bytes](implicit byteAccess: ByteAccess[Bytes]) extends 
 object BorerSpec {
 
   trait DefaultBytes { this: BorerSpec[Array[Byte]] ⇒
-    def newOutput                    = new core.Output.ToByteArray
+    def newOutput                    = Output.newToByteArray
     def newInput(bytes: Array[Byte]) = new Input.FromByteArray(bytes)
   }
 

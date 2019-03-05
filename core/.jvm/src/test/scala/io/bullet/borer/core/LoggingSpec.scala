@@ -8,9 +8,8 @@
 
 package io.bullet.borer.core
 
-import utest._
-
 import scala.collection.immutable.ListMap
+import utest._
 
 // JVM-specific due to the not platform-independent way of Float/Double toStrings
 // see: https://www.scala-js.org/doc/semantics.html
@@ -157,27 +156,22 @@ object LoggingSpec extends TestSuite {
   }
 
   def roundTripLogEquals(element: Element)(expectedLog: String): Unit = {
-    import Logging._
     val log = new java.lang.StringBuilder
 
     val encoded =
       Cbor
-        .encode(
-          element,
-          validationApplier =
-            afterValidation(ToStringLogger(log, maxShownByteArrayPrefixLen = 8, maxShownStringPrefixLen = 8)))
-        .fold(throw _, identity)
+        .encode(element)
+        .withStringLogging(log, maxShownByteArrayPrefixLen = 8, maxShownStringPrefixLen = 8)
+        .toByteArray
 
     log.toString ==> expectedLog
 
     log.setLength(0) // clear
     Cbor
-      .decode[Dom.Element]
-      .from(
-        encoded,
-        validationApplier =
-          afterValidation(ToStringLogger(log, maxShownByteArrayPrefixLen = 8, maxShownStringPrefixLen = 8)))
-      .fold(throw _, _._1) ==> element
+      .decode(encoded)
+      .withStringLogging(log, maxShownByteArrayPrefixLen = 8, maxShownStringPrefixLen = 8)
+      .to[Element]
+      .value ==> element
 
     log.toString ==> expectedLog
   }

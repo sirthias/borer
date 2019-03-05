@@ -32,12 +32,10 @@ import scala.annotation.tailrec
   */
 object Logging {
 
-  def afterValidation[IO[_], Bytes](
-      createLogger: LevelInfo ⇒ Logger[IO[Bytes], Bytes] = PrintLogger()): Receiver.Applier[IO, Bytes] =
+  def afterValidation[IO[_], Bytes](createLogger: LevelInfo ⇒ Logger[IO[Bytes], Bytes]): Receiver.Applier[IO, Bytes] =
     (creator, target) ⇒ creator(new Receiver(target, createLogger))
 
-  def beforeValidation[IO[_], Bytes](
-      createLogger: LevelInfo ⇒ Logger[IO[Bytes], Bytes] = PrintLogger()): Receiver.Applier[IO, Bytes] =
+  def beforeValidation[IO[_], Bytes](createLogger: LevelInfo ⇒ Logger[IO[Bytes], Bytes]): Receiver.Applier[IO, Bytes] =
     (creator, target) ⇒ new Receiver(creator(target), createLogger)
 
   abstract class LevelInfo {
@@ -174,8 +172,9 @@ object Logging {
 
   def ToStringLogger(stringBuilder: JStringBuilder,
                      maxShownByteArrayPrefixLen: Int = 20,
-                     maxShownStringPrefixLen: Int = 50): LevelInfo ⇒ ToStringLogger =
-    new ToStringLogger(stringBuilder, maxShownByteArrayPrefixLen, maxShownStringPrefixLen, _)
+                     maxShownStringPrefixLen: Int = 50,
+                     lineSeparator: String = System.lineSeparator()): LevelInfo ⇒ ToStringLogger =
+    new ToStringLogger(stringBuilder, maxShownByteArrayPrefixLen, maxShownStringPrefixLen, lineSeparator, _)
 
   /**
     * A [[LineFormatLogger]] that appends all lines to a given [[JStringBuilder]].
@@ -183,9 +182,10 @@ object Logging {
   final class ToStringLogger(val stringBuilder: JStringBuilder,
                              val maxShownByteArrayPrefixLen: Int,
                              val maxShownStringPrefixLen: Int,
+                             val lineSeparator: String,
                              val info: LevelInfo)
       extends LineFormatLogger[Any, Any] {
-    def showLine(line: String): Unit = stringBuilder.append(line).append(System.lineSeparator())
+    def showLine(line: String): Unit = stringBuilder.append(line).append(lineSeparator)
   }
 
   /**
