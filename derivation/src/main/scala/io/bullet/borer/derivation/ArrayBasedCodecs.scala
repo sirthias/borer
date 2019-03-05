@@ -28,7 +28,11 @@ object ArrayBasedCodecs {
             val p = params(ix)
             rec(p.typeclass.write(w, p.dereference(value)), ix + 1)
           }
-        rec(w.writeArrayHeader(len), 0)
+        len match {
+          case 0 ⇒ w.writeArrayHeader(0)
+          case 1 ⇒ rec(w, 0)
+          case _ ⇒ rec(w.writeArrayHeader(len), 0)
+        }
       }
     }
 
@@ -60,17 +64,21 @@ object ArrayBasedCodecs {
       val params = ctx.parameters
       val len    = params.size
       Decoder.of[T].from { r ⇒
-        val constructorArgs = new mutable.WrappedArray.ofRef(new Array[AnyRef](len))
-        @tailrec def rec(ix: Int): T =
+        @tailrec def rec(ix: Int, constructorArgs: Array[AnyRef] = new Array(len)): T =
           if (ix < len) {
             constructorArgs(ix) = params(ix).typeclass.read(r).asInstanceOf[AnyRef]
-            rec(ix + 1)
+            rec(ix + 1, constructorArgs)
           } else ctx.rawConstruct(constructorArgs)
 
-        if (!r.tryReadArrayHeader(len)) {
-          val m = s"Array Header with length $len for decoding an instance of type [${ctx.typeName.full}]"
-          r.unexpectedDataItem(m)
-        } else rec(0)
+        len match {
+          case 0 ⇒ ctx.rawConstruct(Nil)
+          case 1 ⇒ rec(0)
+          case _ ⇒
+            if (!r.tryReadArrayHeader(len)) {
+              val m = s"Array Header with length $len for decoding an instance of type [${ctx.typeName.full}]"
+              r.unexpectedDataItem(m)
+            } else rec(0)
+        }
       }
     }
 

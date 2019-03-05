@@ -10,7 +10,10 @@ package io.bullet.borer.core
 
 abstract class TupleEncoders {
 
-  [#implicit def forTuple1[By, [#P1#]](implicit [#e1: Encoder[By, P1]#]): Encoder[By, Tuple1[[#P1#]]] =
+  implicit def forTuple1[By, P1](implicit e1: Encoder[By, P1]): Encoder[By, Tuple1[P1]] =
+    Encoder((w, x) ⇒ w ~ x._1)
+
+  [2..#implicit def forTuple1[By, [#P1#]](implicit [#e1: Encoder[By, P1]#]): Encoder[By, Tuple1[[#P1#]]] =
     Encoder((w, x) ⇒ w.writeArrayHeader(1) ~ [#x._1# ~ ])#
 
   ]

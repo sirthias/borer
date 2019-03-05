@@ -44,7 +44,7 @@ object MapBasedCodecs {
     def combine[T](ctx: CaseClass[Decoder.Universal, T]): Decoder.Universal[T] = {
       val params = ctx.parameters.asInstanceOf[mutable.WrappedArray[Param[Decoder.Universal, T]]].array
       Decoder.of[T].from { r ⇒
-        val constructorArgs = new mutable.WrappedArray.ofRef(new Array[AnyRef](params.length))
+        val constructorArgs = new Array[AnyRef](params.length)
         @tailrec def rec(ix: Int): T =
           if (ix < params.length) {
             val label = r.readString()

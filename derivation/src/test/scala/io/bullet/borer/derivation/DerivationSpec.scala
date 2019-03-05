@@ -118,7 +118,7 @@ object DerivationSpec extends TestSuite {
             Array(Value.String("Dog"), Array(Value.Int(12), Value.String("Fred"))),
             Array(Value.String("TheCAT"), Array(Value.Float16(1.0f), Value.String("none"), Value.String("there"))),
             Array(Value.String("Dog"), Array(Value.Int(4), Value.String("Lolle"))),
-            Array(Value.Int(42), Array(Value.Bool(true))))
+            Array(Value.Int(42), Value.Bool(true)))
         }
 
         Cbor.decode[List[Animal]].from(encoded).right.get._1 ==> animals
