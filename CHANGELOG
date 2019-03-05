@@ -1,3 +1,10 @@
+Version 0.5.1 (2019-03-05)
+--------------------------
+
+borer-derivation:
+- Fix broken round-trip of `deriveCaseClassCodec` for zero- and single-member case classes
+
+
 Version 0.5.0 (2019-03-04)
 --------------------------
 
