@@ -22,6 +22,8 @@ object Macros {
     val tpe       = weakTypeOf[T]
     val companion = tpe.typeSymbol.companion
     if (companion == NoSymbol) c.abort(c.enclosingPosition, s"`$tpe` is not a case class")
-    q"_root_.io.bullet.borer.core.Codec.of[$tpe].from($companion.unapply _, $companion.apply _)"
+    q"""_root_.io.bullet.borer.core.Codec[$tpe](
+        _root_.io.bullet.borer.core.Encoder.from($companion.unapply _),
+        _root_.io.bullet.borer.core.Decoder.from($companion.apply _))"""
   }
 }

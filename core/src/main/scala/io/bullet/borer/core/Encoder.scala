@@ -8,9 +8,9 @@
 
 package io.bullet.borer.core
 
-import java.lang.{Boolean ⇒ JBoolean, Byte ⇒ JByte, Short ⇒ JShort, Long ⇒ JLong, Float ⇒ JFloat, Double ⇒ JDouble}
+import java.lang.{Boolean ⇒ JBoolean, Byte ⇒ JByte, Double ⇒ JDouble, Float ⇒ JFloat, Long ⇒ JLong, Short ⇒ JShort}
 import java.math.{BigDecimal ⇒ JBigDecimal, BigInteger ⇒ JBigInteger}
-
+import io.bullet.borer.core.LeastUpperBounds.Lub2
 import scala.annotation.tailrec
 
 /**
@@ -21,7 +21,7 @@ import scala.annotation.tailrec
   * @tparam T The type to serialize
   */
 trait Encoder[+Bytes, T] {
-  def write(w: Writer[Bytes], value: T): w.type
+  def write[B >: Bytes](w: Writer[B], value: T): w.type
 }
 
 object Encoder extends LowPrioEncoders {
@@ -52,23 +52,29 @@ object Encoder extends LowPrioEncoders {
     */
   def apply[Bytes, T, U](f: (Writer[Bytes], T) ⇒ U): Encoder[Bytes, T] =
     new Encoder[Bytes, T] {
-      def write(w: Writer[Bytes], value: T): w.type = {
+      def write[B >: Bytes](w: Writer[B], value: T): w.type = {
         f(w, value)
         w
       }
     }
 
-  private[this] val builderSingleton = new Builder[Any, Nothing]
-
   /**
-    * Allows for [[Encoder]] definition without having to supply the `Bytes` type parameter.
+    * Allows for concise [[Encoder]] definition for case classes, without any macro magic.
+    * Can be used e.g. like this:
+    *
+    * {{{
+    * case class Foo(int: Int, string: String, doubleOpt: Option[Double])
+    *
+    * val fooEncoder = Encoder(Foo.unapply) // if you only need an `Encoder` for `Foo`
+    * val fooCodec = Codec.of[Foo](Foo.unapply, Foo.apply) // if you need a full `Codec` for `Foo`
+    * }}}
     */
-  def of[T]: Builder[Nothing, T] = builderSingleton.asInstanceOf[Builder[Nothing, T]]
+  implicit def from[T, Tuple, Bytes](unapply: T ⇒ Option[Tuple])(
+      implicit tupleEncoder: Encoder[Bytes, Tuple]): Encoder[Bytes, T] =
+    Encoder((w, x) ⇒ tupleEncoder.write(w, unapply(x).get))
 
-  final class Builder[Bytes, T] private[Encoder] {
-    def from[U](f: (Writer[Bytes], T) ⇒ U): Encoder[Bytes, T] = Encoder(f)
-    def withBytes[B]: Builder[B, T]                           = builderSingleton.asInstanceOf[Builder[B, T]]
-  }
+  implicit def from[T, Bytes](unapply: T ⇒ Boolean): Encoder[Bytes, T] =
+    Encoder((w, x) ⇒ if (unapply(x)) w.writeArrayHeader(0) else sys.error("Unapply unexpectedly failed: " + unapply))
 
   implicit final class EncoderOps[Bytes, A](val underlying: Encoder[Bytes, A]) extends AnyVal {
     def compose[B](f: B ⇒ A): Encoder[Bytes, B] = Encoder((w, b) ⇒ underlying.write(w, f(b)))
@@ -128,13 +134,6 @@ object Encoder extends LowPrioEncoders {
       w.writeBreak()
     }
 
-  implicit def forBytesIterator[Bytes]: Encoder[Bytes, Iterator[Bytes]] =
-    Encoder { (w, x) ⇒
-      w.writeBytesStart()
-      while (x.hasNext) w.writeBytes(x.next())
-      w.writeBreak()
-    }
-
   implicit def forStringIterator[Bytes]: Encoder[Bytes, Iterator[String]] =
     Encoder { (w, x) ⇒
       w.writeTextStart()
@@ -159,8 +158,10 @@ object Encoder extends LowPrioEncoders {
       rec(w.writeArrayHeader(x.length), 0)
     }
 
-  implicit def forMap[Bytes, A, B, M[X, Y] <: Map[X, Y]](implicit ea: Encoder[Bytes, A],
-                                                         eb: Encoder[Bytes, B]): Encoder[Bytes, M[A, B]] =
+  implicit def forMap[A, B, M[X, Y] <: Map[X, Y], Bytes, Bytes1 <: Bytes, Bytes2 <: Bytes](
+      implicit ea: Encoder[Bytes1, A],
+      eb: Encoder[Bytes2, B],
+      lub: Lub2[Bytes1, Bytes2, Bytes]): Encoder[Bytes, M[A, B]] =
     Encoder { (w, x) ⇒
       w.writeMapHeader(x.size)
       val iterator = x.iterator
@@ -170,8 +171,10 @@ object Encoder extends LowPrioEncoders {
       }
     }
 
-  implicit def forEither[Bytes, A, B](implicit ea: Encoder[Bytes, A],
-                                      eb: Encoder[Bytes, B]): Encoder[Bytes, Either[A, B]] =
+  implicit def forEither[A, B, Bytes, Bytes1 <: Bytes, Bytes2 <: Bytes](
+      implicit ea: Encoder[Bytes1, A],
+      eb: Encoder[Bytes2, B],
+      lub: Lub2[Bytes1, Bytes2, Bytes]): Encoder[Bytes, Either[A, B]] =
     Encoder {
       case (w, Left(a))  ⇒ w.writeMapHeader(1).writeInt(0).write(a)
       case (w, Right(b)) ⇒ w.writeMapHeader(1).writeInt(1).write(b)

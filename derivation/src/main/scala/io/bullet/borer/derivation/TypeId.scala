@@ -56,16 +56,18 @@ object TypeId {
     final case class Str(value: String) extends Value
     final case class Num(value: Long)   extends Value
 
-    implicit val encoder = Encoder.of[Value].from {
-      case (w, Str(x)) ⇒ w.writeString(x)
-      case (w, Num(x)) ⇒ w.writeLong(x)
-    }
+    implicit val encoder: Encoder.Universal[Value] =
+      Encoder {
+        case (w, Str(x)) ⇒ w.writeString(x)
+        case (w, Num(x)) ⇒ w.writeLong(x)
+      }
 
-    implicit val decoder = Decoder.of[Value].from { r ⇒
-      if (r.hasString) Str(r.readString())
-      else if (r.hasLong) Num(r.readLong())
-      else r.unexpectedDataItem("String or Integer for decoding a io.bullet.borer.derivation.TypeId")
-    }
+    implicit val decoder: Decoder.Universal[Value] =
+      Decoder { r ⇒
+        if (r.hasString) Str(r.readString())
+        else if (r.hasLong) Num(r.readLong())
+        else r.unexpectedDataItem("String or Integer for decoding a io.bullet.borer.derivation.TypeId")
+      }
 
     def apply(annotation: TypeId): Value =
       annotation.value match {

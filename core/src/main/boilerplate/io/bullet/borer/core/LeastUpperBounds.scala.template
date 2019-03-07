@@ -9,15 +9,12 @@
 package io.bullet.borer.core
 
 /**
-  * Abstraction for the "undefined" value in CBOR-speak.
-  */
-case object Undefined {
+ * Phantom types and implicit providers for computing the least upper bounds of 2 to 22 types.
+ */
+object LeastUpperBounds {
 
-  implicit val codec: Codec.Universal[Undefined.type] = Codec(
-    Encoder((w, _) ⇒ w.writeUndefined()),
-    Decoder { r ⇒
-      r.readUndefined()
-      Undefined
-    }
-  )
+  [2..#sealed trait Lub1[[#-T1#], Out]
+  implicit def lub1[T]: Lub1[[#T#], T] = null#
+
+  ]
 }

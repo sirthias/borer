@@ -1,0 +1,23 @@
+/*
+ * Copyright (c) 2019 Mathias Doenitz
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
+package io.bullet.borer.core
+
+abstract class DecoderFromApply {
+
+  implicit def from[Bytes, T](apply: () ⇒ T): Decoder[Bytes, T] =
+    Decoder { r ⇒ r.readArrayHeader(0); apply() }
+
+  implicit def from[Bytes, P1, T](apply: P1 ⇒ T)(implicit d1: Decoder[Bytes, P1]): Decoder[Bytes, T] =
+    Decoder { r ⇒ apply(r[P1]) }
+
+  [2..#implicit def from[[#B1#], [#P1#], T](apply: ([#P1#]) ⇒ T)(implicit [#d1: Decoder[B1, P1]#]): Decoder[[#B1# with ], T] =
+      Decoder{ r ⇒ r.readArrayHeader(1); apply([#r[P1]#]) }#
+
+  ]
+}

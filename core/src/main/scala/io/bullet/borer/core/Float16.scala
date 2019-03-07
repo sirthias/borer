@@ -23,12 +23,10 @@ final case class Float16(value: Float)
   */
 object Float16 {
 
-  implicit val codec = Codec
-    .of[Float16]
-    .from(
-      encode = (w, x) ⇒ w.writeFloat16(x.value),
-      decode = r ⇒ Float16(r.readFloat16())
-    )
+  implicit val codec: Codec.Universal[Float16] = Codec(
+    Encoder((w, x) ⇒ w.writeFloat16(x.value)),
+    Decoder(r ⇒ Float16(r.readFloat16()))
+  )
 
   /**
     * Hi-word of parameter value is ignored.

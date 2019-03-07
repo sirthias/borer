@@ -161,7 +161,7 @@ object Tag {
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  implicit val codec = Codec.of[Tag].from(_ writeTag _, _.readTag())
+  implicit val codec: Codec.Universal[Tag] = Codec(Encoder(_ writeTag _), Decoder(_.readTag()))
 }
 
 final case class TaggedValue[T](tag: Tag, value: T)

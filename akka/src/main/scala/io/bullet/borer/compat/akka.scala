@@ -8,7 +8,7 @@
 
 package io.bullet.borer.compat
 
-import io.bullet.borer.core.{ByteAccess, Cbor, Input, Output}
+import io.bullet.borer.core._
 import _root_.akka.util.ByteString
 
 object akka {
@@ -37,6 +37,9 @@ object akka {
 
       val empty = ByteString.empty
     }
+
+  implicit val byteStringCodec: Codec[ByteString, ByteString, ByteString] =
+    Codec(Encoder(_ writeBytes _), Decoder(_.readBytes()))
 
   /**
     * Mutable [[Input]] implementation for deserializing from [[ByteString]]

@@ -10,7 +10,7 @@ package io.bullet.borer.compat
 
 import java.util
 
-import io.bullet.borer.core.{ByteAccess, Cbor, Input, Output}
+import io.bullet.borer.core._
 import _root_.scodec.bits.ByteVector
 
 object scodec {
@@ -18,7 +18,7 @@ object scodec {
   /**
     * [[ByteAccess]] for [[ByteVector]].
     */
-  implicit val byteStringByteAccess: ByteAccess[ByteVector] =
+  implicit val byteVectorByteAccess: ByteAccess[ByteVector] =
     new ByteAccess[ByteVector] {
 
       def sizeOf(bytes: ByteVector): Long = bytes.size
@@ -36,6 +36,9 @@ object scodec {
 
       val empty = ByteVector.empty
     }
+
+  implicit val byteVectorCodec: Codec[ByteVector, ByteVector, ByteVector] =
+    Codec(Encoder(_ writeBytes _), Decoder(_.readBytes()))
 
   /**
     * Mutable [[Input]] implementation for deserializing from [[ByteVector]]
@@ -115,7 +118,7 @@ object scodec {
 
     def writeBytes(bytes: ByteVector): this.type = {
       val l = bytes.size
-      if (l > Int.MaxValue) {
+      if (l <= Int.MaxValue) {
         val newCursor = _cursor + l.toInt
         if (newCursor > 0) {
           ensureLength(newCursor)

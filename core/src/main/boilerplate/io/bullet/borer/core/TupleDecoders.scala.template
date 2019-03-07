@@ -8,13 +8,13 @@
 
 package io.bullet.borer.core
 
-abstract class TupleDecoders {
+abstract class TupleDecoders extends DecoderFromApply {
 
-  implicit def forTuple1[By, P1](implicit d1: Decoder[By, P1]): Decoder[By, Tuple1[P1]] =
-    Decoder[By, Tuple1[P1]](r ⇒ Tuple1(r[P1]))
+  implicit def forTuple1[Bytes, P1](implicit d1: Decoder[Bytes, P1]): Decoder[Bytes, Tuple1[P1]] =
+    Decoder(r ⇒ Tuple1(r[P1]))
 
-  [2..#implicit def forTuple1[By, [#P1#]](implicit [#d1: Decoder[By, P1]#]): Decoder[By, Tuple1[[#P1#]]] =
-    Decoder[By, Tuple1[[#P1#]]](r ⇒ close(r, open(r, 1), Tuple1([#r[P1]#])))#
+  [2..#implicit def forTuple1[[#B1#], [#P1#]](implicit [#d1: Decoder[B1, P1]#]): Decoder[[#B1# with ], ([#P1#])] =
+    Decoder(r ⇒ close(r, open(r, 1), ([#r[P1]#])))#
 
   ]
 

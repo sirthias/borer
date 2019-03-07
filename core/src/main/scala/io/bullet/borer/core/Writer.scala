@@ -122,22 +122,4 @@ object Writer {
 
     implicit def encoder[Bytes]: Encoder[Bytes, Script[Bytes]] = Encoder((w, x) ⇒ x.encode(w))
   }
-
-  /**
-    * Allows for concise [[Encoder]] definition for case classes, without any macro magic.
-    * Can be used e.g. like this:
-    *
-    * {{{
-    * case class Foo(int: Int, string: String, doubleOpt: Option[Double])
-    *
-    * val fooEncoder = Encoder(Foo.unapply) // if you only need an `Encoder` for `Foo`
-    * val fooCodec = Codec.of[Foo](Foo.unapply, Foo.apply) // if you need a full `Codec` for `Foo`
-    * }}}
-    */
-  implicit def encoderFuncFromUnapply[T, Tuple](unapply: T ⇒ Option[Tuple])(
-      implicit tupleEncoder: Encoder[Nothing, Tuple]): (Writer.Universal, T) ⇒ Unit =
-    (w, x) ⇒ tupleEncoder.write(w, unapply(x).get)
-
-  implicit def encoderFuncFromUnapply0[T](unapply: T ⇒ Boolean): (Writer.Universal, T) ⇒ Unit =
-    (w, x) ⇒ if (unapply(x)) w.writeArrayHeader(0) else sys.error("Unapply unexpectedly failed: " + unapply)
 }

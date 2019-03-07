@@ -25,17 +25,5 @@ package io.bullet.borer.core
 final case class Codec[+EBytes, -DBytes, T](encoder: Encoder[EBytes, T], decoder: Decoder[DBytes, T])
 
 object Codec {
-
   type Universal[T] = Codec[Nothing, Any, T]
-
-  private[this] val builderSingleton = new Builder[Nothing, Any, Nothing]
-
-  def of[T]: Builder[Nothing, Any, T] = builderSingleton.asInstanceOf[Builder[Nothing, Any, T]]
-
-  final class Builder[EBytes, DBytes, T] private[Codec] {
-    def from(encode: (Writer[EBytes], T) ⇒ Unit, decode: Reader[DBytes] ⇒ T): Codec[EBytes, DBytes, T] =
-      Codec(Encoder(encode), Decoder(decode))
-
-    def withBytes[Bytes]: Builder[Bytes, Bytes, T] = builderSingleton.asInstanceOf[Builder[Bytes, Bytes, T]]
-  }
 }

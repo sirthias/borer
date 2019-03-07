@@ -22,7 +22,7 @@ object ArrayBasedCodecs {
     def combine[T](ctx: CaseClass[Encoder.Universal, T]): Encoder.Universal[T] = {
       val params = ctx.parameters
       val len    = params.size
-      Encoder[Nothing, T, Unit] { (w, value) ⇒
+      Encoder { (w, value) ⇒
         @tailrec def rec(w: Writer.Universal, ix: Int): Unit =
           if (ix < len) {
             val p = params(ix)
@@ -63,7 +63,7 @@ object ArrayBasedCodecs {
     def combine[T](ctx: CaseClass[Decoder.Universal, T]): Decoder.Universal[T] = {
       val params = ctx.parameters
       val len    = params.size
-      Decoder.of[T].from { r ⇒
+      Decoder { r ⇒
         @tailrec def rec(ix: Int, constructorArgs: Array[AnyRef] = new Array(len)): T =
           if (ix < len) {
             constructorArgs(ix) = params(ix).typeclass.read(r).asInstanceOf[AnyRef]
@@ -85,7 +85,7 @@ object ArrayBasedCodecs {
     def dispatch[T](ctx: SealedTrait[Decoder.Universal, T]): Decoder.Universal[T] = {
       val subtypes = ctx.subtypes.asInstanceOf[mutable.WrappedArray[Subtype[Decoder.Universal, T]]].array
       val typeIds  = getTypeIds(ctx.typeName.full, subtypes)
-      Decoder.of[T].from { r ⇒
+      Decoder { r ⇒
         if (r.tryReadArrayHeader(2)) {
           val id = r.read[TypeId.Value]()
 

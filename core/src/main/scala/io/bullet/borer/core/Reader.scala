@@ -9,7 +9,6 @@
 package io.bullet.borer.core
 
 import java.nio.charset.StandardCharsets
-
 import scala.util.control.NonFatal
 
 /**
@@ -327,7 +326,7 @@ final class Reader[+Bytes](startInput: Input[Bytes],
   }
 }
 
-object Reader extends DecoderFuncsFromApply {
+object Reader {
 
   type Universal = Reader[Any]
 

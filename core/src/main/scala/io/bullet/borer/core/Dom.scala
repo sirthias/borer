@@ -84,7 +84,7 @@ object Dom {
     val writeElement = (w: Writer.Universal, x: Element) ⇒ w.write(x)
     val writeEntry   = (w: Writer.Universal, x: (Element, Element)) ⇒ w.write(x._1).write(x._2)
 
-    Encoder.of[Element].from {
+    Encoder {
       case (w, Element.Value.Null)      ⇒ w.writeNull()
       case (w, Element.Value.Undefined) ⇒ w.writeUndefined()
       case (w, Element.Value.Bool(x))   ⇒ w.writeBool(x)
@@ -118,20 +118,20 @@ object Dom {
   implicit def decoder[T <: Element]: Decoder.Universal[T] = elementDecoder.asInstanceOf[Decoder.Universal[T]]
 
   val elementDecoder: Decoder.Universal[Element] = {
-    val bytesDecoder = Decoder.of[Vector[Element.Value.Bytes]].from { r ⇒
+    val bytesDecoder: Decoder.Universal[Vector[Element.Value.Bytes]] = Decoder { r ⇒
       r.readBytesStart()
       val b = new VectorBuilder[Element.Value.Bytes]
       while (!r.tryReadBreak()) b += r.read[Element.Value.Bytes]()
       b.result()
     }
-    val textDecoder = Decoder.of[Vector[Element.Value.Text]].from { r ⇒
+    val textDecoder: Decoder.Universal[Vector[Element.Value.Text]] = Decoder { r ⇒
       r.readTextStart()
       val b = new VectorBuilder[Element.Value.Text]
       while (!r.tryReadBreak()) b += r.read[Element.Value.Text]()
       b.result()
     }
 
-    Decoder.of[Element].from { r ⇒
+    Decoder { r ⇒
       r.dataItem match {
         case DataItem.Null      ⇒ r.readNull(); Element.Value.Null
         case DataItem.Undefined ⇒ r.readUndefined(); Element.Value.Undefined
