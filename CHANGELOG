@@ -1,3 +1,15 @@
+Version 0.7.0 (2019-03-08)
+--------------------------
+
+borer-code:
+- simplify API by removing explicit `Bytes` type parameter from all abstractions
+- allow for mixed `ByteAccess` in a single encoding / decoding run
+- various smaller improvements
+
+borer-akka & border-scodec:
+- add missing Codecs for akka ByteString and scodec ByteVector
+
+
 Version 0.6.0 (2019-03-06)
 --------------------------
 
