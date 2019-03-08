@@ -14,7 +14,9 @@ import scala.util.control.NonFatal
 /**
   * Stateful, mutable abstraction for reading a stream of CBOR data from the given [[Input]].
   */
-final class Reader(startInput: Input, config: Reader.Config, validationApplier: Receiver.Applier[Input]) {
+final class Reader(startInput: Input,
+                   config: Reader.Config = Reader.Config(),
+                   validationApplier: Receiver.Applier[Input] = Receiver.defaultApplier) {
 
   private[this] var _input: Input = startInput
   private[this] var receptacle    = new BufferingReceiver[Input]
@@ -279,6 +281,16 @@ final class Reader(startInput: Input, config: Reader.Config, validationApplier: 
 
   def read[T]()(implicit decoder: Decoder[T]): T = decoder.read(this)
 
+  /**
+    * Attempts to read an instance of [[T]].
+    * If this fails due to any kind of error this [[Reader]] is "reset" to the state it was before this attempted
+    * read, which enables discrimination between several possible input consumption alternatives, when simple
+    * one-element look-ahead doesn't suffice.
+    *
+    * NOTE: Saving and restoring the [[Reader]] state (as well as throwing an catching exceptions) does come with
+    * some additional object allocation cost. So, if the one-element look-ahead provided by the [[Reader]] API is
+    * sufficient for discriminating between cases then thas should be preferred over the use of `tryRead`.
+    */
   def tryRead[T]()(implicit decoder: Decoder[T]): Option[T] = {
     val saved = saveState
     try Some(decoder.read(this))

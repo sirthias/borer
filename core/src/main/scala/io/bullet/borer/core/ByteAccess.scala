@@ -9,7 +9,8 @@
 package io.bullet.borer.core
 
 /**
-  * Type class for providing basic access to a `Bytes` abstraction.
+  * Type class for providing basic access to a `Bytes` abstraction,
+  * as well as construction of a respective [[Output]].
   */
 trait ByteAccess[Bytes] {
   type Out <: Output

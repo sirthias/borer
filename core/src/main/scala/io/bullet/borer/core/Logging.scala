@@ -17,17 +17,15 @@ import java.lang.{StringBuilder ⇒ JStringBuilder}
 import scala.annotation.tailrec
 
 /**
-  * Facilities for on-the-side logging of either encoding or decoding progress, which can be useful
-  * for debugging problems with the input or custom codec logic.
+  * Facilities for on-the-side logging of either encoding or decoding progress,
+  * which can be useful for debugging problems with the input or custom codec logic.
   *
   * Logging can be done either before or after the input validation step, depending on your needs.
-  * If unsure, go for after-validation logging, at least initially.
+  * If unsure, go for after-validation logging, at least initially. (This is also the default.)
   * For example, to log decoding progress to the console you can say:
   *
   * {{{
-  * Cbor
-  *   .decode[MyType]
-  *   .from(inputBytes, validationApplier = Logging.afterValidation(Logging.PrintLogger()))
+  * Cbor.decode(inputBytes).withPrintLogging().to[MyType]
   * }}}
   */
 object Logging {

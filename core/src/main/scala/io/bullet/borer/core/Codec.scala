@@ -16,11 +16,10 @@ package io.bullet.borer.core
   * you can also write a [[Codec]] for `T`.
   * ([[Encoder]] and [[Decoder]] can be implicitly "unpacked" from a codec.)
   *
-  * However, in order to not hinder composability Codecs should only ever be _supplied_,
-  * never consumed. So, if you write an encoder, decoder or codec for a generic type,
-  * which itself requires implicitly available encoders and/or decoders for certain type parameters
-  * (like `Encoder.forOption`, for example) then you should never require implicitly available
-  * Codecs, but rather Encoders and Decoders separately.
+  * However, in order to not hinder composability Codecs should only ever be _supplied_, never consumed.
+  * So, if you write an encoder, decoder or codec for a generic type, which itself requires implicitly
+  * available encoders and/or decoders for certain type parameters (like `Encoder.forOption`, for example)
+  * then you should never require implicitly available Codecs, but rather Encoders and Decoders separately.
   */
 final case class Codec[T](encoder: Encoder[T], decoder: Decoder[T])
 
@@ -29,5 +28,8 @@ object Codec {
   def of[T](encode: (Writer, T) ⇒ Unit, decode: Reader ⇒ T): Codec[T] =
     Codec(Encoder(encode), Decoder(decode))
 
+  /**
+    * Simple macro shortening `Coder(Encoder.forCaseClass[Foo], Decoder.forCaseClass[Foo])` to `Codec.forCaseClass[Foo]`
+    */
   def forCaseClass[T]: Codec[T] = macro Macros.codecForCaseClass[T]
 }

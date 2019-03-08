@@ -8,6 +8,10 @@
 
 package io.bullet.borer.core
 
+/**
+  * The common interface of all types that consume CBOR data.
+  * (On the reading as well as the writing side)
+  */
 trait Receiver[IO] {
 
   def onNull(io: IO): IO

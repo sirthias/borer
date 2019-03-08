@@ -14,11 +14,12 @@ import StandardCharsets.UTF_8
 /**
   * Stateful, mutable abstraction for writing a stream of CBOR data to the given [[Output]].
   */
-final class Writer(startOutput: Output, config: Writer.Config, validationApplier: Receiver.Applier[Output]) {
+final class Writer(startOutput: Output,
+                   config: Writer.Config = Writer.Config(),
+                   validationApplier: Receiver.Applier[Output] = Receiver.defaultApplier) {
 
   private[this] var _output: Output            = startOutput
-  private[this] val byteWriter                 = new ByteWriter(config)
-  private[this] val receiver: Receiver[Output] = validationApplier(Validation.creator(config.validation), byteWriter)
+  private[this] val receiver: Receiver[Output] = validationApplier(Validation.creator(config.validation), ByteWriter)
 
   def output: Output = _output
 
@@ -37,17 +38,27 @@ final class Writer(startOutput: Output, config: Writer.Config, validationApplier
   def writeNull(): this.type      = ret(receiver.onNull(_output))
   def writeUndefined(): this.type = ret(receiver.onUndefined(_output))
 
-  def writeBool(value: Boolean): this.type                   = ret(receiver.onBool(_output, value))
-  def writeChar(value: Char): this.type                      = writeInt(value.toInt)
-  def writeByte(value: Byte): this.type                      = writeInt(value.toInt)
-  def writeShort(value: Short): this.type                    = writeInt(value.toInt)
-  def writeInt(value: Int): this.type                        = ret(receiver.onInt(_output, value.toInt))
-  def writeLong(value: Long): this.type                      = ret(receiver.onLong(_output, value))
-  def writePosOverLong(value: Long): this.type               = ret(receiver.onPosOverLong(_output, value))
-  def writeNegOverLong(value: Long): this.type               = ret(receiver.onNegOverLong(_output, value))
-  def writeFloat16(value: Float): this.type                  = ret(receiver.onFloat16(_output, value))
-  def writeFloat(value: Float): this.type                    = ret(receiver.onFloat(_output, value))
-  def writeDouble(value: Double): this.type                  = ret(receiver.onDouble(_output, value))
+  def writeBool(value: Boolean): this.type     = ret(receiver.onBool(_output, value))
+  def writeChar(value: Char): this.type        = writeInt(value.toInt)
+  def writeByte(value: Byte): this.type        = writeInt(value.toInt)
+  def writeShort(value: Short): this.type      = writeInt(value.toInt)
+  def writeInt(value: Int): this.type          = ret(receiver.onInt(_output, value.toInt))
+  def writeLong(value: Long): this.type        = ret(receiver.onLong(_output, value))
+  def writePosOverLong(value: Long): this.type = ret(receiver.onPosOverLong(_output, value))
+  def writeNegOverLong(value: Long): this.type = ret(receiver.onNegOverLong(_output, value))
+  def writeFloat16(value: Float): this.type    = ret(receiver.onFloat16(_output, value))
+
+  def writeFloat(value: Float): this.type = ret {
+    if (config.dontCompressFloatingPointValues || !Util.canBeRepresentedAsFloat16(value)) {
+      receiver.onFloat(_output, value)
+    } else receiver.onFloat16(_output, value)
+  }
+
+  def writeDouble(value: Double): this.type =
+    if (config.dontCompressFloatingPointValues || !Util.canBeRepresentedAsFloat(value)) {
+      ret(receiver.onDouble(_output, value))
+    } else writeFloat(value.toFloat)
+
   def writeString(value: String): this.type                  = writeText(value getBytes UTF_8)
   def writeBytes[Bytes: ByteAccess](value: Bytes): this.type = ret(receiver.onBytes(_output, value))
   def writeText[Bytes: ByteAccess](value: Bytes): this.type  = ret(receiver.onText(_output, value))
@@ -95,9 +106,9 @@ object Writer {
     val default = Config()
   }
 
-  def script(encode: Writer ⇒ Any): Script = Script(encode)
+  def script(encode: Writer ⇒ Unit): Script = Script(encode)
 
-  final case class Script(encode: Writer ⇒ Any)
+  final case class Script(encode: Writer ⇒ Unit)
 
   object Script {
     val Undefined  = script(_.writeUndefined())

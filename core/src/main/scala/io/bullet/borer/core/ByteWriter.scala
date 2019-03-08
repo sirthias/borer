@@ -12,103 +12,97 @@ import Util.requireNonNegative
 
 /**
   * Encapsulates basic CBOR encoding logic.
-  * State-less and immutable.
+  * Has no internal state and can therefore be a singleton object.
   */
-final class ByteWriter(config: Writer.Config) extends Receiver[Output] {
+object ByteWriter extends Receiver[Output] {
 
-  private type Out = Output // brevity alias
+  def onNull(Output: Output): Output =
+    Output.writeByte(0xF6.toByte)
 
-  def onNull(out: Out): Out =
-    out.writeByte(0xF6.toByte)
+  def onUndefined(Output: Output): Output =
+    Output.writeByte(0xF7.toByte)
 
-  def onUndefined(out: Out): Out =
-    out.writeByte(0xF7.toByte)
+  def onBool(Output: Output, value: Boolean): Output =
+    Output.writeByte(if (value) 0xF5.toByte else 0xF4.toByte)
 
-  def onBool(out: Out, value: Boolean): Out =
-    out.writeByte(if (value) 0xF5.toByte else 0xF4.toByte)
+  def onInt(Output: Output, value: Int): Output =
+    onLong(Output, value.toLong)
 
-  def onInt(out: Out, value: Int): Out =
-    onLong(out, value.toLong)
+  def onLong(Output: Output, value: Long): Output =
+    if (value < 0) writeInteger(Output, ~value, 0x20) else writeInteger(Output, value, 0x00)
 
-  def onLong(out: Out, value: Long): Out =
-    if (value < 0) writeInteger(out, ~value, 0x20) else writeInteger(out, value, 0x00)
+  def onPosOverLong(Output: Output, value: Long): Output =
+    Output.writeByte(0x1B.toByte).writeLong(value)
 
-  def onPosOverLong(out: Out, value: Long): Out =
-    out.writeByte(0x1B.toByte).writeLong(value)
+  def onNegOverLong(Output: Output, value: Long): Output =
+    Output.writeByte(0x3B.toByte).writeLong(value)
 
-  def onNegOverLong(out: Out, value: Long): Out =
-    out.writeByte(0x3B.toByte).writeLong(value)
+  def onFloat16(Output: Output, value: Float): Output =
+    Output.writeByte(0xF9.toByte).writeShort(Float16.floatToShort(value).toShort)
 
-  def onFloat16(out: Out, value: Float): Out =
-    out.writeByte(0xF9.toByte).writeShort(Float16.floatToShort(value).toShort)
+  def onFloat(Output: Output, value: Float): Output =
+    Output.writeByte(0xFA.toByte).writeInt(java.lang.Float.floatToIntBits(value))
 
-  def onFloat(out: Out, value: Float): Out =
-    if (config.dontCompressFloatingPointValues || !Util.canBeRepresentedAsFloat16(value)) {
-      out.writeByte(0xFA.toByte).writeInt(java.lang.Float.floatToIntBits(value))
-    } else onFloat16(out, value)
+  def onDouble(Output: Output, value: Double): Output =
+    Output.writeByte(0xFB.toByte).writeLong(java.lang.Double.doubleToLongBits(value))
 
-  def onDouble(out: Out, value: Double): Out =
-    if (config.dontCompressFloatingPointValues || !Util.canBeRepresentedAsFloat(value)) {
-      out.writeByte(0xFB.toByte).writeLong(java.lang.Double.doubleToLongBits(value))
-    } else onFloat(out, value.toFloat)
+  def onBytes[Bytes](Output: Output, value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Output =
+    writeInteger(Output, byteAccess.sizeOf(value), 0x40).writeBytes(value)
 
-  def onBytes[Bytes](out: Out, value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Out =
-    writeInteger(out, byteAccess.sizeOf(value), 0x40).writeBytes(value)
+  def onBytesStart(Output: Output): Output =
+    Output.writeByte(0x5F.toByte)
 
-  def onBytesStart(out: Out): Out =
-    out.writeByte(0x5F.toByte)
+  def onText[Bytes](Output: Output, value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Output =
+    writeInteger(Output, byteAccess.sizeOf(value), 0x60).writeBytes(value)
 
-  def onText[Bytes](out: Out, value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Out =
-    writeInteger(out, byteAccess.sizeOf(value), 0x60).writeBytes(value)
+  def onTextStart(Output: Output): Output =
+    Output.writeByte(0x7F.toByte)
 
-  def onTextStart(out: Out): Out =
-    out.writeByte(0x7F.toByte)
+  def onArrayHeader(Output: Output, length: Long): Output =
+    writeInteger(Output, requireNonNegative(length, "length"), 0x80)
 
-  def onArrayHeader(out: Out, length: Long): Out =
-    writeInteger(out, requireNonNegative(length, "length"), 0x80)
+  def onArrayStart(Output: Output): Output =
+    Output.writeByte(0x9F.toByte)
 
-  def onArrayStart(out: Out): Out =
-    out.writeByte(0x9F.toByte)
+  def onMapHeader(Output: Output, length: Long): Output =
+    writeInteger(Output, requireNonNegative(length, "length"), 0xA0)
 
-  def onMapHeader(out: Out, length: Long): Out =
-    writeInteger(out, requireNonNegative(length, "length"), 0xA0)
+  def onMapStart(Output: Output): Output =
+    Output.writeByte(0xBF.toByte)
 
-  def onMapStart(out: Out): Out =
-    out.writeByte(0xBF.toByte)
+  def onBreak(Output: Output): Output =
+    Output.writeByte(0xFF.toByte)
 
-  def onBreak(out: Out): Out =
-    out.writeByte(0xFF.toByte)
+  def onTag(Output: Output, value: Tag): Output =
+    writeInteger(Output, value.code, 0xC0)
 
-  def onTag(out: Out, value: Tag): Out =
-    writeInteger(out, value.code, 0xC0)
-
-  def onSimpleValue(out: Out, value: Int): Out =
+  def onSimpleValue(Output: Output, value: Int): Output =
     if (!SimpleValue.isLegal(value)) {
       val msg = s"$value must be in the range ${SimpleValue.legalRange}, but was $value"
-      throw new Cbor.Error.InvalidCborData(out, msg)
-    } else writeInteger(out, value.toLong, 0xE0)
+      throw new Cbor.Error.InvalidCborData(Output, msg)
+    } else writeInteger(Output, value.toLong, 0xE0)
 
-  def onEndOfInput(out: Out): Out = out // no actual action here
+  def onEndOfInput(Output: Output): Output = Output // no actual action here
 
   def target = this
 
   def copy = this
 
-  private def writeInteger(out: Out, value: Long, majorType: Int): Out = {
+  private def writeInteger(Output: Output, value: Long, majorType: Int): Output = {
     var v = value
     (if (v > 23) {
        if (v >> 8 != 0) {
          (if (v >> 16 != 0) {
             (if (v >> 32 != 0) {
-               out
+               Output
                  .writeByte((0x1B + majorType).toByte)
                  .writeInt((v >> 32).toInt)
-             } else out.writeByte((0x1A + majorType).toByte))
+             } else Output.writeByte((0x1A + majorType).toByte))
               .writeShort((v >> 16).toShort)
-          } else out.writeByte((0x19 + majorType).toByte))
+          } else Output.writeByte((0x19 + majorType).toByte))
            .writeByte((v >> 8).toByte)
-       } else out.writeByte((0x18 + majorType).toByte)
-     } else { v += majorType; out })
+       } else Output.writeByte((0x18 + majorType).toByte)
+     } else { v += majorType; Output })
       .writeByte(v.toByte)
   }
 }

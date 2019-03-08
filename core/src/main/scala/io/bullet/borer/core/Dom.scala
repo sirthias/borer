@@ -12,6 +12,12 @@ import java.util
 
 import scala.collection.immutable.{ListMap, VectorBuilder}
 
+/**
+  * Simple Document Object Model (DOM) for CBOR.
+  *
+  * Practically all valid CBOR encodings can be decoded into this structure and vice versa.
+  * Provided as an alternative to plain [[Writer]]-based encoding and [[Reader]]-based decoding.
+  */
 object Dom {
 
   sealed trait Element

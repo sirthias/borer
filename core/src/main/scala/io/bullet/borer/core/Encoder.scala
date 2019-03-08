@@ -13,9 +13,7 @@ import java.math.{BigDecimal ⇒ JBigDecimal, BigInteger ⇒ JBigInteger}
 import scala.annotation.tailrec
 
 /**
-  * Type class containing the logic for writing an instance of type [[T]] to a [[Writer]].
-  *
-  * @tparam T The type to serialize
+  * Type class responsible for writing an instance of type [[T]] to a [[Writer]].
   */
 trait Encoder[T] {
   def write(w: Writer, value: T): w.type
@@ -110,6 +108,13 @@ object Encoder extends LowPrioEncoders {
   implicit val forBigDecimal: Encoder[BigDecimal] = forJBigDecimal.compose(_.bigDecimal)
 
   implicit val forByteArrayIterator: Encoder[Iterator[Array[Byte]]] =
+    Encoder { (w, x) ⇒
+      w.writeBytesStart()
+      while (x.hasNext) w.writeBytes(x.next())
+      w.writeBreak()
+    }
+
+  implicit def forBytesIterator[Bytes: ByteAccess]: Encoder[Iterator[Bytes]] =
     Encoder { (w, x) ⇒
       w.writeBytesStart()
       while (x.hasNext) w.writeBytes(x.next())

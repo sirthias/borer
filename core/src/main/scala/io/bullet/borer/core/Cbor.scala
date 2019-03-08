@@ -19,9 +19,9 @@ object Cbor {
   /**
     * Entry point into the encoding mini-DSL.
     */
-  def encode[T](value: T): EncodingHelper[T] = new EncodingHelper(value)
+  def encode[T: Encoder](value: T): EncodingHelper[T] = new EncodingHelper(value)
 
-  final class EncodingHelper[T] private[Cbor] (value: T) {
+  final class EncodingHelper[T: Encoder] private[Cbor] (value: T) {
     private[this] var config: Writer.Config                       = Writer.Config.default
     private[this] var validationApplier: Receiver.Applier[Output] = Receiver.defaultApplier
 
@@ -61,31 +61,31 @@ object Cbor {
       * Allows for customizing the injection points around input validation.
       * Used, for example, for on-the-side [[Logging]] of the encoding process.
       */
-    def withValidationApplier(validationApplier: Receiver.Applier[Output]): EncodingHelper[T] = {
+    def withValidationApplier(validationApplier: Receiver.Applier[Output]): this.type = {
       this.validationApplier = validationApplier
-      this.asInstanceOf[EncodingHelper[T]]
+      this
     }
 
     /**
       * Short-cut for encoding to a plain byte array, throwing an exception in case of any failures.
       */
-    def toByteArray(implicit encoder: Encoder[T]): Array[Byte] = this.to[Array[Byte]].bytes
+    def toByteArray: Array[Byte] = this.to[Array[Byte]].bytes
 
     /**
       * Short-cut for encoding to a plain byte array, wrapped in a [[Try]] for error handling.
       */
-    def toByteArrayTry(implicit encoder: Encoder[T]): Try[Array[Byte]] =
-      this.to[Array[Byte]].bytesTry
+    def toByteArrayTry: Try[Array[Byte]] = this.to[Array[Byte]].bytesTry
 
     /**
-      * Encodes an instance of [[T]] to the given `output` using the configures options.
+      * Encodes an instance of [[T]] to the given `Bytes` type using the configured options.
       */
-    def to[Bytes](implicit ba: ByteAccess[Bytes], encoder: Encoder[T]): Either[Error[ba.Out], ba.Out] = {
+    def to[Bytes](implicit ba: ByteAccess[Bytes]): Either[Error[ba.Out], ba.Out] = {
       val writer = new Writer(ba.newOutput, config, validationApplier)
       def out    = writer.output.asInstanceOf[ba.Out]
       try {
-        encoder.write(writer, value)
-        writer.writeEndOfInput() // doesn't actually write but triggers certain validation checks (if configured)
+        writer
+          .write(value)
+          .writeEndOfInput() // doesn't actually write anything but triggers certain validation checks (if configured)
         Right(out)
       } catch {
         case e: Error[_] ⇒ Left(e.asInstanceOf[Error[ba.Out]])
@@ -106,7 +106,7 @@ object Cbor {
     private[this] var validationApplier: Receiver.Applier[Input] = Receiver.defaultApplier[Input]
 
     /**
-      * Indicated that the decoding process is not expected to consume the complete input.
+      * Indicates that this decoding run is not expected to consume the complete [[Input]].
       */
     def consumePrefix: this.type = {
       this.prefixOnly = true
@@ -122,7 +122,7 @@ object Cbor {
     }
 
     /**
-      * Enables logging of the decoding progress to the console.
+      * Enables logging of this decoding run to the console.
       * Each data item that is consumed from the underlying CBOR stream is pretty printed to the console
       * on its own line.
       */
@@ -133,7 +133,7 @@ object Cbor {
     }
 
     /**
-      * Enables logging of the decoding progress to the given [[java.lang.StringBuilder]].
+      * Enables logging of this decoding run to the given [[java.lang.StringBuilder]].
       * Each data item that is consumed from the underlying CBOR stream is formatted and appended as its own line.
       */
     def withStringLogging(stringBuilder: java.lang.StringBuilder,
@@ -156,7 +156,7 @@ object Cbor {
     }
 
     /**
-      * Decodes an instance of [[T]] from the configured `input` using the configures options.
+      * Decodes an instance of [[T]] from the configured [[Input]] using the configured options.
       */
     def to[T](implicit decoder: Decoder[T]): Either[Error[In], (T, In)] = {
       val reader = new Reader(input, config, validationApplier)

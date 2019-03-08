@@ -9,8 +9,8 @@
 package io.bullet.borer.core
 
 /**
-  * A [[Receiver]] which simply buffers all incoming data in fields of the appropriate
-  * type, for easy querying from the outside.
+  * A [[Receiver]] which simply buffers all incoming data in fields of the appropriate type,
+  * for easy querying from the outside.
   */
 final class BufferingReceiver[In] extends Receiver[In] with java.lang.Cloneable {
 

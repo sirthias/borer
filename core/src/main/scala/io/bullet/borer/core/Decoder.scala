@@ -17,9 +17,7 @@ import scala.collection.immutable.{ListMap, TreeMap}
 import scala.collection.mutable
 
 /**
-  * Type class containing the logic for reading an instance of type [[T]] from a [[Reader]].
-  *
-  * @tparam T The type to deserialize
+  * Type class responsible for reading an instance of type [[T]] from a [[Reader]].
   */
 trait Decoder[T] {
   def read(r: Reader): T
