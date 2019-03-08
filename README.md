@@ -10,6 +10,8 @@ A [CBOR] (de)serialization implementation in [Scala] sporting these features:
 - easy integration (type class-based design)
 - supports custom "byte string" abstractions (like `akka.util.ByteString` or `scodec.bits.ByteVector`)
 
+---
+
 [![Maven Central](https://img.shields.io/maven-central/v/io.bullet/borer-core_2.12.svg)](https://maven-badges.herokuapp.com/maven-central/io.bullet/borer-core_2.12)
 [![Uses Badges](https://img.shields.io/badge/uses-badges-ff69b4.svg)](http://shields.io/)
 
@@ -37,7 +39,7 @@ libraryDependencies += "io.bullet" %% "borer-compat-akka" % "<version>" // for d
 libraryDependencies += "io.bullet" %% "borer-compat-scodec" % "<version>" // for direct `scodec.bits.ByteVector` support
 ```
 
-It is available for [Scala] 2.12 as [scala.js] 0.6.
+_BORER_ is available for [Scala] 2.12 as [scala.js] 0.6.
 
 
 Basic Usage
@@ -144,7 +146,7 @@ final case class Codec[T](encoder: Encoder[T], decoder: Decoder[T])
 
 Encoders and Decoders can be implicitly "unpacked" from a `Codec` for the same type.
 
-NOTE: In order to not hinder composability Codecs should only ever be _supplied_, never consumed.
+*NOTE*: In order to not hinder composability Codecs should only ever be _supplied_, never consumed.
 So, if you write an `Encoder`, `Decoder` or `Codec` for a generic type, which itself requires implicitly available
 encoders and/or decoders for certain type parameters (like `Encoder.forOption`, for example) then you should never
 require an implicitly available `Codec[T]`, but rather an `Encoder[T]` and `Decoder[T]` separately. 
@@ -237,6 +239,12 @@ eventually, debugging structural problems can be a bit tedious since the error w
 very end of the encoding or decoding process. The section on *Logging* below might be helpful.
 
 
+DOM
+---
+
+... (docs still to be written)
+
+
 Logging
 ------- 
 
@@ -306,7 +314,77 @@ When you include the `borer-derivation` module as a dependency (see *Installatio
 
 There are two basic alternatives to choose from: *Array-Based Codecs* or *Map-Based Codecs*.
 
-... (more docs coming soon) ...
+
+### Array-Based Codecs
+
+Array-Based Codec derivation is enabled with this import:
+
+```scala
+import io.bullet.borer.derivation.ArrayBasedCodecs._
+```
+
+This brings the three methods `deriveEncoder[T]`, `deriveDecoder[T]` and `deriveCodec[T]` in scope,
+which you can use to derive the respective type classes for case classes and ADTs.
+
+Here is an example:
+
+```scala
+import io.bullet.borer.derivation.TypeId
+import io.bullet.borer.derivation.ArrayBasedCodecs._
+
+sealed trait Animal
+case class Dog(age: Int, name: String)                                        extends Animal
+@TypeId("TheCAT") case class Cat(weight: Double, color: String, home: String) extends Animal
+@TypeId(42) case class Mouse(tail: Boolean)                                   extends Animal
+
+implicit val dogCodec = deriveCodec[Dog]
+implicit val catCodec = deriveCodec[Cat]
+implicit val mouseCodec = deriveCodec[Mouse]
+
+implicit val animalCodec = deriveCodec[Animal]
+```   
+
+With these codecs case classes are written to [CBOR] in exactly the same fashion as with the case class support in
+`borer-core` module (see above), i.e. to simple arrays (unless the case classes arity is 1).
+
+An ADT is encoded as a [CBOR] array of length two, with the first element holding the type id and the second holding
+the instances encoding (i.e. an array or single element).
+
+The type id is required to allow the decoder to determine which ADT sub-type to decode into.
+By default _BORER_ will use type's short class name as a (textual) type id.
+If you want to customize this you can use the `@TypeId` annotation to do so.
+Check out the `@TypeId` sources [here][TypeId Source] for more info.
+
+
+### Map-Based Codecs
+
+Array-Based Codec derivation is enabled with this import:
+
+```scala
+import io.bullet.borer.derivation.MapBasedCodecs._
+```
+
+With these codecs case classes are encoded as [CBOR] maps with the member name as key, much as you would normally expect
+as JSON codec to do it. 
+
+ADTs, however, are encoded in exactly the same way as with the Array-Based Codecs described above, i.e. as two-element
+arrays with the type id as first element and the map as second.
+
+
+### Derivation Gotchas
+
+Since _BORER_ derivation relies on [Magnolia] for doing the dirty macro work behind the scenes there are a few gotchas
+to be aware off.
+
+First, _BORER_ derivation is intentionally not fully automatic, i.e. codecs are not created implicitly but require
+you to write one line per type. The best-practice here is to cache the created codec in an `implicit val` or
+`implicit lazy val` (in case there are circular dependencies between the types).
+
+Without this explicit caching the code that [Magnolia] creates for constructing the codecs can sometimes become enormous
+and make compilation as well as runtime unusually slow. (See Magnolia issues [79] and [114] for more info.)
+
+When you cache the individual codecs in their own respective `val`s (or `lazy val`s) [Magnolia]'s derivation is fast
+and efficient.
 
 
 Akka Support
@@ -340,7 +418,9 @@ You also get full "zero-copy" support for encoding to and decoding from `scodec.
 License
 -------
 
-_BORER_ is released under the [MPL 2.0].  
+_BORER_ is released under the [MPL 2.0].
+
+Contributions are welcome at any time!  
 
 
   [Scala]: https://www.scala-lang.org/
@@ -353,3 +433,6 @@ _BORER_ is released under the [MPL 2.0].
   [Cbor Source]: https://github.com/sirthias/borer/blob/master/core/src/main/scala/io/bullet/borer/core/Cbor.scala
   [Writer Source]: https://github.com/sirthias/borer/blob/master/core/src/main/scala/io/bullet/borer/core/Writer.scala
   [Reader Source]: https://github.com/sirthias/borer/blob/master/core/src/main/scala/io/bullet/borer/core/Reader.scala
+  [TypeId Source]: https://github.com/sirthias/borer/blob/master/derivation/src/main/scala/io/bullet/borer/derivation/TypeId.scala
+  [79]: https://github.com/propensive/magnolia/issues/79
+  [114]: https://github.com/propensive/magnolia/issues/114
