@@ -14,10 +14,9 @@ import Util.requireNonNegative
   * Encapsulates basic CBOR encoding logic.
   * State-less and immutable.
   */
-final class ByteWriter[Bytes](config: Writer.Config)(implicit byteAccess: ByteAccess[Bytes])
-    extends Receiver[Output[Bytes], Bytes] {
+final class ByteWriter(config: Writer.Config) extends Receiver[Output] {
 
-  private type Out = Output[Bytes] // brevity alias
+  private type Out = Output // brevity alias
 
   def onNull(out: Out): Out =
     out.writeByte(0xF6.toByte)
@@ -53,20 +52,14 @@ final class ByteWriter[Bytes](config: Writer.Config)(implicit byteAccess: ByteAc
       out.writeByte(0xFB.toByte).writeLong(java.lang.Double.doubleToLongBits(value))
     } else onFloat(out, value.toFloat)
 
-  def onBytes(out: Out, value: Bytes): Out =
+  def onBytes[Bytes](out: Out, value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Out =
     writeInteger(out, byteAccess.sizeOf(value), 0x40).writeBytes(value)
-
-  def onByteArray(out: Out, value: Array[Byte]): Out =
-    writeInteger(out, value.length.toLong, 0x40).writeBytes(value)
 
   def onBytesStart(out: Out): Out =
     out.writeByte(0x5F.toByte)
 
-  def onText(out: Out, value: Bytes): Out =
+  def onText[Bytes](out: Out, value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Out =
     writeInteger(out, byteAccess.sizeOf(value), 0x60).writeBytes(value)
-
-  def onTextByteArray(out: Out, value: Array[Byte]): Out =
-    writeInteger(out, value.length.toLong, 0x60).writeBytes(value)
 
   def onTextStart(out: Out): Out =
     out.writeByte(0x7F.toByte)

@@ -19,11 +19,11 @@ object Cbor {
   /**
     * Entry point into the encoding mini-DSL.
     */
-  def encode[T](value: T): EncodingHelper[T, Nothing] = new EncodingHelper(value)
+  def encode[T](value: T): EncodingHelper[T] = new EncodingHelper(value)
 
-  final class EncodingHelper[T, +Bytes] private[Cbor] (value: T) {
-    private[this] var config: Writer.Config                              = Writer.Config.default
-    private[this] var validationApplier: Receiver.Applier[Output, Bytes] = Receiver.defaultApplier
+  final class EncodingHelper[T] private[Cbor] (value: T) {
+    private[this] var config: Writer.Config                       = Writer.Config.default
+    private[this] var validationApplier: Receiver.Applier[Output] = Receiver.defaultApplier
 
     /**
       * Configures the [[Writer.Config]] for this encoding run.
@@ -61,38 +61,34 @@ object Cbor {
       * Allows for customizing the injection points around input validation.
       * Used, for example, for on-the-side [[Logging]] of the encoding process.
       */
-    def withValidationApplier[By](validationApplier: Receiver.Applier[Output, By]): EncodingHelper[T, By] = {
-      this.validationApplier = validationApplier.asInstanceOf[Receiver.Applier[Output, Bytes]]
-      this.asInstanceOf[EncodingHelper[T, By]]
+    def withValidationApplier(validationApplier: Receiver.Applier[Output]): EncodingHelper[T] = {
+      this.validationApplier = validationApplier
+      this.asInstanceOf[EncodingHelper[T]]
     }
 
     /**
       * Short-cut for encoding to a plain byte array, throwing an exception in case of any failures.
       */
-    def toByteArray(implicit ev: Bytes <:< Array[Byte], encoder: Encoder[Array[Byte], T]): Array[Byte] =
-      this.asInstanceOf[EncodingHelper[T, Nothing]].to[Array[Byte]].bytes
+    def toByteArray(implicit encoder: Encoder[T]): Array[Byte] = this.to[Array[Byte]].bytes
 
     /**
       * Short-cut for encoding to a plain byte array, wrapped in a [[Try]] for error handling.
       */
-    def toByteArrayTry(implicit ev: Bytes <:< Array[Byte], encoder: Encoder[Array[Byte], T]): Try[Array[Byte]] =
-      this.asInstanceOf[EncodingHelper[T, Nothing]].to[Array[Byte]].bytesTry
+    def toByteArrayTry(implicit encoder: Encoder[T]): Try[Array[Byte]] =
+      this.to[Array[Byte]].bytesTry
 
     /**
       * Encodes an instance of [[T]] to the given `output` using the configures options.
       */
-    def to[By >: Bytes](implicit output: Output[By],
-                        ba: ByteAccess[By],
-                        encoder: Encoder[By, T]): Either[Error[output.Self], output.Self] = {
-
-      val writer = new Writer(output, config, validationApplier.asInstanceOf[Receiver.Applier[Output, By]])
-      def out    = writer.output.asInstanceOf[output.Self]
+    def to[Bytes](implicit ba: ByteAccess[Bytes], encoder: Encoder[T]): Either[Error[ba.Out], ba.Out] = {
+      val writer = new Writer(ba.newOutput, config, validationApplier)
+      def out    = writer.output.asInstanceOf[ba.Out]
       try {
         encoder.write(writer, value)
         writer.writeEndOfInput() // doesn't actually write but triggers certain validation checks (if configured)
         Right(out)
       } catch {
-        case e: Error[_] ⇒ Left(e.asInstanceOf[Error[output.Self]])
+        case e: Error[_] ⇒ Left(e.asInstanceOf[Error[ba.Out]])
         case NonFatal(e) ⇒ Left(new Error.General(out, e))
       }
     }
@@ -101,15 +97,13 @@ object Cbor {
   /**
     * Entry point into the decoding mini-DSL.
     */
-  def decode[Bytes](input: Input[Bytes])(implicit ba: ByteAccess[Bytes]): DecodingHelper[Bytes, input.Self] =
-    new DecodingHelper(input)
+  def decode(input: Input): DecodingHelper[input.Self] = new DecodingHelper(input)
 
-  final class DecodingHelper[Bytes, In <: Input[Bytes]] private[Cbor] (input: Input[Bytes])(
-      implicit ba: ByteAccess[Bytes]) {
+  final class DecodingHelper[In <: Input] private[Cbor] (input: Input) {
 
-    private[this] var prefixOnly: Boolean                               = _
-    private[this] var config: Reader.Config                             = Reader.Config.default
-    private[this] var validationApplier: Receiver.Applier[Input, Bytes] = Receiver.defaultApplier[Input, Bytes]
+    private[this] var prefixOnly: Boolean                        = _
+    private[this] var config: Reader.Config                      = Reader.Config.default
+    private[this] var validationApplier: Receiver.Applier[Input] = Receiver.defaultApplier[Input]
 
     /**
       * Indicated that the decoding process is not expected to consume the complete input.
@@ -156,7 +150,7 @@ object Cbor {
       * Allows for customizing the injection points around input validation.
       * Used, for example, for on-the-side [[Logging]] of the decoding process.
       */
-    def withValidationApplier(validationApplier: Receiver.Applier[Input, Bytes]): this.type = {
+    def withValidationApplier(validationApplier: Receiver.Applier[Input]): this.type = {
       this.validationApplier = validationApplier
       this
     }
@@ -164,7 +158,7 @@ object Cbor {
     /**
       * Decodes an instance of [[T]] from the configured `input` using the configures options.
       */
-    def to[T](implicit decoder: Decoder[Bytes, T]): Either[Error[In], (T, In)] = {
+    def to[T](implicit decoder: Decoder[T]): Either[Error[In], (T, In)] = {
       val reader = new Reader(input, config, validationApplier)
       def in     = reader.input.asInstanceOf[In]
       try {
@@ -199,15 +193,15 @@ object Cbor {
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    implicit final class EncodingResultOps[Out](val underlying: Either[Error[Out], Out]) extends AnyVal {
+    implicit final class EncodingResultOps[Out <: Output](val underlying: Either[Error[Out], Out]) extends AnyVal {
 
-      def bytes(implicit ev: BytesOf[Out]): ev.Out = underlying match {
-        case Right(out) ⇒ out.asInstanceOf[Output[_]].result().asInstanceOf[ev.Out]
+      def bytes: Out#Result = underlying match {
+        case Right(out) ⇒ out.result()
         case Left(e)    ⇒ throw e
       }
 
-      def bytesTry(implicit ev: BytesOf[Out]): Try[ev.Out] = underlying match {
-        case Right(out) ⇒ Success(out.asInstanceOf[Output[_]].result().asInstanceOf[ev.Out])
+      def bytesTry: Try[Out#Result] = underlying match {
+        case Right(out) ⇒ Success(out.result())
         case Left(e)    ⇒ Failure(e)
       }
 
@@ -233,13 +227,5 @@ object Cbor {
 
       def error: Error[In] = underlying.left.get
     }
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    // helper phantom type
-    sealed trait BytesOf[-T] {
-      type Out
-    }
-    implicit def BytesOfOutput[Bytes]: BytesOf[Output[Bytes]] { type Out = Bytes } = null
   }
 }

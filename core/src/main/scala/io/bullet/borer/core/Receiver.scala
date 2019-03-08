@@ -8,7 +8,7 @@
 
 package io.bullet.borer.core
 
-trait Receiver[IO, Bytes] {
+trait Receiver[IO] {
 
   def onNull(io: IO): IO
   def onUndefined(io: IO): IO
@@ -23,12 +23,10 @@ trait Receiver[IO, Bytes] {
   def onFloat(io: IO, value: Float): IO
   def onDouble(io: IO, value: Double): IO
 
-  def onBytes(io: IO, value: Bytes): IO
-  def onByteArray(io: IO, value: Array[Byte]): IO
+  def onBytes[Bytes: ByteAccess](io: IO, value: Bytes): IO
   def onBytesStart(io: IO): IO
 
-  def onText(io: IO, value: Bytes): IO
-  def onTextByteArray(io: IO, value: Array[Byte]): IO
+  def onText[Bytes: ByteAccess](io: IO, value: Bytes): IO
   def onTextStart(io: IO): IO
 
   def onArrayHeader(io: IO, length: Long): IO
@@ -49,13 +47,13 @@ trait Receiver[IO, Bytes] {
     * The target [[Receiver]] is this [[Receiver]] wraps another one.
     * If it doesn't wrap another [[Receiver]] the method returns this instance.
     */
-  def target: Receiver[IO, Bytes]
+  def target: Receiver[IO]
 
   /**
     * Returns a deep copy of this [[Receiver]].
     * If this [[Receiver]] wraps another one then the copy must wrap a fresh copy of the wrapped target [[Receiver]].
     */
-  def copy: Receiver[IO, Bytes]
+  def copy: Receiver[IO]
 }
 
 object Receiver {
@@ -63,19 +61,19 @@ object Receiver {
   /**
     * A creator function for [[Receiver]] instances.
     */
-  type Creator[IO[_], Bytes] = Receiver[IO[Bytes], Bytes] ⇒ Receiver[IO[Bytes], Bytes]
+  type Creator[IO] = Receiver[IO] ⇒ Receiver[IO]
 
   /**
     * A function which applies a given [[Creator]] to a given [[Receiver]] and therefore has the chance
     * to wrap either the given [[Receiver]] or the created [[Receiver]] with custom logic, e.g. [[Logging]].
     */
-  type Applier[IO[_], Bytes] = (Creator[IO, Bytes], Receiver[IO[Bytes], Bytes]) ⇒ Receiver[IO[Bytes], Bytes]
+  type Applier[IO] = (Creator[IO], Receiver[IO]) ⇒ Receiver[IO]
 
   /**
     * The default [[Applier]] which simply applies the given [[Creator]] to the given [[Receiver]] without
     * any additional logic.
     */
-  def defaultApplier[IO[_], Bytes]: Applier[IO, Bytes] = _defaultApplier.asInstanceOf[Applier[IO, Bytes]]
+  def defaultApplier[IO]: Applier[IO] = _defaultApplier.asInstanceOf[Applier[IO]]
 
-  private[this] val _defaultApplier: Applier[List, Any] = _(_)
+  private[this] val _defaultApplier: Applier[Any] = _(_)
 }

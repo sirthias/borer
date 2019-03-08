@@ -9,4 +9,4 @@
 package io.bullet.borer.core
 
 object DefaultRfcExamplesSpec
-    extends AbstractRfcExamplesSpec[Array[Byte]]("Default Mutable Byte Array") with BorerSpec.DefaultBytes
+    extends AbstractRfcExamplesSpec[Array[Byte]]("Default Mutable Byte Array") with BorerSpec.ForByteArray

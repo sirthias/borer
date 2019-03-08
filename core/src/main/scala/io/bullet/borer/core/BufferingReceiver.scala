@@ -12,7 +12,7 @@ package io.bullet.borer.core
   * A [[Receiver]] which simply buffers all incoming data in fields of the appropriate
   * type, for easy querying from the outside.
   */
-final class BufferingReceiver[In, Bytes] extends Receiver[In, Bytes] with java.lang.Cloneable {
+final class BufferingReceiver[In] extends Receiver[In] with java.lang.Cloneable {
 
   private[this] var _dataItem: Int = _
 
@@ -21,8 +21,10 @@ final class BufferingReceiver[In, Bytes] extends Receiver[In, Bytes] with java.l
   private[this] var _long: Long     = _
   private[this] var _float: Float   = _
   private[this] var _double: Double = _
-  private[this] var _bytes: Bytes   = _
   private[this] var _tag: Tag       = _
+
+  private[this] var _bytes: Any                   = _
+  private[this] var _bytesAccess: ByteAccess[Any] = _
 
   def dataItem: Int = _dataItem
 
@@ -31,8 +33,11 @@ final class BufferingReceiver[In, Bytes] extends Receiver[In, Bytes] with java.l
   def longValue: Long     = _long
   def floatValue: Float   = _float
   def doubleValue: Double = _double
-  def bytesValue: Bytes   = _bytes
+  def bytesValue: Any     = _bytes
   def tagValue: Tag       = _tag
+
+  def getBytes[Bytes](implicit byteAccess: ByteAccess[Bytes]): Bytes =
+    byteAccess.convert(_bytes)(_bytesAccess)
 
   def clear(): Unit = _dataItem = 0
 
@@ -80,21 +85,19 @@ final class BufferingReceiver[In, Bytes] extends Receiver[In, Bytes] with java.l
     ret(in, DataItem.Double)
   }
 
-  def onBytes(in: In, value: Bytes): In = {
+  def onBytes[Bytes](in: In, value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): In = {
     _bytes = value
+    _bytesAccess = byteAccess.asInstanceOf[ByteAccess[Any]]
     ret(in, DataItem.Bytes)
   }
 
-  def onByteArray(io: In, value: Array[Byte]) = throw new UnsupportedOperationException
-
   def onBytesStart(in: In): In = ret(in, DataItem.BytesStart)
 
-  def onText(in: In, value: Bytes): In = {
+  def onText[Bytes](in: In, value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): In = {
     _bytes = value
+    _bytesAccess = byteAccess.asInstanceOf[ByteAccess[Any]]
     ret(in, DataItem.Text)
   }
-
-  def onTextByteArray(io: In, value: Array[Byte]) = throw new UnsupportedOperationException
 
   def onTextStart(in: In): In = ret(in, DataItem.TextStart)
 
@@ -128,7 +131,7 @@ final class BufferingReceiver[In, Bytes] extends Receiver[In, Bytes] with java.l
 
   def target = this
 
-  def copy = super.clone().asInstanceOf[BufferingReceiver[In, Bytes]]
+  def copy = super.clone().asInstanceOf[BufferingReceiver[In]]
 
   private def ret(in: In, dataItem: Int): In = {
     _dataItem = dataItem

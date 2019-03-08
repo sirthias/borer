@@ -13,20 +13,16 @@ import scala.util.control.NonFatal
 
 /**
   * Stateful, mutable abstraction for reading a stream of CBOR data from the given [[Input]].
-  *
-  * @tparam Bytes The abstraction for byte chunks that the wrapped [[Input]] provides.
   */
-final class Reader[+Bytes](startInput: Input[Bytes],
-                           config: Reader.Config,
-                           validationApplier: Receiver.Applier[Input, Bytes])(implicit byteAccess: ByteAccess[Bytes]) {
+final class Reader(startInput: Input, config: Reader.Config, validationApplier: Receiver.Applier[Input]) {
 
-  private[this] var _input: Input[Bytes] = startInput
-  private[this] var receptacle           = new BufferingReceiver[Input[Bytes], Bytes]
-  private[this] var receiver: Receiver[Input[Bytes], Bytes] =
+  private[this] var _input: Input = startInput
+  private[this] var receptacle    = new BufferingReceiver[Input]
+  private[this] var receiver: Receiver[Input] =
     validationApplier(Validation.creator(config.validation), receptacle)
 
-  def input: Input[Bytes] = _input
-  def dataItem: Int       = receptacle.dataItem
+  def input: Input  = _input
+  def dataItem: Int = receptacle.dataItem
 
   /**
     * Checks whether this [[Reader]] currently has any of the data items masked in the given bit mask.
@@ -35,7 +31,7 @@ final class Reader[+Bytes](startInput: Input[Bytes],
     */
   def has(mask: Int): Boolean = (dataItem & mask) != 0
 
-  def apply[T](implicit decoder: Decoder[Bytes, T]): T = read[T]()
+  def apply[T: Decoder]: T = read[T]()
 
   def hasNull: Boolean       = has(DataItem.Null)
   def readNull(): Null       = if (hasNull) { pull(); null } else unexpectedDataItem(expected = "null")
@@ -142,10 +138,10 @@ final class Reader[+Bytes](startInput: Input[Bytes],
   }
 
   def hasByteArray: Boolean        = hasBytes
-  def readByteArray(): Array[Byte] = byteAccess.toByteArray(readBytes())
+  def readByteArray(): Array[Byte] = readBytes[Array[Byte]]()
 
   def hasBytes: Boolean = has(DataItem.Bytes | DataItem.BytesStart)
-  def readBytes(): Bytes =
+  def readBytes[Bytes: ByteAccess](): Bytes =
     dataItem match {
       case DataItem.Bytes      ⇒ readSizedBytes()
       case DataItem.BytesStart ⇒ readUnsizedBytes()
@@ -153,9 +149,9 @@ final class Reader[+Bytes](startInput: Input[Bytes],
     }
 
   def hasSizedBytes: Boolean = has(DataItem.Bytes)
-  def readSizedBytes(): Bytes =
+  def readSizedBytes[Bytes]()(implicit byteAccess: ByteAccess[Bytes]): Bytes =
     if (hasSizedBytes) {
-      val result = receptacle.bytesValue
+      val result = receptacle.getBytes
       pull()
       result
     } else unexpectedDataItem(expected = "Bounded Bytes")
@@ -166,7 +162,7 @@ final class Reader[+Bytes](startInput: Input[Bytes],
   def tryReadBytesStart(): Boolean = hasBytesStart && { pull(); true }
 
   def hasUnsizedBytes: Boolean = hasBytesStart
-  def readUnsizedBytes(): Bytes =
+  def readUnsizedBytes[Bytes]()(implicit byteAccess: ByteAccess[Bytes]): Bytes =
     if (tryReadBytesStart()) {
       var result = byteAccess.empty
       while (!tryReadBreak()) result = byteAccess.concat(result, readBytes())
@@ -175,12 +171,12 @@ final class Reader[+Bytes](startInput: Input[Bytes],
 
   def hasString: Boolean = hasTextBytes
   def readString(): String = {
-    val byteArray = byteAccess.toByteArray(readTextBytes())
+    val byteArray = readTextBytes[Array[Byte]]()
     if (byteArray.length > 0) new String(byteArray, StandardCharsets.UTF_8) else ""
   }
 
   def hasTextBytes: Boolean = has(DataItem.Text | DataItem.TextStart)
-  def readTextBytes(): Bytes =
+  def readTextBytes[Bytes: ByteAccess](): Bytes =
     dataItem match {
       case DataItem.Text      ⇒ readSizedTextBytes()
       case DataItem.TextStart ⇒ readUnsizedTextBytes()
@@ -188,9 +184,9 @@ final class Reader[+Bytes](startInput: Input[Bytes],
     }
 
   def hasSizedTextBytes: Boolean = has(DataItem.Text)
-  def readSizedTextBytes(): Bytes =
+  def readSizedTextBytes[Bytes]()(implicit byteAccess: ByteAccess[Bytes]): Bytes =
     if (hasSizedTextBytes) {
-      val result = receptacle.bytesValue
+      val result = receptacle.getBytes
       pull()
       result
     } else unexpectedDataItem(expected = "Bounded Text Bytes")
@@ -201,7 +197,7 @@ final class Reader[+Bytes](startInput: Input[Bytes],
   def tryReadTextStart(): Boolean = hasTextStart && { pull(); true }
 
   def hasUnsizedTextBytes: Boolean = hasTextStart
-  def readUnsizedTextBytes(): Bytes =
+  def readUnsizedTextBytes[Bytes]()(implicit byteAccess: ByteAccess[Bytes]): Bytes =
     if (tryReadTextStart()) {
       var result = byteAccess.empty
       while (!tryReadBreak()) result = byteAccess.concat(result, readTextBytes())
@@ -281,9 +277,9 @@ final class Reader[+Bytes](startInput: Input[Bytes],
   def readEndOfInput(): Unit       = if (!hasEndOfInput) unexpectedDataItem(expected = "End of Input")
   def tryReadEndOfInput(): Boolean = hasEndOfInput
 
-  def read[T]()(implicit decoder: Decoder[Bytes, T]): T = decoder.read(this)
+  def read[T]()(implicit decoder: Decoder[T]): T = decoder.read(this)
 
-  def tryRead[T]()(implicit decoder: Decoder[Bytes, T]): Option[T] = {
+  def tryRead[T]()(implicit decoder: Decoder[T]): Option[T] = {
     val saved = saveState
     try Some(decoder.read(this))
     catch {
@@ -310,16 +306,16 @@ final class Reader[+Bytes](startInput: Input[Bytes],
   def unexpectedDataItem(expected: String, actual: String): Nothing =
     throw new Cbor.Error.UnexpectedDataItem(input, expected, actual)
 
-  def saveState[B >: Bytes]: Reader.SavedState[B] = {
+  def saveState: Reader.SavedState = {
     val clonedReceiver   = receiver.copy
     var clonedReceptacle = clonedReceiver.target
     while (clonedReceptacle.target ne clonedReceptacle) clonedReceptacle = clonedReceptacle.target
-    val newBufferingReceiver = clonedReceptacle.asInstanceOf[BufferingReceiver[Input[Bytes], Bytes]]
+    val newBufferingReceiver = clonedReceptacle.asInstanceOf[BufferingReceiver[Input]]
     new Reader.SavedStateImpl(_input.copy, newBufferingReceiver, clonedReceiver)
   }
 
-  def restoreState[B >: Bytes](mark: Reader.SavedState[B]): Unit = {
-    val savedState = mark.asInstanceOf[Reader.SavedStateImpl[Bytes]]
+  def restoreState(mark: Reader.SavedState): Unit = {
+    val savedState = mark.asInstanceOf[Reader.SavedStateImpl]
     _input = savedState.input
     receptacle = savedState.receptacle
     receiver = savedState.receiver
@@ -327,8 +323,6 @@ final class Reader[+Bytes](startInput: Input[Bytes],
 }
 
 object Reader {
-
-  type Universal = Reader[Any]
 
   /**
     * Deserialization config settings
@@ -349,12 +343,12 @@ object Reader {
     val default = Config()
   }
 
-  sealed trait SavedState[+Bytes] {
-    def input: Input[Bytes]
+  sealed trait SavedState {
+    def input: Input
   }
 
-  private final class SavedStateImpl[Bytes](val input: Input[Bytes],
-                                            val receptacle: BufferingReceiver[Input[Bytes], Bytes],
-                                            val receiver: Receiver[Input[Bytes], Bytes])
-      extends SavedState[Bytes]
+  private final class SavedStateImpl(val input: Input,
+                                     val receptacle: BufferingReceiver[Input],
+                                     val receiver: Receiver[Input])
+      extends SavedState
 }

@@ -9,12 +9,11 @@
 package io.bullet.borer.core
 
 abstract class TupleEncoders {
-  import LeastUpperBounds._
 
-  implicit def forTuple1[Bytes, P1](implicit e1: Encoder[Bytes, P1]): Encoder[Bytes, Tuple1[P1]] =
+  implicit def forTuple1[T1 :Encoder]: Encoder[Tuple1[T1]] =
     Encoder((w, x) ⇒ w ~ x._1)
 
-  [2..#implicit def forTuple1[B, [#B1 <: B#], [#P1#]](implicit [#e1: Encoder[B1, P1]#], lub: Lub1[[#B1#], B]): Encoder[B, ([#P1#])] =
+  [2..#implicit def forTuple1[[#T1 :Encoder#]]: Encoder[([#T1#])] =
     Encoder((w, x) ⇒ w.writeArrayHeader(1) ~ [#x._1# ~ ])#
 
   ]

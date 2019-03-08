@@ -10,18 +10,18 @@ package io.bullet.borer.core
 
 abstract class TupleDecoders extends DecoderFromApply {
 
-  implicit def forTuple1[Bytes, P1](implicit d1: Decoder[Bytes, P1]): Decoder[Bytes, Tuple1[P1]] =
-    Decoder(r ⇒ Tuple1(r[P1]))
+  implicit def forTuple1[T1 :Decoder]: Decoder[Tuple1[T1]] =
+    Decoder(r ⇒ Tuple1(r[T1]))
 
-  [2..#implicit def forTuple1[[#B1#], [#P1#]](implicit [#d1: Decoder[B1, P1]#]): Decoder[[#B1# with ], ([#P1#])] =
-    Decoder(r ⇒ close(r, open(r, 1), ([#r[P1]#])))#
+  [2..#implicit def forTuple1[[#T1 :Decoder#]]: Decoder[([#T1#])] =
+    Decoder(r ⇒ close(r, open(r, 1), ([#r[T1]#])))#
 
   ]
 
-  private def open[Bytes, T](r: Reader[Bytes], arity: Int): Boolean =
+  private def open[T](r: Reader, arity: Int): Boolean =
     r.tryReadArrayHeader(arity) || { r.readArrayStart(); false }
 
-  private def close[Bytes, T](r: Reader[Bytes], bounded: Boolean, tuple: T): T = {
+  private def close[T](r: Reader, bounded: Boolean, tuple: T): T = {
     if (!bounded) r.readBreak()
     tuple
   }

@@ -34,9 +34,9 @@ object Validation {
     Util.requireNonNegative(maxNestingLevels, "maxNestingLevels")
   }
 
-  def creator[IO[_], Bytes](config: Option[Config]): Receiver.Creator[IO, Bytes] =
+  def creator[IO](config: Option[Config]): Receiver.Creator[IO] =
     config match {
-      case Some(x) ⇒ new Validation.Receiver[IO[Bytes], Bytes](_, x)
+      case Some(x) ⇒ new Validation.Receiver[IO](_, x)
       case None    ⇒ identity
     }
 
@@ -47,8 +47,8 @@ object Validation {
     *
     * Throws [[Cbor.Error]] exceptions upon detecting any problem with the input.
     */
-  final class Receiver[IO, Bytes](private var _target: core.Receiver[IO, Bytes], config: Config)
-      extends core.Receiver[IO, Bytes] with java.lang.Cloneable {
+  final class Receiver[IO](private var _target: core.Receiver[IO], config: Config)
+      extends core.Receiver[IO] with java.lang.Cloneable {
 
     // compile-time constants
     private final val DEFAULT_MASK = DataItem.AllButBreak
@@ -130,16 +130,10 @@ object Validation {
       _target.onDouble(io, value)
     }
 
-    def onBytes(io: IO, value: Bytes): IO = {
+    def onBytes[Bytes: ByteAccess](io: IO, value: Bytes): IO = {
       checkAllowed(io, DataItem.Bytes)
       count(io)
       _target.onBytes(io, value)
-    }
-
-    def onByteArray(io: IO, value: Array[Byte]): IO = {
-      checkAllowed(io, DataItem.Bytes)
-      count(io)
-      _target.onByteArray(io, value)
     }
 
     def onBytesStart(io: IO): IO =
@@ -149,16 +143,10 @@ object Validation {
         _target.onBytesStart(io)
       } else throw new Cbor.Error.Unsupported(io, "Unbounded byte strings disallowed by configuration")
 
-    def onText(io: IO, value: Bytes): IO = {
+    def onText[Bytes: ByteAccess](io: IO, value: Bytes): IO = {
       checkAllowed(io, DataItem.Text)
       count(io)
       _target.onText(io, value)
-    }
-
-    def onTextByteArray(io: IO, value: Array[Byte]): IO = {
-      checkAllowed(io, DataItem.Text)
-      count(io)
-      _target.onTextByteArray(io, value)
     }
 
     def onTextStart(io: IO): IO =
@@ -263,7 +251,7 @@ object Validation {
       else _target.onEndOfInput(io)
 
     def copy = {
-      val clone = super.clone().asInstanceOf[Receiver[IO, Bytes]]
+      val clone = super.clone().asInstanceOf[Receiver[IO]]
       clone._target = _target.copy
       clone.levelRemaining = util.Arrays.copyOf(levelRemaining, levelRemaining.length)
       clone.levelMasks = util.Arrays.copyOf(levelMasks, levelMasks.length)

@@ -56,13 +56,13 @@ object TypeId {
     final case class Str(value: String) extends Value
     final case class Num(value: Long)   extends Value
 
-    implicit val encoder: Encoder.Universal[Value] =
+    implicit val encoder: Encoder[Value] =
       Encoder {
         case (w, Str(x)) ⇒ w.writeString(x)
         case (w, Num(x)) ⇒ w.writeLong(x)
       }
 
-    implicit val decoder: Decoder.Universal[Value] =
+    implicit val decoder: Decoder[Value] =
       Decoder { r ⇒
         if (r.hasString) Str(r.readString())
         else if (r.hasLong) Num(r.readLong())

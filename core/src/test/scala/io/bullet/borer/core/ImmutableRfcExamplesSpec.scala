@@ -12,13 +12,26 @@ import java.util
 
 object ImmutableRfcExamplesSpec extends AbstractRfcExamplesSpec[Array[Byte]]("Immutable Byte Array") {
 
-  def newOutput = new SomewhatImmutableByteArrayOutput(new Array[Byte](8), 0)
-
   def newInput(bytes: Array[Byte]) = new SomewhatImmutableByteArrayInput(bytes, 0, 0, Array.emptyByteArray)
+  def outResultByteAccess          = byteAccess
 
-  final class SomewhatImmutableByteArrayOutput(buffer: Array[Byte], val cursor: Int) extends Output[Array[Byte]] {
+  object byteAccess extends ByteAccess[Array[Byte]] {
+    type Out = SomewhatImmutableByteArrayOutput
 
-    type Self = SomewhatImmutableByteArrayOutput
+    def newOutput = new SomewhatImmutableByteArrayOutput(new Array[Byte](8), 0)
+
+    def sizeOf(bytes: Array[Byte])                               = ByteAccess.ForByteArray.sizeOf(bytes)
+    def fromByteArray(byteArray: Array[Byte])                    = ByteAccess.ForByteArray.fromByteArray(byteArray)
+    def toByteArray(bytes: Array[Byte])                          = ByteAccess.ForByteArray.toByteArray(bytes)
+    def concat(a: Array[Byte], b: Array[Byte])                   = ByteAccess.ForByteArray.concat(a, b)
+    def convert[B](value: B)(implicit byteAccess: ByteAccess[B]) = ByteAccess.ForByteArray.convert(value)
+    def empty                                                    = ByteAccess.ForByteArray.empty
+  }
+
+  final class SomewhatImmutableByteArrayOutput(buffer: Array[Byte], val cursor: Int) extends Output {
+
+    type Self   = SomewhatImmutableByteArrayOutput
+    type Result = Array[Byte]
 
     def writeByte(byte: Byte): SomewhatImmutableByteArrayOutput = {
       val newCursor = cursor + 1
@@ -29,11 +42,12 @@ object ImmutableRfcExamplesSpec extends AbstractRfcExamplesSpec[Array[Byte]]("Im
       } else overflow()
     }
 
-    def writeBytes(bytes: Array[Byte]): SomewhatImmutableByteArrayOutput = {
-      val newCursor = cursor + bytes.length
+    def writeBytes[Bytes](bytes: Bytes)(implicit ba: ByteAccess[Bytes]): SomewhatImmutableByteArrayOutput = {
+      val byteArray = ba.toByteArray(bytes)
+      val newCursor = cursor + byteArray.length
       if (newCursor > 0) {
         val newBuffer = ensureLength(newCursor)
-        System.arraycopy(bytes, 0, newBuffer, cursor, bytes.length)
+        System.arraycopy(byteArray, 0, newBuffer, cursor, byteArray.length)
         new SomewhatImmutableByteArrayOutput(newBuffer, newCursor)
       } else overflow()
     }
@@ -58,9 +72,12 @@ object ImmutableRfcExamplesSpec extends AbstractRfcExamplesSpec[Array[Byte]]("Im
                                               val cursor: Int,
                                               val lastByte: Byte,
                                               val lastBytes: Array[Byte])
-      extends Input[Array[Byte]] {
+      extends Input {
 
-    type Self = SomewhatImmutableByteArrayInput
+    type Self  = SomewhatImmutableByteArrayInput
+    type Bytes = Array[Byte]
+
+    def byteAccess = ByteAccess.ForByteArray
 
     def hasBytes(length: Long): Boolean = {
       val off = length + cursor

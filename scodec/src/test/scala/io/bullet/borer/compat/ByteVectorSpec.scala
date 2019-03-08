@@ -8,19 +8,16 @@
 
 package io.bullet.borer.compat
 
+import io.bullet.borer.core._
 import _root_.scodec.bits.ByteVector
 import utest._
-import io.bullet.borer.core._
 import scodec._
 
-object ByteVectorSpec extends BorerSpec[ByteVector] {
-
-  def newOutput: Output[ByteVector] = newByteVectorOutput
-  def newInput(bytes: Array[Byte])  = ByteVector(bytes)
+object ByteVectorSpec extends BorerSpec[ByteVector] with ByteVectorSpecSupport {
 
   case class Foo(int: Int, content: ByteVector)
 
-  implicit val fooCodec = Codec(Foo.unapply _, Foo.apply _)
+  implicit val fooCodec = Codec.forCaseClass[Foo]
 
   val tests = Tests {
 

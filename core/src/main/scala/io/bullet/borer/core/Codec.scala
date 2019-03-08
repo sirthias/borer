@@ -22,8 +22,12 @@ package io.bullet.borer.core
   * (like `Encoder.forOption`, for example) then you should never require implicitly available
   * Codecs, but rather Encoders and Decoders separately.
   */
-final case class Codec[+EBytes, -DBytes, T](encoder: Encoder[EBytes, T], decoder: Decoder[DBytes, T])
+final case class Codec[T](encoder: Encoder[T], decoder: Decoder[T])
 
 object Codec {
-  type Universal[T] = Codec[Nothing, Any, T]
+
+  def of[T](encode: (Writer, T) ⇒ Unit, decode: Reader ⇒ T): Codec[T] =
+    Codec(Encoder(encode), Decoder(decode))
+
+  def forCaseClass[T]: Codec[T] = macro Macros.codecForCaseClass[T]
 }

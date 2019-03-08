@@ -9,9 +9,12 @@
 package io.bullet.borer.core
 
 /**
-  * Type class for providing basic access to a custom `Bytes` abstraction.
+  * Type class for providing basic access to a `Bytes` abstraction.
   */
 trait ByteAccess[Bytes] {
+  type Out <: Output
+
+  def newOutput: Out
 
   def sizeOf(bytes: Bytes): Long
 
@@ -21,6 +24,8 @@ trait ByteAccess[Bytes] {
 
   def concat(a: Bytes, b: Bytes): Bytes
 
+  def convert[B: ByteAccess](value: B): Bytes
+
   def empty: Bytes
 }
 
@@ -29,28 +34,36 @@ object ByteAccess {
   /**
     * The default [[ByteAccess]] for plain byte arrays.
     */
-  implicit val forByteArray: ByteAccess[Array[Byte]] =
-    new ByteAccess[Array[Byte]] {
+  implicit object ForByteArray extends ByteAccess[Array[Byte]] {
+    type Out = Output.ToByteArray
 
-      def sizeOf(bytes: Array[Byte]): Long = bytes.length.toLong
+    def newOutput = new Output.ToByteArray
 
-      def fromByteArray(byteArray: Array[Byte]): Array[Byte] = byteArray
+    def sizeOf(bytes: Array[Byte]): Long = bytes.length.toLong
 
-      def toByteArray(bytes: Array[Byte]): Array[Byte] = bytes
+    def fromByteArray(byteArray: Array[Byte]): Array[Byte] = byteArray
 
-      def concat(a: Array[Byte], b: Array[Byte]) =
-        if (a.length > 0) {
-          if (b.length > 0) {
-            val len = a.length + b.length
-            if (len >= 0) {
-              val result = new Array[Byte](len)
-              System.arraycopy(a, 0, result, 0, a.length)
-              System.arraycopy(b, 0, result, a.length, b.length)
-              result
-            } else sys.error("Cannot concatenate two byte arrays with a total size > 2^31 bytes")
-          } else a
-        } else b
+    def toByteArray(bytes: Array[Byte]): Array[Byte] = bytes
 
-      val empty = Array.emptyByteArray
-    }
+    def concat(a: Array[Byte], b: Array[Byte]) =
+      if (a.length > 0) {
+        if (b.length > 0) {
+          val len = a.length + b.length
+          if (len >= 0) {
+            val result = new Array[Byte](len)
+            System.arraycopy(a, 0, result, 0, a.length)
+            System.arraycopy(b, 0, result, a.length, b.length)
+            result
+          } else sys.error("Cannot concatenate two byte arrays with a total size > 2^31 bytes")
+        } else a
+      } else b
+
+    def convert[B](value: B)(implicit byteAccess: ByteAccess[B]): Array[Byte] =
+      value match {
+        case x: Array[Byte] ⇒ x
+        case x              ⇒ byteAccess.toByteArray(x)
+      }
+
+    val empty = Array.emptyByteArray
+  }
 }

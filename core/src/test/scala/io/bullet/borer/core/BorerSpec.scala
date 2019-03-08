@@ -11,30 +11,30 @@ package io.bullet.borer.core
 import java.util
 import utest._
 
-abstract class BorerSpec[Bytes](implicit byteAccess: ByteAccess[Bytes]) extends TestSuite {
+abstract class BorerSpec[Bytes] extends TestSuite {
 
-  implicit def newOutput: Output[Bytes]
-  def newInput(bytes: Array[Byte]): Input[Bytes]
+  implicit val byteAccess: ByteAccess[Bytes]
+  def newInput(bytes: Array[Byte]): Input
+  def outResultByteAccess: ByteAccess[byteAccess.Out#Result]
 
-  def roundTrip[T](hexString: String, decodedValue: T)(implicit e: Encoder[Bytes, T], d: Decoder[Bytes, T]): Unit =
+  def roundTrip[T: Encoder: Decoder](hexString: String, decodedValue: T): Unit =
     roundTrip(hexString, decodedValue, decodedValue)
 
-  def roundTrip[A, B](hexString: String, decodedValue: A, encodedValue: B)(implicit d: Decoder[Bytes, A],
-                                                                           e: Encoder[Bytes, B]): Unit = {
+  def roundTrip[A: Decoder, B: Encoder](hexString: String, decodedValue: A, encodedValue: B): Unit = {
     encode(encodedValue, hexString)
     decode(hexString, decodedValue)
   }
 
-  def encode[T](value: T, hexString: String)(implicit e: Encoder[Bytes, T]): Unit = {
+  def encode[T: Encoder](value: T, hexString: String): Unit = {
     val bytes          = hexBytes(hexString)
     val encodingResult = Cbor.encode(value).to[Bytes].bytes
-    val encoded        = byteAccess.toByteArray(encodingResult)
+    val encoded        = outResultByteAccess.toByteArray(encodingResult)
     if (!util.Arrays.equals(encoded, bytes)) {
       throw new java.lang.AssertionError(s"[$value] encodes to [${toHexString(encoded)}] rather than [$hexString]")
     }
   }
 
-  def decode[T](hexString: String, value: T)(implicit d: Decoder[Bytes, T]): Unit = {
+  def decode[T: Decoder](hexString: String, value: T): Unit = {
     val bytes   = hexBytes(hexString)
     val decoded = Cbor.decode(newInput(bytes)).to[T].value
     if (!equals(decoded, value)) {
@@ -62,10 +62,11 @@ abstract class BorerSpec[Bytes](implicit byteAccess: ByteAccess[Bytes]) extends 
 
 object BorerSpec {
 
-  trait DefaultBytes { this: BorerSpec[Array[Byte]] ⇒
-    def newOutput                    = Output.newToByteArray
-    def newInput(bytes: Array[Byte]) = new Input.FromByteArray(bytes)
+  trait ForByteArray { this: BorerSpec[Array[Byte]] ⇒
+    val byteAccess                          = ByteAccess.ForByteArray
+    def newInput(bytes: Array[Byte]): Input = bytes
+    def outResultByteAccess                 = byteAccess
   }
 
-  abstract class Default extends BorerSpec[Array[Byte]] with BorerSpec.DefaultBytes
+  abstract class Default extends BorerSpec[Array[Byte]] with BorerSpec.ForByteArray
 }

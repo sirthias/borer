@@ -8,7 +8,12 @@
 
 package io.bullet.borer.compat
 
-import io.bullet.borer.core.AbstractRfcExamplesSpec
+import io.bullet.borer.core.{BorerSpec, Input}
 import _root_.scodec.bits.ByteVector
+import scodec._
 
-object ScodecSupportSpec extends AbstractRfcExamplesSpec[ByteVector]("ByteVector") with ByteVectorSpecSupport
+trait ByteVectorSpecSupport { this: BorerSpec[ByteVector] ⇒
+  val byteAccess                          = ByteVectorByteAccess
+  def newInput(bytes: Array[Byte]): Input = ByteVector(bytes)
+  def outResultByteAccess                 = byteAccess
+}

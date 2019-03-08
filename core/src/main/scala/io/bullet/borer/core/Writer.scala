@@ -9,24 +9,18 @@
 package io.bullet.borer.core
 
 import java.nio.charset.StandardCharsets
-import scala.annotation.unchecked.uncheckedVariance
 import StandardCharsets.UTF_8
 
 /**
   * Stateful, mutable abstraction for writing a stream of CBOR data to the given [[Output]].
-  *
-  * @tparam Bytes The abstraction for byte chunks that the wrapped [[Output]] consumes.
   */
-final class Writer[-Bytes](startOutput: Output[Bytes],
-                           config: Writer.Config,
-                           validationApplier: Receiver.Applier[Output, Bytes])(implicit byteAccess: ByteAccess[Bytes]) {
+final class Writer(startOutput: Output, config: Writer.Config, validationApplier: Receiver.Applier[Output]) {
 
-  private[this] var _output: Output[Bytes] = startOutput
-  private[this] val byteWriter             = new ByteWriter[Bytes](config)
-  private[this] val receiver: Receiver[Output[Bytes], Bytes] =
-    validationApplier(Validation.creator(config.validation), byteWriter)
+  private[this] var _output: Output            = startOutput
+  private[this] val byteWriter                 = new ByteWriter(config)
+  private[this] val receiver: Receiver[Output] = validationApplier(Validation.creator(config.validation), byteWriter)
 
-  def output: Output[Bytes @uncheckedVariance] = _output
+  def output: Output = _output
 
   def ~(value: Boolean): this.type = writeBool(value)
   def ~(value: Char): this.type    = writeChar(value)
@@ -37,31 +31,28 @@ final class Writer[-Bytes](startOutput: Output[Bytes],
   def ~(value: Float): this.type   = writeFloat(value)
   def ~(value: Double): this.type  = writeDouble(value)
   def ~(value: String): this.type  = writeString(value)
-  def ~(value: Bytes): this.type   = writeBytes(value)
 
-  def ~[T](value: T)(implicit encoder: Encoder[Bytes, T]): this.type = write(value)
+  def ~[T: Encoder](value: T): this.type = write(value)
 
   def writeNull(): this.type      = ret(receiver.onNull(_output))
   def writeUndefined(): this.type = ret(receiver.onUndefined(_output))
 
-  def writeBool(value: Boolean): this.type              = ret(receiver.onBool(_output, value))
-  def writeChar(value: Char): this.type                 = writeInt(value.toInt)
-  def writeByte(value: Byte): this.type                 = writeInt(value.toInt)
-  def writeShort(value: Short): this.type               = writeInt(value.toInt)
-  def writeInt(value: Int): this.type                   = ret(receiver.onInt(_output, value.toInt))
-  def writeLong(value: Long): this.type                 = ret(receiver.onLong(_output, value))
-  def writePosOverLong(value: Long): this.type          = ret(receiver.onPosOverLong(_output, value))
-  def writeNegOverLong(value: Long): this.type          = ret(receiver.onNegOverLong(_output, value))
-  def writeFloat16(value: Float): this.type             = ret(receiver.onFloat16(_output, value))
-  def writeFloat(value: Float): this.type               = ret(receiver.onFloat(_output, value))
-  def writeDouble(value: Double): this.type             = ret(receiver.onDouble(_output, value))
-  def writeString(value: String): this.type             = writeTextByteArray(value getBytes UTF_8)
-  def writeText(value: Bytes): this.type                = ret(receiver.onText(_output, value))
-  def writeTextByteArray(value: Array[Byte]): this.type = ret(receiver.onTextByteArray(_output, value))
-  def writeBytes(value: Bytes): this.type               = ret(receiver.onBytes(_output, value))
-  def writeByteArray(value: Array[Byte]): this.type     = ret(receiver.onByteArray(_output, value))
-  def writeTag(value: Tag): this.type                   = ret(receiver.onTag(_output, value))
-  def writeSimpleValue(value: Int): this.type           = ret(receiver.onSimpleValue(_output, value))
+  def writeBool(value: Boolean): this.type                   = ret(receiver.onBool(_output, value))
+  def writeChar(value: Char): this.type                      = writeInt(value.toInt)
+  def writeByte(value: Byte): this.type                      = writeInt(value.toInt)
+  def writeShort(value: Short): this.type                    = writeInt(value.toInt)
+  def writeInt(value: Int): this.type                        = ret(receiver.onInt(_output, value.toInt))
+  def writeLong(value: Long): this.type                      = ret(receiver.onLong(_output, value))
+  def writePosOverLong(value: Long): this.type               = ret(receiver.onPosOverLong(_output, value))
+  def writeNegOverLong(value: Long): this.type               = ret(receiver.onNegOverLong(_output, value))
+  def writeFloat16(value: Float): this.type                  = ret(receiver.onFloat16(_output, value))
+  def writeFloat(value: Float): this.type                    = ret(receiver.onFloat(_output, value))
+  def writeDouble(value: Double): this.type                  = ret(receiver.onDouble(_output, value))
+  def writeString(value: String): this.type                  = writeText(value getBytes UTF_8)
+  def writeBytes[Bytes: ByteAccess](value: Bytes): this.type = ret(receiver.onBytes(_output, value))
+  def writeText[Bytes: ByteAccess](value: Bytes): this.type  = ret(receiver.onText(_output, value))
+  def writeTag(value: Tag): this.type                        = ret(receiver.onTag(_output, value))
+  def writeSimpleValue(value: Int): this.type                = ret(receiver.onSimpleValue(_output, value))
 
   def writeBytesStart(): this.type = ret(receiver.onBytesStart(_output))
   def writeTextStart(): this.type  = ret(receiver.onTextStart(_output))
@@ -78,17 +69,15 @@ final class Writer[-Bytes](startOutput: Output[Bytes],
 
   def writeEndOfInput(): this.type = ret(receiver.onEndOfInput(_output))
 
-  def write[T](value: T)(implicit encoder: Encoder[Bytes, T]): this.type = encoder.write(this, value)
+  def write[T](value: T)(implicit encoder: Encoder[T]): this.type = encoder.write(this, value)
 
-  private def ret(out: Output[Bytes @uncheckedVariance]): this.type = {
+  private def ret(out: Output): this.type = {
     _output = out
     this
   }
 }
 
 object Writer {
-
-  type Universal = Writer[Nothing]
 
   /**
     * Serialization config settings
@@ -106,13 +95,11 @@ object Writer {
     val default = Config()
   }
 
-  def script(encode: Writer.Universal ⇒ Any): Script.Universal = Script(encode)
+  def script(encode: Writer ⇒ Any): Script = Script(encode)
 
-  final case class Script[Bytes](encode: Writer[Bytes] ⇒ Any)
+  final case class Script(encode: Writer ⇒ Any)
 
   object Script {
-    type Universal = Script[Nothing]
-
     val Undefined  = script(_.writeUndefined())
     val BytesStart = script(_.writeBytesStart())
     val TextStart  = script(_.writeTextStart())
@@ -120,6 +107,6 @@ object Writer {
     val MapStart   = script(_.writeMapStart())
     val Break      = script(_.writeBreak())
 
-    implicit def encoder[Bytes]: Encoder[Bytes, Script[Bytes]] = Encoder((w, x) ⇒ x.encode(w))
+    implicit val encoder: Encoder[Script] = Encoder((w, x) ⇒ x.encode(w))
   }
 }

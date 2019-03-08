@@ -19,86 +19,65 @@ import scala.collection.mutable
 /**
   * Type class containing the logic for reading an instance of type [[T]] from a [[Reader]].
   *
-  * @tparam Bytes The abstraction for byte chunks that this [[Decoder]] relies on.
-  *               [[Any]] if it has no specific requirements (i.e. only works with plain byte arrays).
   * @tparam T The type to deserialize
   */
-trait Decoder[-Bytes, T] {
-  def read[B <: Bytes](r: Reader[B]): T
+trait Decoder[T] {
+  def read(r: Reader): T
 }
 
 object Decoder extends LowPrioDecoders {
 
   /**
-    * Type alias used for _providing_ a [[Decoder]] for type [[T]], that works with any `Bytes` abstraction
-    * (because it either doesn't consume chunks of bytes at all or relies only on plain byte arrays).
-    *
-    * Should not be used for implicitly _consuming_ a [[Decoder]]!
-    * If you need to implicitly _consume_ a [[Decoder]] (like the `Decoder.forOption` method for example)
-    * this should rather be done with a free type parameter.
-    */
-  type Universal[T] = Decoder[Any, T]
-
-  /**
-    * Type alias used for _consuming_ a concrete [[Decoder]] for type [[T]],
-    * when there are no specific requirements as to the `Bytes` abstraction.
-    *
-    * Should not be used for implicitly _providing_ a [[Decoder]]!
-    * If you write a [[Decoder]] that can work with any `Bytes` abstraction
-    * (because it either doesn't consume chunks of bytes at all or relies only on plain byte arrays)
-    * then give it type `Decoder.Universal[T]` instead.
-    */
-  type Default[T] = Decoder[Array[Byte], T]
-
-  /**
     * Creates a [[Decoder]] from the given function.
     */
-  def apply[Bytes, T](f: Reader[Bytes] ⇒ T): Decoder[Bytes, T] =
-    new Decoder[Bytes, T] {
-      def read[B <: Bytes](r: Reader[B]): T = f(r)
-    }
+  def apply[T](f: Reader ⇒ T): Decoder[T] = f(_)
 
-  implicit final class DecoderOps[Bytes, A](val underlying: Decoder[Bytes, A]) extends AnyVal {
-    def map[B](f: A ⇒ B): Decoder[Bytes, B]                            = Decoder(r ⇒ f(underlying.read(r)))
-    def mapWithReader[B](f: (Reader[Bytes], A) ⇒ B): Decoder[Bytes, B] = Decoder(r ⇒ f(r, underlying.read(r)))
+  /**
+    * Simple macro shortening `Decoder.from(Foo.apply _)` to `Decoder.forCaseClass[Foo]`
+    */
+  def forCaseClass[T]: Decoder[T] = macro Macros.decoderForCaseClass[T]
+
+  implicit final class DecoderOps[A](val underlying: Decoder[A]) extends AnyVal {
+    def map[B](f: A ⇒ B): Decoder[B]                     = Decoder(r ⇒ f(underlying.read(r)))
+    def mapWithReader[B](f: (Reader, A) ⇒ B): Decoder[B] = Decoder(r ⇒ f(r, underlying.read(r)))
   }
 
-  implicit def fromCodec[Bytes, T](implicit codec: Codec[_, Bytes, T]): Decoder[Bytes, T] = codec.decoder
+  implicit def fromCodec[T](implicit codec: Codec[T]): Decoder[T] = codec.decoder
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  implicit val forNull: Decoder.Universal[Null]             = Decoder(_.readNull())
-  implicit val forBoolean: Decoder.Universal[Boolean]       = Decoder(_.readBoolean())
-  implicit val forInt: Decoder.Universal[Int]               = Decoder(_.readInt())
-  implicit val forLong: Decoder.Universal[Long]             = Decoder(_.readLong())
-  implicit val forFloat: Decoder.Universal[Float]           = Decoder(_.readFloat())
-  implicit val forDouble: Decoder.Universal[Double]         = Decoder(_.readDouble())
-  implicit val forString: Decoder.Universal[String]         = Decoder(_.readString())
-  implicit val forByteArray: Decoder.Universal[Array[Byte]] = Decoder(_.readByteArray())
+  implicit val forNull: Decoder[Null]             = Decoder(_.readNull())
+  implicit val forBoolean: Decoder[Boolean]       = Decoder(_.readBoolean())
+  implicit val forInt: Decoder[Int]               = Decoder(_.readInt())
+  implicit val forLong: Decoder[Long]             = Decoder(_.readLong())
+  implicit val forFloat: Decoder[Float]           = Decoder(_.readFloat())
+  implicit val forDouble: Decoder[Double]         = Decoder(_.readDouble())
+  implicit val forString: Decoder[String]         = Decoder(_.readString())
+  implicit val forByteArray: Decoder[Array[Byte]] = Decoder(_.readByteArray())
 
-  implicit val forChar: Decoder.Universal[Char] = forInt.mapWithReader { (r, int) ⇒
+  implicit val forChar: Decoder[Char] = forInt.mapWithReader { (r, int) ⇒
     if ((int >> 16) != 0) r.validationFailure(s"Cannot convert int value [$int] to Char")
     int.toChar
   }
-  implicit val forByte: Decoder.Universal[Byte] = forInt.mapWithReader { (r, int) ⇒
+  implicit val forByte: Decoder[Byte] = forInt.mapWithReader { (r, int) ⇒
     if ((int >> 8) != (int >> 31)) r.validationFailure(s"Cannot convert int value [$int] to Byte")
     int.toByte
   }
-  implicit val forShort: Decoder.Universal[Short] = forInt.mapWithReader { (r, int) ⇒
+  implicit val forShort: Decoder[Short] = forInt.mapWithReader { (r, int) ⇒
     if ((int >> 16) != (int >> 31)) r.validationFailure(s"Cannot convert int value [$int] to Short")
     int.toShort
   }
 
-  implicit def forBoxedBoolean: Decoder.Universal[JBoolean] = forBoolean.asInstanceOf[Decoder.Universal[JBoolean]]
-  implicit def forBoxedChar: Decoder.Universal[Character]   = forChar.asInstanceOf[Decoder.Universal[Character]]
-  implicit def forBoxedByte: Decoder.Universal[JByte]       = forByte.asInstanceOf[Decoder.Universal[JByte]]
-  implicit def forBoxedShort: Decoder.Universal[JShort]     = forShort.asInstanceOf[Decoder.Universal[JShort]]
-  implicit def forBoxedInt: Decoder.Universal[Integer]      = forInt.asInstanceOf[Decoder.Universal[Integer]]
-  implicit def forBoxedLong: Decoder.Universal[JLong]       = forLong.asInstanceOf[Decoder.Universal[JLong]]
-  implicit def forBoxedFloat: Decoder.Universal[JFloat]     = forFloat.asInstanceOf[Decoder.Universal[JFloat]]
-  implicit def forBoxedDouble: Decoder.Universal[JDouble]   = forDouble.asInstanceOf[Decoder.Universal[JDouble]]
+  implicit def forBoxedBoolean: Decoder[JBoolean] = forBoolean.asInstanceOf[Decoder[JBoolean]]
+  implicit def forBoxedChar: Decoder[Character]   = forChar.asInstanceOf[Decoder[Character]]
+  implicit def forBoxedByte: Decoder[JByte]       = forByte.asInstanceOf[Decoder[JByte]]
+  implicit def forBoxedShort: Decoder[JShort]     = forShort.asInstanceOf[Decoder[JShort]]
+  implicit def forBoxedInt: Decoder[Integer]      = forInt.asInstanceOf[Decoder[Integer]]
+  implicit def forBoxedLong: Decoder[JLong]       = forLong.asInstanceOf[Decoder[JLong]]
+  implicit def forBoxedFloat: Decoder[JFloat]     = forFloat.asInstanceOf[Decoder[JFloat]]
+  implicit def forBoxedDouble: Decoder[JDouble]   = forDouble.asInstanceOf[Decoder[JDouble]]
 
-  implicit val forJBigInteger: Decoder.Universal[JBigInteger] =
+  implicit val forJBigInteger: Decoder[JBigInteger] =
     Decoder { r ⇒
       def fromOverLong(long: Long) = new JBigInteger(1, Util.toBigEndianBytes(long))
       def fromByteArray()          = new JBigInteger(1, r.readByteArray())
@@ -112,9 +91,9 @@ object Decoder extends LowPrioDecoders {
       }
     }
 
-  implicit val forBigInteger: Decoder.Universal[BigInt] = forJBigInteger.map(BigInt(_))
+  implicit val forBigInteger: Decoder[BigInt] = forJBigInteger.map(BigInt(_))
 
-  implicit val forJBigDecimal: Decoder.Universal[JBigDecimal] =
+  implicit val forJBigDecimal: Decoder[JBigDecimal] =
     Decoder { r ⇒
       val IntLongOrOverLong = DataItem.Int | DataItem.Long | DataItem.PosOverLong | DataItem.NegOverLong
       if (r.has(IntLongOrOverLong) || r.hasTag(Tag.PositiveBigNum) || r.hasTag(Tag.NegativeBigNum)) {
@@ -134,9 +113,9 @@ object Decoder extends LowPrioDecoders {
       }
     }
 
-  implicit val forBigDecimal: Decoder.Universal[BigDecimal] = forJBigDecimal.map(BigDecimal(_))
+  implicit val forBigDecimal: Decoder[BigDecimal] = forJBigDecimal.map(BigDecimal(_))
 
-  implicit def forOption[Bytes, T](implicit d: Decoder[Bytes, T]): Decoder[Bytes, Option[T]] =
+  implicit def forOption[T: Decoder]: Decoder[Option[T]] =
     Decoder { r ⇒
       r.readArrayHeader() match {
         case 0 ⇒ None
@@ -145,8 +124,7 @@ object Decoder extends LowPrioDecoders {
       }
     }
 
-  implicit def forIterable[Bytes, T, M[X] <: Iterable[X]](implicit d: Decoder[Bytes, T],
-                                                          cbf: CanBuildFrom[M[T], T, M[T]]): Decoder[Bytes, M[T]] =
+  implicit def forIterable[T: Decoder, M[X] <: Iterable[X]](implicit cbf: CanBuildFrom[M[T], T, M[T]]): Decoder[M[T]] =
     Decoder { r ⇒
       if (r.hasArrayHeader) {
         @tailrec def rec(remaining: Int, b: mutable.Builder[T, M[T]]): M[T] =
@@ -166,7 +144,7 @@ object Decoder extends LowPrioDecoders {
       } else r.unexpectedDataItem(expected = "Array for deserializing an Iterable instance")
     }
 
-  implicit def forArray[Bytes, T <: AnyRef](implicit d: Decoder[Bytes, T]): Decoder[Bytes, Array[T]] =
+  implicit def forArray[T <: AnyRef: Decoder]: Decoder[Array[T]] =
     Decoder { r ⇒
       val size = r.readArrayHeader()
       if (size <= Int.MaxValue) {
@@ -177,17 +155,13 @@ object Decoder extends LowPrioDecoders {
       } else r.overflow(s"Cannot deserialize Array with size $size (> Int.MaxValue)")
     }
 
-  implicit def forTreeMap[A: Ordering, B, Bytes1, Bytes2](
-      implicit da: Decoder[Bytes1, A],
-      db: Decoder[Bytes2, B]): Decoder[Bytes1 with Bytes2, TreeMap[A, B]] =
-    constructForMap[A, B, TreeMap[A, B], Bytes1, Bytes2](TreeMap.empty)
+  implicit def forTreeMap[A: Ordering: Decoder, B: Decoder]: Decoder[TreeMap[A, B]] =
+    constructForMap[A, B, TreeMap[A, B]](TreeMap.empty)
 
-  implicit def forListMap[A, B, Bytes1, Bytes2](implicit da: Decoder[Bytes1, A],
-                                                db: Decoder[Bytes2, B]): Decoder[Bytes1 with Bytes2, ListMap[A, B]] =
-    constructForMap[A, B, ListMap[A, B], Bytes1, Bytes2](ListMap.empty)
+  implicit def forListMap[A: Decoder, B: Decoder]: Decoder[ListMap[A, B]] =
+    constructForMap[A, B, ListMap[A, B]](ListMap.empty)
 
-  implicit def forEither[A, B, Bytes1, Bytes2](implicit da: Decoder[Bytes1, A],
-                                               db: Decoder[Bytes2, B]): Decoder[Bytes1 with Bytes2, Either[A, B]] =
+  implicit def forEither[A: Decoder, B: Decoder]: Decoder[Either[A, B]] =
     Decoder { r ⇒
       r.readMapHeader(1).readInt() match {
         case 0 ⇒ Left(r[A])
@@ -202,12 +176,10 @@ object Decoder extends LowPrioDecoders {
 
 sealed abstract class LowPrioDecoders extends TupleDecoders {
 
-  implicit def forMap[A: Ordering, B, Bytes1, Bytes2](implicit da: Decoder[Bytes1, A],
-                                                      db: Decoder[Bytes2, B]): Decoder[Bytes1 with Bytes2, Map[A, B]] =
-    constructForMap[A, B, Map[A, B], Bytes1, Bytes2](Map.empty)
+  implicit def forMap[A: Decoder, B: Decoder]: Decoder[Map[A, B]] =
+    constructForMap[A, B, Map[A, B]](Map.empty)
 
-  def constructForMap[A, B, M <: Map[A, B], Bytes1, Bytes2](
-      empty: M)(implicit da: Decoder[Bytes1, A], db: Decoder[Bytes2, B]): Decoder[Bytes1 with Bytes2, M] =
+  def constructForMap[A: Decoder, B: Decoder, M <: Map[A, B]](empty: M): Decoder[M] =
     Decoder { r ⇒
       if (r.hasMapHeader) {
         @tailrec def rec(remaining: Int, map: Map[A, B]): M =

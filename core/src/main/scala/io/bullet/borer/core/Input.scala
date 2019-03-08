@@ -12,11 +12,12 @@ package io.bullet.borer.core
   * Abstraction over deserialization input.
   *
   * The implementation be either mutable or immutable.
-  *
-  * @tparam Bytes The abstraction for byte chunks that this [[Input]] works with.
   */
-trait Input[+Bytes] {
-  type Self <: Input[Bytes]
+trait Input {
+  type Self <: Input
+  type Bytes
+
+  def byteAccess: ByteAccess[Bytes]
 
   def lastByte: Byte
   def lastBytes: Bytes
@@ -34,12 +35,15 @@ object Input {
   /**
     * Default, mutable implementation for deserializing from plain byte arrays.
     */
-  implicit class FromByteArray(input: Array[Byte]) extends Input[Array[Byte]] with java.lang.Cloneable {
+  implicit final class FromByteArray(input: Array[Byte]) extends Input with java.lang.Cloneable {
     private[this] var _cursor: Int            = _
     private[this] var _lastByte: Byte         = _
     private[this] var _lastBytes: Array[Byte] = _
 
-    type Self = FromByteArray
+    type Self  = FromByteArray
+    type Bytes = Array[Byte]
+
+    def byteAccess = ByteAccess.ForByteArray
 
     def cursor: Int            = _cursor
     def lastByte: Byte         = _lastByte

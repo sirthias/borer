@@ -17,13 +17,13 @@ import magnolia._
 object ArrayBasedCodecs {
 
   object deriveEncoder {
-    type Typeclass[T] = Encoder.Universal[T]
+    type Typeclass[T] = Encoder[T]
 
-    def combine[T](ctx: CaseClass[Encoder.Universal, T]): Encoder.Universal[T] = {
+    def combine[T](ctx: CaseClass[Encoder, T]): Encoder[T] = {
       val params = ctx.parameters
       val len    = params.size
       Encoder { (w, value) ⇒
-        @tailrec def rec(w: Writer.Universal, ix: Int): Unit =
+        @tailrec def rec(w: Writer, ix: Int): Unit =
           if (ix < len) {
             val p = params(ix)
             rec(p.typeclass.write(w, p.dereference(value)), ix + 1)
@@ -36,11 +36,11 @@ object ArrayBasedCodecs {
       }
     }
 
-    def dispatch[T](ctx: SealedTrait[Encoder.Universal, T]): Encoder.Universal[T] = {
+    def dispatch[T](ctx: SealedTrait[Encoder, T]): Encoder[T] = {
       val subtypes = ctx.subtypes
       val len      = subtypes.size
       val typeIds  = getTypeIds(ctx.typeName.full, subtypes)
-      Encoder[Nothing, T, Unit] { (w, value) ⇒
+      Encoder { (w, value) ⇒
         @tailrec def rec(ix: Int): Unit =
           if (ix < len) {
             val sub = subtypes(ix)
@@ -54,13 +54,13 @@ object ArrayBasedCodecs {
       }
     }
 
-    def apply[T]: Encoder.Universal[T] = macro Magnolia.gen[T]
+    def apply[T]: Encoder[T] = macro Magnolia.gen[T]
   }
 
   object deriveDecoder {
-    type Typeclass[T] = Decoder.Universal[T]
+    type Typeclass[T] = Decoder[T]
 
-    def combine[T](ctx: CaseClass[Decoder.Universal, T]): Decoder.Universal[T] = {
+    def combine[T](ctx: CaseClass[Decoder, T]): Decoder[T] = {
       val params = ctx.parameters
       val len    = params.size
       Decoder { r ⇒
@@ -82,8 +82,8 @@ object ArrayBasedCodecs {
       }
     }
 
-    def dispatch[T](ctx: SealedTrait[Decoder.Universal, T]): Decoder.Universal[T] = {
-      val subtypes = ctx.subtypes.asInstanceOf[mutable.WrappedArray[Subtype[Decoder.Universal, T]]].array
+    def dispatch[T](ctx: SealedTrait[Decoder, T]): Decoder[T] = {
+      val subtypes = ctx.subtypes.asInstanceOf[mutable.WrappedArray[Subtype[Decoder, T]]].array
       val typeIds  = getTypeIds(ctx.typeName.full, subtypes)
       Decoder { r ⇒
         if (r.tryReadArrayHeader(2)) {
@@ -102,10 +102,10 @@ object ArrayBasedCodecs {
       }
     }
 
-    def apply[T]: Decoder.Universal[T] = macro Magnolia.gen[T]
+    def apply[T]: Decoder[T] = macro Magnolia.gen[T]
   }
 
-  def deriveCodec[T]: Codec.Universal[T] = macro Macros.deriveCodecImpl[T]
+  def deriveCodec[T]: Codec[T] = macro Macros.deriveCodec[T]
 
   private def getTypeIds[X[_], T](typeName: String, subtypes: Seq[Subtype[X, T]]): Array[TypeId.Value] = {
     val typeIds = Array.tabulate(subtypes.size) { ix ⇒

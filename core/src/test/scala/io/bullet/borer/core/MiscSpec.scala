@@ -15,8 +15,9 @@ object MiscSpec extends BorerSpec.Default {
   case class Foo(int: Int, string: String, doubleOpt: Option[java.lang.Double])
   case class Bar(foo: Foo, optFoo: Option[Foo], stringSeq: Seq[String])
 
-  implicit val fooCodec = Codec(Foo.unapply _, Foo.apply _)
-  implicit val barCodec = Codec(Bar.unapply _, Bar.apply _)
+  // we cannot use `Codec.deriveForCaseClass` since we are in the same compilation module
+  implicit val fooCodec = Codec(Encoder.from(Foo.unapply _), Decoder.from(Foo.apply _))
+  implicit val barCodec = Codec(Encoder.from(Bar.unapply _), Decoder.from(Bar.apply _))
 
   val tests = Tests {
 
@@ -33,14 +34,14 @@ object MiscSpec extends BorerSpec.Default {
 
     "Zero-Member Case Class" - {
       case class Qux()
-      implicit val quxCodec = Codec(Qux.unapply _, Qux.apply _)
+      implicit val quxCodec = Codec(Encoder.from(Qux.unapply _), Decoder.from(Qux.apply _))
 
       roundTrip("80", Qux())
     }
 
     "Single-Member Case Class" - {
       case class Qux(i: Int)
-      implicit val quxCodec = Codec(Qux.unapply _, Qux.apply _)
+      implicit val quxCodec = Codec(Encoder.from(Qux.unapply _), Decoder.from(Qux.apply _))
 
       roundTrip("182A", Qux(42))
     }

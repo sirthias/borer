@@ -22,54 +22,53 @@ object ByteReader {
     * The given [[Receiver]] receives exactly one call to one of its methods,
     * whose result is also the return value of this call to `pull`.
     */
-  def pull[Bytes](input: Input[Bytes], receiver: Receiver[Input[Bytes], Bytes]): Input[Bytes] = {
-    type In = Input[Bytes]
+  def pull(input: Input, receiver: Receiver[Input]): Input = {
 
-    def decodePositiveInteger(in: In, uLong: Long): In =
+    def decodePositiveInteger(in: Input, uLong: Long): Input =
       if (Util.isUnsignedInt(uLong)) receiver.onInt(in, uLong.toInt)
       else if (Util.isUnsignedLong(uLong)) receiver.onLong(in, uLong)
       else receiver.onPosOverLong(in, uLong)
 
-    def decodeNegativeInteger(in: In, uLong: Long): In =
+    def decodeNegativeInteger(in: Input, uLong: Long): Input =
       if (Util.isUnsignedInt(uLong)) receiver.onInt(in, (~uLong).toInt)
       else if (Util.isUnsignedLong(uLong)) receiver.onLong(in, ~uLong)
       else receiver.onNegOverLong(in, uLong)
 
-    def decodeByteString(in: In, uLong: Long, indefiniteLength: Boolean): In =
+    def decodeByteString(in: Input, uLong: Long, indefiniteLength: Boolean): Input =
       if (indefiniteLength) {
         receiver.onBytesStart(in)
       } else if (Util.isUnsignedLong(uLong)) {
         if (in.hasBytes(uLong)) {
           val in2 = in.readBytes(uLong)
-          receiver.onBytes(in2, in2.lastBytes)
+          receiver.onBytes(in2, in2.lastBytes)(in2.byteAccess)
         } else throw new Error.InsufficientInput(in, uLong)
       } else throw new Error.Overflow(in, "This decoder does not support byte strings with size >= 2^63")
 
-    def decodeTextString(in: In, uLong: Long, indefiniteLength: Boolean): In =
+    def decodeTextString(in: Input, uLong: Long, indefiniteLength: Boolean): Input =
       if (indefiniteLength) {
         receiver.onTextStart(in)
       } else if (Util.isUnsignedLong(uLong)) {
         if (in.hasBytes(uLong)) {
           val in2 = in.readBytes(uLong)
-          receiver.onText(in2, in2.lastBytes)
+          receiver.onText(in2, in2.lastBytes)(in2.byteAccess)
         } else throw new Error.InsufficientInput(in, uLong)
       } else throw new Error.Overflow(in, "This decoder does not support text strings with size >= 2^63")
 
-    def decodeArray(in: In, uLong: Long, indefiniteLength: Boolean): In =
+    def decodeArray(in: Input, uLong: Long, indefiniteLength: Boolean): Input =
       if (indefiniteLength) {
         receiver.onArrayStart(in)
       } else if (Util.isUnsignedLong(uLong)) {
         receiver.onArrayHeader(in, uLong)
       } else throw new Error.Overflow(in, "This decoder does not support arrays with >= 2^63 elements")
 
-    def decodeMap(in: In, uLong: Long, indefiniteLength: Boolean): In =
+    def decodeMap(in: Input, uLong: Long, indefiniteLength: Boolean): Input =
       if (indefiniteLength) {
         receiver.onMapStart(in)
       } else if (Util.isUnsignedLong(uLong)) {
         receiver.onMapHeader(in, uLong)
       } else throw new Error.Overflow(in, "This decoder does not support maps with >= 2^63 entries")
 
-    def decodeTag(in: In, uLong: Long): In = {
+    def decodeTag(in: Input, uLong: Long): Input = {
       val tag = uLong match {
         case 0     ⇒ Tag.DateTimeString
         case 1     ⇒ Tag.EpochDateTime
@@ -92,7 +91,7 @@ object ByteReader {
       receiver.onTag(in, tag)
     }
 
-    def decodeExtra(input: In, info: Int, uLong: Long): In =
+    def decodeExtra(input: Input, info: Int, uLong: Long): Input =
       info match {
         case 20 ⇒ receiver.onBool(input, value = false)
         case 21 ⇒ receiver.onBool(input, value = true)

@@ -161,16 +161,13 @@ object Tag {
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  implicit val codec: Codec.Universal[Tag] = Codec(Encoder(_ writeTag _), Decoder(_.readTag()))
+  implicit val codec = Codec.of[Tag](_ writeTag _, _.readTag())
 }
 
 final case class TaggedValue[T](tag: Tag, value: T)
 
 object TaggedValue {
 
-  implicit def encoder[Bytes, T](implicit e: Encoder[Bytes, T]): Encoder[Bytes, TaggedValue[T]] =
-    Encoder((w, x) ⇒ w ~ x.tag ~ x.value)
-
-  implicit def decoder[Bytes, T](implicit d: Decoder[Bytes, T]): Decoder[Bytes, TaggedValue[T]] =
-    Decoder[Bytes, TaggedValue[T]](r ⇒ TaggedValue(r.readTag(), r[T]))
+  implicit def encoder[T: Encoder]: Encoder[TaggedValue[T]] = Encoder((w, x) ⇒ w ~ x.tag ~ x.value)
+  implicit def decoder[T: Decoder]: Decoder[TaggedValue[T]] = Decoder(r ⇒ TaggedValue(r.readTag(), r[T]))
 }

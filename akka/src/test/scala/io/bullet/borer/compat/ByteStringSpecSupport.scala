@@ -8,7 +8,12 @@
 
 package io.bullet.borer.compat
 
-import io.bullet.borer.core.AbstractRfcExamplesSpec
 import _root_.akka.util.ByteString
+import io.bullet.borer.core.{BorerSpec, Input}
+import akka._
 
-object AkkaSupportSpec extends AbstractRfcExamplesSpec[ByteString]("ByteString") with ByteStringSpecSupport
+trait ByteStringSpecSupport { this: BorerSpec[ByteString] ⇒
+  val byteAccess                          = ByteStringByteAccess
+  def newInput(bytes: Array[Byte]): Input = ByteString(bytes)
+  def outResultByteAccess                 = byteAccess
+}

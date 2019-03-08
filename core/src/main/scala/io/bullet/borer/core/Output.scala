@@ -14,37 +14,34 @@ import java.util
   * Abstraction over serialization output.
   *
   * The implementation be either mutable or immutable.
-  *
-  * @tparam Bytes The abstraction for byte chunks that this [[Output]] works with.
   */
-trait Output[Bytes] {
-  type Self <: Output[Bytes]
+trait Output {
+  type Self <: Output
+  type Result
 
   def writeByte(byte: Byte): Self
-  def writeBytes(bytes: Array[Byte]): Self
-  def writeBytes(bytes: Bytes): Self
+  def writeBytes[Bytes: ByteAccess](bytes: Bytes): Self
 
-  def result(): Bytes
+  def result(): Result
 }
 
 object Output {
 
-  implicit final class OutputOps[Bytes](val underlying: Output[Bytes]) extends AnyVal {
-    def writeShort(value: Short): Output[Bytes] = underlying.writeByte((value >> 8).toByte).writeByte(value.toByte)
-    def writeInt(value: Int): Output[Bytes]     = writeShort((value >> 16).toShort).writeShort(value.toShort)
-    def writeLong(value: Long): Output[Bytes]   = writeInt((value >> 32).toInt).writeInt(value.toInt)
+  implicit final class OutputOps(val underlying: Output) extends AnyVal {
+    def writeShort(value: Short): Output = underlying.writeByte((value >> 8).toByte).writeByte(value.toByte)
+    def writeInt(value: Int): Output     = writeShort((value >> 16).toShort).writeShort(value.toShort)
+    def writeLong(value: Long): Output   = writeInt((value >> 32).toInt).writeInt(value.toInt)
   }
-
-  implicit def newToByteArray: ToByteArray = new ToByteArray
 
   /**
     * Default, mutable implementation for serializing to plain byte arrays.
     */
-  final class ToByteArray extends Output[Array[Byte]] {
+  final class ToByteArray extends Output {
     private[this] var buffer       = new Array[Byte](64)
     private[this] var _cursor: Int = _
 
-    type Self = ToByteArray
+    type Self   = ToByteArray
+    type Result = Array[Byte]
 
     def cursor: Int = _cursor
 
@@ -58,12 +55,13 @@ object Output {
       } else overflow()
     }
 
-    def writeBytes(bytes: Array[Byte]): this.type = {
-      val l         = bytes.length
+    def writeBytes[Bytes](bytes: Bytes)(implicit byteAccess: ByteAccess[Bytes]): this.type = {
+      val byteArray = byteAccess.toByteArray(bytes)
+      val l         = byteArray.length
       val newCursor = _cursor + l
       if (newCursor > 0) {
         ensureLength(newCursor)
-        System.arraycopy(bytes, 0, buffer, _cursor, l)
+        System.arraycopy(byteArray, 0, buffer, _cursor, l)
         _cursor = newCursor
         this
       } else overflow()

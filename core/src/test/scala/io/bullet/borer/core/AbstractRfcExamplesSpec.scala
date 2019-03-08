@@ -10,28 +10,22 @@ package io.bullet.borer.core
 
 import java.math.BigInteger
 
-import io.bullet.borer.core.LeastUpperBounds.Lub2
-
 import scala.collection.immutable.{ListMap, TreeMap}
 import utest._
 
 /**
   * Direct implementation of https://tools.ietf.org/html/rfc7049#appendix-A
   */
-abstract class AbstractRfcExamplesSpec[Bytes](testTypeName: String)(implicit byteAccess: ByteAccess[Bytes])
-    extends BorerSpec[Bytes] {
+abstract class AbstractRfcExamplesSpec[Bytes](testTypeName: String) extends BorerSpec[Bytes] {
 
   // for these test we need an alternative `Either` codec
-  implicit def eitherEnc[A, B, By, By1 <: By, By2 <: By](implicit ea: Encoder[By1, A],
-                                                         eb: Encoder[By2, B],
-                                                         lub: Lub2[By1, By2, By]): Encoder[By, Either[A, B]] =
+  implicit def eitherEnc[A: Encoder, B: Encoder]: Encoder[Either[A, B]] =
     Encoder {
       case (w, Left(x))  ⇒ w.write(x)
       case (w, Right(x)) ⇒ w.write(x)
     }
 
-  implicit def eitherDec[A, B, By1, By2](implicit da: Decoder[By1, A],
-                                         db: Decoder[By2, B]): Decoder[By1 with By2, Either[A, B]] =
+  implicit def eitherDec[A: Decoder, B: Decoder]: Decoder[Either[A, B]] =
     Decoder { r ⇒
       r.tryRead[A]() match {
         case Some(x) ⇒ Left(x)

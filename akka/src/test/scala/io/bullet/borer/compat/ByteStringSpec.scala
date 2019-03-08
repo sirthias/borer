@@ -13,14 +13,11 @@ import utest._
 import io.bullet.borer.core._
 import akka._
 
-object ByteStringSpec extends BorerSpec[ByteString] {
-
-  def newOutput: Output[ByteString] = newByteStringOutput
-  def newInput(bytes: Array[Byte])  = ByteString(bytes)
+object ByteStringSpec extends BorerSpec[ByteString] with ByteStringSpecSupport {
 
   case class Foo(int: Int, content: ByteString)
 
-  implicit val fooCodec = Codec(Foo.unapply _, Foo.apply _)
+  implicit val fooCodec = Codec.forCaseClass[Foo]
 
   val tests = Tests {
 

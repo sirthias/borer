@@ -32,10 +32,10 @@ import scala.annotation.tailrec
   */
 object Logging {
 
-  def afterValidation[IO[_], Bytes](createLogger: LevelInfo ⇒ Logger[IO[Bytes], Bytes]): Receiver.Applier[IO, Bytes] =
+  def afterValidation[IO](createLogger: LevelInfo ⇒ Logger[IO]): Receiver.Applier[IO] =
     (creator, target) ⇒ creator(new Receiver(target, createLogger))
 
-  def beforeValidation[IO[_], Bytes](createLogger: LevelInfo ⇒ Logger[IO[Bytes], Bytes]): Receiver.Applier[IO, Bytes] =
+  def beforeValidation[IO](createLogger: LevelInfo ⇒ Logger[IO]): Receiver.Applier[IO] =
     (creator, target) ⇒ new Receiver(creator(target), createLogger)
 
   abstract class LevelInfo {
@@ -57,7 +57,7 @@ object Logging {
     final case object MapValue extends MapEntry
   }
 
-  trait Logger[-IO, -Bytes] {
+  trait Logger[-IO] {
     def onNull(io: IO): Unit
     def onUndefined(io: IO): Unit
     def onBool(io: IO, value: Boolean): Unit
@@ -68,11 +68,9 @@ object Logging {
     def onFloat16(io: IO, value: Float): Unit
     def onFloat(io: IO, value: Float): Unit
     def onDouble(io: IO, value: Double): Unit
-    def onBytes(io: IO, value: Bytes): Unit
-    def onByteArray(io: IO, value: Array[Byte]): Unit
+    def onBytes[Bytes: ByteAccess](io: IO, value: Bytes): Unit
     def onBytesStart(io: IO): Unit
-    def onText(io: IO, value: Bytes): Unit
-    def onTextByteArray(io: IO, value: Array[Byte]): Unit
+    def onText[Bytes: ByteAccess](io: IO, value: Bytes): Unit
     def onTextStart(io: IO): Unit
     def onArrayHeader(io: IO, length: Long): Unit
     def onArrayStart(io: IO): Unit
@@ -87,51 +85,41 @@ object Logging {
   /**
     * A [[Logger]] which formats each incoming element to it's own log line.
     */
-  abstract class LineFormatLogger[-IO, -Bytes] extends Logger[IO, Bytes] {
+  abstract class LineFormatLogger[-IO] extends Logger[IO] {
     showLine("RESET")
 
-    def onNull(io: IO)                     = show("null")
-    def onUndefined(io: IO)                = show("undefined")
-    def onBool(io: IO, value: Boolean)     = show(value.toString)
-    def onInt(io: IO, value: Int)          = show(value.toString)
-    def onLong(io: IO, value: Long)        = show(s"${value}L")
-    def onPosOverLong(io: IO, value: Long) = show("0x" + java.lang.Long.toHexString(value))
-    def onNegOverLong(io: IO, value: Long) = show("-0x" + java.lang.Long.toHexString(value))
-    def onFloat16(io: IO, value: Float)    = show(s"${value}f16")
-    def onFloat(io: IO, value: Float)      = show(s"${value}f")
-    def onDouble(io: IO, value: Double)    = show(value.toString)
-    def onBytes(io: IO, value: Bytes) =
-      value match {
-        case x: Array[Byte] ⇒ onByteArray(io, x)
-        case _              ⇒ show("[BYTES]")
-      }
-    def onByteArray(io: IO, value: Array[Byte]) = show(formatByteArray("BYTES[", value))
-    def onBytesStart(io: IO)                    = show("BYTES-STREAM[")
-    def onText(io: IO, value: Bytes) =
-      value match {
-        case x: Array[Byte] ⇒ onTextByteArray(io, x)
-        case _              ⇒ show("[TEXT BYTES]")
-      }
-    def onTextByteArray(io: IO, value: Array[Byte]) = show(formatString(value))
-    def onTextStart(io: IO)                         = show("TEXT-STREAM[")
-    def onArrayHeader(io: IO, length: Long)         = show(if (length > 0) "[" else "[]")
-    def onArrayStart(io: IO)                        = show("[")
-    def onMapHeader(io: IO, length: Long)           = show(if (length > 0) "{" else "{}")
-    def onMapStart(io: IO)                          = show("{")
-    def onTag(io: IO, value: Tag)                   = show(value.toString)
-    def onSimpleValue(io: IO, value: Int)           = show(s"SimpleValue($value)")
+    def onNull(io: IO)                                   = show("null")
+    def onUndefined(io: IO)                              = show("undefined")
+    def onBool(io: IO, value: Boolean)                   = show(value.toString)
+    def onInt(io: IO, value: Int)                        = show(value.toString)
+    def onLong(io: IO, value: Long)                      = show(s"${value}L")
+    def onPosOverLong(io: IO, value: Long)               = show("0x" + java.lang.Long.toHexString(value))
+    def onNegOverLong(io: IO, value: Long)               = show("-0x" + java.lang.Long.toHexString(value))
+    def onFloat16(io: IO, value: Float)                  = show(s"${value}f16")
+    def onFloat(io: IO, value: Float)                    = show(s"${value}f")
+    def onDouble(io: IO, value: Double)                  = show(value.toString)
+    def onBytes[Bytes: ByteAccess](io: IO, value: Bytes) = show(formatBytes("BYTES[", value))
+    def onBytesStart(io: IO)                             = show("BYTES-STREAM[")
+    def onText[Bytes: ByteAccess](io: IO, value: Bytes)  = show(formatString(value))
+    def onTextStart(io: IO)                              = show("TEXT-STREAM[")
+    def onArrayHeader(io: IO, length: Long)              = show(if (length > 0) "[" else "[]")
+    def onArrayStart(io: IO)                             = show("[")
+    def onMapHeader(io: IO, length: Long)                = show(if (length > 0) "{" else "{}")
+    def onMapStart(io: IO)                               = show("{")
+    def onTag(io: IO, value: Tag)                        = show(value.toString)
+    def onSimpleValue(io: IO, value: Int)                = show(s"SimpleValue($value)")
     def onLevelExited(io: IO, levelType: LevelType, break: Boolean) =
       show(if (levelType.isInstanceOf[LevelType.MapEntry]) "}" else "]")
     def onEndOfInput(io: IO) = show("END")
 
-    def formatByteArray(opener: String, value: Array[Byte]): String =
-      value
+    def formatBytes[Bytes](opener: String, value: Bytes)(implicit ba: ByteAccess[Bytes]): String =
+      ba.toByteArray(value)
         .take(maxShownByteArrayPrefixLen)
         .map(x ⇒ f"${x & 0xFF}%02X")
-        .mkString(opener, " ", if (value.length > maxShownByteArrayPrefixLen) " ...]" else "]")
+        .mkString(opener, " ", if (ba.sizeOf(value) > maxShownByteArrayPrefixLen) " ...]" else "]")
 
-    def formatString(value: Array[Byte]): String = {
-      val s = new String(value, StandardCharsets.UTF_8)
+    def formatString[Bytes](value: Bytes)(implicit ba: ByteAccess[Bytes]): String = {
+      val s = new String(ba.toByteArray(value), StandardCharsets.UTF_8)
       if (s.length > maxShownStringPrefixLen) {
         "\"" + s.substring(0, maxShownStringPrefixLen) + "...\""
       } else "\"" + s + '"'
@@ -166,7 +154,7 @@ object Logging {
     * A [[LineFormatLogger]] that simply prints all lines to the console.
     */
   final class PrintLogger(val maxShownByteArrayPrefixLen: Int, val maxShownStringPrefixLen: Int, val info: LevelInfo)
-      extends LineFormatLogger[Any, Any] {
+      extends LineFormatLogger[Any] {
     def showLine(line: String): Unit = println(line)
   }
 
@@ -184,7 +172,7 @@ object Logging {
                              val maxShownStringPrefixLen: Int,
                              val lineSeparator: String,
                              val info: LevelInfo)
-      extends LineFormatLogger[Any, Any] {
+      extends LineFormatLogger[Any] {
     def showLine(line: String): Unit = stringBuilder.append(line).append(lineSeparator)
   }
 
@@ -192,9 +180,8 @@ object Logging {
     * A [[Receiver]] which forwards all incoming data item to another [[Receiver]] and,
     * on the side, feeds a custom [[Logger]] with logging events.
     */
-  final class Receiver[IO, Bytes](private var _target: core.Receiver[IO, Bytes],
-                                  createLogger: LevelInfo ⇒ Logger[IO, Bytes])
-      extends LevelInfo with core.Receiver[IO, Bytes] with java.lang.Cloneable {
+  final class Receiver[IO](private var _target: core.Receiver[IO], createLogger: LevelInfo ⇒ Logger[IO])
+      extends LevelInfo with core.Receiver[IO] with java.lang.Cloneable {
 
     private var _level: Int = 0
 
@@ -311,16 +298,10 @@ object Logging {
       target.onDouble(io, value)
     }
 
-    def onBytes(io: IO, value: Bytes): IO = {
+    def onBytes[Bytes: ByteAccess](io: IO, value: Bytes): IO = {
       logger.onBytes(io, value)
       count(io)
       target.onBytes(io, value)
-    }
-
-    def onByteArray(io: IO, value: Array[Byte]): IO = {
-      logger.onByteArray(io, value)
-      count(io)
-      target.onByteArray(io, value)
     }
 
     def onBytesStart(io: IO): IO = {
@@ -329,16 +310,10 @@ object Logging {
       target.onBytesStart(io)
     }
 
-    def onText(io: IO, value: Bytes): IO = {
+    def onText[Bytes: ByteAccess](io: IO, value: Bytes): IO = {
       logger.onText(io, value)
       count(io)
       target.onText(io, value)
-    }
-
-    def onTextByteArray(io: IO, value: Array[Byte]): IO = {
-      logger.onTextByteArray(io, value)
-      count(io)
-      target.onTextByteArray(io, value)
     }
 
     def onTextStart(io: IO): IO = {
@@ -396,7 +371,7 @@ object Logging {
     }
 
     def copy = {
-      val clone = super.clone().asInstanceOf[Receiver[IO, Bytes]]
+      val clone = super.clone().asInstanceOf[Receiver[IO]]
       clone._target = _target.copy
       clone._levelCount = _levelCount.clone()
       clone._levelSize = _levelSize.clone()

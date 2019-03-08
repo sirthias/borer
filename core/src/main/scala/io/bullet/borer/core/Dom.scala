@@ -78,11 +78,11 @@ object Dom {
     final case class Tagged(tag: Tag, value: Element) extends Element
   }
 
-  implicit def encoder[T <: Element]: Encoder.Universal[T] = elementEncoder.asInstanceOf[Encoder.Universal[T]]
+  implicit def encoder[T <: Element]: Encoder[T] = elementEncoder.asInstanceOf[Encoder[T]]
 
-  val elementEncoder: Encoder.Universal[Element] = {
-    val writeElement = (w: Writer.Universal, x: Element) ⇒ w.write(x)
-    val writeEntry   = (w: Writer.Universal, x: (Element, Element)) ⇒ w.write(x._1).write(x._2)
+  val elementEncoder: Encoder[Element] = {
+    val writeElement = (w: Writer, x: Element) ⇒ w.write(x)
+    val writeEntry   = (w: Writer, x: (Element, Element)) ⇒ w.write(x._1).write(x._2)
 
     Encoder {
       case (w, Element.Value.Null)      ⇒ w.writeNull()
@@ -97,7 +97,7 @@ object Dom {
       case (w, Element.Value.Float(x))       ⇒ w.writeFloat(x)
       case (w, Element.Value.Double(x))      ⇒ w.writeDouble(x)
 
-      case (w, Element.Value.ByteArray(x))   ⇒ w.writeByteArray(x)
+      case (w, Element.Value.ByteArray(x))   ⇒ w.writeBytes(x)
       case (w, Element.Value.BytesStream(x)) ⇒ x.foldLeft(w.writeBytesStart())(writeElement).writeBreak()
 
       case (w, Element.Value.String(x))     ⇒ w.writeString(x)
@@ -115,16 +115,16 @@ object Dom {
     }
   }
 
-  implicit def decoder[T <: Element]: Decoder.Universal[T] = elementDecoder.asInstanceOf[Decoder.Universal[T]]
+  implicit def decoder[T <: Element]: Decoder[T] = elementDecoder.asInstanceOf[Decoder[T]]
 
-  val elementDecoder: Decoder.Universal[Element] = {
-    val bytesDecoder: Decoder.Universal[Vector[Element.Value.Bytes]] = Decoder { r ⇒
+  val elementDecoder: Decoder[Element] = {
+    val bytesDecoder: Decoder[Vector[Element.Value.Bytes]] = Decoder { r ⇒
       r.readBytesStart()
       val b = new VectorBuilder[Element.Value.Bytes]
       while (!r.tryReadBreak()) b += r.read[Element.Value.Bytes]()
       b.result()
     }
-    val textDecoder: Decoder.Universal[Vector[Element.Value.Text]] = Decoder { r ⇒
+    val textDecoder: Decoder[Vector[Element.Value.Text]] = Decoder { r ⇒
       r.readTextStart()
       val b = new VectorBuilder[Element.Value.Text]
       while (!r.tryReadBreak()) b += r.read[Element.Value.Text]()

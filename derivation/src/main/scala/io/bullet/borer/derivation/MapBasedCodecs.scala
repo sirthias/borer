@@ -17,12 +17,12 @@ import scala.collection.mutable
 object MapBasedCodecs {
 
   object deriveEncoder {
-    type Typeclass[T] = Encoder.Universal[T]
+    type Typeclass[T] = Encoder[T]
 
-    def combine[T](ctx: CaseClass[Encoder.Universal, T]): Encoder.Universal[T] = {
-      val params = ctx.parameters.asInstanceOf[mutable.WrappedArray[Param[Encoder.Universal, T]]].array
+    def combine[T](ctx: CaseClass[Encoder, T]): Encoder[T] = {
+      val params = ctx.parameters.asInstanceOf[mutable.WrappedArray[Param[Encoder, T]]].array
       Encoder { (w, value) ⇒
-        @tailrec def rec(w: Writer.Universal, ix: Int): Unit =
+        @tailrec def rec(w: Writer, ix: Int): Unit =
           if (ix < params.length) {
             val p = params(ix)
             w.writeString(p.label)
@@ -32,17 +32,17 @@ object MapBasedCodecs {
       }
     }
 
-    def dispatch[T](ctx: SealedTrait[Encoder.Universal, T]): Encoder.Universal[T] =
+    def dispatch[T](ctx: SealedTrait[Encoder, T]): Encoder[T] =
       ArrayBasedCodecs.deriveEncoder.dispatch(ctx)
 
-    def apply[T]: Encoder.Universal[T] = macro Magnolia.gen[T]
+    def apply[T]: Encoder[T] = macro Magnolia.gen[T]
   }
 
   object deriveDecoder {
-    type Typeclass[T] = Decoder.Universal[T]
+    type Typeclass[T] = Decoder[T]
 
-    def combine[T](ctx: CaseClass[Decoder.Universal, T]): Decoder.Universal[T] = {
-      val params = ctx.parameters.asInstanceOf[mutable.WrappedArray[Param[Decoder.Universal, T]]].array
+    def combine[T](ctx: CaseClass[Decoder, T]): Decoder[T] = {
+      val params = ctx.parameters.asInstanceOf[mutable.WrappedArray[Param[Decoder, T]]].array
       Decoder { r ⇒
         val constructorArgs = new Array[AnyRef](params.length)
         @tailrec def rec(ix: Int): T =
@@ -65,11 +65,11 @@ object MapBasedCodecs {
       }
     }
 
-    def dispatch[T](ctx: SealedTrait[Decoder.Universal, T]): Decoder.Universal[T] =
+    def dispatch[T](ctx: SealedTrait[Decoder, T]): Decoder[T] =
       ArrayBasedCodecs.deriveDecoder.dispatch(ctx)
 
-    def apply[T]: Decoder.Universal[T] = macro Magnolia.gen[T]
+    def apply[T]: Decoder[T] = macro Magnolia.gen[T]
   }
 
-  def deriveCodec[T]: Codec.Universal[T] = macro Macros.deriveCodecImpl[T]
+  def deriveCodec[T]: Codec[T] = macro Macros.deriveCodec[T]
 }

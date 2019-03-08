@@ -24,8 +24,8 @@ object SimpleValue {
   def isLegal(value: Int): Boolean = 0 <= value && value <= 19 || 24 <= value && value <= 255
   def legalRange: String           = "[0..19] or [24..255]"
 
-  implicit val codec: Codec.Universal[SimpleValue] = Codec(
-    Encoder((w, x) ⇒ w.writeSimpleValue(x.value)),
-    Decoder(r ⇒ SimpleValue(r.readSimpleValue()))
+  implicit val codec = Codec.of[SimpleValue](
+    (w, x) ⇒ w.writeSimpleValue(x.value),
+    r ⇒ SimpleValue(r.readSimpleValue())
   )
 }

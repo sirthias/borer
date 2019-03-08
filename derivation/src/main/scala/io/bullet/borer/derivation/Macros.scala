@@ -12,18 +12,8 @@ import scala.reflect.macros.blackbox
 
 object Macros {
 
-  def deriveCodecImpl[T: c.WeakTypeTag](c: blackbox.Context): c.universe.Tree = {
+  def deriveCodec[T: c.WeakTypeTag](c: blackbox.Context): c.universe.Tree = {
     import c.universe._
     q"_root_.io.bullet.borer.core.Codec(deriveEncoder[${weakTypeOf[T]}], deriveDecoder[${weakTypeOf[T]}])"
-  }
-
-  def deriveCaseClassCodecImpl[T: c.WeakTypeTag](c: blackbox.Context): c.universe.Tree = {
-    import c.universe._
-    val tpe       = weakTypeOf[T]
-    val companion = tpe.typeSymbol.companion
-    if (companion == NoSymbol) c.abort(c.enclosingPosition, s"`$tpe` is not a case class")
-    q"""_root_.io.bullet.borer.core.Codec[$tpe](
-        _root_.io.bullet.borer.core.Encoder.from($companion.unapply _),
-        _root_.io.bullet.borer.core.Decoder.from($companion.apply _))"""
   }
 }

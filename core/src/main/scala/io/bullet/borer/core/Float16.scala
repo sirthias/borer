@@ -23,7 +23,7 @@ final case class Float16(value: Float)
   */
 object Float16 {
 
-  implicit val codec: Codec.Universal[Float16] = Codec(
+  implicit val codec: Codec[Float16] = Codec(
     Encoder((w, x) ⇒ w.writeFloat16(x.value)),
     Decoder(r ⇒ Float16(r.readFloat16()))
   )
