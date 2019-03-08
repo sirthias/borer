@@ -109,10 +109,11 @@ lazy val macroParadise =
 
 /////////////////////// DEPENDENCIES /////////////////////////
 
-val `akka-actor`  = "com.typesafe.akka" %% "akka-actor"  % "2.5.21"
-val magnolia      = "com.propensive"    %% "magnolia"    % "0.10.0"
-val `scodec-bits` = "org.scodec"        %% "scodec-bits" % "1.1.9"
-val utest         = "com.lihaoyi"       %% "utest"       % "0.6.6" % "test"
+val `akka-actor`    = "com.typesafe.akka" %% "akka-actor"    % "2.5.21"
+val magnolia        = "com.propensive"    %% "magnolia"      % "0.10.0"
+val `scodec-bits`   = "org.scodec"        %% "scodec-bits"   % "1.1.9"
+val utest           = "com.lihaoyi"       %% "utest"         % "0.6.6" % "test"
+val `scala-reflect` = "org.scala-lang"    %  "scala-reflect"
 
 /////////////////////// PROJECTS /////////////////////////
 
@@ -141,7 +142,9 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .settings(releaseSettings)
   .settings(
     moduleName := "borer-core",
+    macroParadise,
     scalaJsDeps(utest),
+    libraryDependencies += `scala-reflect` % scalaVersion.value,
 
     // point sbt-boilerplate to the common "project"
     boilerplateSource in Compile := baseDirectory.value.getParentFile / "src" / "main" / "boilerplate",
@@ -152,6 +155,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
 lazy val akka = project
   .enablePlugins(AutomateHeaderPlugin)
   .dependsOn(coreJVM % "compile->compile;test->test")
+  .dependsOn(derivationJVM % "test->compile")
   .settings(commonSettings)
   .settings(publishingSettings)
   .settings(releaseSettings)
@@ -160,8 +164,12 @@ lazy val akka = project
     libraryDependencies ++= Seq(`akka-actor`, utest)
   )
 
-lazy val scodecJVM = scodec.jvm.dependsOn(coreJVM % "compile->compile;test->test")
-lazy val scodecJS  = scodec.js.dependsOn(coreJS   % "compile->compile;test->test")
+lazy val scodecJVM = scodec.jvm
+  .dependsOn(coreJVM % "compile->compile;test->test")
+  .dependsOn(derivationJVM % "test->compile")
+lazy val scodecJS  = scodec.js
+  .dependsOn(coreJS   % "compile->compile;test->test")
+  .dependsOn(derivationJS % "test->compile")
 lazy val scodec = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)

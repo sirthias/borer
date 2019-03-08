@@ -107,8 +107,6 @@ object ArrayBasedCodecs {
 
   def deriveCodec[T]: Codec.Universal[T] = macro Macros.deriveCodecImpl[T]
 
-  def deriveCaseClassCodec[T]: Codec.Universal[T] = macro Macros.deriveCaseClassCodecImpl[T]
-
   private def getTypeIds[X[_], T](typeName: String, subtypes: Seq[Subtype[X, T]]): Array[TypeId.Value] = {
     val typeIds = Array.tabulate(subtypes.size) { ix ⇒
       val sub = subtypes(ix)
