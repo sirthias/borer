@@ -8,7 +8,7 @@ A [CBOR] (de)serialization implementation in [Scala] sporting these features:
 - lightweight (`core` module has zero dependencies)
 - fast (allocation-free in the core code paths, no DOM, pull-parser style)
 - easy integration (type class-based design)
-- supports custom "byte string" abstractions (like `akka.util.ByteString` or `scodec.bits.ByteVector`)
+- efficiently supports custom "byte string" abstractions (like `akka.util.ByteString` or `scodec.bits.ByteVector`)
 
 ---
 
@@ -39,7 +39,7 @@ libraryDependencies += "io.bullet" %% "borer-compat-akka" % "<version>" // for d
 libraryDependencies += "io.bullet" %% "borer-compat-scodec" % "<version>" // for direct `scodec.bits.ByteVector` support
 ```
 
-_BORER_ is available for [Scala] 2.12 as [scala.js] 0.6.
+_BORER_ is available for [Scala] 2.12 as well as [scala.js] 0.6.
 
 
 Basic Usage
@@ -50,12 +50,12 @@ Encoding a value to a plain `Array[Byte]`:
 ```scala
 import io.bullet.borer.core.Cbor
 
-val value = List("foo", "bar", "baz") // some value
+val value = List("foo", "bar", "baz") // example value
 
 val bytes: Array[Byte] = Cbor.encode(value).toByteArray // throws on error
 ```
 
-Decoding a plain `Array[Byte]` back to some type:
+Decoding a plain `Array[Byte]` back to a certain type:
 
 ```scala
 import io.bullet.borer.core.Cbor
@@ -63,7 +63,7 @@ import io.bullet.borer.core.Cbor
 val list: List[String] = Cbor.decode(bytes).to[List[String]].value // throws on error
 ```
 
-If you don't want _BORER_ to throw exceptions you can use these variants to give you a `Try` instead:
+If you don't want _BORER_ to throw exceptions you can use the following variants to give you a `Try` instead:
 
 ```scala
 val encoded: Try[Array[Byte]] = Cbor.encode(value).toByteArrayTry
@@ -75,7 +75,7 @@ and
 val decoded: Try[List[String]] = Cbor.decode(bytes).to[List[String]].valueTry
 ```
 
-Or, if you prefer encoding/decoding to an `Either`:
+Or, if you prefer encoding/decoding to an `Either` instance:
 
 ```scala
 import io.bullet.borer.core.{Cbor, Output}
@@ -95,8 +95,8 @@ Check the sources of the central _BORER_ API entry point [here][Cbor Source] for
  
 
 
-Predefined Type Support
------------------------
+Types Supported Out-of-the-Box
+------------------------------
 
 _BORER_ comes with built-in encoding and decoding support for arbitrary combinations of these types:
 
@@ -120,7 +120,7 @@ nested data items.)
 Encoding and Decoding Custom Types
 ----------------------------------
 
-In order to encode some type `T` you'll have to implicitly provide an `Encoder[T]`, which is defined like this:
+In order to encode some custom type `T` you'll have to implicitly provide an `Encoder[T]`, which is defined like this:
 
 ```scala
 trait Encoder[T] {
@@ -137,28 +137,28 @@ trait Decoder[T] {
 ```
 
 Many times, when encoding _and_ decoding must be available for a type it's easier to supply just a single implicit for
-`T`, rather than two. As an alternative to providing a separate `Encoder` and `Decoder` for type `T`
-you can also provide a `Codec[T]`, which is defined like this:
+`T`, rather than two. As an alternative to providing a separate `Encoder[T]` as well as a  `Decoder[T]`  you can also
+provide a `Codec[T]`, which is defined like this:
 
 ```scala
 final case class Codec[T](encoder: Encoder[T], decoder: Decoder[T])
 ```
 
-Encoders and Decoders can be implicitly "unpacked" from a `Codec` for the same type.
+Encoders and Decoders can be implicitly "unpacked" from a `Codec`.
 
 *NOTE*: In order to not hinder composability Codecs should only ever be _supplied_, never consumed.
 So, if you write an `Encoder`, `Decoder` or `Codec` for a generic type, which itself requires implicitly available
 encoders and/or decoders for certain type parameters (like `Encoder.forOption`, for example) then you should never
 require an implicitly available `Codec[T]`, but rather an `Encoder[T]` and `Decoder[T]` separately. 
 
-There are several way to provide such encoders, decoders or codecs for your custom types.
+There are several ways to provide such encoders, decoders or codecs for your custom types.\
 The following sections outline the alternatives.
 
 
 ### Case Classes
 
 If `T` is a case class then an `Encoder[T]` and/or `Decoder[T]` can be concisely provided by via the `unapply` / `apply`
-methods of `T`s companion: 
+methods of the `T` companion object: 
 
 ```scala
 import io.bullet.borer.core.{Encoder, Decoder, Codec}
@@ -179,25 +179,26 @@ implicit val dec = Decoder.forCaseClass[Color]
 implicit val codec = Codec.forCaseClass[Color]
 ```
 
-The case class codecs created in this way always encode an instance to a single [CBOR] data item, which is a [CBOR]
-array with the length corresponding to the case classes arity. There is one exception though: In order to increase
-encoding efficiency unary case classes, with only one parameter, have their single member written without the wrapping
-array element.
+The codecs created in this way always encode a case class instance to a single [CBOR] data item: a [CBOR] array with
+the length corresponding to the case classes arity and the member encodings forming the array elements.\
+There is one exception though: In order to increase encoding efficiency unary case classes, with only one parameter,
+have their single member written directly, without a wrapping single-element array.
 
 If you would like your case classes to be encoded in a more JSON-esque way, as maps with each member being keyed by its
-member name, you can rely on the `borer-derivation` module described below.        
+member name, check out the `borer-derivation` module [described below](#derivation).         
 
 
 ### Transforming Existing Encoders / Decoders
 
-If your type if not a case class but can somehow be constructed from or deconstructed to any available Encoder or
-Decoder respectively, you can rely on the `compose` or `map` methods available on Encoders / Decoders:
+If your type is not a case class but can somehow be constructed from or deconstructed to any available Encoder or
+Decoder respectively, you can rely on the `compose` and `map` methods available on Encoders / Decoders:
 
 ```scala
 import io.bullet.borer.core.{Encoder, Decoder}
 
 class Person(name: String)
 
+// have `Person` be encoded as a simple CBOR text data item 
 implicit val encoder = Encoder.forString.compose[Person](_.name)
 implicit val decoder = Decoder.forString.map(Person(_))
 ```
@@ -206,7 +207,7 @@ implicit val decoder = Decoder.forString.map(Person(_))
 ### "Manual" Construction
 
 For full flexibility of how your type `T` is to be encoded in [CBOR] you can of course also write the respective
-`Encoder[T]` / `Decoder[T]` manually. This is done by explicitly describing how your type is to be written to a
+`Encoder[T]` / `Decoder[T]` manually. This is done by explicitly defining how your type is to be written to a
 `Writer` and read from a `Reader`:
 
 ```scala
@@ -214,35 +215,59 @@ import io.bullet.borer.core.{Encoder, Decoder}
 
 class Person(name: String)
 
-implicit val encoder: Encoder[Person] = Encoder((writer, x) => writer.writeString(x.name))
+implicit val encoder: Encoder[Person] = Encoder((writer, person) => writer.writeString(person.name))
 implicit val decoder: Decoder[Person] = Decoder(reader => Person(reader.readString()))
 ``` 
 
 On the encoding side the `Writer` gives you a number of different methods for writing [CBOR] primitives,
 while the `Reader` offers their counterparts on the decoding side.
-Check out the sources of these types (`Writer` [here][Writer Source] and `Reader` [here][Reader Source]) to inspect
-their API, which is hopefully somewhat self-explanatory. 
+Check out the sources of these types (`Writer` [here][Writer Source] and `Reader` [here][Reader Source]).
+Hopefully their APIs are somewhat self-explanatory. 
  
 While this low-level way of defining the encoding/decoding logic is the most powerful it also requires a little more
-care. For performance reasons both the `Writer` and `Reader` types are mutable abstractions, which means that the order
+care.\
+For performance reasons both the `Writer` and `Reader` types are mutable abstractions, which means that the order
 in which you call their methods matters a lot. 
 
 Also, very importantly, when deciding on an encoding logic for any type (i.e. how to represent the type with the
-available [CBOR] primitives) make sure to always encode it to exactly *one* [CBOR] data item! (Unless you know exactly,
-what you are doing.) All built-in encoders and decoders, e.g. for case classes, arrays, maps, etc., always assume that
-any object is written to exactly data item.
+available [CBOR] primitives) make sure to always encode it to exactly **one** [CBOR] data item! (Unless you know
+exactly, what you are doing.) All built-in encoders and decoders, e.g. for case classes, arrays, maps, etc., always
+assume that any object is written to exactly data item.\
 So, if you need to write several values, wrap them in an array or map! And rather than writing no value at all write
 some kind of placeholder, like `null`, `undefined` or an empty array or map!
 
-While _BORER_ verifies that the created [CBOR] is indeed valid and will thus catch any mistakes you made in this regard
-eventually, debugging structural problems can be a bit tedious since the error will often only be recognizable at the
-very end of the encoding or decoding process. The section on *Logging* below might be helpful.
+To illustrate the point: The default codec for `Option[T]` for example encodes `Some[T]` to a single element array
+holding the encoding of `T`, and `None` to a zero-element (empty) array!
+
+While _BORER_ (by default) verifies that the [CBOR] created by your application is indeed valid and will thus catch any
+mistakes you made in this regard eventually, debugging structural problems can be a bit tedious since the error will
+often only be recognizable at the very end of the encoding or decoding process. Check out the section on
+[Logging](#Logging) below for more info how _BORER_ can support you in debugging (de)serialization issues.
 
 
-DOM
----
+Document Object Model (DOM)
+---------------------------
 
-... (docs still to be written)
+While _BORER_'s core design is DOM-less, writing directly to and reading directly from the respective stream of [CBOR]
+data items, it is sometimes convenient to nevertheless have access to an object structure that mirrors the structure
+of a [CBOR] message as closely as possible. (Many JSON-libraries for example solely rely on such an "AST" structure for
+their encoding and decoding operations.)
+
+For such cases _BORER_ provides you with a simple "DOM" ADT (see the respective source file [here][Dom Source]),
+which you can use like this:
+
+```scala
+import io.bullet.borer.core.Cbor
+import io.bullet.borer.core.Dom.Element
+
+val dom = Element.Map(
+  "foo" -> Element.Array(Element.Value.Int(42), Element.Value.String("rocks")),
+  "bar" -> Element.Value.Double(26.8)
+)  
+
+val encoded = Cbor.encode(dom).toByteArray
+val decoded = Cbor.decode(encoded).to[Element].value
+```   
 
 
 Logging
@@ -345,10 +370,11 @@ implicit val animalCodec = deriveCodec[Animal]
 ```   
 
 With these codecs case classes are written to [CBOR] in exactly the same fashion as with the case class support in
-`borer-core` module (see above), i.e. to simple arrays (unless the case classes arity is 1).
+`borer-core` module (see [above](#case-classes)), i.e. to simple arrays (or the unwrapped member encoding if the case
+classes has arity 1).
 
-An ADT is encoded as a [CBOR] array of length two, with the first element holding the type id and the second holding
-the instances encoding (i.e. an array or single element).
+An Abstract Data Type (ADT) is encoded as a [CBOR] array of length two, with the first element holding the type id and
+the second holding the instance's encoding (i.e. an array or single element).
 
 The type id is required to allow the decoder to determine which ADT sub-type to decode into.
 By default _BORER_ will use type's short class name as a (textual) type id.
@@ -358,14 +384,14 @@ Check out the `@TypeId` sources [here][TypeId Source] for more info.
 
 ### Map-Based Codecs
 
-Array-Based Codec derivation is enabled with this import:
+Map-Based Codec derivation is enabled with this import:
 
 ```scala
 import io.bullet.borer.derivation.MapBasedCodecs._
 ```
 
 With these codecs case classes are encoded as [CBOR] maps with the member name as key, much as you would normally expect
-as JSON codec to do it. 
+a JSON codec to do it. 
 
 ADTs, however, are encoded in exactly the same way as with the Array-Based Codecs described above, i.e. as two-element
 arrays with the type id as first element and the map as second.
@@ -380,8 +406,9 @@ First, _BORER_ derivation is intentionally not fully automatic, i.e. codecs are 
 you to write one line per type. The best-practice here is to cache the created codec in an `implicit val` or
 `implicit lazy val` (in case there are circular dependencies between the types).
 
-Without this explicit caching the code that [Magnolia] creates for constructing the codecs can sometimes become enormous
-and make compilation as well as runtime unusually slow. (See Magnolia issues [79] and [114] for more info.)
+Without this explicit caching (i.e. when [Magnolia] provides the codecs implicitly, on demand) the code created for
+recursive ADT hierarchies can quickly become enormous and make compilation as well as runtime unusually slow or even
+fail. (See Magnolia issues [79] and [114] for more info.)
 
 When you cache the individual codecs in their own respective `val`s (or `lazy val`s) [Magnolia]'s derivation is fast
 and efficient.
@@ -397,7 +424,7 @@ When you include the `borer-compat-akka` module as a dependency (see *Installati
 import io.bullet.borer.compat.akka._
 ```
 
-You also get full "zero-copy" support for encoding to and decoding from `akka.util.ByteString` as well as an implicit
+you also get full "zero-copy" support for encoding to and decoding from `akka.util.ByteString` as well as an implicit
 `Encoder[ByteString]` and `Decoder[ByteString]`.    
 
 
@@ -411,7 +438,7 @@ When you include the `borer-compat-scodec` module as a dependency (see *Installa
 import io.bullet.borer.compat.scodec._
 ```
 
-You also get full "zero-copy" support for encoding to and decoding from `scodec.bits.ByteVector` as well as an implicit
+you also get full "zero-copy" support for encoding to and decoding from `scodec.bits.ByteVector` as well as an implicit
 `Encoder[ByteVector]` and `Decoder[ByteVector]`.
 
 
@@ -420,7 +447,7 @@ License
 
 _BORER_ is released under the [MPL 2.0].
 
-Contributions are welcome at any time!  
+Contributions are always welcome!  
 
 
   [Scala]: https://www.scala-lang.org/
@@ -433,6 +460,7 @@ Contributions are welcome at any time!
   [Cbor Source]: https://github.com/sirthias/borer/blob/master/core/src/main/scala/io/bullet/borer/core/Cbor.scala
   [Writer Source]: https://github.com/sirthias/borer/blob/master/core/src/main/scala/io/bullet/borer/core/Writer.scala
   [Reader Source]: https://github.com/sirthias/borer/blob/master/core/src/main/scala/io/bullet/borer/core/Reader.scala
+  [Dom Source]: https://github.com/sirthias/borer/blob/master/core/src/main/scala/io/bullet/borer/core/Dom.scala
   [TypeId Source]: https://github.com/sirthias/borer/blob/master/derivation/src/main/scala/io/bullet/borer/derivation/TypeId.scala
   [79]: https://github.com/propensive/magnolia/issues/79
   [114]: https://github.com/propensive/magnolia/issues/114
