@@ -186,12 +186,12 @@ abstract class AbstractRfcExamplesSpec[Bytes](testTypeName: String) extends Bore
       roundTrip(
         "9f018202039f0405ffff",
         (1, List(2, 3), List(4, 5)),
-        Writer.script(_ ~ ArrayStart ~ 1 ~ List(2, 3) ~ Iterator(4, 5) ~ Break))
+        Writer.Script(_ ~ ArrayStart ~ 1 ~ List(2, 3) ~ Iterator(4, 5) ~ Break))
 
       roundTrip(
         "9f01820203820405ff",
         (1, List(2, 3), List(4, 5)),
-        Writer.script(_ ~ ArrayStart ~ 1 ~ List(2, 3) ~ List(4, 5) ~ Break))
+        Writer.Script(_ ~ ArrayStart ~ 1 ~ List(2, 3) ~ List(4, 5) ~ Break))
 
       roundTrip("83018202039f0405ff", (1, List(2, 3), List(4, 5)), (1, List(2, 3), Iterator(4, 5)))
 
@@ -202,17 +202,17 @@ abstract class AbstractRfcExamplesSpec[Bytes](testTypeName: String) extends Bore
       roundTrip(
         "bf61610161629f0203ffff",
         TreeMap("a" → Left(1), "b" → Right(List(2, 3))),
-        Writer.script(_ ~ MapStart ~ "a" ~ 1 ~ "b" ~ Iterator(2, 3) ~ Break))
+        Writer.Script(_ ~ MapStart ~ "a" ~ 1 ~ "b" ~ Iterator(2, 3) ~ Break))
 
       roundTrip(
         "826161bf61626163ff",
         List(Left("a"), Right(TreeMap("b" → "c"))),
-        "a" → Writer.script(_ ~ MapStart ~ "b" ~ "c" ~ Break))
+        "a" → Writer.Script(_ ~ MapStart ~ "b" ~ "c" ~ Break))
 
       roundTrip(
         "bf6346756ef563416d7421ff",
         ListMap("Fun" → Left(true), "Amt" → Right(-2)),
-        Writer.script(_ ~ MapStart ~ "Fun" ~ true ~ "Amt" ~ -2 ~ Break))
+        Writer.Script(_ ~ MapStart ~ "Fun" ~ true ~ "Amt" ~ -2 ~ Break))
     }
   }
 }

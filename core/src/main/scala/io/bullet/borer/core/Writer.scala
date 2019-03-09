@@ -106,17 +106,18 @@ object Writer {
     val default = Config()
   }
 
-  def script(encode: Writer ⇒ Unit): Script = Script(encode)
-
+  /**
+    * Simple encapsulation of encoding logic in a stand-alone object.
+    */
   final case class Script(encode: Writer ⇒ Unit)
 
   object Script {
-    val Undefined  = script(_.writeUndefined())
-    val BytesStart = script(_.writeBytesStart())
-    val TextStart  = script(_.writeTextStart())
-    val ArrayStart = script(_.writeArrayStart())
-    val MapStart   = script(_.writeMapStart())
-    val Break      = script(_.writeBreak())
+    val Undefined  = Script(_.writeUndefined())
+    val BytesStart = Script(_.writeBytesStart())
+    val TextStart  = Script(_.writeTextStart())
+    val ArrayStart = Script(_.writeArrayStart())
+    val MapStart   = Script(_.writeMapStart())
+    val Break      = Script(_.writeBreak())
 
     implicit val encoder: Encoder[Script] = Encoder((w, x) ⇒ x.encode(w))
   }
