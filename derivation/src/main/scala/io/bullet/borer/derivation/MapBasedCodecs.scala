@@ -8,7 +8,7 @@
 
 package io.bullet.borer.derivation
 
-import io.bullet.borer.core.{Codec, Decoder, Encoder, Writer}
+import io.bullet.borer.{Codec, Decoder, Encoder, Writer}
 import magnolia._
 
 import scala.annotation.tailrec

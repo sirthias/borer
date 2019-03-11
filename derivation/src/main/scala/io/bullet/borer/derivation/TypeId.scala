@@ -8,7 +8,7 @@
 
 package io.bullet.borer.derivation
 
-import io.bullet.borer.core.{Decoder, Encoder}
+import io.bullet.borer.{Decoder, Encoder}
 
 import scala.annotation.StaticAnnotation
 

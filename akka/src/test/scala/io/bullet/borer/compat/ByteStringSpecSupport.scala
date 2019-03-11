@@ -9,8 +9,8 @@
 package io.bullet.borer.compat
 
 import _root_.akka.util.ByteString
-import io.bullet.borer.core.{BorerSpec, Input}
-import akka._
+import io.bullet.borer.{BorerSpec, Input}
+import io.bullet.borer.compat.akka._
 
 trait ByteStringSpecSupport { this: BorerSpec[ByteString] ⇒
   val byteAccess                          = ByteStringByteAccess

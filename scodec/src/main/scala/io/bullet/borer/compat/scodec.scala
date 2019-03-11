@@ -10,8 +10,8 @@ package io.bullet.borer.compat
 
 import java.util
 
-import io.bullet.borer.core._
 import _root_.scodec.bits.ByteVector
+import io.bullet.borer.{ByteAccess, _}
 
 object scodec {
 

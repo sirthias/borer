@@ -26,7 +26,7 @@ lazy val commonSettings = Seq(
   scalafmtOnCompile := true,
 
   testFrameworks += new TestFramework("utest.runner.Framework"),
-  initialCommands in console := """import io.bullet.borer.core._""",
+  initialCommands in console := """import io.bullet.borer._""",
 )
 
 lazy val commonScalacOptions = Seq(

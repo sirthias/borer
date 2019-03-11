@@ -14,6 +14,6 @@ object Macros {
 
   def deriveCodec[T: c.WeakTypeTag](c: blackbox.Context): c.universe.Tree = {
     import c.universe._
-    q"_root_.io.bullet.borer.core.Codec(deriveEncoder[${weakTypeOf[T]}], deriveDecoder[${weakTypeOf[T]}])"
+    q"_root_.io.bullet.borer.Codec(deriveEncoder[${weakTypeOf[T]}], deriveDecoder[${weakTypeOf[T]}])"
   }
 }

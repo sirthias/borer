@@ -8,7 +8,7 @@
 
 package io.bullet.borer.derivation
 
-import io.bullet.borer.core.{Cbor, Dom}
+import io.bullet.borer.{Cbor, Dom}
 import utest._
 
 object DerivationSpec extends TestSuite {

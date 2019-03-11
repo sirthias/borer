@@ -8,7 +8,7 @@
 
 package io.bullet.borer.compat
 
-import io.bullet.borer.core._
+import io.bullet.borer.{ByteAccess, _}
 import _root_.akka.util.ByteString
 
 object akka {
@@ -89,7 +89,7 @@ object akka {
           _cursor = newCursor
         } else _lastBytes = ByteString.empty
         this
-      } else throw new Cbor.Error.Overflow(_cursor, "ByteString input is limited to size 2GB")
+      } else throw Cbor.Error.Overflow(_cursor, "ByteString input is limited to size 2GB")
 
     def copy: ByteStringInput = super.clone().asInstanceOf[ByteStringInput]
   }

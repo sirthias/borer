@@ -9,8 +9,8 @@
 package io.bullet.borer.compat
 
 import _root_.akka.util.ByteString
+import io.bullet.borer._
 import utest._
-import io.bullet.borer.core._
 import akka._
 
 object ByteStringSpec extends BorerSpec[ByteString] with ByteStringSpecSupport {

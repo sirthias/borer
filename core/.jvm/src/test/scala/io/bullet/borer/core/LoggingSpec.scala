@@ -6,7 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package io.bullet.borer.core
+package io.bullet.borer
 
 import scala.collection.immutable.ListMap
 import utest._

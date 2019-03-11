@@ -6,9 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package io.bullet.borer.compat
+package io.bullet.borer
 
-import io.bullet.borer.AbstractRfcExamplesSpec
-import _root_.akka.util.ByteString
-
-object AkkaSupportSpec extends AbstractRfcExamplesSpec[ByteString]("ByteString") with ByteStringSpecSupport
+object DefaultRfcExamplesSpec
+    extends AbstractRfcExamplesSpec[Array[Byte]]("Default Mutable Byte Array") with BorerSpec.ForByteArray

@@ -8,7 +8,7 @@
 
 package io.bullet.borer.compat
 
-import io.bullet.borer.core.{BorerSpec, Input}
+import io.bullet.borer.{BorerSpec, Input}
 import _root_.scodec.bits.ByteVector
 import scodec._
 
