@@ -89,7 +89,7 @@ object Cbor {
         Right(out)
       } catch {
         case e: Error[_] ⇒ Left(e.asInstanceOf[Error[ba.Out]])
-        case NonFatal(e) ⇒ Left(new Error.General(out, e))
+        case NonFatal(e) ⇒ Left(Error.General(out, e))
       }
     }
   }
@@ -168,28 +168,30 @@ object Cbor {
         Right(value → in)
       } catch {
         case e: Error[_] ⇒ Left(e.asInstanceOf[Error[In]])
-        case NonFatal(e) ⇒ Left(new Error.General(in, e))
+        case NonFatal(e) ⇒ Left(Error.General(in, e))
       }
     }
   }
 
-  sealed abstract class Error[IO](val io: IO, msg: String, cause: Throwable = null) extends RuntimeException(msg, cause)
+  sealed abstract class Error[IO](msg: String, cause: Throwable = null) extends RuntimeException(msg, cause) {
+    def io: IO
+  }
 
   object Error {
-    final class InvalidCborData[IO](io: IO, msg: String) extends Error(io, msg)
+    final case class InvalidCborData[IO](io: IO, msg: String) extends Error[IO](msg)
 
-    final class ValidationFailure[IO](io: IO, msg: String) extends Error(io, msg)
+    final case class ValidationFailure[IO](io: IO, msg: String) extends Error[IO](msg)
 
-    final class InsufficientInput[IO](io: IO, val length: Long) extends Error(io, "Insufficient Input")
+    final case class InsufficientInput[IO](io: IO, length: Long) extends Error[IO]("Insufficient Input")
 
-    final class UnexpectedDataItem[IO](io: IO, expected: String, actual: String)
-        extends Error(io, s"Unexpected data item: Expected [$expected] but got [$actual]")
+    final case class UnexpectedDataItem[IO](io: IO, expected: String, actual: String)
+        extends Error[IO](s"Unexpected data item: Expected [$expected] but got [$actual]")
 
-    final class Unsupported[IO](io: IO, msg: String) extends Error(io, msg)
+    final case class Unsupported[IO](io: IO, msg: String) extends Error[IO](msg)
 
-    final class Overflow[IO](io: IO, msg: String) extends Error(io, msg)
+    final case class Overflow[IO](io: IO, msg: String) extends Error[IO](msg)
 
-    final class General[IO](io: IO, cause: Throwable) extends Error(io, cause.toString, cause)
+    final case class General[IO](io: IO, cause: Throwable) extends Error[IO](cause.toString, cause)
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

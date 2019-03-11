@@ -101,7 +101,7 @@ object MiscSpec extends BorerSpec.Default {
       val encoded = Cbor.encode(Writer.Script(_.writeArrayHeader(0))).toByteArray
       val error   = Cbor.decode(encoded).to[Foo].left.get
       assertMatch(error) {
-        case x: Cbor.Error.UnexpectedDataItem[_] ⇒
+        case Cbor.Error.UnexpectedDataItem(_, "Array Header (3)", "Array Header (0)") ⇒
       }
     }
   }
