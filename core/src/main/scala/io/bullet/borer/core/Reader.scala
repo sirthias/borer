@@ -312,8 +312,15 @@ final class Reader(startInput: Input,
   def overflow(msg: String): Nothing =
     throw new Cbor.Error.Overflow(input, msg)
 
-  def unexpectedDataItem(expected: String): Nothing =
-    unexpectedDataItem(expected, DataItem.stringify(dataItem))
+  def unexpectedDataItem(expected: String): Nothing = {
+    val actual = dataItem match {
+      case DataItem.ArrayHeader ⇒ s"Array Header (${receptacle.longValue})"
+      case DataItem.MapHeader   ⇒ s"Map Header (${receptacle.longValue})"
+      case DataItem.Tag         ⇒ "Tag: " + receptacle.tagValue
+      case _                    ⇒ DataItem.stringify(dataItem)
+    }
+    unexpectedDataItem(expected, actual)
+  }
 
   def unexpectedDataItem(expected: String, actual: String): Nothing =
     throw new Cbor.Error.UnexpectedDataItem(input, expected, actual)

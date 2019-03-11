@@ -96,5 +96,13 @@ object MiscSpec extends BorerSpec.Default {
         "C4821845C2581D748734B402B41DF49150F2D71EAA36FA06D63B69F95A89DA23E14FA668",
         BigDecimal("3.141592653589793238462643383279502884197169399375105820974944592307816"))
     }
+
+    "Array Header Mismatch Error" - {
+      val encoded = Cbor.encode(Writer.Script(_.writeArrayHeader(0))).toByteArray
+      val error   = Cbor.decode(encoded).to[Foo].left.get
+      assertMatch(error) {
+        case x: Cbor.Error.UnexpectedDataItem[_] ⇒
+      }
+    }
   }
 }
