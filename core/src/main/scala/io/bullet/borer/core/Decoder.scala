@@ -54,15 +54,15 @@ object Decoder extends LowPrioDecoders {
   implicit val forByteArray: Decoder[Array[Byte]] = Decoder(_.readByteArray())
 
   implicit val forChar: Decoder[Char] = forInt.mapWithReader { (r, int) ⇒
-    if ((int >> 16) != 0) r.validationFailure(s"Cannot convert int value [$int] to Char")
+    if ((int >> 16) != 0) r.validationFailure(s"Cannot convert int value $int to Char")
     int.toChar
   }
   implicit val forByte: Decoder[Byte] = forInt.mapWithReader { (r, int) ⇒
-    if ((int >> 8) != (int >> 31)) r.validationFailure(s"Cannot convert int value [$int] to Byte")
+    if ((int >> 8) != (int >> 31)) r.validationFailure(s"Cannot convert int value $int to Byte")
     int.toByte
   }
   implicit val forShort: Decoder[Short] = forInt.mapWithReader { (r, int) ⇒
-    if ((int >> 16) != (int >> 31)) r.validationFailure(s"Cannot convert int value [$int] to Short")
+    if ((int >> 16) != (int >> 31)) r.validationFailure(s"Cannot convert int value $int to Short")
     int.toShort
   }
 
@@ -106,7 +106,7 @@ object Decoder extends LowPrioDecoders {
               val mantissa = if (r.hasLong) JBigInteger.valueOf(r.readLong()) else r.read[JBigInteger]()
               new JBigDecimal(mantissa, exp)
             } else r.unexpectedDataItem(expected = "BigDecimal exponent as Int")
-          } else r.unexpectedDataItem(expected = "Array of length 2", actual = s"Array of length $len")
+          } else r.unexpectedDataItem("Array of length 2 for decoding a `BigDecimal`", s"Array of length $len")
         } else r.unexpectedDataItem(expected = "BigDecimal")
       }
     }
@@ -118,7 +118,7 @@ object Decoder extends LowPrioDecoders {
       r.readArrayHeader() match {
         case 0 ⇒ None
         case 1 ⇒ Some(r[T])
-        case x ⇒ r.unexpectedDataItem("Array with length 0 or 1", s"Array with length $x")
+        case x ⇒ r.unexpectedDataItem("Array with length 0 or 1 for decoding an `Option`", s"Array with length $x")
       }
     }
 
@@ -166,7 +166,7 @@ object Decoder extends LowPrioDecoders {
         case 1 ⇒ Right(r[B])
         case x ⇒
           r.unexpectedDataItem(
-            expected = "Map entry with key 0 or 1 for decoding an `Either` instance",
+            expected = "Map entry with key 0 or 1 for decoding an `Either`",
             actual = s"Map entry with key $x")
       }
     }
