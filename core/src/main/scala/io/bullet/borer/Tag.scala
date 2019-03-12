@@ -43,6 +43,10 @@ object Tag {
     * The element following this tag is a byte string data item,
     * which is interpreted as an unsigned integer n in network byte order.
     * There might be leading zeroes!
+    *
+    * NOTE: This tag isn't actually ever produced by the CBOR parser,
+    * since it has built-in support for it and immediately produces a
+    * [[java.math.BigInteger]] instead.
     */
   final case object PositiveBigNum extends Tag(2)
 
@@ -51,6 +55,10 @@ object Tag {
     * which is interpreted as an unsigned integer n in network byte order.
     * The semantic value is -1 - n.
     * There might be leading zeroes!
+    *
+    * NOTE: This tag isn't actually ever produced by the CBOR parser,
+    * since it has built-in support for it and immediately produces a
+    * [[java.math.BigInteger]] instead.
     */
   final case object NegativeBigNum extends Tag(3)
 
@@ -60,6 +68,10 @@ object Tag {
     * 1. Exponent e with base 10 (must be Int or Long, i.e. BigNum is disallowed)
     * 2. Mantissa m (Int, Long or BigNum)
     * The value of the decimal fraction is m*(10**e).
+    *
+    * NOTE: This tag isn't actually ever produced by the CBOR parser,
+    * since it has built-in support for it and immediately produces a
+    * [[java.math.BigDecimal]] instead.
     */
   final case object DecimalFraction extends Tag(4)
 

@@ -8,22 +8,25 @@
 
 package io.bullet.borer
 
-import java.nio.charset.StandardCharsets
-import StandardCharsets.UTF_8
+import java.math.{BigDecimal ⇒ JBigDecimal, BigInteger ⇒ JBigInteger}
 
-import io.bullet.borer.cbor.ByteWriter
+import scala.annotation.tailrec
+import scala.collection.LinearSeq
 
 /**
-  * Stateful, mutable abstraction for writing a stream of CBOR data to the given [[Output]].
+  * Stateful, mutable abstraction for writing a stream of CBOR or JSON data to the given [[Output]].
   */
 final class Writer(startOutput: Output,
-                   config: Writer.Config = Writer.Config(),
-                   validationApplier: Receiver.Applier[Output] = Receiver.defaultApplier) {
+                   receiver: Receiver[Output],
+                   val config: Writer.Config,
+                   val target: Borer.Target) {
 
-  private[this] var _output: Output            = startOutput
-  private[this] val receiver: Receiver[Output] = validationApplier(Validation.creator(config.validation), ByteWriter)
+  private[this] var _output: Output = startOutput
 
   def output: Output = _output
+
+  def writingJson: Boolean = target eq Json
+  def writingCbor: Boolean = target eq Cbor
 
   def ~(value: Boolean): this.type = writeBool(value)
   def ~(value: Char): this.type    = writeChar(value)
@@ -40,28 +43,30 @@ final class Writer(startOutput: Output,
   def writeNull(): this.type      = ret(receiver.onNull(_output))
   def writeUndefined(): this.type = ret(receiver.onUndefined(_output))
 
-  def writeBool(value: Boolean): this.type     = ret(receiver.onBool(_output, value))
-  def writeChar(value: Char): this.type        = writeInt(value.toInt)
-  def writeByte(value: Byte): this.type        = writeInt(value.toInt)
-  def writeShort(value: Short): this.type      = writeInt(value.toInt)
-  def writeInt(value: Int): this.type          = ret(receiver.onInt(_output, value.toInt))
-  def writeLong(value: Long): this.type        = ret(receiver.onLong(_output, value))
-  def writePosOverLong(value: Long): this.type = ret(receiver.onPosOverLong(_output, value))
-  def writeNegOverLong(value: Long): this.type = ret(receiver.onNegOverLong(_output, value))
-  def writeFloat16(value: Float): this.type    = ret(receiver.onFloat16(_output, value))
+  def writeBool(value: Boolean): this.type                     = ret(receiver.onBool(_output, value))
+  def writeChar(value: Char): this.type                        = writeInt(value.toInt)
+  def writeByte(value: Byte): this.type                        = writeInt(value.toInt)
+  def writeShort(value: Short): this.type                      = writeInt(value.toInt)
+  def writeInt(value: Int): this.type                          = ret(receiver.onInt(_output, value.toInt))
+  def writeLong(value: Long): this.type                        = ret(receiver.onLong(_output, value))
+  def writeOverLong(negative: Boolean, value: Long): this.type = ret(receiver.onOverLong(_output, negative, value))
+  def writeFloat16(value: Float): this.type                    = ret(receiver.onFloat16(_output, value))
 
   def writeFloat(value: Float): this.type = ret {
-    if (config.dontCompressFloatingPointValues || !Util.canBeRepresentedAsFloat16(value)) {
+    if (writingJson || config.cborDontCompressFloatingPointValues || !Util.canBeRepresentedAsFloat16(value)) {
       receiver.onFloat(_output, value)
     } else receiver.onFloat16(_output, value)
   }
 
   def writeDouble(value: Double): this.type =
-    if (config.dontCompressFloatingPointValues || !Util.canBeRepresentedAsFloat(value)) {
+    if (writingJson || config.cborDontCompressFloatingPointValues || !Util.canBeRepresentedAsFloat(value)) {
       ret(receiver.onDouble(_output, value))
     } else writeFloat(value.toFloat)
 
-  def writeString(value: String): this.type                  = writeText(value getBytes UTF_8)
+  def writeBigInteger(value: JBigInteger): this.type = ret(receiver.onBigInteger(_output, value))
+  def writeBigDecimal(value: JBigDecimal): this.type = ret(receiver.onBigDecimal(_output, value))
+
+  def writeString(value: String): this.type                  = ret(receiver.onString(_output, value))
   def writeBytes[Bytes: ByteAccess](value: Bytes): this.type = ret(receiver.onBytes(_output, value))
   def writeText[Bytes: ByteAccess](value: Bytes): this.type  = ret(receiver.onText(_output, value))
   def writeTag(value: Tag): this.type                        = ret(receiver.onTag(_output, value))
@@ -84,6 +89,77 @@ final class Writer(startOutput: Output,
 
   def write[T](value: T)(implicit encoder: Encoder[T]): this.type = encoder.write(this, value)
 
+  def writeEmptyArray(): this.type = if (writingJson) writeArrayStart().writeBreak() else writeArrayHeader(0)
+
+  def writeToArray[T: Encoder](x: T): this.type =
+    if (writingJson) writeArrayStart().write(x).writeBreak()
+    else writeArrayHeader(1).write(x)
+
+  def writeToArray[T: Encoder](a: T, b: T): this.type =
+    if (writingJson) writeArrayStart().write(a).write(b).writeBreak()
+    else writeArrayHeader(2).write(a).write(b)
+
+  def writeToArray[T: Encoder](a: T, b: T, c: T): this.type =
+    if (writingJson) writeArrayStart().write(a).write(b).write(c).writeBreak()
+    else writeArrayHeader(3).write(a).write(b).write(c)
+
+  def writeEmptyMap(): this.type = if (writingJson) writeMapStart().writeBreak() else writeMapHeader(0)
+
+  def writeIndexedSeq[T: Encoder](x: IndexedSeq[T]): this.type = {
+    @tailrec def rec(ix: Int): Unit =
+      if (ix < x.size) {
+        write(x(ix))
+        rec(ix + 1)
+      }
+    if (writingJson) {
+      writeArrayStart()
+      rec(0)
+      writeBreak()
+    } else {
+      writeArrayHeader(x.size)
+      rec(0)
+      this
+    }
+  }
+
+  def writeLinearSeq[T: Encoder](x: LinearSeq[T]): this.type = {
+    @tailrec def rec(x: LinearSeq[T]): Unit =
+      if (x.nonEmpty) {
+        write(x.head)
+        rec(x.tail)
+      }
+    if (writingJson || x.nonEmpty) {
+      writeArrayStart()
+      rec(x)
+      writeBreak()
+    } else writeArrayHeader(0)
+  }
+
+  def writeIterator[T: Encoder](iterator: Iterator[T]): this.type =
+    if (iterator.hasNext) {
+      writeArrayStart()
+      while (iterator.hasNext) write(iterator.next())
+      writeBreak()
+    } else writeArrayHeader(0)
+
+  def writeMap[A: Encoder, B: Encoder](x: Map[A, B]): this.type = {
+    val iterator = x.iterator
+    def writeEntries(): Unit =
+      while (iterator.hasNext) {
+        val (k, v) = iterator.next()
+        write(k).write(v)
+      }
+    if (writingJson) {
+      writeMapStart()
+      writeEntries()
+      writeBreak()
+    } else {
+      writeMapHeader(x.size)
+      writeEntries()
+      this
+    }
+  }
+
   private def ret(out: Output): this.type = {
     _output = out
     this
@@ -96,12 +172,12 @@ object Writer {
     * Serialization config settings
     *
     * @param validation the validation settings to use or `None` if no validation should be performed
-    * @param dontCompressFloatingPointValues set to true in order to always write floats as 32-bit values and doubles
+    * @param cborDontCompressFloatingPointValues set to true in order to always write floats as 32-bit values and doubles
     *                                        as 64-bit values, even if they could safely be represented with fewer bits
     */
   final case class Config(
       validation: Option[Validation.Config] = Some(Validation.Config()),
-      dontCompressFloatingPointValues: Boolean = false
+      cborDontCompressFloatingPointValues: Boolean = false
   )
 
   object Config {

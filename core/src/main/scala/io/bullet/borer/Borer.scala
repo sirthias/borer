@@ -8,20 +8,74 @@
 
 package io.bullet.borer
 
+import io.bullet.borer.cbor.{CborParser, CborRenderer}
+import java.nio.charset.StandardCharsets.UTF_8
+
+import io.bullet.borer.json.{JsonParser, JsonRenderer}
+
 import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
+
+case object Cbor extends Borer.Target {
+
+  /**
+    * Entry point into the CBOR encoding mini-DSL.
+    */
+  def encode[T: Encoder](value: T): Borer.EncodingSetup[T] =
+    new Borer.EncodingSetup[T](value, this, CborRenderer)
+
+  /**
+    * Entry point into the CBOR decoding mini-DSL.
+    */
+  def decode(input: Input): Borer.DecodingSetup[input.Self] =
+    new Borer.DecodingSetup(input, this, CborParser)
+}
+
+case object Json extends Borer.Target {
+
+  /**
+    * Entry point into the JSON encoding mini-DSL.
+    */
+  def encode[T: Encoder](value: T): Borer.EncodingSetup[T] with JsonEncoding =
+    new Borer.EncodingSetup[T](value, this, new JsonRenderer).asInstanceOf[Borer.EncodingSetup[T] with JsonEncoding]
+
+  /**
+    * Entry point into the JSON decoding mini-DSL.
+    */
+  def decode(input: Input): Borer.DecodingSetup[input.Self] =
+    new Borer.DecodingSetup(input, this, new JsonParser)
+
+  sealed trait JsonEncoding
+
+  implicit final class EncodingExtraOps[T](val underlying: Borer.EncodingSetup[T] with JsonEncoding) extends AnyVal {
+
+    /**
+      * Short-cut for encoding to a plain byte array, throwing an exception in case of any failures,
+      * and then immediately UTF-8 decoding into a [[String]].
+      */
+    def toUtf8String: String = new String(underlying.toByteArray, UTF_8)
+  }
+}
 
 /**
   * Main entry point into the CBOR API.
   */
-object Cbor {
+object Borer {
 
   /**
-    * Entry point into the encoding mini-DSL.
+    * Super-type of the [[Cbor]] and [[Json]] objects.
+    *
+    * Used, for example, as the type of the `target` member of [[Reader]] and [[Writer]] instances,
+    * which allows custom logic to pick different (de)serialization approaches
+    * depending on whether the target is CBOR or JSON.
     */
-  def encode[T: Encoder](value: T): EncodingHelper[T] = new EncodingHelper(value)
+  sealed abstract class Target {
+    def encode[T: Encoder](value: T): Borer.EncodingSetup[T]
+    def decode(input: Input): Borer.DecodingSetup[input.Self]
+  }
 
-  final class EncodingHelper[T: Encoder] private[Cbor] (value: T) {
+  final class EncodingSetup[T: Encoder] private[borer] (value: T, target: Target, receiver: Receiver[Output]) {
+
     private[this] var config: Writer.Config                       = Writer.Config.default
     private[this] var validationApplier: Receiver.Applier[Output] = Receiver.defaultApplier
 
@@ -69,19 +123,20 @@ object Cbor {
     /**
       * Short-cut for encoding to a plain byte array, throwing an exception in case of any failures.
       */
-    def toByteArray: Array[Byte] = this.to[Array[Byte]].bytes
+    def toByteArray: Array[Byte] = to[Array[Byte]].bytes
 
     /**
       * Short-cut for encoding to a plain byte array, wrapped in a [[Try]] for error handling.
       */
-    def toByteArrayTry: Try[Array[Byte]] = this.to[Array[Byte]].bytesTry
+    def toByteArrayTry: Try[Array[Byte]] = to[Array[Byte]].bytesTry
 
     /**
       * Encodes an instance of [[T]] to the given `Bytes` type using the configured options.
       */
     def to[Bytes](implicit ba: ByteAccess[Bytes]): Either[Error[ba.Out], ba.Out] = {
-      val writer = new Writer(ba.newOutput, config, validationApplier)
-      def out    = writer.output.asInstanceOf[ba.Out]
+      val validationReceiver = validationApplier(Validation.creator(target, config.validation), receiver)
+      val writer             = new Writer(ba.newOutput, validationReceiver, config, target)
+      def out                = writer.output.asInstanceOf[ba.Out]
       try {
         writer
           .write(value)
@@ -94,12 +149,7 @@ object Cbor {
     }
   }
 
-  /**
-    * Entry point into the decoding mini-DSL.
-    */
-  def decode(input: Input): DecodingHelper[input.Self] = new DecodingHelper(input)
-
-  final class DecodingHelper[In <: Input] private[Cbor] (input: Input) {
+  final class DecodingSetup[In <: Input] private[borer] (input: Input, target: Target, parser: Receiver.Parser) {
 
     private[this] var prefixOnly: Boolean                        = _
     private[this] var config: Reader.Config                      = Reader.Config.default
@@ -159,7 +209,7 @@ object Cbor {
       * Decodes an instance of [[T]] from the configured [[Input]] using the configured options.
       */
     def to[T](implicit decoder: Decoder[T]): Either[Error[In], (T, In)] = {
-      val reader = new Reader(input, config, validationApplier)
+      val reader = new Reader(input, parser, validationApplier, config, target)
       def in     = reader.input.asInstanceOf[In]
       try {
         reader.pull() // fetch first data item
@@ -179,6 +229,8 @@ object Cbor {
 
   object Error {
     final case class InvalidCborData[IO](io: IO, msg: String) extends Error[IO](msg)
+
+    final case class InvalidJsonData[IO](io: IO, msg: String) extends Error[IO](msg)
 
     final case class ValidationFailure[IO](io: IO, msg: String) extends Error[IO](msg)
 

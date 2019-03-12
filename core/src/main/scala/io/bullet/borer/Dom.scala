@@ -9,7 +9,7 @@
 package io.bullet.borer
 
 import java.util
-
+import java.math.{BigDecimal ⇒ JBigDecimal, BigInteger ⇒ JBigInteger}
 import scala.collection.immutable.{ListMap, VectorBuilder}
 
 /**
@@ -36,14 +36,16 @@ object Dom {
         val False = Bool(false)
       }
 
-      final case class Int(value: scala.Int)          extends Value
-      final case class Long(value: scala.Long)        extends Value
-      final case class PosOverLong(value: scala.Long) extends Value
-      final case class NegOverLong(value: scala.Long) extends Value
+      final case class Int(value: scala.Int)                          extends Value
+      final case class Long(value: scala.Long)                        extends Value
+      final case class OverLong(negative: Boolean, value: scala.Long) extends Value
 
       final case class Float16(value: scala.Float) extends Value
       final case class Float(value: scala.Float)   extends Value
       final case class Double(value: scala.Double) extends Value
+
+      final case class BigInteger(value: JBigInteger) extends Value
+      final case class BigDecimal(value: JBigDecimal) extends Value
 
       sealed trait Bytes extends Value
 
@@ -97,11 +99,12 @@ object Dom {
 
       case (w, Element.Value.Int(x))         ⇒ w.writeInt(x)
       case (w, Element.Value.Long(x))        ⇒ w.writeLong(x)
-      case (w, Element.Value.PosOverLong(x)) ⇒ w.writePosOverLong(x)
-      case (w, Element.Value.NegOverLong(x)) ⇒ w.writeNegOverLong(x)
+      case (w, Element.Value.OverLong(n, x)) ⇒ w.writeOverLong(n, x)
       case (w, Element.Value.Float16(x))     ⇒ w.writeFloat16(x)
       case (w, Element.Value.Float(x))       ⇒ w.writeFloat(x)
       case (w, Element.Value.Double(x))      ⇒ w.writeDouble(x)
+      case (w, Element.Value.BigInteger(x))  ⇒ w.writeBigInteger(x)
+      case (w, Element.Value.BigDecimal(x))  ⇒ w.writeBigDecimal(x)
 
       case (w, Element.Value.ByteArray(x))   ⇒ w.writeBytes(x)
       case (w, Element.Value.BytesStream(x)) ⇒ x.foldLeft(w.writeBytesStart())(writeElement).writeBreak()
@@ -143,13 +146,15 @@ object Dom {
         case DataItem.Undefined ⇒ r.readUndefined(); Element.Value.Undefined
         case DataItem.Bool      ⇒ if (r.readBoolean()) Element.Value.Bool.True else Element.Value.Bool.False
 
-        case DataItem.Int         ⇒ Element.Value.Int(r.readInt())
-        case DataItem.Long        ⇒ Element.Value.Long(r.readLong())
-        case DataItem.PosOverLong ⇒ Element.Value.PosOverLong(r.readPosOverLong())
-        case DataItem.NegOverLong ⇒ Element.Value.NegOverLong(r.readNegOverLong())
-        case DataItem.Float16     ⇒ Element.Value.Float16(r.readFloat16())
-        case DataItem.Float       ⇒ Element.Value.Float(r.readFloat())
-        case DataItem.Double      ⇒ Element.Value.Double(r.readDouble())
+        case DataItem.Int      ⇒ Element.Value.Int(r.readInt())
+        case DataItem.Long     ⇒ Element.Value.Long(r.readLong())
+        case DataItem.OverLong ⇒ Element.Value.OverLong(r.overLongNegative, r.readOverLong())
+        case DataItem.Float16  ⇒ Element.Value.Float16(r.readFloat16())
+        case DataItem.Float    ⇒ Element.Value.Float(r.readFloat())
+        case DataItem.Double   ⇒ Element.Value.Double(r.readDouble())
+
+        case DataItem.BigInteger ⇒ Element.Value.BigInteger(r.readBigInteger())
+        case DataItem.BigDecimal ⇒ Element.Value.BigDecimal(r.readBigDecimal())
 
         case DataItem.Bytes      ⇒ Element.Value.ByteArray(r.readByteArray())
         case DataItem.BytesStart ⇒ Element.Value.BytesStream(r.read()(bytesDecoder))

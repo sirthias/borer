@@ -10,6 +10,8 @@ package io.bullet.borer
 
 import java.util
 
+import scala.annotation.tailrec
+
 /**
   * Abstraction over serialization output.
   *
@@ -31,6 +33,14 @@ object Output {
     def writeShort(value: Short): Output = underlying.writeByte((value >> 8).toByte).writeByte(value.toByte)
     def writeInt(value: Int): Output     = writeShort((value >> 16).toShort).writeShort(value.toShort)
     def writeLong(value: Long): Output   = writeInt((value >> 32).toInt).writeInt(value.toInt)
+
+    def writeAsByte(i: Int): Output  = underlying.writeByte(i.toByte)
+    def writeAsByte(c: Char): Output = underlying.writeByte(c.toByte)
+    def writeStringAsAsciiBytes(s: String): Output = {
+      @tailrec def rec(out: Output, ix: Int): Output =
+        if (ix < s.length) rec(out.writeAsByte(s.charAt(ix)), ix + 1) else underlying
+      rec(underlying, 0)
+    }
   }
 
   /**
@@ -80,6 +90,6 @@ object Output {
         buffer = util.Arrays.copyOf(buffer, newLen)
       }
 
-    private def overflow() = throw new Cbor.Error.Overflow(this, "Cannot output to byte array with > 2^31 bytes")
+    private def overflow() = throw Borer.Error.Overflow(this, "Cannot output to byte array with > 2^31 bytes")
   }
 }

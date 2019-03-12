@@ -69,7 +69,7 @@ object Input {
           _cursor += len
         } else _lastBytes = Array.emptyByteArray
         this
-      } else throw new Cbor.Error.Overflow(_cursor, "Byte-array input is limited to size 2GB")
+      } else throw Borer.Error.Overflow(_cursor, "Byte-array input is limited to size 2GB")
 
     def copy: FromByteArray = super.clone().asInstanceOf[FromByteArray]
   }

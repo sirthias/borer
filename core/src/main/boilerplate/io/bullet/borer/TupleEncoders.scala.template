@@ -14,7 +14,19 @@ abstract class TupleEncoders {
     Encoder((w, x) ⇒ w ~ x._1)
 
   [2..#implicit def forTuple1[[#T1 :Encoder#]]: Encoder[([#T1#])] =
-    Encoder((w, x) ⇒ w.writeArrayHeader(1) ~ [#x._1# ~ ])#
+    Encoder((w, x) ⇒ close(open(w, 1), w ~ [#x._1# ~ ]))#
 
   ]
+
+  private def open(w: Writer, arity: Int): Boolean =
+    if (w.target eq Json) {
+      w.writeArrayStart()
+      true
+    } else {
+      w.writeArrayHeader(arity)
+      false
+    }
+
+  private def close(unbounded: Boolean, w: Writer): w.type =
+    if (unbounded) w.writeBreak() else w
 }

@@ -10,10 +10,15 @@ package io.bullet.borer
 
 import java.util
 
-object ImmutableRfcExamplesSpec extends AbstractRfcExamplesSpec[Array[Byte]]("Immutable Byte Array") {
+object ImmutableRfcExamplesSpec extends AbstractRfcExamplesSpec("Immutable Byte Array") {
 
-  def newInput(bytes: Array[Byte]) = new SomewhatImmutableByteArrayInput(bytes, 0, 0, Array.emptyByteArray)
-  def outResultByteAccess          = byteAccess
+  override def encode[T: Encoder](value: T): String =
+    toHexString(Cbor.encode(value).to[Array[Byte]](byteAccess).bytes)
+
+  override def decode[T: Decoder](encoded: String): T = {
+    val input = new SomewhatImmutableByteArrayInput(hexBytes(encoded), 0, 0, Array.emptyByteArray)
+    Cbor.decode(input).to[T].value
+  }
 
   object byteAccess extends ByteAccess[Array[Byte]] {
     type Out = SomewhatImmutableByteArrayOutput
@@ -65,7 +70,7 @@ object ImmutableRfcExamplesSpec extends AbstractRfcExamplesSpec[Array[Byte]]("Im
         util.Arrays.copyOf(buffer, newLen)
       } else buffer
 
-    private def overflow() = throw new Cbor.Error.Overflow(this, "Cannot output to byte array with > 2^31 bytes")
+    private def overflow() = throw Borer.Error.Overflow(this, "Cannot output to byte array with > 2^31 bytes")
   }
 
   final class SomewhatImmutableByteArrayInput(buffer: Array[Byte],
@@ -96,7 +101,7 @@ object ImmutableRfcExamplesSpec extends AbstractRfcExamplesSpec[Array[Byte]]("Im
         } else if (lastBytes.length != 0) {
           new SomewhatImmutableByteArrayInput(buffer, cursor, lastByte, Array.emptyByteArray)
         } else this
-      } else throw new Cbor.Error.Overflow(cursor, "Byte-array input is limited to size 2GB")
+      } else throw Borer.Error.Overflow(cursor, "Byte-array input is limited to size 2GB")
 
     def copy: SomewhatImmutableByteArrayInput = this
   }

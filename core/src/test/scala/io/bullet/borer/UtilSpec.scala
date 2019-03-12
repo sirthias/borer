@@ -14,46 +14,43 @@ object UtilSpec extends TestSuite {
 
   val tests = Tests {
 
-    "Util" - {
+    "canBeRepresentedAsFloat16" - {
+      val floats = Seq(
+        Float.NaN,
+        Float.NegativeInfinity,
+        Float.PositiveInfinity,
+        Float.MinPositiveValue,
+        Float.MinValue,
+        Float.MaxValue,
+        0.0f,
+        -0.0f,
+        1.0f,
+        -1.0f,
+        1.6f,
+        -1.6f,
+        10.0f,
+        -10.0f,
+        100.0f,
+        -100.0f,
+        1000.0f,
+        -1000.0f,
+        10000.0f,
+        -10000.0f,
+        100000.0f,
+        -100000.0f,
+        1000000.0f,
+        -1000000.0f
+      )
 
-      "canBeRepresentedAsFloat16" - {
-        val floats = Seq(
-          Float.NaN,
-          Float.NegativeInfinity,
-          Float.PositiveInfinity,
-          Float.MinPositiveValue,
-          Float.MinValue,
-          Float.MaxValue,
-          0.0f,
-          -0.0f,
-          1.0f,
-          -1.0f,
-          1.6f,
-          -1.6f,
-          10.0f,
-          -10.0f,
-          100.0f,
-          -100.0f,
-          1000.0f,
-          -1000.0f,
-          10000.0f,
-          -10000.0f,
-          100000.0f,
-          -100000.0f,
-          1000000.0f,
-          -1000000.0f
-        )
+      val (yes, no) = floats.partition(Util.canBeRepresentedAsFloat16)
 
-        val (yes, no) = floats.partition(Util.canBeRepresentedAsFloat16)
-
-        def roundTrips(f: Float) = {
-          val roundTripped = Float16.shortToFloat(Float16.floatToShort(f))
-          f == roundTripped || f.isNaN && roundTripped.isNaN
-        }
-
-        yes.forall(roundTrips) ==> true
-        !no.exists(roundTrips) ==> true
+      def roundTrips(f: Float) = {
+        val roundTripped = Float16.shortToFloat(Float16.floatToShort(f))
+        f == roundTripped || f.isNaN && roundTripped.isNaN
       }
+
+      yes.forall(roundTrips) ==> true
+      !no.exists(roundTrips) ==> true
     }
   }
 }

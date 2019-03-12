@@ -17,7 +17,7 @@ import scala.collection.immutable.{ListMap, TreeMap}
 /**
   * Direct implementation of https://tools.ietf.org/html/rfc7049#appendix-A
   */
-abstract class AbstractRfcExamplesSpec[Bytes](testTypeName: String) extends BorerSpec[Bytes] {
+abstract class AbstractRfcExamplesSpec(testTypeName: String) extends BorerSpec {
 
   // for these test we need an alternative `Either` codec
   implicit def eitherEnc[A: Encoder, B: Encoder]: Encoder[Either[A, B]] =
@@ -46,18 +46,24 @@ abstract class AbstractRfcExamplesSpec[Bytes](testTypeName: String) extends Bore
       roundTrip("1864", 100)
       roundTrip("1903e8", 1000)
       roundTrip("1a000f4240", 1000000)
+      roundTrip("1a7fffffff", Int.MaxValue)
       roundTrip("1b000000e8d4a51000", 1000000000000L)
+      roundTrip("1b7fffffffffffffff", Long.MaxValue)
       roundTrip("1bffffffffffffffff", new BigInteger("18446744073709551615"))
       roundTrip("c249010000000000000000", new BigInteger("18446744073709551616"))
     }
 
     "Negative Ints" - {
-      roundTrip("3bffffffffffffffff", new BigInteger("-18446744073709551616"))
-      roundTrip("c349010000000000000000", new BigInteger("-18446744073709551617"))
       roundTrip("20", -1)
       roundTrip("29", -10)
       roundTrip("3863", -100)
       roundTrip("3903e7", -1000)
+      roundTrip("1a000f4240", 1000000)
+      roundTrip("3a7fffffff", Int.MinValue)
+      roundTrip("1b000000e8d4a51000", 1000000000000L)
+      roundTrip("3b7fffffffffffffff", Long.MinValue)
+      roundTrip("3bffffffffffffffff", new BigInteger("-18446744073709551616"))
+      roundTrip("c349010000000000000000", new BigInteger("-18446744073709551617"))
     }
 
     "Floating Point Numbers" - {
@@ -115,13 +121,13 @@ abstract class AbstractRfcExamplesSpec[Bytes](testTypeName: String) extends Bore
       roundTrip("f9fc00", Float.NegativeInfinity)
       roundTrip("f9fc00", Double.NegativeInfinity)
 
-      decode("fa7f800000", Float.PositiveInfinity)
-      decode("fa7fc00000", Float.NaN)
-      decode("faff800000", Float.NegativeInfinity)
+      verifyDecoding("fa7f800000", Float.PositiveInfinity)
+      verifyDecoding("fa7fc00000", Float.NaN)
+      verifyDecoding("faff800000", Float.NegativeInfinity)
 
-      decode("fb7ff0000000000000", Double.PositiveInfinity)
-      decode("fb7ff8000000000000", Double.NaN)
-      decode("fbfff0000000000000", Double.NegativeInfinity)
+      verifyDecoding("fb7ff0000000000000", Double.PositiveInfinity)
+      verifyDecoding("fb7ff8000000000000", Double.NaN)
+      verifyDecoding("fbfff0000000000000", Double.NegativeInfinity)
     }
 
     "Simple Values" - {
@@ -160,16 +166,16 @@ abstract class AbstractRfcExamplesSpec[Bytes](testTypeName: String) extends Bore
 
     "Arrays" - {
       roundTrip("80", Array.empty[String])
-      roundTrip("83010203", List(1, 2, 3))
-      roundTrip("8301820203820405", (1, List(2, 3), List(4, 5)))
+      roundTrip("83010203", Vector(1, 2, 3))
+      roundTrip("8301820203820405", (1, Vector(2, 3), Vector(4, 5)))
       roundTrip("98190102030405060708090a0b0c0d0e0f101112131415161718181819", (1 to 25).toVector)
     }
 
     "Maps" - {
       roundTrip("a0", TreeMap.empty[Int, String])
       roundTrip("a201020304", TreeMap(1           → 2, 3         → 4))
-      roundTrip("a26161016162820203", TreeMap("a" → Left(1), "b" → Right(List(2, 3))))
-      roundTrip("826161a161626163", List(Right("a"), Left(TreeMap("b" → "c"))))
+      roundTrip("a26161016162820203", TreeMap("a" → Left(1), "b" → Right(Vector(2, 3))))
+      roundTrip("826161a161626163", Vector(Right("a"), Left(TreeMap("b" → "c"))))
       roundTrip(
         "a56161614161626142616361436164614461656145",
         TreeMap("a" → "A", "b" → "B", "c" → "C", "d" → "D", "e" → "E"))
@@ -182,21 +188,21 @@ abstract class AbstractRfcExamplesSpec[Bytes](testTypeName: String) extends Bore
 
       roundTrip("7f657374726561646d696e67ff", "streaming", Iterator("strea", "ming"))
 
-      roundTrip("9fff", List.empty[Int], Iterator.empty: Iterator[Int])
+      roundTrip("9fff", List.empty[Int], Writer.Script(_ ~ ArrayStart ~ Break))
 
       roundTrip(
         "9f018202039f0405ffff",
         (1, List(2, 3), List(4, 5)),
-        Writer.Script(_ ~ ArrayStart ~ 1 ~ List(2, 3) ~ Iterator(4, 5) ~ Break))
+        Writer.Script(_ ~ ArrayStart ~ 1 ~ Vector(2, 3) ~ Iterator(4, 5) ~ Break))
 
       roundTrip(
         "9f01820203820405ff",
         (1, List(2, 3), List(4, 5)),
-        Writer.Script(_ ~ ArrayStart ~ 1 ~ List(2, 3) ~ List(4, 5) ~ Break))
+        Writer.Script(_ ~ ArrayStart ~ 1 ~ Vector(2, 3) ~ Vector(4, 5) ~ Break))
 
-      roundTrip("83018202039f0405ff", (1, List(2, 3), List(4, 5)), (1, List(2, 3), Iterator(4, 5)))
+      roundTrip("83018202039f0405ff", (1, List(2, 3), List(4, 5)), (1, Vector(2, 3), Iterator(4, 5)))
 
-      roundTrip("83019f0203ff820405", (1, List(2, 3), List(4, 5)), (1, Iterator(2, 3), List(4, 5)))
+      roundTrip("83019f0203ff820405", (1, List(2, 3), List(4, 5)), (1, Iterator(2, 3), Vector(4, 5)))
 
       roundTrip("9f0102030405060708090a0b0c0d0e0f101112131415161718181819ff", (1 to 25).toVector, (1 to 25).iterator)
 

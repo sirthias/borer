@@ -9,9 +9,9 @@
 package io.bullet.borer
 
 import java.lang.{StringBuilder ⇒ JStringBuilder}
-import java.nio.charset.StandardCharsets
+import java.nio.charset.StandardCharsets.UTF_8
 import java.util
-
+import java.math.{BigDecimal ⇒ JBigDecimal, BigInteger ⇒ JBigInteger}
 import io.bullet.borer
 
 import scala.annotation.tailrec
@@ -61,13 +61,15 @@ object Logging {
     def onBool(io: IO, value: Boolean): Unit
     def onInt(io: IO, value: Int): Unit
     def onLong(io: IO, value: Long): Unit
-    def onPosOverLong(io: IO, value: Long): Unit
-    def onNegOverLong(io: IO, value: Long): Unit
+    def onOverLong(io: IO, negative: Boolean, value: Long): Unit
     def onFloat16(io: IO, value: Float): Unit
     def onFloat(io: IO, value: Float): Unit
     def onDouble(io: IO, value: Double): Unit
+    def onBigInteger(io: IO, value: JBigInteger): Unit
+    def onBigDecimal(io: IO, value: JBigDecimal): Unit
     def onBytes[Bytes: ByteAccess](io: IO, value: Bytes): Unit
     def onBytesStart(io: IO): Unit
+    def onString(io: IO, value: String): Unit
     def onText[Bytes: ByteAccess](io: IO, value: Bytes): Unit
     def onTextStart(io: IO): Unit
     def onArrayHeader(io: IO, length: Long): Unit
@@ -84,30 +86,34 @@ object Logging {
     * A [[Logger]] which formats each incoming element to it's own log line.
     */
   abstract class LineFormatLogger[-IO] extends Logger[IO] {
-    showLine("RESET")
+    import java.lang.Long.toHexString
 
-    def onNull(io: IO)                                   = show("null")
-    def onUndefined(io: IO)                              = show("undefined")
-    def onBool(io: IO, value: Boolean)                   = show(value.toString)
-    def onInt(io: IO, value: Int)                        = show(value.toString)
-    def onLong(io: IO, value: Long)                      = show(s"${value}L")
-    def onPosOverLong(io: IO, value: Long)               = show("0x" + java.lang.Long.toHexString(value))
-    def onNegOverLong(io: IO, value: Long)               = show("-0x" + java.lang.Long.toHexString(value))
-    def onFloat16(io: IO, value: Float)                  = show(s"${value}f16")
-    def onFloat(io: IO, value: Float)                    = show(s"${value}f")
-    def onDouble(io: IO, value: Double)                  = show(value.toString)
-    def onBytes[Bytes: ByteAccess](io: IO, value: Bytes) = show(formatBytes("BYTES[", value))
-    def onBytesStart(io: IO)                             = show("BYTES-STREAM[")
-    def onText[Bytes: ByteAccess](io: IO, value: Bytes)  = show(formatString(value))
-    def onTextStart(io: IO)                              = show("TEXT-STREAM[")
-    def onArrayHeader(io: IO, length: Long)              = show(if (length > 0) "[" else "[]")
-    def onArrayStart(io: IO)                             = show("[")
-    def onMapHeader(io: IO, length: Long)                = show(if (length > 0) "{" else "{}")
-    def onMapStart(io: IO)                               = show("{")
-    def onTag(io: IO, value: Tag)                        = show(value.toString)
-    def onSimpleValue(io: IO, value: Int)                = show(s"SimpleValue($value)")
+    def onNull(io: IO)                                     = show("null")
+    def onUndefined(io: IO)                                = show("undefined")
+    def onBool(io: IO, value: Boolean)                     = show(value.toString)
+    def onInt(io: IO, value: Int)                          = show(value.toString)
+    def onLong(io: IO, value: Long)                        = show(s"${value}L")
+    def onOverLong(io: IO, negative: Boolean, value: Long) = show((if (negative) "-0x" else "0x") + toHexString(value))
+    def onFloat16(io: IO, value: Float)                    = show(s"${value}f16")
+    def onFloat(io: IO, value: Float)                      = show(s"${value}f")
+    def onDouble(io: IO, value: Double)                    = show(value.toString)
+    def onBigInteger(io: IO, value: JBigInteger)           = show(s"BigInteger($value)")
+    def onBigDecimal(io: IO, value: JBigDecimal)           = show(s"BigDecimal($value)")
+    def onBytes[Bytes: ByteAccess](io: IO, value: Bytes)   = show(formatBytes("BYTES[", value))
+    def onBytesStart(io: IO)                               = show("BYTES-STREAM[")
+    def onString(io: IO, value: String): Unit              = show(formatString(value))
+    def onText[Bytes: ByteAccess](io: IO, value: Bytes)    = show(formatString(value))
+    def onTextStart(io: IO)                                = show("TEXT-STREAM[")
+    def onArrayHeader(io: IO, length: Long)                = show(if (length > 0) "[" else "[]")
+    def onArrayStart(io: IO)                               = show("[")
+    def onMapHeader(io: IO, length: Long)                  = show(if (length > 0) "{" else "{}")
+    def onMapStart(io: IO)                                 = show("{")
+    def onTag(io: IO, value: Tag)                          = show(value.toString)
+    def onSimpleValue(io: IO, value: Int)                  = show(s"SimpleValue($value)")
+
     def onLevelExited(io: IO, levelType: LevelType, break: Boolean) =
       show(if (levelType.isInstanceOf[LevelType.MapEntry]) "}" else "]")
+
     def onEndOfInput(io: IO) = show("END")
 
     def formatBytes[Bytes](opener: String, value: Bytes)(implicit ba: ByteAccess[Bytes]): String =
@@ -116,12 +122,13 @@ object Logging {
         .map(x ⇒ f"${x & 0xFF}%02X")
         .mkString(opener, " ", if (ba.sizeOf(value) > maxShownByteArrayPrefixLen) " ...]" else "]")
 
-    def formatString[Bytes](value: Bytes)(implicit ba: ByteAccess[Bytes]): String = {
-      val s = new String(ba.toByteArray(value), StandardCharsets.UTF_8)
-      if (s.length > maxShownStringPrefixLen) {
-        "\"" + s.substring(0, maxShownStringPrefixLen) + "...\""
-      } else "\"" + s + '"'
-    }
+    def formatString[Bytes](value: Bytes)(implicit ba: ByteAccess[Bytes]): String =
+      formatString(new String(ba.toByteArray(value), UTF_8))
+
+    def formatString(value: String): String =
+      if (value.length > maxShownStringPrefixLen) {
+        "\"" + value.substring(0, maxShownStringPrefixLen) + "...\""
+      } else "\"" + value + '"'
 
     def show(item: String): Unit = {
       val sb = new java.lang.StringBuilder
@@ -266,16 +273,10 @@ object Logging {
       target.onLong(io, value)
     }
 
-    def onPosOverLong(io: IO, value: Long): IO = {
-      logger.onPosOverLong(io, value)
+    def onOverLong(io: IO, negative: Boolean, value: Long): IO = {
+      logger.onOverLong(io, negative, value)
       count(io)
-      target.onPosOverLong(io, value)
-    }
-
-    def onNegOverLong(io: IO, value: Long): IO = {
-      logger.onNegOverLong(io, value)
-      count(io)
-      target.onNegOverLong(io, value)
+      target.onOverLong(io, negative, value)
     }
 
     def onFloat16(io: IO, value: Float): IO = {
@@ -296,6 +297,18 @@ object Logging {
       target.onDouble(io, value)
     }
 
+    def onBigInteger(io: IO, value: JBigInteger): IO = {
+      logger.onBigInteger(io, value)
+      count(io)
+      target.onBigInteger(io, value)
+    }
+
+    def onBigDecimal(io: IO, value: JBigDecimal): IO = {
+      logger.onBigDecimal(io, value)
+      count(io)
+      target.onBigDecimal(io, value)
+    }
+
     def onBytes[Bytes: ByteAccess](io: IO, value: Bytes): IO = {
       logger.onBytes(io, value)
       count(io)
@@ -306,6 +319,12 @@ object Logging {
       logger.onBytesStart(io)
       enterLevel(count = -1, size = 2)
       target.onBytesStart(io)
+    }
+
+    def onString(io: IO, value: String): IO = {
+      logger.onString(io, value)
+      count(io)
+      target.onString(io, value)
     }
 
     def onText[Bytes: ByteAccess](io: IO, value: Bytes): IO = {

@@ -89,7 +89,7 @@ object akka {
           _cursor = newCursor
         } else _lastBytes = ByteString.empty
         this
-      } else throw Cbor.Error.Overflow(_cursor, "ByteString input is limited to size 2GB")
+      } else throw Borer.Error.Overflow(_cursor, "ByteString input is limited to size 2GB")
 
     def copy: ByteStringInput = super.clone().asInstanceOf[ByteStringInput]
   }

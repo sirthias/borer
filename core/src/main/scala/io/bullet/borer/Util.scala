@@ -8,6 +8,8 @@
 
 package io.bullet.borer
 
+import scala.annotation.tailrec
+
 object Util {
 
   def requireNonNegative(value: Int, name: String): Int = {
@@ -22,6 +24,7 @@ object Util {
   def isChar(x: Int): Boolean              = (x >> 16) == 0
   def isByte(x: Int): Boolean              = (x >> 7) == (x >> 31)
   def isShort(x: Int): Boolean             = (x >> 15) == (x >> 31)
+  def isInt(x: Long): Boolean              = (x >> 31) == (x >> 63)
   def isUnsignedInt(uLong: Long): Boolean  = uLong >> 31 == 0
   def isUnsignedLong(uLong: Long): Boolean = uLong >= 0
 
@@ -55,4 +58,16 @@ object Util {
   }
 
   def canBeRepresentedAsFloat(value: Double): Boolean = value.isNaN || value.toFloat.toDouble == value
+
+  /**
+    * Returns the int value of a given hex digit char.
+    * Note: this implementation is very fast (since it's branchless) and therefore
+    * does not perform ANY range checks!
+    */
+  def hexValue(c: Char): Int = (c & 0x1f) + ((c >> 6) * 0x19) - 0x10
+
+  def inPlaceNegate(bytes: Array[Byte]): Unit = {
+    @tailrec def rec(ix: Int): Unit = if (ix < bytes.length) { bytes(ix) = (~bytes(ix).toInt).toByte; rec(ix + 1) }
+    rec(0)
+  }
 }

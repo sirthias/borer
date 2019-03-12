@@ -85,7 +85,7 @@ object scodec {
         if (newCursor >= 0) {
           _lastBytes = input.slice(_cursor, newCursor)
           _cursor = newCursor
-        } else throw new Cbor.Error.Overflow(_cursor, "ByteVector input is limited to 2^63 bytes")
+        } else throw Borer.Error.Overflow(_cursor, "ByteVector input is limited to 2^63 bytes")
       } else _lastBytes = ByteVector.empty
       this
     }
@@ -156,6 +156,6 @@ object scodec {
         buffer = util.Arrays.copyOf(buffer, newLen)
       }
 
-    private def overflow() = throw new Cbor.Error.Overflow(this, "Cannot output to byte array with > 2^31 bytes")
+    private def overflow() = throw Borer.Error.Overflow(this, "Cannot output to byte array with > 2^31 bytes")
   }
 }

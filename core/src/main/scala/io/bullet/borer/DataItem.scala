@@ -19,51 +19,47 @@ object DataItem {
   final val Undefined = 1 << 1
   final val Bool      = 1 << 2
 
-  final val Int         = 1 << 3
-  final val Long        = 1 << 4
-  final val PosOverLong = 1 << 5
-  final val NegOverLong = 1 << 6
-  final val Float16     = 1 << 7
-  final val Float       = 1 << 8
-  final val Double      = 1 << 9
+  final val Int      = 1 << 3
+  final val Long     = 1 << 4
+  final val OverLong = 1 << 5
+  final val Float16  = 1 << 6
+  final val Float    = 1 << 7
+  final val Double   = 1 << 8
 
-  final val Text      = 1 << 10
-  final val TextStart = 1 << 11
+  final val BigInteger = 1 << 9
+  final val BigDecimal = 1 << 10
 
-  final val Bytes      = 1 << 12
-  final val BytesStart = 1 << 13
+  final val String    = 1 << 11
+  final val Text      = 1 << 12
+  final val TextStart = 1 << 13
 
-  final val ArrayHeader = 1 << 14
-  final val ArrayStart  = 1 << 15
+  final val Bytes      = 1 << 14
+  final val BytesStart = 1 << 15
 
-  final val MapHeader = 1 << 16
-  final val MapStart  = 1 << 17
+  final val ArrayHeader = 1 << 16
+  final val ArrayStart  = 1 << 17
 
-  final val Break = 1 << 18
-  final val Tag   = 1 << 19
+  final val MapHeader = 1 << 18
+  final val MapStart  = 1 << 19
 
-  final val SimpleValue = 1 << 20
+  final val Break = 1 << 20
+  final val Tag   = 1 << 21
 
-  final val EndOfInput = 1 << 21
+  final val SimpleValue = 1 << 22
 
-  final val BigNum = 1 << 22
+  final val EndOfInput = 1 << 23
 
   //////////////////////////////// COMPOUND ////////////////////////////////
 
-  final val Integer = Int | Long | PosOverLong | NegOverLong
-  final val Number  = Integer | Float | Double
-
   final val None        = 0
   final val AllButBreak = 0x00FFFFFF & ~Break
-
-  private[borer] final val DecimalFrac = ArrayHeader | BigNum // special value for validator
 
   //////////////////////////////////////////////////////////////////////////
 
   def stringify(mask: Int): String =
     if (mask != AllButBreak) {
       Iterator
-        .range(0, 20)
+        .range(0, 24)
         .map { i ⇒
           mask & (1 << i) match {
             case None ⇒ ""
@@ -72,15 +68,17 @@ object DataItem {
             case Undefined ⇒ "Undefined"
             case Bool      ⇒ "Bool"
 
-            case Int         ⇒ "Int"
-            case Long        ⇒ "Long"
-            case PosOverLong ⇒ "PosOverLong"
-            case NegOverLong ⇒ "NegOverLong"
+            case Int      ⇒ "Int"
+            case Long     ⇒ "Long"
+            case OverLong ⇒ "OverLong"
+            case Float16  ⇒ "Float16"
+            case Float    ⇒ "Float"
+            case Double   ⇒ "Double"
 
-            case Float16 ⇒ "Float16"
-            case Float   ⇒ "Float"
-            case Double  ⇒ "Double"
+            case BigInteger ⇒ "BigInteger"
+            case BigDecimal ⇒ "BigDecimal"
 
+            case String    ⇒ "String"
             case Text      ⇒ "Text"
             case TextStart ⇒ "Start of unbounded Text"
 
@@ -99,8 +97,6 @@ object DataItem {
             case SimpleValue ⇒ "Simple Value"
 
             case EndOfInput ⇒ "End of Input"
-
-            case BigNum ⇒ "BigNum"
           }
         }
         .filter(_.nonEmpty)

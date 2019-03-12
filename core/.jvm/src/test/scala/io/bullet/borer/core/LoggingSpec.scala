@@ -28,15 +28,14 @@ object LoggingSpec extends TestSuite {
         Value.Bool(true),
         Value.Int(42),
         Value.Long(Int.MaxValue + 1L),
-        Value.PosOverLong(-1),
-        Value.NegOverLong(-1),
+        Value.OverLong(negative = false, -1),
+        Value.OverLong(negative = true, -1),
         Value.Float16(1.0f),
         Value.Float(100000.0f),
         Value.Double(1.6),
         Value.Simple(SimpleValue(18)))
     } {
-      """RESET
-        |1: [
+      """1: [
         |     1/11: null
         |     2/11: undefined
         |     3/11: true
@@ -59,8 +58,7 @@ object LoggingSpec extends TestSuite {
         Value.ByteArray(alphabet.getBytes),
         Value.BytesStream(alphabet.grouped(4).map(s ⇒ Value.ByteArray(s.getBytes)).toVector))
     } {
-      """RESET
-        |1: [
+      """1: [
         |    1/3: BYTES[41 42 43 44 45 46 47 48]
         |    2/3: BYTES[41 42 43 44 45 46 47 48 ...]
         |    3/3: BYTES-STREAM[
@@ -83,8 +81,7 @@ object LoggingSpec extends TestSuite {
         Value.String(alphabet),
         Value.TextStream(alphabet.grouped(4).map(Value.String).toVector))
     } {
-      """RESET
-        |1: [
+      """1: [
         |    1/3: "ABCDEFGH"
         |    2/3: "ABCDEFGH..."
         |    3/3: TEXT-STREAM[
@@ -107,8 +104,7 @@ object LoggingSpec extends TestSuite {
         Element.Array(),
         Element.Array(Vector(Value.Int(1), Value.Int(2), Value.Int(3)), indefiniteLength = true))
     } {
-      """RESET
-        |1: [
+      """1: [
         |    1/3: [
         |        1/3: 1
         |        2/3: 2
@@ -134,8 +130,7 @@ object LoggingSpec extends TestSuite {
         "empty" → Element.Map(),
         "bar"   → Element.Map(ListMap(tuples: _*), indefiniteLength = true))
     } {
-      """RESET
-        |1: {
+      """1: {
         |    1/3: "foo"
         |    1/3: -> 42
         |    2/3: "empty"
