@@ -13,7 +13,7 @@ import io.bullet.borer._
 import utest._
 import scodec._
 
-object ByteVectorSpec extends BorerSpec[ByteVector] with ByteVectorSpecSupport {
+object ByteVectorSpec extends AbstractByteVectorSpec {
 
   case class Foo(int: Int, content: ByteVector)
 
@@ -22,8 +22,8 @@ object ByteVectorSpec extends BorerSpec[ByteVector] with ByteVectorSpecSupport {
   val tests = Tests {
 
     "basic roundtrip" - roundTrip(
-      "83820B40820C476F682079656168820D43FF0001",
-      List(
+      "83820b40820c476f682079656168820d43ff0001",
+      Vector(
         Foo(11, ByteVector.empty),
         Foo(12, ByteVector("oh yeah" getBytes "UTF8")),
         Foo(13, ByteVector(-1, 0, 1))

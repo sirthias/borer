@@ -92,7 +92,7 @@ private[borer] final class JsonRenderer extends Receiver[Output] {
   def onDouble(out: Output, value: Double): Output =
     if (!value.isNaN) {
       if (!value.isInfinity) {
-        count(sep(out).writeStringAsAsciiBytes(java.lang.Double toString value))
+        count(sep(out).writeStringAsAsciiBytes(Util.doubleToString(value)))
       } else unsupported(out, "`Infinity` floating point values")
     } else unsupported(out, "`NaN` floating point values")
 

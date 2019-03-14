@@ -8,12 +8,16 @@
 
 package io.bullet.borer.compat
 
-import io.bullet.borer.{BorerSpec, Input}
+import io.bullet.borer._
 import _root_.scodec.bits.ByteVector
 import scodec._
 
-trait ByteVectorSpecSupport { this: BorerSpec[ByteVector] ⇒
-  val byteAccess                          = ByteVectorByteAccess
-  def newInput(bytes: Array[Byte]): Input = ByteVector(bytes)
-  def outResultByteAccess                 = byteAccess
+trait AbstractByteVectorSpec extends BorerSpec {
+
+  override def encode[T: Encoder](value: T): String =
+    toHexString(Cbor.encode(value).to[ByteVector].bytes.toArray)
+
+  override def decode[T: Decoder](encoded: String): T =
+    Cbor.decode(ByteVector(hexBytes(encoded))).to[T].value
+
 }

@@ -9,6 +9,5 @@
 package io.bullet.borer.compat
 
 import io.bullet.borer.AbstractRfcExamplesSpec
-import _root_.akka.util.ByteString
 
-object AkkaSupportSpec extends AbstractRfcExamplesSpec[ByteString]("ByteString") with ByteStringSpecSupport
+object AkkaSupportSpec extends AbstractRfcExamplesSpec("ByteString") with AbstractByteStringSpec

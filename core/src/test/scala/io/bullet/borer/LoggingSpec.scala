@@ -8,11 +8,10 @@
 
 package io.bullet.borer
 
-import scala.collection.immutable.ListMap
 import utest._
 
-// JVM-specific due to the not platform-independent way of Float/Double toStrings
-// see: https://www.scala-js.org/doc/semantics.html
+import scala.collection.immutable.ListMap
+
 object LoggingSpec extends TestSuite {
   import Dom.Element
   import Dom.Element.Value

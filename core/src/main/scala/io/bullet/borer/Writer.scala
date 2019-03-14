@@ -95,11 +95,11 @@ final class Writer(startOutput: Output,
     if (writingJson) writeArrayStart().write(x).writeBreak()
     else writeArrayHeader(1).write(x)
 
-  def writeToArray[T: Encoder](a: T, b: T): this.type =
+  def writeToArray[A: Encoder, B: Encoder](a: A, b: B): this.type =
     if (writingJson) writeArrayStart().write(a).write(b).writeBreak()
     else writeArrayHeader(2).write(a).write(b)
 
-  def writeToArray[T: Encoder](a: T, b: T, c: T): this.type =
+  def writeToArray[A: Encoder, B: Encoder, C: Encoder](a: A, b: B, c: C): this.type =
     if (writingJson) writeArrayStart().write(a).write(b).write(c).writeBreak()
     else writeArrayHeader(3).write(a).write(b).write(c)
 

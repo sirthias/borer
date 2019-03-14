@@ -67,20 +67,21 @@ object Dom {
     }
 
     final case class Array(value: Vector[Element], indefiniteLength: Boolean = false) extends Element {
-      override def toString = value.mkString("[", ", ", "]")
+      override def toString = value.mkString(if (indefiniteLength) "*[" else "[", ", ", "]")
     }
     object Array {
-      def apply(elements: Element*): Array = new Array(elements.toVector, indefiniteLength = false)
+      def apply(elements: Element*): Array      = new Array(elements.toVector, indefiniteLength = false)
+      def indefinite(elements: Element*): Array = new Array(elements.toVector, indefiniteLength = true)
     }
 
     final case class Map(value: ListMap[Element, Element], indefiniteLength: Boolean = false) extends Element {
-      override def toString = value.map(x ⇒ x._1 + ": " + x._2).mkString("{", ", ", "}")
+      override def toString = value.map(x ⇒ x._1 + ": " + x._2).mkString(if (indefiniteLength) "*{" else "{", ", ", "}")
     }
     object Map {
-      def apply(entries: (String, Element)*): Map =
-        new Map(
-          value = entries.foldLeft(ListMap.empty[Element, Element])((m, x) ⇒ m.updated(Value.String(x._1), x._2)),
-          indefiniteLength = false)
+      def apply(entries: (String, Element)*): Map      = new Map(asMap(entries), indefiniteLength = false)
+      def indefinite(entries: (String, Element)*): Map = new Map(asMap(entries), indefiniteLength = true)
+      private def asMap(entries: Seq[(String, Element)]): ListMap[Element, Element] =
+        entries.foldLeft(ListMap.empty[Element, Element])((m, x) ⇒ m.updated(Value.String(x._1), x._2))
     }
 
     final case class Tagged(tag: Tag, value: Element) extends Element
@@ -159,8 +160,8 @@ object Dom {
         case DataItem.Bytes      ⇒ Element.Value.ByteArray(r.readByteArray())
         case DataItem.BytesStart ⇒ Element.Value.BytesStream(r.read()(bytesDecoder))
 
-        case DataItem.Text      ⇒ Element.Value.String(r.readString())
-        case DataItem.TextStart ⇒ Element.Value.TextStream(r.read()(textDecoder))
+        case DataItem.Text | DataItem.String ⇒ Element.Value.String(r.readString())
+        case DataItem.TextStart              ⇒ Element.Value.TextStream(r.read()(textDecoder))
 
         case DataItem.SimpleValue ⇒ Element.Value.Simple(SimpleValue(r.readSimpleValue()))
 

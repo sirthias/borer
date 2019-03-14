@@ -8,11 +8,10 @@
 
 package io.bullet.borer.derivation
 
-import io.bullet.borer.{Codec, Decoder, Encoder, Writer}
+import io.bullet.borer._
 import magnolia._
 
 import scala.annotation.tailrec
-import scala.collection.mutable
 
 object MapBasedCodecs {
 
@@ -20,15 +19,18 @@ object MapBasedCodecs {
     type Typeclass[T] = Encoder[T]
 
     def combine[T](ctx: CaseClass[Encoder, T]): Encoder[T] = {
-      val params = ctx.parameters.asInstanceOf[mutable.WrappedArray[Param[Encoder, T]]].array
+      val params = ctx.parameters
+      val len    = params.size
       Encoder { (w, value) ⇒
-        @tailrec def rec(w: Writer, ix: Int): Unit =
-          if (ix < params.length) {
+        @tailrec def rec(w: Writer, ix: Int): w.type =
+          if (ix < len) {
             val p = params(ix)
             w.writeString(p.label)
             rec(p.typeclass.write(w, p.dereference(value)), ix + 1)
-          }
-        rec(w.writeMapHeader(params.length), 0)
+          } else w
+
+        if (w.writingJson) rec(w.writeMapStart(), 0).writeBreak()
+        else rec(w.writeMapHeader(len), 0)
       }
     }
 
@@ -42,14 +44,15 @@ object MapBasedCodecs {
     type Typeclass[T] = Decoder[T]
 
     def combine[T](ctx: CaseClass[Decoder, T]): Decoder[T] = {
-      val params = ctx.parameters.asInstanceOf[mutable.WrappedArray[Param[Decoder, T]]].array
+      val params = ctx.parameters
+      val len    = params.size
       Decoder { r ⇒
-        val constructorArgs = new Array[AnyRef](params.length)
+        val constructorArgs = new Array[AnyRef](len)
         @tailrec def rec(ix: Int): T =
-          if (ix < params.length) {
+          if (ix < len) {
             val label = r.readString()
             @tailrec def findParam(i: Int): AnyRef =
-              if (i < params.length) {
+              if (i < len) {
                 val p = params(ix)
                 if (p.label == label) p.typeclass.read(r).asInstanceOf[AnyRef]
                 else findParam(i + 1)
@@ -58,9 +61,17 @@ object MapBasedCodecs {
             rec(ix + 1)
           } else ctx.rawConstruct(constructorArgs)
 
-        if (!r.tryReadMapHeader(params.length)) {
-          val m = s"Map Header with length ${params.length} for decoding an instance of type [${ctx.typeName.full}]"
-          r.unexpectedDataItem(m)
+        if (r.readingJson) {
+          if (r.tryReadMapStart()) {
+            val result = rec(0)
+            if (!r.tryReadBreak()) {
+              val expected = s"Map with $len elements for decoding an instance of type [${ctx.typeName.full}]"
+              r.unexpectedDataItem(expected, "at least one extra element")
+            } else result
+          } else r.unexpectedDataItem(s"Map Start for decoding an instance of type [${ctx.typeName.full}]")
+        } else if (!r.tryReadMapHeader(len)) {
+          val expected = s"Map Header with length $len for decoding an instance of type [${ctx.typeName.full}]"
+          r.unexpectedDataItem(expected)
         } else rec(0)
       }
     }

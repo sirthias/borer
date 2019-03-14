@@ -56,12 +56,15 @@ object JsonSpec extends BorerSpec {
     }
 
     "Floating Point Numbers" - {
-      intercept[Borer.Error.InvalidJsonData[_]](roundTrip("0.0", Float16(0.0f)))
+      intercept[Borer.Error.InvalidJsonData[_]](encode(Float16(0.0f)))
+
       roundTrip("0.0", 0.0f)
       roundTrip("0.0", 0.0)
 
-      roundTrip("-0.0", -0.0f)
-      roundTrip("-0.0", -0.0)
+      if (Util.isJVM) {
+        roundTrip("-0.0", -0.0f)
+        roundTrip("-0.0", -0.0)
+      }
 
       roundTrip("1.0", 1.0f)
       roundTrip("1.0", 1.0)
@@ -77,13 +80,15 @@ object JsonSpec extends BorerSpec {
       roundTrip("100000.0", 100000.0f)
       roundTrip("100000.0", 100000.0)
 
-      roundTrip("3.4028234663852886E38", 3.4028234663852886e+38f)
-      roundTrip("3.4028234663852886E38", 3.4028234663852886e+38)
+      if (Util.isJVM) {
+        roundTrip("3.4028234663852886E38", 3.4028234663852886e+38f)
+        roundTrip("3.4028234663852886E38", 3.4028234663852886e+38)
 
-      roundTrip("1.0E300", 1.0e+300)
+        roundTrip("1.0E300", 1.0e+300)
 
-      roundTrip("6.103515625E-5", 0.00006103515625f)
-      roundTrip("6.103515625E-5", 0.00006103515625)
+        roundTrip("6.103515625E-5", 0.00006103515625f)
+        roundTrip("6.103515625E-5", 0.00006103515625)
+      }
 
       roundTrip("-4.0", -4.0f)
       roundTrip("-4.0", -4.0)
@@ -158,11 +163,11 @@ object JsonSpec extends BorerSpec {
 
       roundTrip(
         """[[[42,"foo",[]],[[43,"",[1.0]]],[]],[[-44,"árvíztűrő ütvefúrógép",[26.18]],[],["a","bravo","zulu"]],""" +
-          """[[10000,"CBOR roxx",[-1.23456789012345E7]],[[0,"0",[]]],["yes","no"]]]""",
+          """[[10000,"CBOR roxx",[-123.456]],[[0,"0",[]]],["yes","no"]]]""",
         Vector(
           Bar(Foo(42, "foo", None), Some(Foo(43, "", Some(1.0))), Nil),
           Bar(Foo(-44, "árvíztűrő ütvefúrógép", Some(26.18)), None, Vector("a", "bravo", "zulu")),
-          Bar(Foo(10000, "CBOR roxx", Some(-12345678.9012345)), Some(Foo(0, "0", None)), Vector("yes", "no"))
+          Bar(Foo(10000, "CBOR roxx", Some(-123.456)), Some(Foo(0, "0", None)), Vector("yes", "no"))
         )
       )
     }

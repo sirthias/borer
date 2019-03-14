@@ -10,6 +10,10 @@ A [CBOR] (de)serialization implementation in [Scala] sporting these features:
 - easy integration (type class-based design)
 - efficiently supports custom "byte string" abstractions (like `akka.util.ByteString` or `scodec.bits.ByteVector`)
 
+_BORER_ also supports high-performance de- and encoding from and to [JSON] through the same API.
+One example where this is useful is providing "bilingual" REST APIs that can consume and produce both [CBOR] and [JSON].
+_BORER_ makes this very easy.  
+
 ---
 
 [![Maven Central](https://img.shields.io/maven-central/v/io.bullet/borer-core_2.12.svg)](https://maven-badges.herokuapp.com/maven-central/io.bullet/borer-core_2.12)
@@ -453,6 +457,7 @@ Contributions are always welcome!
   [Scala]: https://www.scala-lang.org/
   [scala.js]: https://www.scala-js.org/
   [CBOR]: http://cbor.io/
+  [JSON]: http://json.org/
   [akka-actor]: https://doc.akka.io/docs/akka/2.5/actors.html#dependency
   [Magnolia]: https://propensive.com/opensource/magnolia
   [scodec]: http://scodec.org/

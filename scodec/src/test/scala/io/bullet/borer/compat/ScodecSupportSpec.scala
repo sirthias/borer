@@ -8,7 +8,6 @@
 
 package io.bullet.borer.compat
 
-import _root_.scodec.bits.ByteVector
 import io.bullet.borer.AbstractRfcExamplesSpec
 
-object ScodecSupportSpec extends AbstractRfcExamplesSpec[ByteVector]("ByteVector") with ByteVectorSpecSupport
+object ScodecSupportSpec extends AbstractRfcExamplesSpec("ByteVector") with AbstractByteVectorSpec

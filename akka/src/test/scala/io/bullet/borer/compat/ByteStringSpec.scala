@@ -13,7 +13,7 @@ import io.bullet.borer._
 import utest._
 import akka._
 
-object ByteStringSpec extends BorerSpec[ByteString] with ByteStringSpecSupport {
+object ByteStringSpec extends AbstractByteStringSpec {
 
   case class Foo(int: Int, content: ByteString)
 
@@ -22,8 +22,8 @@ object ByteStringSpec extends BorerSpec[ByteString] with ByteStringSpecSupport {
   val tests = Tests {
 
     "basic roundtrip" - roundTrip(
-      "83820B40820C476F682079656168820D43FF0001",
-      List(
+      "83820b40820c476f682079656168820d43ff0001",
+      Vector(
         Foo(11, ByteString.empty),
         Foo(12, ByteString("oh yeah")),
         Foo(13, ByteString(-1, 0, 1))

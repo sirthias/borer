@@ -9,11 +9,15 @@
 package io.bullet.borer.compat
 
 import _root_.akka.util.ByteString
-import io.bullet.borer.{BorerSpec, Input}
+import io.bullet.borer._
 import io.bullet.borer.compat.akka._
 
-trait ByteStringSpecSupport { this: BorerSpec[ByteString] ⇒
-  val byteAccess                          = ByteStringByteAccess
-  def newInput(bytes: Array[Byte]): Input = ByteString(bytes)
-  def outResultByteAccess                 = byteAccess
+trait AbstractByteStringSpec extends BorerSpec {
+
+  override def encode[T: Encoder](value: T): String =
+    toHexString(Cbor.encode(value).to[ByteString].bytes.toArray)
+
+  override def decode[T: Decoder](encoded: String): T =
+    Cbor.decode(ByteString(hexBytes(encoded))).to[T].value
+
 }

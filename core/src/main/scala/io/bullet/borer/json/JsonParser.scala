@@ -8,9 +8,10 @@
 
 package io.bullet.borer.json
 
-import java.lang.{Byte ⇒ JByte, Double ⇒ JDouble}
-import java.util
+import java.lang.{Double ⇒ JDouble}
 import java.math.{BigDecimal ⇒ JBigDecimal, BigInteger ⇒ JBigInteger}
+import java.util
+
 import io.bullet.borer._
 
 import scala.annotation.{switch, tailrec}
@@ -110,7 +111,8 @@ private[borer] final class JsonParser extends Receiver.Parser {
           // Improvement ideas are always welcome!
           val s      = getString
           val double = JDouble.parseDouble(s)
-          if (!double.isNaN && !double.isInfinite && double.toString == s) { // can we do better here?
+          // Is there a better way to figure out whether the double parsing was lossless?
+          if (!double.isNaN && !double.isInfinite && Util.doubleToString(double) == s) {
             val float = double.toFloat
             if (float.toDouble == double) receiver.onFloat(in, float)
             else receiver.onDouble(in, double)
@@ -150,7 +152,7 @@ private[borer] final class JsonParser extends Receiver.Parser {
         (c: @switch) match {
           case '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' ⇒
             appendChar(in, c)
-            if (value <= Long.MaxValue / 10 - 1) { // largest value that cannot overflow beloe
+            if (value <= Long.MaxValue / 10 - 1) { // largest value that cannot overflow below
               val newValue = (value << 3) + (value << 1) + c - '0' // same as multiplication by 10
               parseNumber(in, newValue, negative)
             } else parseNonLongNumber(in, decimal = false) // can't be sure to not overflow, so break out
@@ -180,7 +182,7 @@ private[borer] final class JsonParser extends Receiver.Parser {
     @tailrec def parseUtf8String(inp: Input): Input = {
       if (inp.hasBytes(1)) {
         var in: Input = inp.readByte()
-        var c         = JByte.toUnsignedInt(in.lastByte)
+        var c         = in.lastByte & 0xFF
         if ((c >> 7) == 0) { // single byte UTF-8 char
           // simple bloom-filter that quick-matches all special chars and one good char (as collateral),
           // specifically it matches: \u0000 - \u001f, '"', '\' and 'b'
@@ -217,7 +219,7 @@ private[borer] final class JsonParser extends Receiver.Parser {
           } else parseUtf8String(appendChar(in, c.toChar))
         } else {
           def trailingByte(in: Input): Int = {
-            val x = JByte.toUnsignedInt(in.lastByte)
+            val x = in.lastByte & 0xFF
             if ((x >> 6) != 2) throw Error.InvalidJsonData(in, s"Illegal UTF-8 character encoding")
             x & 0x3F
           }
@@ -242,8 +244,8 @@ private[borer] final class JsonParser extends Receiver.Parser {
 
           if (c < 0xD800 || 0xE000 <= c) {
             if (c > 0xFFFF) { // surrogate pair required?
-              appendChar(in, Character.highSurrogate(c))
-              appendChar(in, Character.lowSurrogate(c))
+              appendChar(in, ((c >> 10) + 0xD800 - (0x10000 >> 10)).toChar) // high surrogate
+              appendChar(in, (0xDC00 + (c & 0x3FF)).toChar)                 // low surrogate
             } else appendChar(in, c.toChar)
             parseUtf8String(in)
           } else throw Error.InvalidJsonData(in, s"Illegal Unicode Code point [${Integer.toHexString(c)}]")
