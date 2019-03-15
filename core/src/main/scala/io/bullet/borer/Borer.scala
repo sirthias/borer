@@ -29,6 +29,24 @@ case object Cbor extends Borer.Target {
     */
   def decode(input: Input): Borer.DecodingSetup[input.Self] =
     new Borer.DecodingSetup(input, this, CborParser)
+
+  /**
+    * Constructs a new [[Writer]] that writes CBOR to the given [[Output]].
+    */
+  def writer(output: Output,
+             config: Writer.Config = Writer.Config.default,
+             validationApplier: Receiver.Applier[Output] = Receiver.defaultApplier): Writer = {
+    val receiver = validationApplier(Validation.creator(this, config.validation), CborRenderer)
+    new Writer(output, receiver, config, this)
+  }
+
+  /**
+    * Constructs a new [[Reader]] that reads CBOR from the given [[Input]].
+    */
+  def reader(input: Input,
+             config: Reader.Config = Reader.Config.default,
+             validationApplier: Receiver.Applier[Input] = Receiver.defaultApplier): Reader =
+    new Reader(input, CborParser, validationApplier, config, this)
 }
 
 case object Json extends Borer.Target {
@@ -44,6 +62,24 @@ case object Json extends Borer.Target {
     */
   def decode(input: Input): Borer.DecodingSetup[input.Self] =
     new Borer.DecodingSetup(input, this, new JsonParser)
+
+  /**
+    * Constructs a new [[Writer]] that writes JSON to the given [[Output]].
+    */
+  def writer(output: Output,
+             config: Writer.Config = Writer.Config.default,
+             validationApplier: Receiver.Applier[Output] = Receiver.defaultApplier): Writer = {
+    val receiver = validationApplier(Validation.creator(this, config.validation), new JsonRenderer)
+    new Writer(output, receiver, config, this)
+  }
+
+  /**
+    * Constructs a new [[Reader]] that reads JSON from the given [[Input]].
+    */
+  def reader(input: Input,
+             config: Reader.Config = Reader.Config.default,
+             validationApplier: Receiver.Applier[Input] = Receiver.defaultApplier): Reader =
+    new Reader(input, new JsonParser, validationApplier, config, this)
 
   sealed trait JsonEncoding
 
@@ -72,9 +108,17 @@ object Borer {
   sealed abstract class Target {
     def encode[T: Encoder](value: T): Borer.EncodingSetup[T]
     def decode(input: Input): Borer.DecodingSetup[input.Self]
+
+    def writer(output: Output,
+               config: Writer.Config = Writer.Config.default,
+               validationApplier: Receiver.Applier[Output] = Receiver.defaultApplier): Writer
+
+    def reader(input: Input,
+               config: Reader.Config = Reader.Config.default,
+               validationApplier: Receiver.Applier[Input] = Receiver.defaultApplier): Reader
   }
 
-  final class EncodingSetup[T: Encoder] private[borer] (value: T, target: Target, receiver: Receiver[Output]) {
+  final class EncodingSetup[T: Encoder] private[borer] (value: T, target: Target, renderer: Receiver[Output]) {
 
     private[this] var config: Writer.Config                       = Writer.Config.default
     private[this] var validationApplier: Receiver.Applier[Output] = Receiver.defaultApplier
@@ -134,9 +178,9 @@ object Borer {
       * Encodes an instance of [[T]] to the given `Bytes` type using the configured options.
       */
     def to[Bytes](implicit ba: ByteAccess[Bytes]): Either[Error[ba.Out], ba.Out] = {
-      val validationReceiver = validationApplier(Validation.creator(target, config.validation), receiver)
-      val writer             = new Writer(ba.newOutput, validationReceiver, config, target)
-      def out                = writer.output.asInstanceOf[ba.Out]
+      val receiver = validationApplier(Validation.creator(target, config.validation), renderer)
+      val writer   = new Writer(ba.newOutput, receiver, config, target)
+      def out      = writer.output.asInstanceOf[ba.Out]
       try {
         writer
           .write(value)
