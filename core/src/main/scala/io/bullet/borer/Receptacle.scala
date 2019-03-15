@@ -31,22 +31,22 @@ private[borer] final class Receptacle extends Receiver[Input] with java.lang.Clo
   private[this] var _bytes: Any                   = _
   private[this] var _bytesAccess: ByteAccess[Any] = _
 
-  def dataItem: Int = _dataItem
+  @inline def dataItem: Int = _dataItem
 
-  def boolValue: Boolean           = _bool
-  def intValue: Int                = _int
-  def longValue: Long              = _long
-  def floatValue: Float            = _float
-  def doubleValue: Double          = _double
-  def bigIntegerValue: JBigInteger = _bigInteger
-  def bigDecimalValue: JBigDecimal = _bigDecimal
-  def stringValue: String          = _string
-  def tagValue: Tag                = _tag
+  @inline def boolValue: Boolean           = _bool
+  @inline def intValue: Int                = _int
+  @inline def longValue: Long              = _long
+  @inline def floatValue: Float            = _float
+  @inline def doubleValue: Double          = _double
+  @inline def bigIntegerValue: JBigInteger = _bigInteger
+  @inline def bigDecimalValue: JBigDecimal = _bigDecimal
+  @inline def stringValue: String          = _string
+  @inline def tagValue: Tag                = _tag
 
-  def getBytes[Bytes](implicit byteAccess: ByteAccess[Bytes]): Bytes =
+  @inline def getBytes[Bytes](implicit byteAccess: ByteAccess[Bytes]): Bytes =
     byteAccess.convert(_bytes)(_bytesAccess)
 
-  def clear(): Unit = _dataItem = DataItem.None
+  @inline def clear(): Unit = _dataItem = DataItem.None
 
   def onNull(in: Input): Input = ret(in, DataItem.Null)
 
@@ -151,7 +151,7 @@ private[borer] final class Receptacle extends Receiver[Input] with java.lang.Clo
 
   def copy = super.clone().asInstanceOf[Receptacle]
 
-  private def ret(in: Input, dataItem: Int): Input = {
+  @inline private def ret(in: Input, dataItem: Int): Input = {
     _dataItem = dataItem
     in
   }

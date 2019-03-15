@@ -53,7 +53,7 @@ case object Json extends Borer.Target {
       * Short-cut for encoding to a plain byte array, throwing an exception in case of any failures,
       * and then immediately UTF-8 decoding into a [[String]].
       */
-    def toUtf8String: String = new String(underlying.toByteArray, UTF_8)
+    @inline def toUtf8String: String = new String(underlying.toByteArray, UTF_8)
   }
 }
 
@@ -82,7 +82,7 @@ object Borer {
     /**
       * Configures the [[Writer.Config]] for this encoding run.
       */
-    def withConfig(config: Writer.Config): this.type = {
+    @inline def withConfig(config: Writer.Config): this.type = {
       this.config = config
       this
     }
@@ -115,7 +115,7 @@ object Borer {
       * Allows for customizing the injection points around input validation.
       * Used, for example, for on-the-side [[Logging]] of the encoding process.
       */
-    def withValidationApplier(validationApplier: Receiver.Applier[Output]): this.type = {
+    @inline def withValidationApplier(validationApplier: Receiver.Applier[Output]): this.type = {
       this.validationApplier = validationApplier
       this
     }
@@ -123,12 +123,12 @@ object Borer {
     /**
       * Short-cut for encoding to a plain byte array, throwing an exception in case of any failures.
       */
-    def toByteArray: Array[Byte] = to[Array[Byte]].bytes
+    @inline def toByteArray: Array[Byte] = to[Array[Byte]].bytes
 
     /**
       * Short-cut for encoding to a plain byte array, wrapped in a [[Try]] for error handling.
       */
-    def toByteArrayTry: Try[Array[Byte]] = to[Array[Byte]].bytesTry
+    @inline def toByteArrayTry: Try[Array[Byte]] = to[Array[Byte]].bytesTry
 
     /**
       * Encodes an instance of [[T]] to the given `Bytes` type using the configured options.
@@ -158,7 +158,7 @@ object Borer {
     /**
       * Indicates that this decoding run is not expected to consume the complete [[Input]].
       */
-    def consumePrefix: this.type = {
+    @inline def consumePrefix: this.type = {
       this.prefixOnly = true
       this
     }
@@ -166,7 +166,7 @@ object Borer {
     /**
       * Configures the [[Reader.Config]] for this decoding run.
       */
-    def withConfig(config: Reader.Config): this.type = {
+    @inline def withConfig(config: Reader.Config): this.type = {
       this.config = config
       this
     }
@@ -200,7 +200,7 @@ object Borer {
       * Allows for customizing the injection points around input validation.
       * Used, for example, for on-the-side [[Logging]] of the decoding process.
       */
-    def withValidationApplier(validationApplier: Receiver.Applier[Input]): this.type = {
+    @inline def withValidationApplier(validationApplier: Receiver.Applier[Input]): this.type = {
       this.validationApplier = validationApplier
       this
     }
@@ -249,37 +249,37 @@ object Borer {
 
     implicit final class EncodingResultOps[Out <: Output](val underlying: Either[Error[Out], Out]) extends AnyVal {
 
-      def bytes: Out#Result = underlying match {
+      @inline def bytes: Out#Result = underlying match {
         case Right(out) ⇒ out.result()
         case Left(e)    ⇒ throw e
       }
 
-      def bytesTry: Try[Out#Result] = underlying match {
+      @inline def bytesTry: Try[Out#Result] = underlying match {
         case Right(out) ⇒ Success(out.result())
         case Left(e)    ⇒ Failure(e)
       }
 
-      def output: Out = underlying match {
+      @inline def output: Out = underlying match {
         case Right(out) ⇒ out
         case Left(e)    ⇒ throw e
       }
 
-      def error: Error[Out] = underlying.left.get
+      @inline def error: Error[Out] = underlying.left.get
     }
 
     implicit final class DecodingResultOps[In, T](val underlying: Either[Error[In], (T, In)]) extends AnyVal {
 
-      def value: T = underlying match {
+      @inline def value: T = underlying match {
         case Right((x, _)) ⇒ x
         case Left(e)       ⇒ throw e
       }
 
-      def valueTry: Try[T] = underlying match {
+      @inline def valueTry: Try[T] = underlying match {
         case Right((x, _)) ⇒ Success(x)
         case Left(e)       ⇒ Failure(e)
       }
 
-      def error: Error[In] = underlying.left.get
+      @inline def error: Error[In] = underlying.left.get
     }
   }
 }

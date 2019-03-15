@@ -17,30 +17,30 @@ object Util {
 
   // "platform-independent" toString for Doubles, appends a ".0" suffix on JS, if required
   def doubleToString(value: Double): String = {
-    val s                                     = java.lang.Double.toString(value)
+    val s = java.lang.Double.toString(value)
     // check, whether the string consists only of digits (except for the first char, which might be a minus sign)
     @tailrec def onlyDigits(ix: Int): Boolean = ix <= 0 || { val c = s(ix); '0' <= c && c <= '9' && onlyDigits(ix - 1) }
     if (isJS && onlyDigits(s.length - 1)) s + ".0" else s
   }
 
-  def requireNonNegative(value: Int, name: String): Int = {
+  @inline def requireNonNegative(value: Int, name: String): Int = {
     requireNonNegative(value.toLong, name)
     value
   }
 
-  def requireNonNegative(value: Long, name: String): Long =
+  @inline def requireNonNegative(value: Long, name: String): Long =
     if (value < 0) throw new IllegalArgumentException(s"$name must be >= 0, but was $value")
     else value
 
-  def isChar(x: Int): Boolean              = (x >> 16) == 0
-  def isByte(x: Int): Boolean              = (x >> 7) == (x >> 31)
-  def isShort(x: Int): Boolean             = (x >> 15) == (x >> 31)
-  def isInt(x: Long): Boolean              = (x >> 31) == (x >> 63)
-  def isUnsignedInt(uLong: Long): Boolean  = uLong >> 31 == 0
-  def isUnsignedLong(uLong: Long): Boolean = uLong >= 0
+  @inline def isChar(x: Int): Boolean              = (x >> 16) == 0
+  @inline def isByte(x: Int): Boolean              = (x >> 7) == (x >> 31)
+  @inline def isShort(x: Int): Boolean             = (x >> 15) == (x >> 31)
+  @inline def isInt(x: Long): Boolean              = (x >> 31) == (x >> 63)
+  @inline def isUnsignedInt(uLong: Long): Boolean  = uLong >> 31 == 0
+  @inline def isUnsignedLong(uLong: Long): Boolean = uLong >= 0
 
-  def toUnsignedInt(byte: Byte): Int   = byte.toInt & 0xFF
-  def toUnsignedLong(byte: Byte): Long = byte.toLong & 0xFFL
+  @inline def toUnsignedInt(byte: Byte): Int   = byte.toInt & 0xFF
+  @inline def toUnsignedLong(byte: Byte): Long = byte.toLong & 0xFFL
 
   def toBigEndianBytes(uLong: Long): Array[Byte] = {
     val bytes = new Array[Byte](8)
@@ -68,14 +68,14 @@ object Util {
     }
   }
 
-  def canBeRepresentedAsFloat(value: Double): Boolean = value.isNaN || value.toFloat.toDouble == value
+  @inline def canBeRepresentedAsFloat(value: Double): Boolean = value.isNaN || value.toFloat.toDouble == value
 
   /**
     * Returns the int value of a given hex digit char.
     * Note: this implementation is very fast (since it's branchless) and therefore
     * does not perform ANY range checks!
     */
-  def hexValue(c: Char): Int = (c & 0x1f) + ((c >> 6) * 0x19) - 0x10
+  @inline def hexValue(c: Char): Int = (c & 0x1f) + ((c >> 6) * 0x19) - 0x10
 
   def inPlaceNegate(bytes: Array[Byte]): Unit = {
     @tailrec def rec(ix: Int): Unit = if (ix < bytes.length) { bytes(ix) = (~bytes(ix).toInt).toByte; rec(ix + 1) }

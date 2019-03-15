@@ -34,7 +34,7 @@ object MapBasedCodecs {
       }
     }
 
-    def dispatch[T](ctx: SealedTrait[Encoder, T]): Encoder[T] =
+    @inline def dispatch[T](ctx: SealedTrait[Encoder, T]): Encoder[T] =
       ArrayBasedCodecs.deriveEncoder.dispatch(ctx)
 
     def apply[T]: Encoder[T] = macro Magnolia.gen[T]
@@ -76,7 +76,7 @@ object MapBasedCodecs {
       }
     }
 
-    def dispatch[T](ctx: SealedTrait[Decoder, T]): Decoder[T] =
+    @inline def dispatch[T](ctx: SealedTrait[Decoder, T]): Decoder[T] =
       ArrayBasedCodecs.deriveDecoder.dispatch(ctx)
 
     def apply[T]: Decoder[T] = macro Magnolia.gen[T]

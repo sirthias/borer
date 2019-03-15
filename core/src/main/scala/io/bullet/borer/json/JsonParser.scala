@@ -71,7 +71,7 @@ private[borer] final class JsonParser extends Receiver.Parser {
     def invalidJsonValue(in: Input) = throw Error.InvalidJsonData(in, "Invalid JSON value")
 
     // format: OFF
-    def parseNull(inp: Input): Input = {
+    @inline def parseNull(inp: Input): Input = {
       var in = inp
       if (in.hasBytes(3) &&
         { in = in.readByte(); in.lastByte } == 'u' &&
@@ -81,7 +81,7 @@ private[borer] final class JsonParser extends Receiver.Parser {
       } else invalidJsonValue(in)
     }
 
-    def parseFalse(inp: Input): Input = {
+    @inline def parseFalse(inp: Input): Input = {
       var in = inp
       if (in.hasBytes(4) &&
         { in = in.readByte(); in.lastByte } == 'a' &&
@@ -92,7 +92,7 @@ private[borer] final class JsonParser extends Receiver.Parser {
       } else invalidJsonValue(in)
     }
 
-    def parseTrue(inp: Input): Input = {
+    @inline def parseTrue(inp: Input): Input = {
       var in = inp
       if (in.hasBytes(3) &&
         { in = in.readByte(); in.lastByte } == 'r' &&
@@ -142,7 +142,7 @@ private[borer] final class JsonParser extends Receiver.Parser {
     }
 
     @tailrec def parseNumber(inp: Input, value: Long, negative: Boolean): Input = {
-      def result(in: Input) = {
+      @inline def result(in: Input) = {
         val long = if (negative) -value else value
         if (Util.isInt(long)) receiver.onInt(in, long.toInt) else receiver.onLong(in, long)
       }
@@ -165,7 +165,7 @@ private[borer] final class JsonParser extends Receiver.Parser {
       } else result(inp)
     }
 
-    def parseNumber0(inp: Input): Input =
+    @inline def parseNumber0(inp: Input): Input =
       if (inp.hasBytes(1)) {
         val in = inp.readByte()
         val c  = in.lastByte.toChar
@@ -218,7 +218,7 @@ private[borer] final class JsonParser extends Receiver.Parser {
             }
           } else parseUtf8String(appendChar(in, c.toChar))
         } else {
-          def trailingByte(in: Input): Int = {
+          @inline def trailingByte(in: Input): Int = {
             val x = in.lastByte & 0xFF
             if ((x >> 6) != 2) throw Error.InvalidJsonData(in, s"Illegal UTF-8 character encoding")
             x & 0x3F
@@ -294,7 +294,7 @@ private[borer] final class JsonParser extends Receiver.Parser {
     }
   }
 
-  private def clearChars(): Unit = charsCursor = 0
+  @inline private def clearChars(): Unit = charsCursor = 0
 
   private def appendChar(in: Input, c: Char): Input = {
     val newCursor = charsCursor + 1
@@ -309,5 +309,5 @@ private[borer] final class JsonParser extends Receiver.Parser {
     } else throw Error.Overflow(in, "JSON String too long")
   }
 
-  private def getString: String = if (charsCursor > 0) new String(chars, 0, charsCursor) else ""
+  @inline private def getString: String = if (charsCursor > 0) new String(chars, 0, charsCursor) else ""
 }

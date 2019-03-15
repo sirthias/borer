@@ -255,9 +255,9 @@ object Validation {
         throw Borer.Error.UnexpectedDataItem(io, DataItem stringify mask, DataItem stringify dataItem)
       }
 
-    private def isMasked(test: Int): Boolean = (mask & test) != 0
+    @inline private def isMasked(test: Int): Boolean = (mask & test) != 0
 
-    private def isEvenNumberedElement: Boolean = (levelRemaining(level) & 1) == 0
+    @inline private def isEvenNumberedElement: Boolean = (levelRemaining(level) & 1) == 0
 
     @tailrec private def count(io: IO): Unit = {
       val l = level

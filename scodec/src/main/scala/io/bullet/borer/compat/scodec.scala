@@ -22,13 +22,13 @@ object scodec {
 
     type Out = ByteVectorOutput
 
-    def newOutput = new ByteVectorOutput
+    @inline def newOutput = new ByteVectorOutput
 
-    def sizeOf(bytes: ByteVector): Long = bytes.size
+    @inline def sizeOf(bytes: ByteVector): Long = bytes.size
 
-    def fromByteArray(byteArray: Array[Byte]): ByteVector = ByteVector(byteArray)
+    @inline def fromByteArray(byteArray: Array[Byte]): ByteVector = ByteVector(byteArray)
 
-    def toByteArray(bytes: ByteVector): Array[Byte] = bytes.toArray
+    @inline def toByteArray(bytes: ByteVector): Array[Byte] = bytes.toArray
 
     def concat(a: ByteVector, b: ByteVector) =
       if (a.nonEmpty) {
@@ -37,13 +37,13 @@ object scodec {
         } else a
       } else b
 
-    def convert[B](value: B)(implicit byteAccess: ByteAccess[B]) =
+    @inline def convert[B](value: B)(implicit byteAccess: ByteAccess[B]) =
       value match {
         case x: ByteVector ⇒ x
         case x             ⇒ ByteVector(byteAccess.toByteArray(x))
       }
 
-    def empty = ByteVector.empty
+    @inline def empty = ByteVector.empty
   }
 
   /**
@@ -62,18 +62,18 @@ object scodec {
     type Self  = ByteVectorInput
     type Bytes = ByteVector
 
-    def byteAccess = ByteVectorByteAccess
+    @inline def byteAccess = ByteVectorByteAccess
 
-    def cursor: Long          = _cursor
-    def lastByte: Byte        = _lastByte
-    def lastBytes: ByteVector = _lastBytes
+    @inline def cursor: Long          = _cursor
+    @inline def lastByte: Byte        = _lastByte
+    @inline def lastBytes: ByteVector = _lastBytes
 
-    def hasBytes(length: Long): Boolean = {
+    @inline def hasBytes(length: Long): Boolean = {
       val off = length + _cursor
       0 <= off && off <= input.length
     }
 
-    def readByte(): Self = {
+    @inline def readByte(): Self = {
       _lastByte = input(_cursor)
       _cursor += 1
       this
@@ -106,7 +106,7 @@ object scodec {
     type Self   = ByteVectorOutput
     type Result = ByteVector
 
-    def cursor: Int = _cursor
+    @inline def cursor: Int = _cursor
 
     def writeByte(byte: Byte): this.type = {
       val newCursor = _cursor + 1
@@ -148,9 +148,9 @@ object scodec {
       } else overflow()
     }
 
-    def result(): ByteVector = ByteVector.view(buffer, 0, _cursor)
+    @inline def result(): ByteVector = ByteVector.view(buffer, 0, _cursor)
 
-    private def ensureLength(minSize: Int): Unit =
+    @inline private def ensureLength(minSize: Int): Unit =
       if (buffer.length < minSize) {
         val newLen = math.max(buffer.length << 1, minSize)
         buffer = util.Arrays.copyOf(buffer, newLen)

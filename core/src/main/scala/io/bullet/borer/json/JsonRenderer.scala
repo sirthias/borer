@@ -57,7 +57,7 @@ private[borer] final class JsonRenderer extends Receiver[Output] {
 
   _levelCount(0) = -1 // we treat level 0 as an unbounded array
 
-  private def isLevelMap: Boolean = _levelSize(level) < 0
+  @inline private def isLevelMap: Boolean = _levelSize(level) < 0
 
   def onNull(out: Output): Output =
     count(sep(out).writeAsByte('n').writeAsByte('u').writeAsByte('l').writeAsByte('l'))
@@ -229,7 +229,7 @@ private[borer] final class JsonRenderer extends Receiver[Output] {
     out
   }
 
-  private def exitLevel(): Unit = level -= 1
+  @inline private def exitLevel(): Unit = level -= 1
 
   private def writeOverLong(out: Output, value: Long): Output = {
     val q = (value >>> 1) / 5
@@ -274,7 +274,7 @@ private[borer] final class JsonRenderer extends Receiver[Output] {
     } else out.writeAsByte('0')
 
   // fast branchless implementation returning the lower-case hex digit corresponding to the last 4 bits of the given Int
-  private def lowerHexDigit(int: Int): Int = {
+  @inline private def lowerHexDigit(int: Int): Int = {
     val i = int & 0x0F
     48 + i + (39 & ((9 - i) >> 31))
   }

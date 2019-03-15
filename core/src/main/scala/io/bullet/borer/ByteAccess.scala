@@ -38,13 +38,13 @@ object ByteAccess {
   implicit object ForByteArray extends ByteAccess[Array[Byte]] {
     type Out = Output.ToByteArray
 
-    def newOutput = new Output.ToByteArray
+    @inline def newOutput = new Output.ToByteArray
 
-    def sizeOf(bytes: Array[Byte]): Long = bytes.length.toLong
+    @inline def sizeOf(bytes: Array[Byte]): Long = bytes.length.toLong
 
-    def fromByteArray(byteArray: Array[Byte]): Array[Byte] = byteArray
+    @inline def fromByteArray(byteArray: Array[Byte]): Array[Byte] = byteArray
 
-    def toByteArray(bytes: Array[Byte]): Array[Byte] = bytes
+    @inline def toByteArray(bytes: Array[Byte]): Array[Byte] = bytes
 
     def concat(a: Array[Byte], b: Array[Byte]) =
       if (a.length > 0) {
@@ -59,12 +59,12 @@ object ByteAccess {
         } else a
       } else b
 
-    def convert[B](value: B)(implicit byteAccess: ByteAccess[B]): Array[Byte] =
+    @inline def convert[B](value: B)(implicit byteAccess: ByteAccess[B]): Array[Byte] =
       value match {
         case x: Array[Byte] ⇒ x
         case x              ⇒ byteAccess.toByteArray(x)
       }
 
-    val empty = Array.emptyByteArray
+    @inline def empty = Array.emptyByteArray
   }
 }

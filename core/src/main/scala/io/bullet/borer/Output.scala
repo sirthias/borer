@@ -53,7 +53,7 @@ object Output {
     type Self   = ToByteArray
     type Result = Array[Byte]
 
-    def cursor: Int = _cursor
+    @inline def cursor: Int = _cursor
 
     def writeByte(byte: Byte): this.type = {
       val newCursor = _cursor + 1

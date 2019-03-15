@@ -45,16 +45,16 @@ object Input {
 
     def byteAccess = ByteAccess.ForByteArray
 
-    def cursor: Int            = _cursor
-    def lastByte: Byte         = _lastByte
-    def lastBytes: Array[Byte] = _lastBytes
+    @inline def cursor: Int            = _cursor
+    @inline def lastByte: Byte         = _lastByte
+    @inline def lastBytes: Array[Byte] = _lastBytes
 
-    def hasBytes(length: Long): Boolean = {
+    @inline def hasBytes(length: Long): Boolean = {
       val off = length + _cursor
       0 <= off && off <= input.length
     }
 
-    def readByte(): Self = {
+    @inline def readByte(): Self = {
       _lastByte = input(_cursor)
       _cursor += 1
       this

@@ -26,17 +26,17 @@ private[borer] object CborParser extends Receiver.Parser {
     */
   def pull(input: Input, receiver: Receiver[Input]): Input = {
 
-    def decodePositiveInteger(in: Input, uLong: Long): Input =
+    @inline def decodePositiveInteger(in: Input, uLong: Long): Input =
       if (Util.isUnsignedInt(uLong)) receiver.onInt(in, uLong.toInt)
       else if (Util.isUnsignedLong(uLong)) receiver.onLong(in, uLong)
       else receiver.onOverLong(in, negative = false, uLong)
 
-    def decodeNegativeInteger(in: Input, uLong: Long): Input =
+    @inline def decodeNegativeInteger(in: Input, uLong: Long): Input =
       if (Util.isUnsignedInt(uLong)) receiver.onInt(in, (~uLong).toInt)
       else if (Util.isUnsignedLong(uLong)) receiver.onLong(in, ~uLong)
       else receiver.onOverLong(in, negative = true, uLong)
 
-    def decodeByteString(in: Input, uLong: Long, indefiniteLength: Boolean): Input =
+    @inline def decodeByteString(in: Input, uLong: Long, indefiniteLength: Boolean): Input =
       if (indefiniteLength) {
         receiver.onBytesStart(in)
       } else if (Util.isUnsignedLong(uLong)) {
@@ -46,7 +46,7 @@ private[borer] object CborParser extends Receiver.Parser {
         } else throw Error.InsufficientInput(in, uLong)
       } else throw Error.Overflow(in, "This decoder does not support byte strings with size >= 2^63")
 
-    def decodeTextString(in: Input, uLong: Long, indefiniteLength: Boolean): Input =
+    @inline def decodeTextString(in: Input, uLong: Long, indefiniteLength: Boolean): Input =
       if (indefiniteLength) {
         receiver.onTextStart(in)
       } else if (Util.isUnsignedLong(uLong)) {
@@ -56,21 +56,21 @@ private[borer] object CborParser extends Receiver.Parser {
         } else throw Error.InsufficientInput(in, uLong)
       } else throw Error.Overflow(in, "This decoder does not support text strings with size >= 2^63")
 
-    def decodeArray(in: Input, uLong: Long, indefiniteLength: Boolean): Input =
+    @inline def decodeArray(in: Input, uLong: Long, indefiniteLength: Boolean): Input =
       if (indefiniteLength) {
         receiver.onArrayStart(in)
       } else if (Util.isUnsignedLong(uLong)) {
         receiver.onArrayHeader(in, uLong)
       } else throw Error.Overflow(in, "This decoder does not support arrays with >= 2^63 elements")
 
-    def decodeMap(in: Input, uLong: Long, indefiniteLength: Boolean): Input =
+    @inline def decodeMap(in: Input, uLong: Long, indefiniteLength: Boolean): Input =
       if (indefiniteLength) {
         receiver.onMapStart(in)
       } else if (Util.isUnsignedLong(uLong)) {
         receiver.onMapHeader(in, uLong)
       } else throw Error.Overflow(in, "This decoder does not support maps with >= 2^63 entries")
 
-    def decodeTag(in: Input, uLong: Long): Input =
+    @inline def decodeTag(in: Input, uLong: Long): Input =
       uLong match {
         case 0     ⇒ receiver.onTag(in, Tag.DateTimeString)
         case 1     ⇒ receiver.onTag(in, Tag.EpochDateTime)
@@ -91,7 +91,7 @@ private[borer] object CborParser extends Receiver.Parser {
         case x     ⇒ receiver.onTag(in, Tag.Other(x))
       }
 
-    def decodeExtra(input: Input, info: Int, uLong: Long): Input =
+    @inline def decodeExtra(input: Input, info: Int, uLong: Long): Input =
       info match {
         case 20 ⇒ receiver.onBool(input, value = false)
         case 21 ⇒ receiver.onBool(input, value = true)
