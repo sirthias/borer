@@ -148,8 +148,8 @@ object Decoder extends LowPrioDecoders {
 
   implicit def forEither[A: Decoder, B: Decoder]: Decoder[Either[A, B]] =
     Decoder { r ⇒
-      if (r.readingJson) {
-        if (r.readArrayStart().readArrayStart().tryReadBreak()) {
+      if (r.tryReadArrayStart()) {
+        if (r.readArrayStart().tryReadBreak()) {
           val x = r.readArrayStart().read[B]()
           r.readBreak().readBreak()
           Right(x)

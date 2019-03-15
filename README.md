@@ -20,6 +20,33 @@ _BORER_ makes this very easy.
 [![Uses Badges](https://img.shields.io/badge/uses-badges-ff69b4.svg)](http://shields.io/)
 
 
+Basic Design Principles and Limitations 
+---------------------------------------
+
+_BORER_'s goal is to provide a highly efficient (de)serialization layer between some data model defined in Scala and
+[CBOR] and/or [JSON] as storage/network formats. _BORER_ performs this task in the most direct way, without relying on
+some Abstract Syntax Tree (AST, also called Document Object Model (DOM)) as intermediate structure.
+
+As such it doesn't offer any facilities for pre- or post-processing the serialized data, like manipulating the [JSON]
+structure, filtering or augmenting nodes, or the like.
+
+Also, it doesn't rely on reflection in any way. All information about the types to encode and decode must be statically
+available at the encoding/decoding point. With the exception of `sealed` ADT hierarchies (which are supported out of
+the box) this means that you need to define yourself, how to represent type information of abstract types on the wire!
+
+Another design principle has been to implement _BORER_'s core module without relying on Scala macros or depending on any
+external libraries. This should make _BORER_ easily maintainable for the foreseeable future and reduces its weight as
+a dependency of your applications (which can be especially important with [scala.js]).   
+
+The benefit of this design is simplicity and performance. In fact, it is possible to write Encoder- and Decoder-
+hierachies with _BORER_, that do not allocate any ephemeral garbage over the course of the (de)serialization process,
+which means, among other things, that primitives values do not _have to_ be boxed anywhere. 
+
+While writing encoding- and decoding logic in such a way isn't always the most convenient, and most of the predefined
+Encoders and Decoders _aren't_ written with a focus on zero-allocations, _BORER_'s core infrastructure is built to
+support such high-performance use cases, if required.     
+
+
 Modules
 -------
 
@@ -52,7 +79,7 @@ Basic Usage
 Encoding a value to a plain `Array[Byte]`:
 
 ```scala
-import io.bullet.borer.core.Cbor
+import io.bullet.borer.Cbor
 
 val value = List("foo", "bar", "baz") // example value
 
@@ -62,7 +89,7 @@ val bytes: Array[Byte] = Cbor.encode(value).toByteArray // throws on error
 Decoding a plain `Array[Byte]` back to a certain type:
 
 ```scala
-import io.bullet.borer.core.Cbor
+import io.bullet.borer.Cbor
 
 val list: List[String] = Cbor.decode(bytes).to[List[String]].value // throws on error
 ```
@@ -82,7 +109,7 @@ val decoded: Try[List[String]] = Cbor.decode(bytes).to[List[String]].valueTry
 Or, if you prefer encoding/decoding to an `Either` instance:
 
 ```scala
-import io.bullet.borer.core.{Cbor, Output}
+import io.bullet.borer.{Cbor, Output}
 
 val encoded: Either[Cbor.Error[Output], Output] = Cbor.encode(value)
 ```
@@ -90,7 +117,7 @@ val encoded: Either[Cbor.Error[Output], Output] = Cbor.encode(value)
 and
 
 ```scala
-import io.bullet.borer.core.{Cbor, Input}
+import io.bullet.borer.{Cbor, Input}
 
 val decoded: Either[Cbor.Error[Input], (List[String], Input)] = Cbor.decode(bytes).to[List[String]]
 ```
@@ -165,7 +192,7 @@ If `T` is a case class then an `Encoder[T]` and/or `Decoder[T]` can be concisely
 methods of the `T` companion object: 
 
 ```scala
-import io.bullet.borer.core.{Encoder, Decoder, Codec}
+import io.bullet.borer.{Encoder, Decoder, Codec}
 
 case class Color(name: String, value: Int)
 
@@ -198,7 +225,7 @@ If your type is not a case class but can somehow be constructed from or deconstr
 Decoder respectively, you can rely on the `compose` and `map` methods available on Encoders / Decoders:
 
 ```scala
-import io.bullet.borer.core.{Encoder, Decoder}
+import io.bullet.borer.{Encoder, Decoder}
 
 class Person(name: String)
 
@@ -215,7 +242,7 @@ For full flexibility of how your type `T` is to be encoded in [CBOR] you can of 
 `Writer` and read from a `Reader`:
 
 ```scala
-import io.bullet.borer.core.{Encoder, Decoder}
+import io.bullet.borer.{Encoder, Decoder}
 
 class Person(name: String)
 
@@ -225,8 +252,7 @@ implicit val decoder: Decoder[Person] = Decoder(reader => Person(reader.readStri
 
 On the encoding side the `Writer` gives you a number of different methods for writing [CBOR] primitives,
 while the `Reader` offers their counterparts on the decoding side.
-Check out the sources of these types (`Writer` [here][Writer Source] and `Reader` [here][Reader Source]).
-Hopefully their APIs are somewhat self-explanatory. 
+The [next section](#reader-and-writer) has some more details on how to work with these two types. 
  
 While this low-level way of defining the encoding/decoding logic is the most powerful it also requires a little more
 care.\
@@ -249,6 +275,103 @@ often only be recognizable at the very end of the encoding or decoding process. 
 [Logging](#Logging) below for more info how _BORER_ can support you in debugging (de)serialization issues.
 
 
+#### Reader and Writer
+
+All pre-defined Encoders and Decoders, as well as the ones you might write yourself, describe how to encode or decode
+and object by operating on a `Writer` or `Reader`, respectively.
+
+The `Writer` (sources [here][Writer Source]) contains a largish number of methods (like `writeInt`, `writeString` or
+`writeArrayHeader`) that more or less directly write the respective data item to the output.
+The `Reader` (sources [here][Reader Source]) contains the respective counterparts (like `readInt`, `readString` or
+`readArrayHeader`).
+
+The `Writer` and `Reader` operate directly on the respective `Output` and `Input` data "streams" and simply cause the
+respective low-level "primitive" to be written or read. This means, that the logic working with them has to have at
+least a basic understanding of the rules governing how these primitives can be or must be combined in order to produce
+valid output.
+
+For example, an "indefinite-length array" (in [CBOR] terminology) is written by first calling
+`writer.writeArrayStart()`, then writing all the elements (recursively descending into any nested structures) and
+finally "closing" the array with `writer.writeBreak()`.\
+
+On the reading side this is mirrored by first having to call `reader.readArrayStart()`, then reading all the elements
+(recursively decoding nested structures) and finally consuming the "closing" with `reader.readBreak()`.
+
+While _BORER_ implements validation logic (enabled by default), which verifies the structural integrity of all produced
+and consumed data, there are no static (type-level, i.e. compile-time) checks that catch you, when you forget to write
+or read the BREAK primitive at the end!
+
+When consuming [CBOR] data during decoding the `READER` gives you one-element look-ahead. This means that you can "see"
+the kind of the next data item (primitive) that is available _before_ reading it, which is often very helpful.
+
+For example, here is an potential `Decoder[Either[String, Int]]`:
+
+```scala
+import io.bullet.borer.Decoder
+
+implicit val eitherStringIntDecoder: Decoder[Either[String, Int]] =
+  Decoder { reader =>
+    if (reader.hasString) Left(reader.readString())
+    else if (reader.hasInt) Right(reader.readInt())
+    else reader.unexpectedDataItem(expected = "`String` or `Int`")   
+  }
+
+```
+
+
+JSON Support
+------------
+
+Since the [CBOR] data item primitives are a super set of what is available in [JSON], or, said differently, everything
+in [JSON] has a counterpart in [CBOR], it's not hard for _BORER_ to also support encoding to and decoding from [JSON].
+
+Here is how to encode a value to a plain `Array[Byte]` holding the UTF-8-encoded [JSON] output:
+
+```scala
+import io.bullet.borer.Json
+
+val value = List("foo", "bar", "baz") // example value
+
+val bytes: Array[Byte] = Json.encode(value).toByteArray // throws on error
+```
+
+Decoding a plain `Array[Byte]` holding UTF-8-encoded JSON input back to a certain type:
+
+```scala
+import io.bullet.borer.Json
+
+val list: List[String] = Json.decode(bytes).to[List[String]].value // throws on error
+```
+
+The `io.bullet.borer.Json` object supports the same API as the `io.bullet.borer.Cbor` object.
+
+From _BORER_'s point of view [JSON] is simply a slightly different binary format that only supports a subset of the
+models data primitives. Like with [CBOR] _BORER_ encodes and decodes [JSON] in a *single pass*, UTF-8 encoding and
+decoding to and from raw bytes on the fly, which should make it one of the fastest [JSON] implementations on the JVM
+for directly producing and consuming raw bytes (benchmarks pending).
+
+All higher-level infrastructure (i.e. `Writer`, `Reader`, `Encoder`, `Decoder`, `Codec`, etc.) is essentially agnostic
+to the (de)serialization target format. However, the `Writer` and `Reader` types do have a `target` member, which
+enables custom logic to discriminate between the two variants, if required.\
+Since the underlying [JSON] renderer will throw exceptions on attempts to write data primitives that are not supported
+in [JSON] (like [CBOR] Tags), this is sometimes necessary to efficiently support both formats.
+
+For example, in order to write an empty array in the most efficient way to both [CBOR] and [JSON] one would use this
+approach:
+
+```scala
+import io.bullet.borer.Writer
+
+def writeEmptyArray(w: Writer): w.type =
+  if (writingJson) writeArrayStart().writeBreak()
+  else writeArrayHeader(0) // fixed-sized Array Headers are not supported in JSON
+```
+
+However, as long as you don't use the `Reader` and `Writer` APIs to directly write low-level data primitives (like
+Arrays and Maps), but simply construct your (de)serialization logic from the _BORER_'s built-in Encoders and Decoders,
+your application should be able to support both [CBOR] and [JSON] at the same time without any special casing.      
+
+
 Document Object Model (DOM)
 ---------------------------
 
@@ -261,8 +384,8 @@ For such cases _BORER_ provides you with a simple "DOM" ADT (see the respective 
 which you can use like this:
 
 ```scala
-import io.bullet.borer.core.Cbor
-import io.bullet.borer.core.Dom.Element
+import io.bullet.borer.Cbor
+import io.bullet.borer.Dom.Element
 
 val dom = Element.Map(
   "foo" -> Element.Array(Element.Value.Int(42), Element.Value.String("rocks")),
@@ -287,7 +410,7 @@ with the `.withPrintLogging()` modifier.
 For example, this snippet:
 
 ```scala
-import io.bullet.borer.core.Cbot
+import io.bullet.borer.Cbot
 
 val value =
   Map(
@@ -462,10 +585,10 @@ Contributions are always welcome!
   [Magnolia]: https://propensive.com/opensource/magnolia
   [scodec]: http://scodec.org/
   [MPL 2.0]: https://www.mozilla.org/en-US/MPL/2.0/
-  [Cbor Source]: https://github.com/sirthias/borer/blob/master/core/src/main/scala/io/bullet/borer/core/Cbor.scala
-  [Writer Source]: https://github.com/sirthias/borer/blob/master/core/src/main/scala/io/bullet/borer/core/Writer.scala
-  [Reader Source]: https://github.com/sirthias/borer/blob/master/core/src/main/scala/io/bullet/borer/core/Reader.scala
-  [Dom Source]: https://github.com/sirthias/borer/blob/master/core/src/main/scala/io/bullet/borer/core/Dom.scala
+  [Cbor Source]: https://github.com/sirthias/borer/blob/master/core/src/main/scala/io/bullet/borerCbor.scala
+  [Writer Source]: https://github.com/sirthias/borer/blob/master/core/src/main/scala/io/bullet/borer/Writer.scala
+  [Reader Source]: https://github.com/sirthias/borer/blob/master/core/src/main/scala/io/bullet/borer/Reader.scala
+  [Dom Source]: https://github.com/sirthias/borer/blob/master/core/src/main/scala/io/bullet/borer/Dom.scala
   [TypeId Source]: https://github.com/sirthias/borer/blob/master/derivation/src/main/scala/io/bullet/borer/derivation/TypeId.scala
   [79]: https://github.com/propensive/magnolia/issues/79
   [114]: https://github.com/propensive/magnolia/issues/114
