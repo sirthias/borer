@@ -60,8 +60,10 @@ object ArrayBasedCodecs {
     type Typeclass[T] = Decoder[T]
 
     def combine[T](ctx: CaseClass[Decoder, T]): Decoder[T] = {
-      val params = ctx.parameters
-      val len    = params.size
+      val params              = ctx.parameters
+      val len                 = params.size
+      def expected(s: String) = s"$s for decoding an instance of type [${ctx.typeName.full}]"
+
       Decoder { r ⇒
         @tailrec def rec(ix: Int, constructorArgs: Array[AnyRef] = new Array(len)): T =
           if (ix < len) {
@@ -73,25 +75,21 @@ object ArrayBasedCodecs {
           case 0 ⇒ ctx.rawConstruct(Nil)
           case 1 ⇒ rec(0)
           case _ ⇒
-            if (r.readingJson) {
-              if (r.tryReadArrayStart()) {
-                val result = rec(0)
-                if (!r.tryReadBreak()) {
-                  val expected = s"Array with $len elements for decoding an instance of type [${ctx.typeName.full}]"
-                  r.unexpectedDataItem(expected, "at least one extra element")
-                } else result
-              } else r.unexpectedDataItem(s"Array Start for decoding an instance of type [${ctx.typeName.full}]")
-            } else if (!r.tryReadArrayHeader(len)) {
-              val expected = s"Array Header with length $len for decoding an instance of type [${ctx.typeName.full}]"
-              r.unexpectedDataItem(expected)
-            } else rec(0)
+            if (r.tryReadArrayStart()) {
+              val result = rec(0)
+              if (r.tryReadBreak()) result
+              else r.unexpectedDataItem(expected(s"Array with $len elements"), "at least one extra element")
+            } else if (r.tryReadArrayHeader(len)) rec(0)
+            else r.unexpectedDataItem(expected(s"Array Start or Array Header($len)"))
         }
       }
     }
 
     def dispatch[T](ctx: SealedTrait[Decoder, T]): Decoder[T] = {
-      val subtypes = ctx.subtypes.asInstanceOf[mutable.WrappedArray[Subtype[Decoder, T]]].array
-      val typeIds  = getTypeIds(ctx.typeName.full, subtypes)
+      val subtypes            = ctx.subtypes.asInstanceOf[mutable.WrappedArray[Subtype[Decoder, T]]].array
+      val typeIds             = getTypeIds(ctx.typeName.full, subtypes)
+      def expected(s: String) = s"$s for decoding an instance of type [${ctx.typeName.full}]"
+
       Decoder { r ⇒
         @tailrec def rec(id: TypeId.Value, ix: Int): T =
           if (ix < typeIds.length) {
@@ -99,15 +97,13 @@ object ArrayBasedCodecs {
             else rec(id, ix + 1)
           } else r.unexpectedDataItem(s"Any TypeId in [${typeIds.map(_.value).mkString(", ")}]", id.value.toString)
 
-        if (r.readingJson && r.tryReadArrayStart()) {
+        if (r.tryReadArrayStart()) {
           val result = rec(r.read[TypeId.Value](), 0)
-          if (!r.tryReadBreak()) {
-            val expected = s"Array with 2 elements for decoding an instance of type [${ctx.typeName.full}]"
-            r.unexpectedDataItem(expected, "at least one extra element")
-          } else result
+          if (r.tryReadBreak()) result
+          else r.unexpectedDataItem(expected("Array with 2 elements"), "at least one extra element")
         } else if (r.tryReadArrayHeader(2)) {
           rec(r.read[TypeId.Value](), 0)
-        } else r.unexpectedDataItem(s"Array with length 2 for decoding an instance of type [${ctx.typeName.full}]")
+        } else r.unexpectedDataItem(expected("Array with 2 elements"))
       }
     }
 

@@ -44,8 +44,10 @@ object MapBasedCodecs {
     type Typeclass[T] = Decoder[T]
 
     def combine[T](ctx: CaseClass[Decoder, T]): Decoder[T] = {
-      val params = ctx.parameters
-      val len    = params.size
+      val params              = ctx.parameters
+      val len                 = params.size
+      def expected(s: String) = s"$s for decoding an instance of type [${ctx.typeName.full}]"
+
       Decoder { r ⇒
         val constructorArgs = new Array[AnyRef](len)
         @tailrec def rec(ix: Int): T =
@@ -61,18 +63,12 @@ object MapBasedCodecs {
             rec(ix + 1)
           } else ctx.rawConstruct(constructorArgs)
 
-        if (r.readingJson) {
-          if (r.tryReadMapStart()) {
-            val result = rec(0)
-            if (!r.tryReadBreak()) {
-              val expected = s"Map with $len elements for decoding an instance of type [${ctx.typeName.full}]"
-              r.unexpectedDataItem(expected, "at least one extra element")
-            } else result
-          } else r.unexpectedDataItem(s"Map Start for decoding an instance of type [${ctx.typeName.full}]")
-        } else if (!r.tryReadMapHeader(len)) {
-          val expected = s"Map Header with length $len for decoding an instance of type [${ctx.typeName.full}]"
-          r.unexpectedDataItem(expected)
-        } else rec(0)
+        if (r.tryReadMapStart()) {
+          val result = rec(0)
+          if (r.tryReadBreak()) result
+          else r.unexpectedDataItem(expected(s"Map with $len elements"), "at least one extra element")
+        } else if (r.tryReadMapHeader(len)) rec(0)
+        else r.unexpectedDataItem(expected(s"Map Start or Map Header ($len)"))
       }
     }
 
