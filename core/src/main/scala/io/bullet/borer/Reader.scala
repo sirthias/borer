@@ -378,7 +378,8 @@ object Reader {
   )
 
   object Config {
-    val default = Config()
+    val default                  = Config()
+    val defaultWithoutValidation = Config(validation = None)
   }
 
   sealed trait SavedState {

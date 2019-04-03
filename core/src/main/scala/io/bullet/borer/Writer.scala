@@ -181,7 +181,8 @@ object Writer {
   )
 
   object Config {
-    val default = Config()
+    val default                  = Config()
+    val defaultWithoutValidation = Config(validation = None)
   }
 
   /**
