@@ -34,7 +34,6 @@ object ImmutableRfcExamplesSpec extends AbstractRfcExamplesSpec("Immutable Byte 
   }
 
   final class SomewhatImmutableByteArrayOutput(buffer: Array[Byte], val cursor: Int) extends Output {
-
     type Self   = SomewhatImmutableByteArrayOutput
     type Result = Array[Byte]
 
@@ -46,6 +45,10 @@ object ImmutableRfcExamplesSpec extends AbstractRfcExamplesSpec("Immutable Byte 
         new SomewhatImmutableByteArrayOutput(newBuffer, newCursor)
       } else overflow()
     }
+
+    def writeBytes(a: Byte, b: Byte)                   = writeByte(a).writeByte(b)
+    def writeBytes(a: Byte, b: Byte, c: Byte)          = writeByte(a).writeByte(b).writeByte(c)
+    def writeBytes(a: Byte, b: Byte, c: Byte, d: Byte) = writeByte(a).writeByte(b).writeByte(c).writeByte(d)
 
     def writeBytes[Bytes](bytes: Bytes)(implicit ba: ByteAccess[Bytes]): SomewhatImmutableByteArrayOutput = {
       val byteArray = ba.toByteArray(bytes)

@@ -67,8 +67,9 @@ private[borer] final class JsonRenderer extends Receiver[Output] {
 
   def onBool(out: Output, value: Boolean): Output =
     count {
-      if (value) sep(out).writeAsByte('t').writeAsByte('r').writeAsByte('u').writeAsByte('e')
-      else sep(out).writeAsByte('f').writeAsByte('a').writeAsByte('l').writeAsByte('s').writeAsByte('e')
+      val sep = separator
+      if (value) (if (sep != '\u0000') out.writeAsByte(sep) else out).writeAsBytes('t', 'r', 'u', 'e')
+      else (if (sep != '\u0000') out.writeAsBytes(sep, 'f') else out.writeAsByte('f')).writeAsBytes('a', 'l', 's', 'e')
     }
 
   def onInt(out: Output, value: Int): Output =
@@ -79,8 +80,9 @@ private[borer] final class JsonRenderer extends Receiver[Output] {
 
   def onOverLong(out: Output, negative: Boolean, value: Long): Output =
     count {
-      if (negative) writeOverLong(sep(out).writeAsByte('-'), ~value)
-      else writeOverLong(sep(out), value)
+      val sep = separator
+      if (negative) writeOverLong(if (sep != '\u0000') out.writeAsBytes(sep, '-') else out.writeAsByte('-'), ~value)
+      else writeOverLong(if (sep != '\u0000') out.writeAsByte(sep) else out, value)
     }
 
   def onFloat16(out: Output, value: Float): Output =
@@ -111,7 +113,7 @@ private[borer] final class JsonRenderer extends Receiver[Output] {
   def onString(out: Output, value: String): Output = {
     @tailrec def rec(out: Output, ix: Int): Output =
       if (ix < value.length) {
-        def escaped(c: Char)  = out.writeAsByte('\\').writeAsByte(c)
+        def escaped(c: Char)  = out.writeAsBytes('\\', c)
         def fail(msg: String) = throw Borer.Error.ValidationFailure(out, msg)
 
         value.charAt(ix) match {
@@ -128,7 +130,7 @@ private[borer] final class JsonRenderer extends Receiver[Output] {
                         index += 1
                         if (index < value.length) {
                           codePoint = Character.toCodePoint(c, value.charAt(index))
-                          out.writeAsByte(0xF0 | (codePoint >> 18)).writeAsByte(0x80 | ((codePoint >> 12) & 0x3F))
+                          out.writeBytes((0xF0 | (codePoint >> 18)).toByte, (0x80 | ((codePoint >> 12) & 0x3F)).toByte)
                         } else fail("Truncated UTF-16 surrogate pair at end of string \"" + value + '"')
                       } else fail("Invalid UTF-16 surrogate pair at index " + codePoint + " of string \"" + value + '"')
                     } else out.writeAsByte(0xE0 | (codePoint >> 12))) // 3-byte UTF-8 codepoint
@@ -145,14 +147,14 @@ private[borer] final class JsonRenderer extends Receiver[Output] {
           case '\t' ⇒ rec(escaped('t'), ix + 1)
           case c ⇒
             val newOut = out
-              .writeStringAsAsciiBytes("\\u00")
-              .writeAsByte(lowerHexDigit(c.toInt >> 4))
-              .writeAsByte(lowerHexDigit(c.toInt))
+              .writeAsBytes('\\', 'u', '0', '0')
+              .writeBytes(lowerHexDigit(c.toInt >> 4).toByte, lowerHexDigit(c.toInt).toByte)
             rec(newOut, ix + 1)
         }
       } else out
 
-    count(rec(sep(out).writeAsByte('"'), 0).writeAsByte('"'))
+    val sep = separator
+    count(rec(if (sep != '\u0000') out.writeAsBytes(sep, '"') else out.writeAsByte('"'), 0).writeAsByte('"'))
   }
 
   def onText[Bytes](out: Output, value: Bytes)(implicit ba: ByteAccess[Bytes]): Output =
@@ -164,14 +166,18 @@ private[borer] final class JsonRenderer extends Receiver[Output] {
   def onArrayHeader(out: Output, length: Long): Output =
     unsupported(out, "definite-length arrays")
 
-  def onArrayStart(out: Output): Output =
-    enterLevel(sep(out).writeAsByte('['), count = -1, size = 0)
+  def onArrayStart(out: Output): Output = {
+    val sep = separator
+    enterLevel(if (sep != '\u0000') out.writeAsBytes(sep, '[') else out.writeAsByte('['), count = -1, size = 0)
+  }
 
   def onMapHeader(out: Output, length: Long): Output =
     unsupported(out, "definite-length maps")
 
-  def onMapStart(out: Output): Output =
-    enterLevel(sep(out).writeAsByte('{'), count = -1, size = -1)
+  def onMapStart(out: Output): Output = {
+    val sep = separator
+    enterLevel(if (sep != '\u0000') out.writeAsBytes(sep, '{') else out.writeAsByte('{'), count = -1, size = -1)
+  }
 
   def onBreak(out: Output): Output = {
     val c = if (isLevelMap) '}' else ']'
@@ -186,12 +192,17 @@ private[borer] final class JsonRenderer extends Receiver[Output] {
   def target = this
   def copy   = throw new UnsupportedOperationException
 
-  private def sep(out: Output): Output = {
+  private def separator: Char = {
     val count = _levelCount(level)
     if (count != (count >> 63)) { // short for (count != 0) && (count != -1)
       val size = _levelSize(level)
-      out.writeAsByte(if ((size >= 0) || (count & 1) == (count >>> 63)) ',' else ':')
-    } else out
+      if ((size >= 0) || (count & 1) == (count >>> 63)) ',' else ':'
+    } else '\u0000'
+  }
+
+  private def sep(out: Output): Output = {
+    val s = separator
+    if (s != '\u0000') out.writeAsByte(s) else out
   }
 
   @tailrec private def count(out: Output): Output = {
@@ -255,7 +266,7 @@ private[borer] final class JsonRenderer extends Receiver[Output] {
             val q  = l / 100
             val r  = (l - mul100(q)).toInt
             val rq = div10(r)
-            phase1(q).writeAsByte('0' + rq).writeAsByte('0' + r - mul10(rq))
+            phase1(q).writeBytes(('0' + rq).toByte, ('0' + r - mul10(rq)).toByte)
           } else phase2(l.toInt)
 
         // for small numbers we can use the "fast-path"

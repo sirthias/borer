@@ -22,6 +22,10 @@ trait Output {
   type Result
 
   def writeByte(byte: Byte): Self
+  def writeBytes(a: Byte, b: Byte): Self
+  def writeBytes(a: Byte, b: Byte, c: Byte): Self
+  def writeBytes(a: Byte, b: Byte, c: Byte, d: Byte): Self
+
   def writeBytes[Bytes: ByteAccess](bytes: Bytes): Self
 
   def result(): Result
@@ -30,15 +34,28 @@ trait Output {
 object Output {
 
   implicit final class OutputOps(val underlying: Output) extends AnyVal {
-    def writeShort(value: Short): Output = underlying.writeByte((value >> 8).toByte).writeByte(value.toByte)
-    def writeInt(value: Int): Output     = writeShort((value >> 16).toShort).writeShort(value.toShort)
-    def writeLong(value: Long): Output   = writeInt((value >> 32).toInt).writeInt(value.toInt)
+    @inline def writeShort(value: Short): Output = underlying.writeBytes((value >> 8).toByte, value.toByte)
+    @inline def writeInt(value: Int): Output =
+      underlying.writeBytes((value >> 24).toByte, (value >> 16).toByte, (value >> 8).toByte, value.toByte)
+    @inline def writeLong(value: Long): Output = writeInt((value >> 32).toInt).writeInt(value.toInt)
 
-    def writeAsByte(i: Int): Output  = underlying.writeByte(i.toByte)
-    def writeAsByte(c: Char): Output = underlying.writeByte(c.toByte)
+    @inline def writeAsByte(i: Int): Output = underlying.writeByte(i.toByte)
+
+    @inline def writeAsByte(c: Char): Output                    = underlying.writeByte(c.toByte)
+    @inline def writeAsBytes(a: Char, b: Char): Output          = underlying.writeBytes(a.toByte, b.toByte)
+    @inline def writeAsBytes(a: Char, b: Char, c: Char): Output = underlying.writeBytes(a.toByte, b.toByte, c.toByte)
+    @inline def writeAsBytes(a: Char, b: Char, c: Char, d: Char): Output =
+      underlying.writeBytes(a.toByte, b.toByte, c.toByte, d.toByte)
+
     def writeStringAsAsciiBytes(s: String): Output = {
       @tailrec def rec(out: Output, ix: Int): Output =
-        if (ix < s.length) rec(out.writeAsByte(s.charAt(ix)), ix + 1) else underlying
+        s.length - ix match {
+          case 0 ⇒ out
+          case 1 ⇒ writeAsByte(s.charAt(ix))
+          case 2 ⇒ writeAsBytes(s.charAt(ix), s.charAt(ix + 1))
+          case 3 ⇒ writeAsBytes(s.charAt(ix), s.charAt(ix + 1), s.charAt(ix + 2))
+          case _ ⇒ rec(writeAsBytes(s.charAt(ix), s.charAt(ix + 1), s.charAt(ix + 2), s.charAt(ix + 3)), ix + 4)
+        }
       rec(underlying, 0)
     }
   }
@@ -56,10 +73,50 @@ object Output {
     @inline def cursor: Int = _cursor
 
     def writeByte(byte: Byte): this.type = {
-      val newCursor = _cursor + 1
+      val crs       = _cursor
+      val newCursor = crs + 1
       if (newCursor > 0) {
         ensureLength(newCursor)
-        buffer(_cursor) = byte
+        buffer(crs) = byte
+        _cursor = newCursor
+        this
+      } else overflow()
+    }
+
+    def writeBytes(a: Byte, b: Byte): this.type = {
+      val crs       = _cursor
+      val newCursor = crs + 2
+      if (newCursor > 0) {
+        ensureLength(newCursor)
+        buffer(crs) = a
+        buffer(crs + 1) = b
+        _cursor = newCursor
+        this
+      } else overflow()
+    }
+
+    def writeBytes(a: Byte, b: Byte, c: Byte): this.type = {
+      val crs       = _cursor
+      val newCursor = crs + 3
+      if (newCursor > 0) {
+        ensureLength(newCursor)
+        buffer(crs) = a
+        buffer(crs + 1) = b
+        buffer(crs + 2) = c
+        _cursor = newCursor
+        this
+      } else overflow()
+    }
+
+    def writeBytes(a: Byte, b: Byte, c: Byte, d: Byte): this.type = {
+      val crs       = _cursor
+      val newCursor = crs + 4
+      if (newCursor > 0) {
+        ensureLength(newCursor)
+        buffer(crs) = a
+        buffer(crs + 1) = b
+        buffer(crs + 2) = c
+        buffer(crs + 3) = d
         _cursor = newCursor
         this
       } else overflow()
@@ -68,10 +125,11 @@ object Output {
     def writeBytes[Bytes](bytes: Bytes)(implicit byteAccess: ByteAccess[Bytes]): this.type = {
       val byteArray = byteAccess.toByteArray(bytes)
       val l         = byteArray.length
-      val newCursor = _cursor + l
+      val crs       = _cursor
+      val newCursor = crs + l
       if (newCursor > 0) {
         ensureLength(newCursor)
-        System.arraycopy(byteArray, 0, buffer, _cursor, l)
+        System.arraycopy(byteArray, 0, buffer, crs, l)
         _cursor = newCursor
         this
       } else overflow()
@@ -84,7 +142,7 @@ object Output {
         result
       } else buffer
 
-    private def ensureLength(minSize: Int): Unit =
+    @inline private def ensureLength(minSize: Int): Unit =
       if (buffer.length < minSize) {
         val newLen = math.max(buffer.length << 1, minSize)
         buffer = util.Arrays.copyOf(buffer, newLen)
