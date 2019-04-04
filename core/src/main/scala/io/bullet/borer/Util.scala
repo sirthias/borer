@@ -32,6 +32,9 @@ object Util {
     if (value < 0) throw new IllegalArgumentException(s"$name must be >= 0, but was $value")
     else value
 
+  private[this] val _identityFunc = (x: Any) ⇒ x
+  def identityFunc[T]: T ⇒ T      = _identityFunc.asInstanceOf[T ⇒ T]
+
   @inline def isChar(x: Int): Boolean              = (x >> 16) == 0
   @inline def isByte(x: Int): Boolean              = (x >> 7) == (x >> 31)
   @inline def isShort(x: Int): Boolean             = (x >> 15) == (x >> 31)

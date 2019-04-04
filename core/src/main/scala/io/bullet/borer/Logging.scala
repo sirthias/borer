@@ -30,10 +30,10 @@ import scala.annotation.tailrec
   */
 object Logging {
 
-  def afterValidation[IO](createLogger: LevelInfo ⇒ Logger[IO]): Receiver.Applier[IO] =
+  def afterValidation(createLogger: LevelInfo ⇒ Logger): Receiver.Applier =
     (creator, target) ⇒ creator(new Receiver(target, createLogger))
 
-  def beforeValidation[IO](createLogger: LevelInfo ⇒ Logger[IO]): Receiver.Applier[IO] =
+  def beforeValidation(createLogger: LevelInfo ⇒ Logger): Receiver.Applier =
     (creator, target) ⇒ new Receiver(creator(target), createLogger)
 
   abstract class LevelInfo {
@@ -55,66 +55,66 @@ object Logging {
     final case object MapValue extends MapEntry
   }
 
-  trait Logger[-IO] {
-    def onNull(io: IO): Unit
-    def onUndefined(io: IO): Unit
-    def onBool(io: IO, value: Boolean): Unit
-    def onInt(io: IO, value: Int): Unit
-    def onLong(io: IO, value: Long): Unit
-    def onOverLong(io: IO, negative: Boolean, value: Long): Unit
-    def onFloat16(io: IO, value: Float): Unit
-    def onFloat(io: IO, value: Float): Unit
-    def onDouble(io: IO, value: Double): Unit
-    def onBigInteger(io: IO, value: JBigInteger): Unit
-    def onBigDecimal(io: IO, value: JBigDecimal): Unit
-    def onBytes[Bytes: ByteAccess](io: IO, value: Bytes): Unit
-    def onBytesStart(io: IO): Unit
-    def onString(io: IO, value: String): Unit
-    def onText[Bytes: ByteAccess](io: IO, value: Bytes): Unit
-    def onTextStart(io: IO): Unit
-    def onArrayHeader(io: IO, length: Long): Unit
-    def onArrayStart(io: IO): Unit
-    def onMapHeader(io: IO, length: Long): Unit
-    def onMapStart(io: IO): Unit
-    def onTag(io: IO, value: Tag): Unit
-    def onSimpleValue(io: IO, value: Int): Unit
-    def onLevelExited(io: IO, levelType: LevelType, break: Boolean): Unit
-    def onEndOfInput(io: IO): Unit
+  trait Logger {
+    def onNull(): Unit
+    def onUndefined(): Unit
+    def onBool(value: Boolean): Unit
+    def onInt(value: Int): Unit
+    def onLong(value: Long): Unit
+    def onOverLong(negative: Boolean, value: Long): Unit
+    def onFloat16(value: Float): Unit
+    def onFloat(value: Float): Unit
+    def onDouble(value: Double): Unit
+    def onBigInteger(value: JBigInteger): Unit
+    def onBigDecimal(value: JBigDecimal): Unit
+    def onBytes[Bytes: ByteAccess](value: Bytes): Unit
+    def onBytesStart(): Unit
+    def onString(value: String): Unit
+    def onText[Bytes: ByteAccess](value: Bytes): Unit
+    def onTextStart(): Unit
+    def onArrayHeader(length: Long): Unit
+    def onArrayStart(): Unit
+    def onMapHeader(length: Long): Unit
+    def onMapStart(): Unit
+    def onTag(value: Tag): Unit
+    def onSimpleValue(value: Int): Unit
+    def onLevelExited(levelType: LevelType, break: Boolean): Unit
+    def onEndOfInput(): Unit
   }
 
   /**
     * A [[Logger]] which formats each incoming element to it's own log line.
     */
-  abstract class LineFormatLogger[-IO] extends Logger[IO] {
+  abstract class LineFormatLogger extends Logger {
     import java.lang.Long.toHexString
 
-    def onNull(io: IO)                                     = show("null")
-    def onUndefined(io: IO)                                = show("undefined")
-    def onBool(io: IO, value: Boolean)                     = show(value.toString)
-    def onInt(io: IO, value: Int)                          = show(value.toString)
-    def onLong(io: IO, value: Long)                        = show(s"${value}L")
-    def onOverLong(io: IO, negative: Boolean, value: Long) = show((if (negative) "-0x" else "0x") + toHexString(value))
-    def onFloat16(io: IO, value: Float)                    = show(s"${Util.doubleToString(value.toDouble)}f16")
-    def onFloat(io: IO, value: Float)                      = show(s"${Util.doubleToString(value.toDouble)}f")
-    def onDouble(io: IO, value: Double)                    = show(Util.doubleToString(value))
-    def onBigInteger(io: IO, value: JBigInteger)           = show(s"BigInteger($value)")
-    def onBigDecimal(io: IO, value: JBigDecimal)           = show(s"BigDecimal($value)")
-    def onBytes[Bytes: ByteAccess](io: IO, value: Bytes)   = show(formatBytes("BYTES[", value))
-    def onBytesStart(io: IO)                               = show("BYTES-STREAM[")
-    def onString(io: IO, value: String): Unit              = show(formatString(value))
-    def onText[Bytes: ByteAccess](io: IO, value: Bytes)    = show(formatString(value))
-    def onTextStart(io: IO)                                = show("TEXT-STREAM[")
-    def onArrayHeader(io: IO, length: Long)                = show(if (length > 0) "[" else "[]")
-    def onArrayStart(io: IO)                               = show("[")
-    def onMapHeader(io: IO, length: Long)                  = show(if (length > 0) "{" else "{}")
-    def onMapStart(io: IO)                                 = show("{")
-    def onTag(io: IO, value: Tag)                          = show(value.toString)
-    def onSimpleValue(io: IO, value: Int)                  = show(s"SimpleValue($value)")
+    def onNull(): Unit                                   = show("null")
+    def onUndefined(): Unit                              = show("undefined")
+    def onBool(value: Boolean): Unit                     = show(value.toString)
+    def onInt(value: Int): Unit                          = show(value.toString)
+    def onLong(value: Long): Unit                        = show(s"${value}L")
+    def onOverLong(negative: Boolean, value: Long): Unit = show((if (negative) "-0x" else "0x") + toHexString(value))
+    def onFloat16(value: Float): Unit                    = show(s"${Util.doubleToString(value.toDouble)}f16")
+    def onFloat(value: Float): Unit                      = show(s"${Util.doubleToString(value.toDouble)}f")
+    def onDouble(value: Double): Unit                    = show(Util.doubleToString(value))
+    def onBigInteger(value: JBigInteger): Unit           = show(s"BigInteger($value)")
+    def onBigDecimal(value: JBigDecimal): Unit           = show(s"BigDecimal($value)")
+    def onBytes[Bytes: ByteAccess](value: Bytes): Unit   = show(formatBytes("BYTES[", value))
+    def onBytesStart(): Unit                             = show("BYTES-STREAM[")
+    def onString(value: String): Unit                    = show(formatString(value))
+    def onText[Bytes: ByteAccess](value: Bytes)          = show(formatString(value))
+    def onTextStart(): Unit                              = show("TEXT-STREAM[")
+    def onArrayHeader(length: Long): Unit                = show(if (length > 0) "[" else "[]")
+    def onArrayStart(): Unit                             = show("[")
+    def onMapHeader(length: Long): Unit                  = show(if (length > 0) "{" else "{}")
+    def onMapStart(): Unit                               = show("{")
+    def onTag(value: Tag): Unit                          = show(value.toString)
+    def onSimpleValue(value: Int): Unit                  = show(s"SimpleValue($value)")
 
-    def onLevelExited(io: IO, levelType: LevelType, break: Boolean) =
+    def onLevelExited(levelType: LevelType, break: Boolean): Unit =
       show(if (levelType.isInstanceOf[LevelType.MapEntry]) "}" else "]")
 
-    def onEndOfInput(io: IO) = show("END")
+    def onEndOfInput(): Unit = show("END")
 
     def formatBytes[Bytes](opener: String, value: Bytes)(implicit ba: ByteAccess[Bytes]): String =
       ba.toByteArray(value)
@@ -159,7 +159,7 @@ object Logging {
     * A [[LineFormatLogger]] that simply prints all lines to the console.
     */
   final class PrintLogger(val maxShownByteArrayPrefixLen: Int, val maxShownStringPrefixLen: Int, val info: LevelInfo)
-      extends LineFormatLogger[Any] {
+      extends LineFormatLogger {
     def showLine(line: String): Unit = println(line)
   }
 
@@ -177,7 +177,7 @@ object Logging {
                              val maxShownStringPrefixLen: Int,
                              val lineSeparator: String,
                              val info: LevelInfo)
-      extends LineFormatLogger[Any] {
+      extends LineFormatLogger {
     def showLine(line: String): Unit = stringBuilder.append(line).append(lineSeparator)
   }
 
@@ -185,8 +185,8 @@ object Logging {
     * A [[Receiver]] which forwards all incoming data item to another [[Receiver]] and,
     * on the side, feeds a custom [[Logger]] with logging events.
     */
-  final class Receiver[IO](private var _target: borer.Receiver[IO], createLogger: LevelInfo ⇒ Logger[IO])
-      extends LevelInfo with borer.Receiver[IO] with java.lang.Cloneable {
+  final class Receiver(private var _target: borer.Receiver, createLogger: LevelInfo ⇒ Logger)
+      extends LevelInfo with borer.Receiver with java.lang.Cloneable {
 
     private var _level: Int = 0
 
@@ -243,152 +243,152 @@ object Logging {
         }
     }
 
-    def onNull(io: IO): IO = {
-      logger.onNull(io)
-      count(io)
-      target.onNull(io)
+    def onNull(): Unit = {
+      logger.onNull()
+      count()
+      target.onNull()
     }
 
-    def onUndefined(io: IO): IO = {
-      logger.onUndefined(io)
-      count(io)
-      target.onUndefined(io)
+    def onUndefined(): Unit = {
+      logger.onUndefined()
+      count()
+      target.onUndefined()
     }
 
-    def onBool(io: IO, value: Boolean): IO = {
-      logger.onBool(io, value)
-      count(io)
-      target.onBool(io, value)
+    def onBool(value: Boolean): Unit = {
+      logger.onBool(value)
+      count()
+      target.onBool(value)
     }
 
-    def onInt(io: IO, value: Int): IO = {
-      logger.onInt(io, value)
-      count(io)
-      target.onInt(io, value)
+    def onInt(value: Int): Unit = {
+      logger.onInt(value)
+      count()
+      target.onInt(value)
     }
 
-    def onLong(io: IO, value: Long): IO = {
-      logger.onLong(io, value)
-      count(io)
-      target.onLong(io, value)
+    def onLong(value: Long): Unit = {
+      logger.onLong(value)
+      count()
+      target.onLong(value)
     }
 
-    def onOverLong(io: IO, negative: Boolean, value: Long): IO = {
-      logger.onOverLong(io, negative, value)
-      count(io)
-      target.onOverLong(io, negative, value)
+    def onOverLong(negative: Boolean, value: Long): Unit = {
+      logger.onOverLong(negative, value)
+      count()
+      target.onOverLong(negative, value)
     }
 
-    def onFloat16(io: IO, value: Float): IO = {
-      logger.onFloat16(io, value)
-      count(io)
-      target.onFloat16(io, value)
+    def onFloat16(value: Float): Unit = {
+      logger.onFloat16(value)
+      count()
+      target.onFloat16(value)
     }
 
-    def onFloat(io: IO, value: Float): IO = {
-      logger.onFloat(io, value)
-      count(io)
-      target.onFloat(io, value)
+    def onFloat(value: Float): Unit = {
+      logger.onFloat(value)
+      count()
+      target.onFloat(value)
     }
 
-    def onDouble(io: IO, value: Double): IO = {
-      logger.onDouble(io, value)
-      count(io)
-      target.onDouble(io, value)
+    def onDouble(value: Double): Unit = {
+      logger.onDouble(value)
+      count()
+      target.onDouble(value)
     }
 
-    def onBigInteger(io: IO, value: JBigInteger): IO = {
-      logger.onBigInteger(io, value)
-      count(io)
-      target.onBigInteger(io, value)
+    def onBigInteger(value: JBigInteger): Unit = {
+      logger.onBigInteger(value)
+      count()
+      target.onBigInteger(value)
     }
 
-    def onBigDecimal(io: IO, value: JBigDecimal): IO = {
-      logger.onBigDecimal(io, value)
-      count(io)
-      target.onBigDecimal(io, value)
+    def onBigDecimal(value: JBigDecimal): Unit = {
+      logger.onBigDecimal(value)
+      count()
+      target.onBigDecimal(value)
     }
 
-    def onBytes[Bytes: ByteAccess](io: IO, value: Bytes): IO = {
-      logger.onBytes(io, value)
-      count(io)
-      target.onBytes(io, value)
+    def onBytes[Bytes: ByteAccess](value: Bytes): Unit = {
+      logger.onBytes(value)
+      count()
+      target.onBytes(value)
     }
 
-    def onBytesStart(io: IO): IO = {
-      logger.onBytesStart(io)
+    def onBytesStart(): Unit = {
+      logger.onBytesStart()
       enterLevel(count = -1, size = 2)
-      target.onBytesStart(io)
+      target.onBytesStart()
     }
 
-    def onString(io: IO, value: String): IO = {
-      logger.onString(io, value)
-      count(io)
-      target.onString(io, value)
+    def onString(value: String): Unit = {
+      logger.onString(value)
+      count()
+      target.onString(value)
     }
 
-    def onText[Bytes: ByteAccess](io: IO, value: Bytes): IO = {
-      logger.onText(io, value)
-      count(io)
-      target.onText(io, value)
+    def onText[Bytes: ByteAccess](value: Bytes): Unit = {
+      logger.onText(value)
+      count()
+      target.onText(value)
     }
 
-    def onTextStart(io: IO): IO = {
-      logger.onTextStart(io)
+    def onTextStart(): Unit = {
+      logger.onTextStart()
       enterLevel(count = -1, size = 3)
-      target.onTextStart(io)
+      target.onTextStart()
     }
 
-    def onArrayHeader(io: IO, length: Long): IO = {
-      logger.onArrayHeader(io, length)
-      if (length > 0) enterLevel(count = 0, size = length) else count(io)
-      target.onArrayHeader(io, length)
+    def onArrayHeader(length: Long): Unit = {
+      logger.onArrayHeader(length)
+      if (length > 0) enterLevel(count = 0, size = length) else count()
+      target.onArrayHeader(length)
     }
 
-    def onArrayStart(io: IO): IO = {
-      logger.onArrayStart(io)
+    def onArrayStart(): Unit = {
+      logger.onArrayStart()
       enterLevel(count = -1, size = 0)
-      target.onArrayStart(io)
+      target.onArrayStart()
     }
 
-    def onMapHeader(io: IO, length: Long): IO = {
-      logger.onMapHeader(io, length)
-      if (length > 0) enterLevel(count = 0, size = ~(length << 1)) else count(io)
-      target.onMapHeader(io, length)
+    def onMapHeader(length: Long): Unit = {
+      logger.onMapHeader(length)
+      if (length > 0) enterLevel(count = 0, size = ~(length << 1)) else count()
+      target.onMapHeader(length)
     }
 
-    def onMapStart(io: IO): IO = {
-      logger.onMapStart(io)
+    def onMapStart(): Unit = {
+      logger.onMapStart()
       enterLevel(count = -1, size = 1)
-      target.onMapStart(io)
+      target.onMapStart()
     }
 
-    def onBreak(io: IO): IO = {
+    def onBreak(): Unit = {
       val exitedLevelType = levelType
       exitLevel()
-      logger.onLevelExited(io, exitedLevelType, break = true)
-      count(io) // level-entering items are only counted when the level is exited, not when they are entered
-      target.onBreak(io)
+      logger.onLevelExited(exitedLevelType, break = true)
+      count() // level-entering items are only counted when the level is exited, not when they are entered
+      target.onBreak()
     }
 
-    def onTag(io: IO, value: Tag): IO = {
-      logger.onTag(io, value)
-      target.onTag(io, value)
+    def onTag(value: Tag): Unit = {
+      logger.onTag(value)
+      target.onTag(value)
     }
 
-    def onSimpleValue(io: IO, value: Int): IO = {
-      logger.onSimpleValue(io, value)
-      count(io)
-      target.onSimpleValue(io, value)
+    def onSimpleValue(value: Int): Unit = {
+      logger.onSimpleValue(value)
+      count()
+      target.onSimpleValue(value)
     }
 
-    def onEndOfInput(io: IO): IO = {
-      logger.onEndOfInput(io)
-      target.onEndOfInput(io)
+    def onEndOfInput(): Unit = {
+      logger.onEndOfInput()
+      target.onEndOfInput()
     }
 
     def copy = {
-      val clone = super.clone().asInstanceOf[Receiver[IO]]
+      val clone = super.clone().asInstanceOf[Receiver]
       clone._target = _target.copy
       clone._levelCount = _levelCount.clone()
       clone._levelSize = _levelSize.clone()
@@ -396,7 +396,7 @@ object Logging {
       clone
     }
 
-    @tailrec private def count(io: IO): Unit = {
+    @tailrec private def count(): Unit = {
       val cnt = _levelCount(_level)
       if (cnt >= 0) {
         // bounded array or map
@@ -406,8 +406,8 @@ object Logging {
         if (newCount == size) {
           val exitedLevelType = levelType
           exitLevel()
-          logger.onLevelExited(io, exitedLevelType, break = false)
-          count(io) // level-entering items are only counted when the level is exited, not when they are entered
+          logger.onLevelExited(exitedLevelType, break = false)
+          count() // level-entering items are only counted when the level is exited, not when they are entered
         } else _levelCount(_level) = newCount
       } else _levelCount(_level) = cnt - 1 // unbounded something
     }

@@ -9,7 +9,6 @@
 package io.bullet.borer.json
 
 import io.bullet.borer._
-import java.util
 import java.math.{BigDecimal ⇒ JBigDecimal, BigInteger ⇒ JBigInteger}
 import scala.annotation.tailrec
 
@@ -44,73 +43,67 @@ import scala.annotation.tailrec
   *
   * @see https://tools.ietf.org/html/rfc8259
   */
-private[borer] final class JsonRenderer extends Receiver[Output] {
+private[borer] final class JsonRenderer(var out: Output) extends Receiver.Renderer {
 
-  private[this] var level: Int = 0
+  private[this] var level: Int           = _ // valid range: 0 - 63
+  private[this] var levelType: Long      = _ // keeps the type of each level as a bit map: 0 -> Array, 1 -> Map
+  private[this] var sepRequired: Boolean = _ // whether a separator required before the next element
+  private[this] var mapCount: Long       = _ // for each map level: 0 -> next element is key, 1 -> next element is value
 
-  // >= 0 if bounded, < 0 if unbounded (the count is then ~x)
-  private[this] var _levelCount = new Array[Long](4)
+  @inline private def isLevelMap: Boolean = ((levelType >> level) & 1) != 0
 
-  // if bounded: >= 0 if in array, < 0 if in map (the size is then ~x)
-  // if unbounded: 0 -> array, -1 -> map
-  private[this] var _levelSize = new Array[Long](4)
+  def onNull(): Unit =
+    out = count(sep(out).writeAsBytes('n', 'u', 'l', 'l'))
 
-  _levelCount(0) = -1 // we treat level 0 as an unbounded array
-
-  @inline private def isLevelMap: Boolean = _levelSize(level) < 0
-
-  def onNull(out: Output): Output =
-    count(sep(out).writeAsByte('n').writeAsByte('u').writeAsByte('l').writeAsByte('l'))
-
-  def onUndefined(out: Output): Output =
+  def onUndefined(): Unit =
     unsupported(out, "the `undefined` value")
 
-  def onBool(out: Output, value: Boolean): Output =
-    count {
+  def onBool(value: Boolean): Unit =
+    out = count {
       val sep = separator
       if (value) (if (sep != '\u0000') out.writeAsByte(sep) else out).writeAsBytes('t', 'r', 'u', 'e')
       else (if (sep != '\u0000') out.writeAsBytes(sep, 'f') else out.writeAsByte('f')).writeAsBytes('a', 'l', 's', 'e')
     }
 
-  def onInt(out: Output, value: Int): Output =
-    onLong(out, value.toLong)
+  def onInt(value: Int): Unit =
+    onLong(value.toLong)
 
-  def onLong(out: Output, value: Long): Output =
-    count(writeLong(sep(out), value))
+  def onLong(value: Long): Unit =
+    out = count(writeLong(sep(out), value))
 
-  def onOverLong(out: Output, negative: Boolean, value: Long): Output =
-    count {
+  def onOverLong(negative: Boolean, value: Long): Unit =
+    out = count {
       val sep = separator
       if (negative) writeOverLong(if (sep != '\u0000') out.writeAsBytes(sep, '-') else out.writeAsByte('-'), ~value)
       else writeOverLong(if (sep != '\u0000') out.writeAsByte(sep) else out, value)
     }
 
-  def onFloat16(out: Output, value: Float): Output =
+  def onFloat16(value: Float): Unit =
     unsupported(out, "Float16 values")
 
-  def onFloat(out: Output, value: Float): Output =
-    onDouble(out, value.toDouble)
+  def onFloat(value: Float): Unit =
+    onDouble(value.toDouble)
 
-  def onDouble(out: Output, value: Double): Output =
+  def onDouble(value: Double): Unit =
     if (!value.isNaN) {
       if (!value.isInfinity) {
-        count(sep(out).writeStringAsAsciiBytes(Util.doubleToString(value)))
+        out = count(sep(out).writeStringAsAsciiBytes(Util.doubleToString(value)))
       } else unsupported(out, "`Infinity` floating point values")
     } else unsupported(out, "`NaN` floating point values")
 
-  def onBigInteger(out: Output, value: JBigInteger): Output =
-    out.writeStringAsAsciiBytes(value.toString)
+  def onBigInteger(value: JBigInteger): Unit =
+    out = out.writeStringAsAsciiBytes(value.toString)
 
-  def onBigDecimal(out: Output, value: JBigDecimal): Output =
-    out.writeStringAsAsciiBytes(value.toString)
+  def onBigDecimal(value: JBigDecimal): Unit =
+    out = out.writeStringAsAsciiBytes(value.toString)
 
-  def onBytes[Bytes](out: Output, value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Output =
+  def onBytes[Bytes: ByteAccess](value: Bytes): Unit =
     unsupported(out, "byte strings")
 
-  def onBytesStart(out: Output): Output =
+  def onBytesStart(): Unit =
     unsupported(out, "byte string streams")
 
-  def onString(out: Output, value: String): Output = {
+  def onString(value: String): Unit = {
     @tailrec def rec(out: Output, ix: Int): Output =
       if (ix < value.length) {
         def escaped(c: Char)  = out.writeAsBytes('\\', c)
@@ -154,93 +147,74 @@ private[borer] final class JsonRenderer extends Receiver[Output] {
       } else out
 
     val sep = separator
-    count(rec(if (sep != '\u0000') out.writeAsBytes(sep, '"') else out.writeAsByte('"'), 0).writeAsByte('"'))
+    out = count(rec(if (sep != '\u0000') out.writeAsBytes(sep, '"') else out.writeAsByte('"'), 0).writeAsByte('"'))
   }
 
-  def onText[Bytes](out: Output, value: Bytes)(implicit ba: ByteAccess[Bytes]): Output =
+  def onText[Bytes](value: Bytes)(implicit ba: ByteAccess[Bytes]): Unit =
     unsupported(out, "text byte strings")
 
-  def onTextStart(out: Output): Output =
+  def onTextStart(): Unit =
     unsupported(out, "text byte string streams")
 
-  def onArrayHeader(out: Output, length: Long): Output =
+  def onArrayHeader(length: Long): Unit =
     unsupported(out, "definite-length arrays")
 
-  def onArrayStart(out: Output): Output = {
-    val sep = separator
-    enterLevel(if (sep != '\u0000') out.writeAsBytes(sep, '[') else out.writeAsByte('['), count = -1, size = 0)
+  def onArrayStart(): Unit = {
+    val sep      = separator
+    val newLevel = level + 1
+    if (newLevel < 64) {
+      levelType &= ~(1 << newLevel)
+      level = newLevel
+      sepRequired = false
+      out = if (sep != '\u0000') out.writeAsBytes(sep, '[') else out.writeAsByte('[')
+    } else unsupported(out, "more than 64 JSON Array/Object nesting levels")
   }
 
-  def onMapHeader(out: Output, length: Long): Output =
+  def onMapHeader(length: Long): Unit =
     unsupported(out, "definite-length maps")
 
-  def onMapStart(out: Output): Output = {
-    val sep = separator
-    enterLevel(if (sep != '\u0000') out.writeAsBytes(sep, '{') else out.writeAsByte('{'), count = -1, size = -1)
+  def onMapStart(): Unit = {
+    val sep      = separator
+    val newLevel = level + 1
+    if (newLevel < 64) {
+      levelType |= 1 << newLevel
+      level = newLevel
+      sepRequired = false
+      out = if (sep != '\u0000') out.writeAsBytes(sep, '{') else out.writeAsByte('{')
+    } else unsupported(out, "more than 64 JSON Array/Object nesting levels")
   }
 
-  def onBreak(out: Output): Output = {
+  def onBreak(): Unit = {
     val c = if (isLevelMap) '}' else ']'
-    exitLevel()
-    count(out.writeAsByte(c)) // level-entering items are only counted when the level is exited, not when entered
+    if (level > 0) level -= 1
+    else throw Borer.Error.InvalidJsonData(out, "Received BREAK without corresponding ArrayStart or MapStart")
+    out = count(out.writeAsByte(c)) // level-entering items are only counted when the level is exited, not when entered
   }
 
-  def onTag(out: Output, value: Tag): Output         = unsupported(out, "CBOR tags")
-  def onSimpleValue(out: Output, value: Int): Output = unsupported(out, "CBOR Simple Values")
-  def onEndOfInput(out: Output): Output              = out
+  def onTag(value: Tag): Unit         = unsupported(out, "CBOR tags")
+  def onSimpleValue(value: Int): Unit = unsupported(out, "CBOR Simple Values")
+  def onEndOfInput(): Unit            = ()
 
   def target = this
   def copy   = throw new UnsupportedOperationException
 
-  private def separator: Char = {
-    val count = _levelCount(level)
-    if (count != (count >> 63)) { // short for (count != 0) && (count != -1)
-      val size = _levelSize(level)
-      if ((size >= 0) || (count & 1) == (count >>> 63)) ',' else ':'
+  @inline private def separator: Char =
+    if (sepRequired) {
+      if (isLevelMap) {
+        if (((mapCount >> level) & 1) != 0) ':' else ','
+      } else ','
     } else '\u0000'
-  }
 
-  private def sep(out: Output): Output = {
+  @inline private def sep(out: Output): Output = {
     val s = separator
     if (s != '\u0000') out.writeAsByte(s) else out
   }
 
-  @tailrec private def count(out: Output): Output = {
-    val cnt = _levelCount(level)
-    if (cnt >= 0) {
-      // bounded array or map
-      val newCount = cnt + 1
-      val rawSize  = _levelSize(level)
-      val size     = if (rawSize >= 0) rawSize else ~rawSize
-      if (newCount == size) {
-        val c = if (isLevelMap) '}' else ']'
-        exitLevel()
-        count(out.writeAsByte(c)) // level-entering items are only counted when the level is exited, not when entered
-      } else {
-        _levelCount(level) = newCount
-        out
-      }
-    } else {
-      _levelCount(level) = cnt - 1 // unbounded something
-      out
-    }
-  }
-
-  private def enterLevel(out: Output, count: Long, size: Long): Output = {
-    val newLevel = level + 1
-    if (newLevel == _levelCount.length) {
-      val l2     = newLevel << 1
-      val newLen = if (l2 >= 0) l2 else Int.MaxValue // overflow protection
-      _levelCount = util.Arrays.copyOf(_levelCount, newLen)
-      _levelSize = util.Arrays.copyOf(_levelSize, newLen)
-    }
-    level = newLevel
-    _levelCount(newLevel) = count
-    _levelSize(newLevel) = size
+  private def count(out: Output): Output = {
+    if (isLevelMap) mapCount ^= 1 << level
+    sepRequired = true
     out
   }
-
-  @inline private def exitLevel(): Unit = level -= 1
 
   private def writeOverLong(out: Output, value: Long): Output = {
     val q = (value >>> 1) / 5
@@ -292,4 +266,8 @@ private[borer] final class JsonRenderer extends Receiver[Output] {
 
   private def unsupported(out: Output, what: String) =
     throw Borer.Error.InvalidJsonData(out, s"The JSON renderer doesn't support $what")
+}
+
+object JsonRenderer extends (Output ⇒ JsonRenderer) {
+  def apply(out: Output) = new JsonRenderer(out)
 }

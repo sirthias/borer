@@ -16,14 +16,7 @@ import scala.collection.LinearSeq
 /**
   * Stateful, mutable abstraction for writing a stream of CBOR or JSON data to the given [[Output]].
   */
-final class Writer(startOutput: Output,
-                   receiver: Receiver[Output],
-                   val config: Writer.Config,
-                   val target: Borer.Target) {
-
-  private[this] var _output: Output = startOutput
-
-  @inline def output: Output = _output
+final class Writer(receiver: Receiver, val config: Writer.Config, val target: Borer.Target) {
 
   @inline def writingJson: Boolean = target eq Json
   @inline def writingCbor: Boolean = target eq Cbor
@@ -40,52 +33,55 @@ final class Writer(startOutput: Output,
 
   @inline def ~[T: Encoder](value: T): this.type = write(value)
 
-  def writeNull(): this.type      = ret(receiver.onNull(_output))
-  def writeUndefined(): this.type = ret(receiver.onUndefined(_output))
+  def writeNull(): this.type      = { receiver.onNull(); this }
+  def writeUndefined(): this.type = { receiver.onUndefined(); this }
 
-  @inline def writeBool(value: Boolean): this.type             = ret(receiver.onBool(_output, value))
+  @inline def writeBool(value: Boolean): this.type             = { receiver.onBool(value); this }
   @inline def writeChar(value: Char): this.type                = writeInt(value.toInt)
   @inline def writeByte(value: Byte): this.type                = writeInt(value.toInt)
   @inline def writeShort(value: Short): this.type              = writeInt(value.toInt)
-  @inline def writeInt(value: Int): this.type                  = ret(receiver.onInt(_output, value.toInt))
-  @inline def writeLong(value: Long): this.type                = ret(receiver.onLong(_output, value))
-  def writeOverLong(negative: Boolean, value: Long): this.type = ret(receiver.onOverLong(_output, negative, value))
-  def writeFloat16(value: Float): this.type                    = ret(receiver.onFloat16(_output, value))
+  @inline def writeInt(value: Int): this.type                  = { receiver.onInt(value.toInt); this }
+  @inline def writeLong(value: Long): this.type                = { receiver.onLong(value); this }
+  def writeOverLong(negative: Boolean, value: Long): this.type = { receiver.onOverLong(negative, value); this }
+  def writeFloat16(value: Float): this.type                    = { receiver.onFloat16(value); this }
 
-  def writeFloat(value: Float): this.type = ret {
+  def writeFloat(value: Float): this.type = {
     if (writingJson || config.cborDontCompressFloatingPointValues || !Util.canBeRepresentedAsFloat16(value)) {
-      receiver.onFloat(_output, value)
-    } else receiver.onFloat16(_output, value)
+      receiver.onFloat(value)
+    } else receiver.onFloat16(value)
+    this
   }
 
-  def writeDouble(value: Double): this.type =
+  def writeDouble(value: Double): this.type = {
     if (writingJson || config.cborDontCompressFloatingPointValues || !Util.canBeRepresentedAsFloat(value)) {
-      ret(receiver.onDouble(_output, value))
+      receiver.onDouble(value)
     } else writeFloat(value.toFloat)
+    this
+  }
 
-  def writeBigInteger(value: JBigInteger): this.type = ret(receiver.onBigInteger(_output, value))
-  def writeBigDecimal(value: JBigDecimal): this.type = ret(receiver.onBigDecimal(_output, value))
+  def writeBigInteger(value: JBigInteger): this.type = { receiver.onBigInteger(value); this }
+  def writeBigDecimal(value: JBigDecimal): this.type = { receiver.onBigDecimal(value); this }
 
-  @inline def writeString(value: String): this.type          = ret(receiver.onString(_output, value))
-  def writeBytes[Bytes: ByteAccess](value: Bytes): this.type = ret(receiver.onBytes(_output, value))
-  def writeText[Bytes: ByteAccess](value: Bytes): this.type  = ret(receiver.onText(_output, value))
-  def writeTag(value: Tag): this.type                        = ret(receiver.onTag(_output, value))
-  def writeSimpleValue(value: Int): this.type                = ret(receiver.onSimpleValue(_output, value))
+  @inline def writeString(value: String): this.type          = { receiver.onString(value); this }
+  def writeBytes[Bytes: ByteAccess](value: Bytes): this.type = { receiver.onBytes(value); this }
+  def writeText[Bytes: ByteAccess](value: Bytes): this.type  = { receiver.onText(value); this }
+  def writeTag(value: Tag): this.type                        = { receiver.onTag(value); this }
+  def writeSimpleValue(value: Int): this.type                = { receiver.onSimpleValue(value); this }
 
-  def writeBytesStart(): this.type = ret(receiver.onBytesStart(_output))
-  def writeTextStart(): this.type  = ret(receiver.onTextStart(_output))
+  def writeBytesStart(): this.type = { receiver.onBytesStart(); this }
+  def writeTextStart(): this.type  = { receiver.onTextStart(); this }
 
   @inline def writeArrayHeader(length: Int): this.type  = writeArrayHeader(length.toLong)
-  @inline def writeArrayHeader(length: Long): this.type = ret(receiver.onArrayHeader(_output, length))
-  @inline def writeArrayStart(): this.type              = ret(receiver.onArrayStart(_output))
+  @inline def writeArrayHeader(length: Long): this.type = { receiver.onArrayHeader(length); this }
+  @inline def writeArrayStart(): this.type              = { receiver.onArrayStart(); this }
 
   @inline def writeMapHeader(length: Int): this.type  = writeMapHeader(length.toLong)
-  @inline def writeMapHeader(length: Long): this.type = ret(receiver.onMapHeader(_output, length))
-  @inline def writeMapStart(): this.type              = ret(receiver.onMapStart(_output))
+  @inline def writeMapHeader(length: Long): this.type = { receiver.onMapHeader(length); this }
+  @inline def writeMapStart(): this.type              = { receiver.onMapStart(); this }
 
-  @inline def writeBreak(): this.type = ret(receiver.onBreak(_output))
+  @inline def writeBreak(): this.type = { receiver.onBreak(); this }
 
-  @inline def writeEndOfInput(): this.type = ret(receiver.onEndOfInput(_output))
+  @inline def writeEndOfInput(): this.type = { receiver.onEndOfInput(); this }
 
   @inline def write[T](value: T)(implicit encoder: Encoder[T]): this.type = encoder.write(this, value)
 
@@ -158,11 +154,6 @@ final class Writer(startOutput: Output,
       writeEntries()
       this
     }
-  }
-
-  @inline private def ret(out: Output): this.type = {
-    _output = out
-    this
   }
 }
 

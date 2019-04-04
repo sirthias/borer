@@ -17,22 +17,23 @@ import scala.collection.mutable
 import scala.util.control.NonFatal
 
 /**
-  * Stateful, mutable abstraction for reading a stream of CBOR or JSON data from the given [[Input]].
+  * Stateful, mutable abstraction for reading a stream of CBOR or JSON data from the given `input`.
   */
-final class Reader(startInput: Input,
+final class Reader(val input: Any,
+                   startCursor: Long,
                    parser: Receiver.Parser,
-                   validationApplier: Receiver.Applier[Input],
+                   validationApplier: Receiver.Applier,
                    val config: Reader.Config,
-                   val target: Borer.Target) {
+                   val target: Borer.Target)(implicit inputAccess: InputAccess[Any]) {
 
   import io.bullet.borer.{DataItem ⇒ DI}
 
-  private[this] var _input: Input = startInput
-  private[this] var receiver: Receiver[Input] =
+  private[this] var _cursor: Long = startCursor
+  private[this] var receiver: Receiver =
     validationApplier(Validation.creator(target, config.validation), new Receptacle)
   private[this] var receptacle: Receptacle = receiver.finalTarget.asInstanceOf[Receptacle]
 
-  @inline def input: Input  = _input
+  @inline def cursor: Long  = _cursor
   @inline def dataItem: Int = receptacle.dataItem
 
   @inline def readingJson: Boolean = target eq Json
@@ -329,7 +330,7 @@ final class Reader(startInput: Input,
 
   @inline def pull(): Unit = {
     receptacle.clear()
-    _input = parser.pull(_input, receiver)
+    _cursor = parser.pull(input, _cursor, receiver)
   }
 
   @inline private def pullReturn[T](value: T): T = {
@@ -356,11 +357,11 @@ final class Reader(startInput: Input,
   def unexpectedDataItem(expected: String, actual: String): Nothing =
     throw Borer.Error.UnexpectedDataItem(input, expected, actual)
 
-  def saveState: Reader.SavedState = new Reader.SavedStateImpl(_input.copy, receiver.copy)
+  def saveState: Reader.SavedState = new Reader.SavedStateImpl(_cursor, receiver.copy)
 
   def restoreState(mark: Reader.SavedState): Unit = {
     val savedState = mark.asInstanceOf[Reader.SavedStateImpl]
-    _input = savedState.input
+    _cursor = savedState.cursor
     receiver = savedState.receiver
     receptacle = receiver.finalTarget.asInstanceOf[Receptacle]
   }
@@ -383,8 +384,8 @@ object Reader {
   }
 
   sealed trait SavedState {
-    def input: Input
+    def cursor: Long
   }
 
-  private final class SavedStateImpl(val input: Input, val receiver: Receiver[Input]) extends SavedState
+  private final class SavedStateImpl(val cursor: Long, val receiver: Receiver) extends SavedState
 }

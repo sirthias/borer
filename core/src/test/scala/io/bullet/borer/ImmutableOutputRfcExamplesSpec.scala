@@ -10,15 +10,10 @@ package io.bullet.borer
 
 import java.util
 
-object ImmutableRfcExamplesSpec extends AbstractRfcExamplesSpec("Immutable Byte Array") {
+object ImmutableOutputRfcExamplesSpec extends AbstractRfcExamplesSpec("Immutable Output to Byte Array") {
 
   override def encode[T: Encoder](value: T): String =
     toHexString(Cbor.encode(value).to[Array[Byte]](byteAccess).bytes)
-
-  override def decode[T: Decoder](encoded: String): T = {
-    val input = new SomewhatImmutableByteArrayInput(hexBytes(encoded), 0, 0, Array.emptyByteArray)
-    Cbor.decode(input).to[T].value
-  }
 
   object byteAccess extends ByteAccess[Array[Byte]] {
     type Out = SomewhatImmutableByteArrayOutput
@@ -74,38 +69,5 @@ object ImmutableRfcExamplesSpec extends AbstractRfcExamplesSpec("Immutable Byte 
       } else buffer
 
     private def overflow() = throw Borer.Error.Overflow(this, "Cannot output to byte array with > 2^31 bytes")
-  }
-
-  final class SomewhatImmutableByteArrayInput(buffer: Array[Byte],
-                                              val cursor: Int,
-                                              val lastByte: Byte,
-                                              val lastBytes: Array[Byte])
-      extends Input {
-
-    type Self  = SomewhatImmutableByteArrayInput
-    type Bytes = Array[Byte]
-
-    def byteAccess = ByteAccess.ForByteArray
-
-    def hasBytes(length: Long): Boolean = {
-      val off = length + cursor
-      0 <= off && off <= buffer.length
-    }
-
-    def readByte(): Self = new SomewhatImmutableByteArrayInput(buffer, cursor + 1, buffer(cursor), lastBytes)
-
-    def readBytes(length: Long): Self =
-      if (length >> 31 == 0) {
-        if (length > 0) {
-          val len          = length.toInt
-          val newLastBytes = new Array[Byte](len)
-          System.arraycopy(buffer, cursor, newLastBytes, 0, len)
-          new SomewhatImmutableByteArrayInput(buffer, cursor + len, lastByte, newLastBytes)
-        } else if (lastBytes.length != 0) {
-          new SomewhatImmutableByteArrayInput(buffer, cursor, lastByte, Array.emptyByteArray)
-        } else this
-      } else throw Borer.Error.Overflow(cursor, "Byte-array input is limited to size 2GB")
-
-    def copy: SomewhatImmutableByteArrayInput = this
   }
 }

@@ -34,10 +34,10 @@ object Validation {
       throw new IllegalArgumentException(s"maxMapLength must be <= ${Long.MaxValue / 2}, but was $maxMapLength")
   }
 
-  def creator[IO](target: Borer.Target, config: Option[Config]): Receiver.Creator[IO] =
+  def creator(target: Borer.Target, config: Option[Config]): Receiver.Creator =
     config match {
-      case Some(x) ⇒ new Validation.Receiver[IO](_, target eq Json, x)
-      case None    ⇒ identity
+      case Some(x) ⇒ new Validation.Receiver(_, target eq Json, x)
+      case None    ⇒ Util.identityFunc
     }
 
   /**
@@ -47,8 +47,8 @@ object Validation {
     *
     * Throws [[Borer.Error]] exceptions upon detecting any problem with the input.
     */
-  final class Receiver[IO](private var _target: borer.Receiver[IO], isJson: Boolean, config: Config)
-      extends borer.Receiver[IO] with java.lang.Cloneable {
+  final class Receiver(private var _target: borer.Receiver, isJson: Boolean, config: Config)
+      extends borer.Receiver with java.lang.Cloneable {
 
     import io.bullet.borer.{DataItem ⇒ DI}
 
@@ -64,209 +64,209 @@ object Validation {
 
     def target = _target
 
-    def onNull(io: IO): IO = {
-      checkAllowed(io, DI.Null)
-      count(io)
-      _target.onNull(io)
+    def onNull(): Unit = {
+      checkAllowed(DI.Null)
+      count()
+      _target.onNull()
     }
 
-    def onUndefined(io: IO): IO = {
-      checkAllowed(io, DI.Undefined)
-      count(io)
-      _target.onUndefined(io)
+    def onUndefined(): Unit = {
+      checkAllowed(DI.Undefined)
+      count()
+      _target.onUndefined()
     }
 
-    def onBool(io: IO, value: Boolean): IO = {
-      checkAllowed(io, DI.Bool)
-      count(io)
-      _target.onBool(io, value)
+    def onBool(value: Boolean): Unit = {
+      checkAllowed(DI.Bool)
+      count()
+      _target.onBool(value)
     }
 
-    def onInt(io: IO, value: Int): IO = {
-      checkAllowed(io, DI.Int)
-      count(io)
-      _target.onInt(io, value)
+    def onInt(value: Int): Unit = {
+      checkAllowed(DI.Int)
+      count()
+      _target.onInt(value)
     }
 
-    def onLong(io: IO, value: Long): IO = {
-      checkAllowed(io, DI.Long)
-      count(io)
-      _target.onLong(io, value)
+    def onLong(value: Long): Unit = {
+      checkAllowed(DI.Long)
+      count()
+      _target.onLong(value)
     }
 
-    def onOverLong(io: IO, negative: Boolean, value: Long): IO = {
-      checkAllowed(io, DI.OverLong)
-      count(io)
-      _target.onOverLong(io, negative, value)
+    def onOverLong(negative: Boolean, value: Long): Unit = {
+      checkAllowed(DI.OverLong)
+      count()
+      _target.onOverLong(negative, value)
     }
 
-    def onFloat16(io: IO, value: Float): IO = {
-      checkAllowed(io, DI.Float16)
-      count(io)
-      _target.onFloat16(io, value)
+    def onFloat16(value: Float): Unit = {
+      checkAllowed(DI.Float16)
+      count()
+      _target.onFloat16(value)
     }
 
-    def onFloat(io: IO, value: Float): IO = {
-      checkAllowed(io, DI.Float)
-      count(io)
-      _target.onFloat(io, value)
+    def onFloat(value: Float): Unit = {
+      checkAllowed(DI.Float)
+      count()
+      _target.onFloat(value)
     }
 
-    def onDouble(io: IO, value: Double): IO = {
-      checkAllowed(io, DI.Double)
-      count(io)
-      _target.onDouble(io, value)
+    def onDouble(value: Double): Unit = {
+      checkAllowed(DI.Double)
+      count()
+      _target.onDouble(value)
     }
 
-    def onBigInteger(io: IO, value: JBigInteger): IO = {
-      checkAllowed(io, DI.BigInteger)
-      count(io)
-      _target.onBigInteger(io, value)
+    def onBigInteger(value: JBigInteger): Unit = {
+      checkAllowed(DI.BigInteger)
+      count()
+      _target.onBigInteger(value)
     }
 
-    def onBigDecimal(io: IO, value: JBigDecimal): IO = {
-      checkAllowed(io, DI.BigDecimal)
-      count(io)
-      _target.onBigDecimal(io, value)
+    def onBigDecimal(value: JBigDecimal): Unit = {
+      checkAllowed(DI.BigDecimal)
+      count()
+      _target.onBigDecimal(value)
     }
 
-    def onBytes[Bytes: ByteAccess](io: IO, value: Bytes): IO = {
-      checkAllowed(io, DI.Bytes)
-      count(io)
-      _target.onBytes(io, value)
+    def onBytes[Bytes: ByteAccess](value: Bytes): Unit = {
+      checkAllowed(DI.Bytes)
+      count()
+      _target.onBytes(value)
     }
 
-    def onBytesStart(io: IO): IO = {
-      checkAllowed(io, DI.BytesStart)
-      enterLevel(io, 0, DI.Bytes | DI.BytesStart | UNBOUNDED)
-      _target.onBytesStart(io)
+    def onBytesStart(): Unit = {
+      checkAllowed(DI.BytesStart)
+      enterLevel(0, DI.Bytes | DI.BytesStart | UNBOUNDED)
+      _target.onBytesStart()
     }
 
-    def onString(io: IO, value: String): IO = {
-      checkAllowed(io, DI.String)
-      count(io)
-      _target.onString(io, value)
+    def onString(value: String): Unit = {
+      checkAllowed(DI.String)
+      count()
+      _target.onString(value)
     }
 
-    def onText[Bytes: ByteAccess](io: IO, value: Bytes): IO = {
-      checkAllowed(io, DI.Text)
-      count(io)
-      _target.onText(io, value)
+    def onText[Bytes: ByteAccess](value: Bytes): Unit = {
+      checkAllowed(DI.Text)
+      count()
+      _target.onText(value)
     }
 
-    def onTextStart(io: IO): IO = {
-      checkAllowed(io, DI.TextStart)
-      enterLevel(io, 0, DI.String | DI.Text | DI.TextStart | UNBOUNDED)
-      _target.onTextStart(io)
+    def onTextStart(): Unit = {
+      checkAllowed(DI.TextStart)
+      enterLevel(0, DI.String | DI.Text | DI.TextStart | UNBOUNDED)
+      _target.onTextStart()
     }
 
-    def onArrayHeader(io: IO, length: Long): IO = {
-      checkAllowed(io, DI.ArrayHeader)
+    def onArrayHeader(length: Long): Unit = {
+      checkAllowed(DI.ArrayHeader)
       if (length <= config.maxArrayLength) {
-        if (length > 0) enterLevel(io, length, DEFAULT_MASK) else count(io)
-        _target.onArrayHeader(io, length)
+        if (length > 0) enterLevel(length, DEFAULT_MASK) else count()
+        _target.onArrayHeader(length)
       } else {
         val msg = s"Array length $length is greater than the configured maximum of ${config.maxArrayLength}"
-        throw Borer.Error.Unsupported(io, msg)
+        throw Borer.Error.Unsupported(Position.unavailable, msg)
       }
     }
 
-    def onArrayStart(io: IO): IO = {
-      checkAllowed(io, DI.ArrayStart)
-      enterLevel(io, 0, DEFAULT_MASK | UNBOUNDED)
-      _target.onArrayStart(io)
+    def onArrayStart(): Unit = {
+      checkAllowed(DI.ArrayStart)
+      enterLevel(0, DEFAULT_MASK | UNBOUNDED)
+      _target.onArrayStart()
     }
 
-    def onMapHeader(io: IO, length: Long): IO = {
-      checkAllowed(io, DI.MapHeader)
+    def onMapHeader(length: Long): Unit = {
+      checkAllowed(DI.MapHeader)
       if (length <= config.maxMapLength) {
-        if (length > 0) enterLevel(io, length << 1, DEFAULT_MASK | MAP) else count(io)
-        _target.onMapHeader(io, length)
+        if (length > 0) enterLevel(length << 1, DEFAULT_MASK | MAP) else count()
+        _target.onMapHeader(length)
       } else {
         val msg = s"Map length $length is greater than the configured maximum of ${config.maxMapLength}"
-        throw Borer.Error.Unsupported(io, msg)
+        throw Borer.Error.Unsupported(Position.unavailable, msg)
       }
     }
 
-    def onMapStart(io: IO): IO = {
-      checkAllowed(io, DI.MapStart)
-      enterLevel(io, 0, DEFAULT_MASK | MAP | UNBOUNDED)
+    def onMapStart(): Unit = {
+      checkAllowed(DI.MapStart)
+      enterLevel(0, DEFAULT_MASK | MAP | UNBOUNDED)
       if (isJson) mask = DI.String | MAP | UNBOUNDED
-      _target.onMapStart(io)
+      _target.onMapStart()
     }
 
-    def onBreak(io: IO): IO =
+    def onBreak(): Unit =
       if (level >= 0 && isMasked(UNBOUNDED)) {
         if (!isMasked(MAP) || isEvenNumberedElement) {
           exitLevel()
-          count(io) // level-entering items are only counted when the level is exited, not when they are entered
-          _target.onBreak(io)
-        } else throw Borer.Error.UnexpectedDataItem(io, "map entry value data item", "BREAK")
-      } else throw Borer.Error.UnexpectedDataItem(io, "any data item except for BREAK", "BREAK")
+          count() // level-entering items are only counted when the level is exited, not when they are entered
+          _target.onBreak()
+        } else throw Borer.Error.UnexpectedDataItem(Position.unavailable, "map entry value data item", "BREAK")
+      } else throw Borer.Error.UnexpectedDataItem(Position.unavailable, "any data item except for BREAK", "BREAK")
 
-    def onTag(io: IO, value: Tag): IO = {
+    def onTag(value: Tag): Unit = {
       value match {
         case Tag.EpochDateTime ⇒
-          checkAllowed(io, DI.Tag)
-          enterLevel(io, 1L, DI.Int | DI.Long | DI.Float16 | DI.Float | DI.Double)
+          checkAllowed(DI.Tag)
+          enterLevel(1L, DI.Int | DI.Long | DI.Float16 | DI.Float | DI.Double)
 
         case Tag.PositiveBigNum | Tag.NegativeBigNum ⇒
-          checkAllowed(io, DI.Tag)
-          enterLevel(io, 1L, DI.Bytes | DI.BytesStart)
+          checkAllowed(DI.Tag)
+          enterLevel(1L, DI.Bytes | DI.BytesStart)
 
         case Tag.EmbeddedCBOR ⇒
-          checkAllowed(io, DI.Tag)
-          enterLevel(io, 1L, DI.Bytes | DI.BytesStart)
+          checkAllowed(DI.Tag)
+          enterLevel(1L, DI.Bytes | DI.BytesStart)
 
         case Tag.DateTimeString | Tag.TextUri | Tag.TextBase64Url | Tag.TextBase64 | Tag.TextRegex | Tag.TextMime ⇒
-          checkAllowed(io, DI.Tag)
-          enterLevel(io, 1L, DI.String | DI.Text)
+          checkAllowed(DI.Tag)
+          enterLevel(1L, DI.String | DI.Text)
 
         case Tag.DecimalFraction | Tag.BigFloat ⇒
-          checkAllowed(io, DI.Tag)
-          enterLevel(io, 1L, DI.ArrayHeader) // we don't fully verify compliance of the subsequent array content
+          checkAllowed(DI.Tag)
+          enterLevel(1L, DI.ArrayHeader) // we don't fully verify compliance of the subsequent array content
 
         case Tag.HintBase64url | Tag.HintBase64 | Tag.HintBase16 | Tag.MagicHeader | Tag.Other(_) ⇒
-          checkAllowed(io, DI.Tag)
+          checkAllowed(DI.Tag)
       }
-      _target.onTag(io, value)
+      _target.onTag(value)
     }
 
-    def onSimpleValue(io: IO, value: Int): IO = {
-      checkAllowed(io, DI.SimpleValue)
-      count(io)
-      _target.onSimpleValue(io, value)
+    def onSimpleValue(value: Int): Unit = {
+      checkAllowed(DI.SimpleValue)
+      count()
+      _target.onSimpleValue(value)
     }
 
-    def onEndOfInput(io: IO) =
-      if (level >= 0) throw Borer.Error.InsufficientInput(io, 1)
-      else _target.onEndOfInput(io)
+    def onEndOfInput(): Unit =
+      if (level >= 0) throw Borer.Error.InsufficientInput(Position.unavailable, 1)
+      else _target.onEndOfInput()
 
     def copy = {
-      val clone = super.clone().asInstanceOf[Receiver[IO]]
+      val clone = super.clone().asInstanceOf[Receiver]
       clone._target = _target.copy
       clone.levelRemaining = levelRemaining.clone()
       clone.levelMasks = levelMasks.clone()
       clone
     }
 
-    private def checkAllowed(io: IO, dataItem: Int): Unit =
+    private def checkAllowed(dataItem: Int): Unit =
       if (!isMasked(dataItem)) {
-        throw Borer.Error.UnexpectedDataItem(io, DataItem stringify mask, DataItem stringify dataItem)
+        throw Borer.Error.UnexpectedDataItem(Position.unavailable, DataItem stringify mask, DataItem stringify dataItem)
       }
 
     @inline private def isMasked(test: Int): Boolean = (mask & test) != 0
 
     @inline private def isEvenNumberedElement: Boolean = (levelRemaining(level) & 1) == 0
 
-    @tailrec private def count(io: IO): Unit = {
+    @tailrec private def count(): Unit = {
       val l = level
       if (l >= 0) {
         val remaining  = levelRemaining(l) - 1
         def ok(): Unit = levelRemaining(l) = remaining
         def overflow(tpe: String, max: Long): Nothing = {
           val msg = s"Unbounded $tpe length ${-remaining} is greater than the configured maximum of $max"
-          throw Borer.Error.Overflow(io, msg)
+          throw Borer.Error.Overflow(Position.unavailable, msg)
         }
         if (isMasked(UNBOUNDED)) {
           if (isMasked(MAP)) {
@@ -280,13 +280,13 @@ object Validation {
         } else {
           if (remaining == 0) {
             exitLevel()
-            count(io) // level-entering items are only counted when the level is exited, not when they are entered
+            count() // level-entering items are only counted when the level is exited, not when they are entered
           } else ok()
         }
       }
     }
 
-    private def enterLevel(io: IO, remaining: Long, mask: Int): Unit = {
+    private def enterLevel(remaining: Long, mask: Int): Unit = {
       val l = level + 1
       if (l <= config.maxNestingLevels) {
         if (l == levelMasks.length) {
@@ -299,7 +299,9 @@ object Validation {
         levelRemaining(l) = remaining
         levelMasks(l) = mask
         this.mask = mask
-      } else throw Borer.Error.Overflow(io, s"Exceeded ${config.maxNestingLevels} maximum array/map nesting levels")
+      } else
+        throw Borer.Error
+          .Overflow(Position.unavailable, s"Exceeded ${config.maxNestingLevels} maximum array/map nesting levels")
     }
 
     private def exitLevel(): Unit = {

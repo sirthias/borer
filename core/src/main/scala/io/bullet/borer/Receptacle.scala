@@ -14,7 +14,7 @@ import java.math.{BigDecimal ⇒ JBigDecimal, BigInteger ⇒ JBigInteger}
   * A [[Receiver]] which simply buffers all incoming data in fields of the appropriate type,
   * for easy querying from the outside.
   */
-private[borer] final class Receptacle extends Receiver[Input] with java.lang.Cloneable {
+private[borer] final class Receptacle extends Receiver with java.lang.Cloneable {
 
   private[this] var _dataItem: Int = _
 
@@ -48,111 +48,106 @@ private[borer] final class Receptacle extends Receiver[Input] with java.lang.Clo
 
   @inline def clear(): Unit = _dataItem = DataItem.None
 
-  def onNull(in: Input): Input = ret(in, DataItem.Null)
+  def onNull(): Unit = _dataItem = DataItem.Null
 
-  def onUndefined(in: Input): Input = ret(in, DataItem.Undefined)
+  def onUndefined(): Unit = _dataItem = DataItem.Undefined
 
-  def onBool(in: Input, value: Boolean): Input = {
+  def onBool(value: Boolean): Unit = {
     _bool = value
-    ret(in, DataItem.Bool)
+    _dataItem = DataItem.Bool
   }
 
-  def onInt(in: Input, value: Int): Input = {
+  def onInt(value: Int): Unit = {
     _int = value
-    ret(in, DataItem.Int)
+    _dataItem = DataItem.Int
   }
 
-  def onLong(in: Input, value: Long): Input = {
+  def onLong(value: Long): Unit = {
     _long = value
-    ret(in, DataItem.Long)
+    _dataItem = DataItem.Long
   }
 
-  def onOverLong(in: Input, negative: Boolean, value: Long): Input = {
+  def onOverLong(negative: Boolean, value: Long): Unit = {
     _bool = negative
     _long = value
-    ret(in, DataItem.OverLong)
+    _dataItem = DataItem.OverLong
   }
 
-  def onFloat16(in: Input, value: Float): Input = {
+  def onFloat16(value: Float): Unit = {
     _float = value
-    ret(in, DataItem.Float16)
+    _dataItem = DataItem.Float16
   }
 
-  def onFloat(in: Input, value: Float): Input = {
+  def onFloat(value: Float): Unit = {
     _float = value
-    ret(in, DataItem.Float)
+    _dataItem = DataItem.Float
   }
 
-  def onDouble(in: Input, value: Double): Input = {
+  def onDouble(value: Double): Unit = {
     _double = value
-    ret(in, DataItem.Double)
+    _dataItem = DataItem.Double
   }
 
-  def onBigInteger(in: Input, value: JBigInteger): Input = {
+  def onBigInteger(value: JBigInteger): Unit = {
     _bigInteger = value
-    ret(in, DataItem.BigInteger)
+    _dataItem = DataItem.BigInteger
   }
 
-  def onBigDecimal(in: Input, value: JBigDecimal): Input = {
+  def onBigDecimal(value: JBigDecimal): Unit = {
     _bigDecimal = value
-    ret(in, DataItem.BigDecimal)
+    _dataItem = DataItem.BigDecimal
   }
 
-  def onBytes[Bytes](in: Input, value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Input = {
+  def onBytes[Bytes](value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Unit = {
     _bytes = value
     _bytesAccess = byteAccess.asInstanceOf[ByteAccess[Any]]
-    ret(in, DataItem.Bytes)
+    _dataItem = DataItem.Bytes
   }
 
-  def onBytesStart(in: Input): Input = ret(in, DataItem.BytesStart)
+  def onBytesStart(): Unit = _dataItem = DataItem.BytesStart
 
-  def onString(in: Input, value: String): Input = {
+  def onString(value: String): Unit = {
     _string = value
-    ret(in, DataItem.String)
+    _dataItem = DataItem.String
   }
 
-  def onText[Bytes](in: Input, value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Input = {
+  def onText[Bytes](value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Unit = {
     _bytes = value
     _bytesAccess = byteAccess.asInstanceOf[ByteAccess[Any]]
-    ret(in, DataItem.Text)
+    _dataItem = DataItem.Text
   }
 
-  def onTextStart(in: Input): Input = ret(in, DataItem.TextStart)
+  def onTextStart(): Unit = _dataItem = DataItem.TextStart
 
-  def onArrayHeader(in: Input, length: Long): Input = {
+  def onArrayHeader(length: Long): Unit = {
     _long = length
-    ret(in, DataItem.ArrayHeader)
+    _dataItem = DataItem.ArrayHeader
   }
 
-  def onArrayStart(in: Input): Input = ret(in, DataItem.ArrayStart)
+  def onArrayStart(): Unit = _dataItem = DataItem.ArrayStart
 
-  def onMapHeader(in: Input, length: Long): Input = {
+  def onMapHeader(length: Long): Unit = {
     _long = length
-    ret(in, DataItem.MapHeader)
+    _dataItem = DataItem.MapHeader
   }
 
-  def onMapStart(in: Input): Input = ret(in, DataItem.MapStart)
+  def onMapStart(): Unit = _dataItem = DataItem.MapStart
 
-  def onBreak(in: Input): Input = ret(in, DataItem.Break)
+  def onBreak(): Unit = _dataItem = DataItem.Break
 
-  def onTag(in: Input, value: Tag): Input = {
+  def onTag(value: Tag): Unit = {
     _tag = value
-    ret(in, DataItem.Tag)
+    _dataItem = DataItem.Tag
   }
 
-  def onSimpleValue(in: Input, value: Int): Input = {
+  def onSimpleValue(value: Int): Unit = {
     _int = value
-    ret(in, DataItem.SimpleValue)
+    _dataItem = DataItem.SimpleValue
   }
 
-  def onEndOfInput(in: Input): Input = ret(in, DataItem.EndOfInput)
+  def onEndOfInput(): Unit = _dataItem = DataItem.EndOfInput
 
   def target = this
 
   def copy = super.clone().asInstanceOf[Receptacle]
-
-  @inline private def ret(in: Input, dataItem: Int): Input = {
-    _dataItem = dataItem
-    in
-  }
 }

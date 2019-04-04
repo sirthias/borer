@@ -8,9 +8,9 @@
 
 package io.bullet.borer
 
-import io.bullet.borer.cbor.{CborParser, CborRenderer}
 import java.nio.charset.StandardCharsets.UTF_8
 
+import io.bullet.borer.cbor.{CborParser, CborRenderer}
 import io.bullet.borer.json.{JsonParser, JsonRenderer}
 
 import scala.util.{Failure, Success, Try}
@@ -27,7 +27,7 @@ case object Cbor extends Borer.Target {
   /**
     * Entry point into the CBOR decoding mini-DSL.
     */
-  def decode(input: Input): Borer.DecodingSetup[input.Self] =
+  def decode[Input: InputAccess](input: Input): Borer.DecodingSetup[Input] =
     new Borer.DecodingSetup(input, this, CborParser)
 
   /**
@@ -35,18 +35,19 @@ case object Cbor extends Borer.Target {
     */
   def writer(output: Output,
              config: Writer.Config = Writer.Config.default,
-             validationApplier: Receiver.Applier[Output] = Receiver.defaultApplier): Writer = {
-    val receiver = validationApplier(Validation.creator(this, config.validation), CborRenderer)
-    new Writer(output, receiver, config, this)
+             validationApplier: Receiver.Applier = Receiver.defaultApplier): Writer = {
+    val receiver = validationApplier(Validation.creator(this, config.validation), CborRenderer(output))
+    new Writer(receiver, config, this)
   }
 
   /**
     * Constructs a new [[Reader]] that reads CBOR from the given [[Input]].
     */
-  def reader(input: Input,
-             config: Reader.Config = Reader.Config.default,
-             validationApplier: Receiver.Applier[Input] = Receiver.defaultApplier): Reader =
-    new Reader(input, CborParser, validationApplier, config, this)
+  def reader[Input: InputAccess](input: Input,
+                                 startIndex: Long = 0,
+                                 config: Reader.Config = Reader.Config.default,
+                                 validationApplier: Receiver.Applier = Receiver.defaultApplier): Reader =
+    new Reader(input, startIndex, CborParser, validationApplier, config, this)(InputAccess.asAny[Input])
 }
 
 case object Json extends Borer.Target {
@@ -55,12 +56,12 @@ case object Json extends Borer.Target {
     * Entry point into the JSON encoding mini-DSL.
     */
   def encode[T: Encoder](value: T): Borer.EncodingSetup[T] with JsonEncoding =
-    new Borer.EncodingSetup[T](value, this, new JsonRenderer).asInstanceOf[Borer.EncodingSetup[T] with JsonEncoding]
+    new Borer.EncodingSetup[T](value, this, JsonRenderer).asInstanceOf[Borer.EncodingSetup[T] with JsonEncoding]
 
   /**
     * Entry point into the JSON decoding mini-DSL.
     */
-  def decode(input: Input): Borer.DecodingSetup[input.Self] =
+  def decode[Input: InputAccess](input: Input): Borer.DecodingSetup[Input] =
     new Borer.DecodingSetup(input, this, new JsonParser)
 
   /**
@@ -68,18 +69,19 @@ case object Json extends Borer.Target {
     */
   def writer(output: Output,
              config: Writer.Config = Writer.Config.default,
-             validationApplier: Receiver.Applier[Output] = Receiver.defaultApplier): Writer = {
-    val receiver = validationApplier(Validation.creator(this, config.validation), new JsonRenderer)
-    new Writer(output, receiver, config, this)
+             validationApplier: Receiver.Applier = Receiver.defaultApplier): Writer = {
+    val receiver = validationApplier(Validation.creator(this, config.validation), JsonRenderer(output))
+    new Writer(receiver, config, this)
   }
 
   /**
     * Constructs a new [[Reader]] that reads JSON from the given [[Input]].
     */
-  def reader(input: Input,
-             config: Reader.Config = Reader.Config.default,
-             validationApplier: Receiver.Applier[Input] = Receiver.defaultApplier): Reader =
-    new Reader(input, new JsonParser, validationApplier, config, this)
+  def reader[Input: InputAccess](input: Input,
+                                 startIndex: Long = 0,
+                                 config: Reader.Config = Reader.Config.default,
+                                 validationApplier: Receiver.Applier = Receiver.defaultApplier): Reader =
+    new Reader(input, startIndex, new JsonParser, validationApplier, config, this)(InputAccess.asAny[Input])
 
   sealed trait JsonEncoding
 
@@ -107,21 +109,24 @@ object Borer {
     */
   sealed abstract class Target {
     def encode[T: Encoder](value: T): Borer.EncodingSetup[T]
-    def decode(input: Input): Borer.DecodingSetup[input.Self]
+    def decode[Input: InputAccess](input: Input): Borer.DecodingSetup[Input]
 
     def writer(output: Output,
                config: Writer.Config = Writer.Config.default,
-               validationApplier: Receiver.Applier[Output] = Receiver.defaultApplier): Writer
+               validationApplier: Receiver.Applier = Receiver.defaultApplier): Writer
 
-    def reader(input: Input,
-               config: Reader.Config = Reader.Config.default,
-               validationApplier: Receiver.Applier[Input] = Receiver.defaultApplier): Reader
+    def reader[Input: InputAccess](input: Input,
+                                   startIndex: Long = 0,
+                                   config: Reader.Config = Reader.Config.default,
+                                   validationApplier: Receiver.Applier = Receiver.defaultApplier): Reader
   }
 
-  final class EncodingSetup[T: Encoder] private[borer] (value: T, target: Target, renderer: Receiver[Output]) {
+  final class EncodingSetup[T: Encoder] private[borer] (value: T,
+                                                        target: Target,
+                                                        rendererCreator: Output ⇒ Receiver.Renderer) {
 
-    private[this] var config: Writer.Config                       = Writer.Config.default
-    private[this] var validationApplier: Receiver.Applier[Output] = Receiver.defaultApplier
+    private[this] var config: Writer.Config               = Writer.Config.default
+    private[this] var validationApplier: Receiver.Applier = Receiver.defaultApplier
 
     /**
       * Configures the [[Writer.Config]] for this encoding run.
@@ -159,7 +164,7 @@ object Borer {
       * Allows for customizing the injection points around input validation.
       * Used, for example, for on-the-side [[Logging]] of the encoding process.
       */
-    @inline def withValidationApplier(validationApplier: Receiver.Applier[Output]): this.type = {
+    @inline def withValidationApplier(validationApplier: Receiver.Applier): this.type = {
       this.validationApplier = validationApplier
       this
     }
@@ -178,9 +183,10 @@ object Borer {
       * Encodes an instance of [[T]] to the given `Bytes` type using the configured options.
       */
     def to[Bytes](implicit ba: ByteAccess[Bytes]): Either[Error[ba.Out], ba.Out] = {
+      val renderer = rendererCreator(ba.newOutput)
       val receiver = validationApplier(Validation.creator(target, config.validation), renderer)
-      val writer   = new Writer(ba.newOutput, receiver, config, target)
-      def out      = writer.output.asInstanceOf[ba.Out]
+      val writer   = new Writer(receiver, config, target)
+      def out      = renderer.out.asInstanceOf[ba.Out]
       try {
         writer
           .write(value)
@@ -193,16 +199,24 @@ object Borer {
     }
   }
 
-  final class DecodingSetup[In <: Input] private[borer] (input: Input, target: Target, parser: Receiver.Parser) {
-
-    private[this] var prefixOnly: Boolean                        = _
-    private[this] var config: Reader.Config                      = Reader.Config.default
-    private[this] var validationApplier: Receiver.Applier[Input] = Receiver.defaultApplier[Input]
+  final class DecodingSetup[Input: InputAccess] private[borer] (input: Input, target: Target, parser: Receiver.Parser) {
+    private[this] var startIndex: Long                    = _
+    private[this] var prefixOnly: Boolean                 = _
+    private[this] var config: Reader.Config               = Reader.Config.default
+    private[this] var validationApplier: Receiver.Applier = Receiver.defaultApplier
 
     /**
       * Indicates that this decoding run is not expected to consume the complete [[Input]].
       */
-    @inline def consumePrefix: this.type = {
+    @inline def withStartIndex(index: Long): this.type = {
+      this.startIndex = index
+      this
+    }
+
+    /**
+      * Indicates that this decoding run is not expected to consume the complete [[Input]].
+      */
+    @inline def withPrefixOnly: this.type = {
       this.prefixOnly = true
       this
     }
@@ -244,7 +258,7 @@ object Borer {
       * Allows for customizing the injection points around input validation.
       * Used, for example, for on-the-side [[Logging]] of the decoding process.
       */
-    @inline def withValidationApplier(validationApplier: Receiver.Applier[Input]): this.type = {
+    @inline def withValidationApplier(validationApplier: Receiver.Applier): this.type = {
       this.validationApplier = validationApplier
       this
     }
@@ -252,17 +266,16 @@ object Borer {
     /**
       * Decodes an instance of [[T]] from the configured [[Input]] using the configured options.
       */
-    def to[T](implicit decoder: Decoder[T]): Either[Error[In], (T, In)] = {
-      val reader = new Reader(input, parser, validationApplier, config, target)
-      def in     = reader.input.asInstanceOf[In]
+    def to[T](implicit decoder: Decoder[T]): Either[Error[Position[Input]], (T, Long)] = {
+      val reader = new Reader(input, startIndex, parser, validationApplier, config, target)(InputAccess.asAny[Input])
       try {
         reader.pull() // fetch first data item
         val value = decoder.read(reader)
         if (!prefixOnly) reader.readEndOfInput()
-        Right(value → in)
+        Right(value → reader.cursor)
       } catch {
-        case e: Error[_] ⇒ Left(e.asInstanceOf[Error[In]])
-        case NonFatal(e) ⇒ Left(Error.General(in, e))
+        case e: Error[_] ⇒ Left(e.asInstanceOf[Error[Position[Input]]])
+        case NonFatal(e) ⇒ Left(Error.General(Position(input, reader.cursor), e))
       }
     }
   }
@@ -311,7 +324,8 @@ object Borer {
       @inline def error: Error[Out] = underlying.left.get
     }
 
-    implicit final class DecodingResultOps[In, T](val underlying: Either[Error[In], (T, In)]) extends AnyVal {
+    implicit final class DecodingResultOps[Input, T](val underlying: Either[Error[Position[Input]], (T, Long)])
+        extends AnyVal {
 
       @inline def value: T = underlying match {
         case Right((x, _)) ⇒ x
@@ -323,7 +337,7 @@ object Borer {
         case Left(e)       ⇒ Failure(e)
       }
 
-      @inline def error: Error[In] = underlying.left.get
+      @inline def error: Error[Position[Input]] = underlying.left.get
     }
   }
 }

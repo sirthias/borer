@@ -53,45 +53,26 @@ object akka {
   implicit val ByteStringCodec = Codec.of[ByteString](_ writeBytes _, _.readBytes())
 
   /**
-    * Mutable [[Input]] implementation for deserializing from [[ByteString]]
+    * [[InputAccess]] for [[ByteString]].
     */
-  implicit class ByteStringInput(input: ByteString) extends Input with java.lang.Cloneable {
-    private[this] var _cursor: Int           = _
-    private[this] var _lastByte: Byte        = _
-    private[this] var _lastBytes: ByteString = _
-
-    type Self  = ByteStringInput
+  implicit object ByteStringInputAccess extends InputAccess[ByteString] {
     type Bytes = ByteString
 
     def byteAccess = ByteStringByteAccess
 
-    def cursor: Int           = _cursor
-    def lastByte: Byte        = _lastByte
-    def lastBytes: ByteString = _lastBytes
+    def hasByteAtIndex(input: ByteString, index: Long): Boolean =
+      0 <= index && index < input.length
 
-    def hasBytes(length: Long): Boolean = {
-      val off = length + _cursor
-      0 <= off && off <= input.length
-    }
+    def byteAt(input: ByteString, index: Long): Byte = input(index.toInt)
 
-    def readByte(): Self = {
-      _lastByte = input(_cursor)
-      _cursor += 1
-      this
-    }
-
-    def readBytes(length: Long): Self =
-      if (length >> 31 == 0) {
-        if (length > 0) {
-          val c         = _cursor
-          val newCursor = c + length.toInt
-          _lastBytes = input.slice(c, newCursor)
-          _cursor = newCursor
-        } else _lastBytes = ByteString.empty
-        this
-      } else throw Borer.Error.Overflow(_cursor, "ByteString input is limited to size 2GB")
-
-    def copy: ByteStringInput = super.clone().asInstanceOf[ByteStringInput]
+    def bytesAt(input: ByteString, index: Long, length: Long): ByteString =
+      if ((index | length) >> 31 == 0) {
+        if (length != 0) {
+          val end = index + length
+          if ((end >> 31) == 0) input.slice(index.toInt, end.toInt)
+          else throw Borer.Error.Overflow(Position(input, index), "ByteString input is limited to size 2GB")
+        } else ByteString.empty
+      } else throw Borer.Error.Overflow(Position(input, index), "ByteString input is limited to size 2GB")
   }
 
   /**
@@ -107,6 +88,27 @@ object akka {
 
     def writeByte(byte: Byte): this.type = {
       builder += byte
+      this
+    }
+
+    def writeBytes(a: Byte, b: Byte): this.type = {
+      builder += a
+      builder += b
+      this
+    }
+
+    def writeBytes(a: Byte, b: Byte, c: Byte): this.type = {
+      builder += a
+      builder += b
+      builder += c
+      this
+    }
+
+    def writeBytes(a: Byte, b: Byte, c: Byte, d: Byte): this.type = {
+      builder += a
+      builder += b
+      builder += c
+      builder += d
       this
     }
 

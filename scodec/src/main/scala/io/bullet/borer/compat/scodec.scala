@@ -52,45 +52,24 @@ object scodec {
   implicit val ByteVectorCodec = Codec.of[ByteVector](_ writeBytes _, _.readBytes())
 
   /**
-    * Mutable [[Input]] implementation for deserializing from [[ByteVector]]
+    * [[InputAccess]] for [[ByteVector]].
     */
-  implicit class ByteVectorInput(input: ByteVector) extends Input with java.lang.Cloneable {
-    private[this] var _cursor: Long          = _
-    private[this] var _lastByte: Byte        = _
-    private[this] var _lastBytes: ByteVector = _
-
-    type Self  = ByteVectorInput
+  implicit object ByteVectorInputAccess extends InputAccess[ByteVector] {
     type Bytes = ByteVector
 
-    @inline def byteAccess = ByteVectorByteAccess
+    def byteAccess = ByteVectorByteAccess
 
-    @inline def cursor: Long          = _cursor
-    @inline def lastByte: Byte        = _lastByte
-    @inline def lastBytes: ByteVector = _lastBytes
+    def hasByteAtIndex(input: ByteVector, index: Long): Boolean =
+      0 <= index && index < input.length
 
-    @inline def hasBytes(length: Long): Boolean = {
-      val off = length + _cursor
-      0 <= off && off <= input.length
-    }
+    def byteAt(input: ByteVector, index: Long): Byte = input(index)
 
-    @inline def readByte(): Self = {
-      _lastByte = input(_cursor)
-      _cursor += 1
-      this
-    }
-
-    def readBytes(length: Long): Self = {
+    def bytesAt(input: ByteVector, index: Long, length: Long): ByteVector =
       if (length > 0) {
-        val newCursor = _cursor + length
-        if (newCursor >= 0) {
-          _lastBytes = input.slice(_cursor, newCursor)
-          _cursor = newCursor
-        } else throw Borer.Error.Overflow(_cursor, "ByteVector input is limited to 2^63 bytes")
-      } else _lastBytes = ByteVector.empty
-      this
-    }
-
-    def copy: ByteVectorInput = super.clone().asInstanceOf[ByteVectorInput]
+        val end = index + length
+        if (end >= 0) input.slice(index, end)
+        else throw Borer.Error.Overflow(Position(input, index), "ByteVector input is limited to 2^63 bytes")
+      } else ByteVector.empty
   }
 
   /**
@@ -109,10 +88,50 @@ object scodec {
     @inline def cursor: Int = _cursor
 
     def writeByte(byte: Byte): this.type = {
-      val newCursor = _cursor + 1
+      val crs       = _cursor
+      val newCursor = crs + 1
       if (newCursor > 0) {
         ensureLength(newCursor)
-        buffer(_cursor) = byte
+        buffer(crs) = byte
+        _cursor = newCursor
+        this
+      } else overflow()
+    }
+
+    def writeBytes(a: Byte, b: Byte): this.type = {
+      val crs       = _cursor
+      val newCursor = crs + 2
+      if (newCursor > 0) {
+        ensureLength(newCursor)
+        buffer(crs) = a
+        buffer(crs + 1) = b
+        _cursor = newCursor
+        this
+      } else overflow()
+    }
+
+    def writeBytes(a: Byte, b: Byte, c: Byte): this.type = {
+      val crs       = _cursor
+      val newCursor = crs + 3
+      if (newCursor > 0) {
+        ensureLength(newCursor)
+        buffer(crs) = a
+        buffer(crs + 1) = b
+        buffer(crs + 2) = c
+        _cursor = newCursor
+        this
+      } else overflow()
+    }
+
+    def writeBytes(a: Byte, b: Byte, c: Byte, d: Byte): this.type = {
+      val crs       = _cursor
+      val newCursor = crs + 4
+      if (newCursor > 0) {
+        ensureLength(newCursor)
+        buffer(crs) = a
+        buffer(crs + 1) = b
+        buffer(crs + 2) = c
+        buffer(crs + 3) = d
         _cursor = newCursor
         this
       } else overflow()
