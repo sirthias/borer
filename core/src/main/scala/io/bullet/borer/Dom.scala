@@ -142,36 +142,37 @@ object Dom {
     }
 
     Decoder { r ⇒
+      import io.bullet.borer.{DataItem ⇒ DI}
       r.dataItem match {
-        case DataItem.Null      ⇒ r.readNull(); Element.Value.Null
-        case DataItem.Undefined ⇒ r.readUndefined(); Element.Value.Undefined
-        case DataItem.Bool      ⇒ if (r.readBoolean()) Element.Value.Bool.True else Element.Value.Bool.False
+        case DI.Null      ⇒ r.readNull(); Element.Value.Null
+        case DI.Undefined ⇒ r.readUndefined(); Element.Value.Undefined
+        case DI.Bool      ⇒ if (r.readBoolean()) Element.Value.Bool.True else Element.Value.Bool.False
 
-        case DataItem.Int      ⇒ Element.Value.Int(r.readInt())
-        case DataItem.Long     ⇒ Element.Value.Long(r.readLong())
-        case DataItem.OverLong ⇒ Element.Value.OverLong(r.overLongNegative, r.readOverLong())
-        case DataItem.Float16  ⇒ Element.Value.Float16(r.readFloat16())
-        case DataItem.Float    ⇒ Element.Value.Float(r.readFloat())
-        case DataItem.Double   ⇒ Element.Value.Double(r.readDouble())
+        case DI.Int      ⇒ Element.Value.Int(r.readInt())
+        case DI.Long     ⇒ Element.Value.Long(r.readLong())
+        case DI.OverLong ⇒ Element.Value.OverLong(r.overLongNegative, r.readOverLong())
+        case DI.Float16  ⇒ Element.Value.Float16(r.readFloat16())
+        case DI.Float    ⇒ Element.Value.Float(r.readFloat())
+        case DI.Double   ⇒ Element.Value.Double(r.readDouble())
 
-        case DataItem.BigInteger ⇒ Element.Value.BigInteger(r.readBigInteger())
-        case DataItem.BigDecimal ⇒ Element.Value.BigDecimal(r.readBigDecimal())
+        case DI.BigInteger ⇒ Element.Value.BigInteger(r.readBigInteger())
+        case DI.BigDecimal ⇒ Element.Value.BigDecimal(r.readBigDecimal())
 
-        case DataItem.Bytes      ⇒ Element.Value.ByteArray(r.readByteArray())
-        case DataItem.BytesStart ⇒ Element.Value.BytesStream(r.read()(bytesDecoder))
+        case DI.Bytes      ⇒ Element.Value.ByteArray(r.readByteArray())
+        case DI.BytesStart ⇒ Element.Value.BytesStream(r.read()(bytesDecoder))
 
-        case DataItem.Text | DataItem.String ⇒ Element.Value.String(r.readString())
-        case DataItem.TextStart              ⇒ Element.Value.TextStream(r.read()(textDecoder))
+        case DI.Chars | DI.String | DI.Text ⇒ Element.Value.String(r.readString())
+        case DI.TextStart                   ⇒ Element.Value.TextStream(r.read()(textDecoder))
 
-        case DataItem.SimpleValue ⇒ Element.Value.Simple(SimpleValue(r.readSimpleValue()))
+        case DI.SimpleValue ⇒ Element.Value.Simple(SimpleValue(r.readSimpleValue()))
 
-        case DataItem.ArrayHeader ⇒ Element.Array(r.read[Vector[Element]]())
-        case DataItem.ArrayStart  ⇒ Element.Array(r.read[Vector[Element]](), indefiniteLength = true)
+        case DI.ArrayHeader ⇒ Element.Array(r.read[Vector[Element]]())
+        case DI.ArrayStart  ⇒ Element.Array(r.read[Vector[Element]](), indefiniteLength = true)
 
-        case DataItem.MapHeader ⇒ Element.Map(r.read[ListMap[Element, Element]]())
-        case DataItem.MapStart  ⇒ Element.Map(r.read[ListMap[Element, Element]](), indefiniteLength = true)
+        case DI.MapHeader ⇒ Element.Map(r.read[ListMap[Element, Element]]())
+        case DI.MapStart  ⇒ Element.Map(r.read[ListMap[Element, Element]](), indefiniteLength = true)
 
-        case DataItem.Tag ⇒ Element.Tagged(r.readTag(), r.read[Element]())
+        case DI.Tag ⇒ Element.Tagged(r.readTag(), r.read[Element]())
       }
     }
   }

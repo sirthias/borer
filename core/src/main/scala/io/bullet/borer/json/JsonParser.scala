@@ -197,7 +197,7 @@ private[borer] final class JsonParser extends Receiver.Parser {
           // specifically it matches: \u0000 - \u001f, '"', '\' and 'b'
           if (((1L << (c - 32)) & ((31 - c) >> 31) & 0xeffffffffffffffbL) == 0) {
             c match {
-              case '"' ⇒ receiver.onString(getString); ix + 1
+              case '"' ⇒ receiver.onChars(chars, 0, charsCursor); ix + 1
               case 'b' ⇒ parseUtf8String(appendChar(ix, 'b') + 1)
               case '\\' ⇒
                 var i = ix + 1

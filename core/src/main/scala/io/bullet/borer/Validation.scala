@@ -62,7 +62,7 @@ object Validation {
     private var level: Int     = -1
     private var mask: Int      = DEFAULT_MASK
 
-    def target = _target
+    override def target = _target
 
     def onNull(): Unit = {
       checkAllowed(DI.Null)
@@ -148,6 +148,12 @@ object Validation {
       _target.onString(value)
     }
 
+    def onChars(buffer: Array[Char], from: Int, until: Int): Unit = {
+      checkAllowed(DI.Chars)
+      count()
+      _target.onChars(buffer, from, until)
+    }
+
     def onText[Bytes: ByteAccess](value: Bytes): Unit = {
       checkAllowed(DI.Text)
       count()
@@ -156,7 +162,7 @@ object Validation {
 
     def onTextStart(): Unit = {
       checkAllowed(DI.TextStart)
-      enterLevel(0, DI.String | DI.Text | DI.TextStart | UNBOUNDED)
+      enterLevel(0, DI.StringLike | DI.Text | DI.TextStart | UNBOUNDED)
       _target.onTextStart()
     }
 
@@ -191,7 +197,7 @@ object Validation {
     def onMapStart(): Unit = {
       checkAllowed(DI.MapStart)
       enterLevel(0, DEFAULT_MASK | MAP | UNBOUNDED)
-      if (isJson) mask = DI.String | MAP | UNBOUNDED
+      if (isJson) mask = DI.StringLike | MAP | UNBOUNDED
       _target.onMapStart()
     }
 
@@ -220,7 +226,7 @@ object Validation {
 
         case Tag.DateTimeString | Tag.TextUri | Tag.TextBase64Url | Tag.TextBase64 | Tag.TextRegex | Tag.TextMime ⇒
           checkAllowed(DI.Tag)
-          enterLevel(1L, DI.String | DI.Text)
+          enterLevel(1L, DI.StringLike | DI.Text)
 
         case Tag.DecimalFraction | Tag.BigFloat ⇒
           checkAllowed(DI.Tag)
@@ -242,7 +248,7 @@ object Validation {
       if (level >= 0) throw Borer.Error.InsufficientInput(Position.unavailable, 1)
       else _target.onEndOfInput()
 
-    def copy = {
+    override def copy = {
       val clone = super.clone().asInstanceOf[Receiver]
       clone._target = _target.copy
       clone.levelRemaining = levelRemaining.clone()
@@ -271,7 +277,7 @@ object Validation {
         if (isMasked(UNBOUNDED)) {
           if (isMasked(MAP)) {
             if (isJson) {
-              mask = if (isEvenNumberedElement) DEFAULT_MASK | MAP | UNBOUNDED else DI.String | MAP | UNBOUNDED
+              mask = if (isEvenNumberedElement) DEFAULT_MASK | MAP | UNBOUNDED else DI.StringLike | MAP | UNBOUNDED
             }
             if (remaining < -config.maxMapLength) overflow("map", config.maxMapLength) else ok()
           } else {

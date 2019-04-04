@@ -36,7 +36,7 @@ object Logging {
   def beforeValidation(createLogger: LevelInfo ⇒ Logger): Receiver.Applier =
     (creator, target) ⇒ new Receiver(creator(target), createLogger)
 
-  abstract class LevelInfo {
+  trait LevelInfo {
     def level: Int
     def levelCount: Long
     def levelSize: Long
@@ -70,6 +70,7 @@ object Logging {
     def onBytes[Bytes: ByteAccess](value: Bytes): Unit
     def onBytesStart(): Unit
     def onString(value: String): Unit
+    def onChars(buffer: Array[Char], from: Int, until: Int): Unit
     def onText[Bytes: ByteAccess](value: Bytes): Unit
     def onTextStart(): Unit
     def onArrayHeader(length: Long): Unit
@@ -88,28 +89,29 @@ object Logging {
   abstract class LineFormatLogger extends Logger {
     import java.lang.Long.toHexString
 
-    def onNull(): Unit                                   = show("null")
-    def onUndefined(): Unit                              = show("undefined")
-    def onBool(value: Boolean): Unit                     = show(value.toString)
-    def onInt(value: Int): Unit                          = show(value.toString)
-    def onLong(value: Long): Unit                        = show(s"${value}L")
-    def onOverLong(negative: Boolean, value: Long): Unit = show((if (negative) "-0x" else "0x") + toHexString(value))
-    def onFloat16(value: Float): Unit                    = show(s"${Util.doubleToString(value.toDouble)}f16")
-    def onFloat(value: Float): Unit                      = show(s"${Util.doubleToString(value.toDouble)}f")
-    def onDouble(value: Double): Unit                    = show(Util.doubleToString(value))
-    def onBigInteger(value: JBigInteger): Unit           = show(s"BigInteger($value)")
-    def onBigDecimal(value: JBigDecimal): Unit           = show(s"BigDecimal($value)")
-    def onBytes[Bytes: ByteAccess](value: Bytes): Unit   = show(formatBytes("BYTES[", value))
-    def onBytesStart(): Unit                             = show("BYTES-STREAM[")
-    def onString(value: String): Unit                    = show(formatString(value))
-    def onText[Bytes: ByteAccess](value: Bytes)          = show(formatString(value))
-    def onTextStart(): Unit                              = show("TEXT-STREAM[")
-    def onArrayHeader(length: Long): Unit                = show(if (length > 0) "[" else "[]")
-    def onArrayStart(): Unit                             = show("[")
-    def onMapHeader(length: Long): Unit                  = show(if (length > 0) "{" else "{}")
-    def onMapStart(): Unit                               = show("{")
-    def onTag(value: Tag): Unit                          = show(value.toString)
-    def onSimpleValue(value: Int): Unit                  = show(s"SimpleValue($value)")
+    def onNull(): Unit                                    = show("null")
+    def onUndefined(): Unit                               = show("undefined")
+    def onBool(value: Boolean): Unit                      = show(value.toString)
+    def onInt(value: Int): Unit                           = show(value.toString)
+    def onLong(value: Long): Unit                         = show(s"${value}L")
+    def onOverLong(negative: Boolean, value: Long): Unit  = show((if (negative) "-0x" else "0x") + toHexString(value))
+    def onFloat16(value: Float): Unit                     = show(s"${Util.doubleToString(value.toDouble)}f16")
+    def onFloat(value: Float): Unit                       = show(s"${Util.doubleToString(value.toDouble)}f")
+    def onDouble(value: Double): Unit                     = show(Util.doubleToString(value))
+    def onBigInteger(value: JBigInteger): Unit            = show(s"BigInteger($value)")
+    def onBigDecimal(value: JBigDecimal): Unit            = show(s"BigDecimal($value)")
+    def onBytes[Bytes: ByteAccess](value: Bytes): Unit    = show(formatBytes("BYTES[", value))
+    def onBytesStart(): Unit                              = show("BYTES-STREAM[")
+    def onString(value: String): Unit                     = show(formatString(value))
+    def onChars(b: Array[Char], from: Int, to: Int): Unit = show(formatString(new String(b, from, to - from)))
+    def onText[Bytes: ByteAccess](value: Bytes): Unit     = show(formatString(value))
+    def onTextStart(): Unit                               = show("TEXT-STREAM[")
+    def onArrayHeader(length: Long): Unit                 = show(if (length > 0) "[" else "[]")
+    def onArrayStart(): Unit                              = show("[")
+    def onMapHeader(length: Long): Unit                   = show(if (length > 0) "{" else "{}")
+    def onMapStart(): Unit                                = show("{")
+    def onTag(value: Tag): Unit                           = show(value.toString)
+    def onSimpleValue(value: Int): Unit                   = show(s"SimpleValue($value)")
 
     def onLevelExited(levelType: LevelType, break: Boolean): Unit =
       show(if (levelType.isInstanceOf[LevelType.MapEntry]) "}" else "]")
@@ -186,7 +188,7 @@ object Logging {
     * on the side, feeds a custom [[Logger]] with logging events.
     */
   final class Receiver(private var _target: borer.Receiver, createLogger: LevelInfo ⇒ Logger)
-      extends LevelInfo with borer.Receiver with java.lang.Cloneable {
+      extends borer.Receiver with LevelInfo with java.lang.Cloneable {
 
     private var _level: Int = 0
 
@@ -201,7 +203,7 @@ object Logging {
 
     private var logger = createLogger(this)
 
-    def target = _target
+    override def target = _target
 
     def level = _level
 
@@ -327,6 +329,12 @@ object Logging {
       target.onString(value)
     }
 
+    def onChars(buffer: Array[Char], from: Int, until: Int): Unit = {
+      logger.onChars(buffer, from, until)
+      count()
+      target.onChars(buffer, from, until)
+    }
+
     def onText[Bytes: ByteAccess](value: Bytes): Unit = {
       logger.onText(value)
       count()
@@ -387,7 +395,7 @@ object Logging {
       target.onEndOfInput()
     }
 
-    def copy = {
+    override def copy = {
       val clone = super.clone().asInstanceOf[Receiver]
       clone._target = _target.copy
       clone._levelCount = _levelCount.clone()

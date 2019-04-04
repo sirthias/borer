@@ -14,7 +14,7 @@ import java.math.{BigDecimal ⇒ JBigDecimal, BigInteger ⇒ JBigInteger}
   * The common interface of all types that consume CBOR data.
   * (On the reading as well as the writing side)
   */
-trait Receiver {
+abstract class Receiver {
 
   def onNull(): Unit
   def onUndefined(): Unit
@@ -35,6 +35,7 @@ trait Receiver {
   def onBytesStart(): Unit
 
   def onString(value: String): Unit
+  def onChars(buffer: Array[Char], from: Int, until: Int): Unit
   def onText[Bytes: ByteAccess](value: Bytes): Unit
   def onTextStart(): Unit
 
@@ -56,13 +57,13 @@ trait Receiver {
     * The target [[Receiver]] is this [[Receiver]] wraps another one.
     * If it doesn't wrap another [[Receiver]] the method returns this instance.
     */
-  def target: Receiver
+  def target: Receiver = this
 
   /**
     * Returns a deep copy of this [[Receiver]].
     * If this [[Receiver]] wraps another one then the copy must wrap a fresh copy of the wrapped target [[Receiver]].
     */
-  def copy: Receiver
+  def copy: Receiver = this
 }
 
 object Receiver {
@@ -115,32 +116,31 @@ object Receiver {
   }
 
   abstract class Abstract extends Receiver {
-    def onNull()                                   = default(DataItem.Null)
-    def onUndefined()                              = default(DataItem.Undefined)
-    def onBool(value: Boolean)                     = default(DataItem.Bool)
-    def onInt(value: Int)                          = default(DataItem.Int)
-    def onLong(value: Long)                        = default(DataItem.Long)
-    def onOverLong(negative: Boolean, value: Long) = default(DataItem.OverLong)
-    def onFloat16(value: Float)                    = default(DataItem.Float16)
-    def onFloat(value: Float)                      = default(DataItem.Float)
-    def onDouble(value: Double)                    = default(DataItem.Double)
-    def onBigInteger(value: JBigInteger)           = default(DataItem.BigInteger)
-    def onBigDecimal(value: JBigDecimal)           = default(DataItem.BigDecimal)
-    def onBytes[Bytes: ByteAccess](value: Bytes)   = default(DataItem.Bytes)
-    def onBytesStart()                             = default(DataItem.BytesStart)
-    def onString(value: String)                    = default(DataItem.String)
-    def onText[Bytes: ByteAccess](value: Bytes)    = default(DataItem.Text)
-    def onTextStart()                              = default(DataItem.TextStart)
-    def onArrayHeader(length: Long)                = default(DataItem.ArrayHeader)
-    def onArrayStart()                             = default(DataItem.ArrayStart)
-    def onMapHeader(length: Long)                  = default(DataItem.MapHeader)
-    def onMapStart()                               = default(DataItem.MapStart)
-    def onBreak()                                  = default(DataItem.Break)
-    def onTag(value: Tag)                          = default(DataItem.Tag)
-    def onSimpleValue(value: Int)                  = default(DataItem.SimpleValue)
-    def onEndOfInput()                             = default(DataItem.EndOfInput)
-    def target                                     = throw new UnsupportedOperationException
-    def copy                                       = throw new UnsupportedOperationException
+    def onNull()                                            = default(DataItem.Null)
+    def onUndefined()                                       = default(DataItem.Undefined)
+    def onBool(value: Boolean)                              = default(DataItem.Bool)
+    def onInt(value: Int)                                   = default(DataItem.Int)
+    def onLong(value: Long)                                 = default(DataItem.Long)
+    def onOverLong(negative: Boolean, value: Long)          = default(DataItem.OverLong)
+    def onFloat16(value: Float)                             = default(DataItem.Float16)
+    def onFloat(value: Float)                               = default(DataItem.Float)
+    def onDouble(value: Double)                             = default(DataItem.Double)
+    def onBigInteger(value: JBigInteger)                    = default(DataItem.BigInteger)
+    def onBigDecimal(value: JBigDecimal)                    = default(DataItem.BigDecimal)
+    def onBytes[Bytes: ByteAccess](value: Bytes)            = default(DataItem.Bytes)
+    def onBytesStart()                                      = default(DataItem.BytesStart)
+    def onString(value: String)                             = default(DataItem.String)
+    def onChars(buffer: Array[Char], from: Int, until: Int) = default(DataItem.Chars)
+    def onText[Bytes: ByteAccess](value: Bytes)             = default(DataItem.Text)
+    def onTextStart()                                       = default(DataItem.TextStart)
+    def onArrayHeader(length: Long)                         = default(DataItem.ArrayHeader)
+    def onArrayStart()                                      = default(DataItem.ArrayStart)
+    def onMapHeader(length: Long)                           = default(DataItem.MapHeader)
+    def onMapStart()                                        = default(DataItem.MapStart)
+    def onBreak()                                           = default(DataItem.Break)
+    def onTag(value: Tag)                                   = default(DataItem.Tag)
+    def onSimpleValue(value: Int)                           = default(DataItem.SimpleValue)
+    def onEndOfInput()                                      = default(DataItem.EndOfInput)
     protected def default(dataItem: Int): Unit
   }
 }

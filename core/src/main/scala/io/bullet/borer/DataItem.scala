@@ -30,36 +30,38 @@ object DataItem {
   final val BigDecimal = 1 << 10
 
   final val String    = 1 << 11
-  final val Text      = 1 << 12
-  final val TextStart = 1 << 13
+  final val Chars     = 1 << 12
+  final val Text      = 1 << 13
+  final val TextStart = 1 << 14
 
-  final val Bytes      = 1 << 14
-  final val BytesStart = 1 << 15
+  final val Bytes      = 1 << 15
+  final val BytesStart = 1 << 16
 
-  final val ArrayHeader = 1 << 16
-  final val ArrayStart  = 1 << 17
+  final val ArrayHeader = 1 << 17
+  final val ArrayStart  = 1 << 18
 
-  final val MapHeader = 1 << 18
-  final val MapStart  = 1 << 19
+  final val MapHeader = 1 << 19
+  final val MapStart  = 1 << 20
 
-  final val Break = 1 << 20
-  final val Tag   = 1 << 21
+  final val Break = 1 << 21
+  final val Tag   = 1 << 22
 
-  final val SimpleValue = 1 << 22
+  final val SimpleValue = 1 << 23
 
-  final val EndOfInput = 1 << 23
+  final val EndOfInput = 1 << 24
 
   //////////////////////////////// COMPOUND ////////////////////////////////
 
   final val None        = 0
-  final val AllButBreak = 0x00FFFFFF & ~Break
+  final val StringLike  = String | Chars
+  final val AllButBreak = 0x0FFFFFFF & ~Break
 
   //////////////////////////////////////////////////////////////////////////
 
   def stringify(mask: Int): String =
     if (mask != AllButBreak) {
       Iterator
-        .range(0, 24)
+        .range(0, 25)
         .map { i ⇒
           mask & (1 << i) match {
             case None ⇒ ""
@@ -79,6 +81,7 @@ object DataItem {
             case BigDecimal ⇒ "BigDecimal"
 
             case String    ⇒ "String"
+            case Chars     ⇒ "Chars"
             case Text      ⇒ "Text"
             case TextStart ⇒ "Start of unbounded Text"
 

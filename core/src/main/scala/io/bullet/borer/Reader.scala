@@ -57,11 +57,11 @@ final class Reader(val input: Any,
 
   @inline def hasNull: Boolean = has(DI.Null)
   def readNull(): Null         = if (hasNull) pullReturn(null) else unexpectedDataItem(expected = "null")
-  def tryReadNull(): Boolean   = hasNull && { pull(); true }
+  def tryReadNull(): Boolean   = pullIfTrue(hasNull)
 
   @inline def hasUndefined: Boolean = has(DI.Undefined)
   def readUndefined(): this.type    = if (hasUndefined) pullReturn(this) else unexpectedDataItem(expected = "undefined")
-  def tryReadUndefined(): Boolean   = hasUndefined && { pull(); true }
+  def tryReadUndefined(): Boolean   = pullIfTrue(hasUndefined)
 
   @inline def hasBoolean: Boolean = has(DI.Bool)
   def readBoolean(): Boolean =
@@ -186,7 +186,7 @@ final class Reader(val input: Any,
   @inline def hasBytesStart: Boolean = has(DI.BytesStart)
   def readBytesStart(): this.type =
     if (tryReadBytesStart()) this else unexpectedDataItem(expected = "Unbounded Bytes Start")
-  def tryReadBytesStart(): Boolean = hasBytesStart && { pull(); true }
+  def tryReadBytesStart(): Boolean = pullIfTrue(hasBytesStart)
 
   @inline def hasUnsizedBytes: Boolean = hasBytesStart
   def readUnsizedBytes[Bytes]()(implicit byteAccess: ByteAccess[Bytes]): Bytes =
@@ -196,13 +196,31 @@ final class Reader(val input: Any,
       result
     } else unexpectedDataItem(expected = "Unbounded Bytes")
 
-  @inline def hasString: Boolean = hasAnyOf(DI.String | DI.Text | DI.TextStart)
+  @inline def hasString: Boolean = hasAnyOf(DI.StringLike | DI.Text | DI.TextStart)
   def readString(): String =
-    if (hasTextBytes) {
-      val byteArray = readTextBytes[Array[Byte]]()
-      if (byteArray.length > 0) new String(byteArray, StandardCharsets.UTF_8) else ""
-    } else if (hasString) pullReturn(receptacle.stringValue)
-    else unexpectedDataItem(expected = "String or Text Bytes")
+    dataItem match {
+      case DI.Chars     ⇒ pullReturn(new String(receptacle.charBufValue, receptacle.intValue, receptacle.longValue.toInt))
+      case DI.String    ⇒ pullReturn(receptacle.stringValue)
+      case DI.Text      ⇒ stringOf(readSizedTextBytes[Array[Byte]]())
+      case DI.TextStart ⇒ stringOf(readUnsizedTextBytes[Array[Byte]]())
+      case _            ⇒ unexpectedDataItem(expected = "String or Text Bytes")
+    }
+
+  def tryReadString(s: String): Boolean =
+    dataItem match {
+      case DI.Chars ⇒
+        @tailrec def rec(buf: Array[Char], ix: Int, end: Int, six: Int): Boolean =
+          ix == end || buf(ix) == s.charAt(six) && rec(buf, ix + 1, end, six + 1)
+        val from  = receptacle.intValue
+        val until = receptacle.longValue.toInt
+        pullIfTrue((until - from) == s.length && rec(receptacle.charBufValue, from, until, 0))
+      case DI.String ⇒ pullIfTrue(receptacle.stringValue == s)
+      case DI.Text   ⇒ pullIfTrue(stringOf(receptacle.getBytes[Array[Byte]]) == s)
+      case DI.TextStart ⇒
+        val saved = saveState
+        stringOf(readUnsizedTextBytes[Array[Byte]]()) == s || { restoreState(saved); false }
+      case _ ⇒ false
+    }
 
   @inline def hasTextBytes: Boolean = hasAnyOf(DI.Text | DI.TextStart)
   def readTextBytes[Bytes: ByteAccess](): Bytes =
@@ -220,7 +238,7 @@ final class Reader(val input: Any,
   @inline def hasTextStart: Boolean = has(DI.TextStart)
   def readTextStart(): this.type =
     if (tryReadTextStart()) this else unexpectedDataItem(expected = "Unbounded Text Start")
-  def tryReadTextStart(): Boolean = hasTextStart && { pull(); true }
+  def tryReadTextStart(): Boolean = pullIfTrue(hasTextStart)
 
   @inline def hasUnsizedTextBytes: Boolean = hasTextStart
   def readUnsizedTextBytes[Bytes]()(implicit byteAccess: ByteAccess[Bytes]): Bytes =
@@ -244,11 +262,11 @@ final class Reader(val input: Any,
   def readArrayHeader(length: Long): this.type =
     if (tryReadArrayHeader(length)) this else unexpectedDataItem(expected = s"Array Header ($length)")
   def tryReadArrayHeader(length: Int): Boolean  = tryReadArrayHeader(length.toLong)
-  def tryReadArrayHeader(length: Long): Boolean = hasArrayHeader(length) && { pull(); true }
+  def tryReadArrayHeader(length: Long): Boolean = pullIfTrue(hasArrayHeader(length))
 
   @inline def hasArrayStart: Boolean = has(DI.ArrayStart)
   def readArrayStart(): this.type    = if (tryReadArrayStart()) this else unexpectedDataItem(expected = "Array Start")
-  def tryReadArrayStart(): Boolean   = hasArrayStart && { pull(); true }
+  def tryReadArrayStart(): Boolean   = pullIfTrue(hasArrayStart)
 
   @inline def hasMapHeader: Boolean = has(DI.MapHeader)
   def readMapHeader(): Long =
@@ -264,15 +282,15 @@ final class Reader(val input: Any,
   def readMapHeader(length: Long): this.type =
     if (tryReadMapHeader(length)) this else unexpectedDataItem(expected = s"Map Header ($length)")
   def tryReadMapHeader(length: Int): Boolean  = tryReadMapHeader(length.toLong)
-  def tryReadMapHeader(length: Long): Boolean = hasMapHeader(length) && { pull(); true }
+  def tryReadMapHeader(length: Long): Boolean = pullIfTrue(hasMapHeader(length))
 
   @inline def hasMapStart: Boolean = has(DI.MapStart)
   def readMapStart(): this.type    = if (tryReadMapStart()) this else unexpectedDataItem(expected = "Map Start")
-  def tryReadMapStart(): Boolean   = hasMapStart && { pull(); true }
+  def tryReadMapStart(): Boolean   = pullIfTrue(hasMapStart)
 
   @inline def hasBreak: Boolean = has(DI.Break)
   def readBreak(): this.type    = if (tryReadBreak()) this else unexpectedDataItem(expected = "BREAK")
-  def tryReadBreak(): Boolean   = hasBreak && { pull(); true }
+  def tryReadBreak(): Boolean   = pullIfTrue(hasBreak)
 
   @inline def hasTag: Boolean = has(DI.Tag)
   def readTag(): Tag =
@@ -281,7 +299,7 @@ final class Reader(val input: Any,
 
   @inline def hasTag(tag: Tag): Boolean = hasTag && receptacle.tagValue == tag
   def readTag(tag: Tag): this.type      = if (tryReadTag(tag)) this else unexpectedDataItem(expected = tag.toString)
-  def tryReadTag(tag: Tag): Boolean     = hasTag(tag) && { pull(); true }
+  def tryReadTag(tag: Tag): Boolean     = pullIfTrue(hasTag(tag))
 
   @inline def hasSimpleValue: Boolean = has(DI.SimpleValue)
   def readSimpleValue(): Int =
@@ -294,7 +312,7 @@ final class Reader(val input: Any,
   @inline def hasSimpleValue(value: Int): Boolean = hasSimpleValue && receptacle.intValue == value
   def readSimpleValue(value: Int): this.type =
     if (tryReadSimpleValue(value)) this else unexpectedDataItem(expected = s"Simple Value $value")
-  def tryReadSimpleValue(value: Int): Boolean = hasSimpleValue(value) && { pull(); true }
+  def tryReadSimpleValue(value: Int): Boolean = pullIfTrue(hasSimpleValue(value))
 
   @inline def hasEndOfInput: Boolean       = has(DI.EndOfInput)
   @inline def readEndOfInput(): Unit       = if (!hasEndOfInput) unexpectedDataItem(expected = "End of Input")
@@ -338,10 +356,12 @@ final class Reader(val input: Any,
     value
   }
 
-  def validationFailure(msg: String): Nothing =
+  @inline private def pullIfTrue(value: Boolean): Boolean = value && { pull(); true }
+
+  @inline def validationFailure(msg: String): Nothing =
     throw Borer.Error.ValidationFailure(input, msg)
 
-  def overflow(msg: String): Nothing =
+  @inline def overflow(msg: String): Nothing =
     throw Borer.Error.Overflow(input, msg)
 
   def unexpectedDataItem(expected: String): Nothing = {
@@ -354,10 +374,10 @@ final class Reader(val input: Any,
     unexpectedDataItem(expected, actual)
   }
 
-  def unexpectedDataItem(expected: String, actual: String): Nothing =
+  @inline def unexpectedDataItem(expected: String, actual: String): Nothing =
     throw Borer.Error.UnexpectedDataItem(input, expected, actual)
 
-  def saveState: Reader.SavedState = new Reader.SavedStateImpl(_cursor, receiver.copy)
+  @inline def saveState: Reader.SavedState = new Reader.SavedStateImpl(_cursor, receiver.copy)
 
   def restoreState(mark: Reader.SavedState): Unit = {
     val savedState = mark.asInstanceOf[Reader.SavedStateImpl]
@@ -365,6 +385,9 @@ final class Reader(val input: Any,
     receiver = savedState.receiver
     receptacle = receiver.finalTarget.asInstanceOf[Receptacle]
   }
+
+  @inline private def stringOf(bytes: Array[Byte]): String =
+    if (bytes.length > 0) new String(bytes, StandardCharsets.UTF_8) else ""
 }
 
 object Reader {

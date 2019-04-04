@@ -49,17 +49,20 @@ object MapBasedCodecs {
       def expected(s: String) = s"$s for decoding an instance of type [${ctx.typeName.full}]"
 
       Decoder { r ⇒
-        val constructorArgs = new Array[AnyRef](len)
+        val constructorArgs     = new Array[AnyRef](len)
         @tailrec def rec(ix: Int): T =
           if (ix < len) {
-            val label = r.readString()
-            @tailrec def findParam(i: Int): AnyRef =
-              if (i < len) {
-                val p = params(ix)
-                if (p.label == label) p.typeclass.read(r).asInstanceOf[AnyRef]
-                else findParam(i + 1)
-              } else r.unexpectedDataItem(s"a member of type [${ctx.typeName.full}]", s"member with name [$label]")
-            constructorArgs(ix) = findParam(0)
+            val p = params(ix)
+            @tailrec def findParam(i: Int, end: Int): AnyRef =
+              if (i < end) {
+                if (r.tryReadString(p.label)) p.typeclass.read(r).asInstanceOf[AnyRef]
+                else findParam(i + 1, end)
+              } else if (end == len) findParam(0, ix)
+              else
+                r.unexpectedDataItem(
+                  s"a member of type [${ctx.typeName.full}]",
+                  s"member with name [${r.readString()}]")
+            constructorArgs(ix) = findParam(ix, len)
             rec(ix + 1)
           } else ctx.rawConstruct(constructorArgs)
 

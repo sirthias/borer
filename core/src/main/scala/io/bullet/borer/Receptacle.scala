@@ -18,17 +18,13 @@ private[borer] final class Receptacle extends Receiver with java.lang.Cloneable 
 
   private[this] var _dataItem: Int = _
 
-  private[this] var _bool: Boolean           = _
-  private[this] var _int: Int                = _
-  private[this] var _long: Long              = _
-  private[this] var _float: Float            = _
-  private[this] var _double: Double          = _
-  private[this] var _bigInteger: JBigInteger = _
-  private[this] var _bigDecimal: JBigDecimal = _
-  private[this] var _string: String          = _
-  private[this] var _tag: Tag                = _
+  private[this] var _bool: Boolean  = _
+  private[this] var _int: Int       = _
+  private[this] var _long: Long     = _
+  private[this] var _float: Float   = _
+  private[this] var _double: Double = _
+  private[this] var _obj: Any       = _
 
-  private[this] var _bytes: Any                   = _
   private[this] var _bytesAccess: ByteAccess[Any] = _
 
   @inline def dataItem: Int = _dataItem
@@ -38,13 +34,14 @@ private[borer] final class Receptacle extends Receiver with java.lang.Cloneable 
   @inline def longValue: Long              = _long
   @inline def floatValue: Float            = _float
   @inline def doubleValue: Double          = _double
-  @inline def bigIntegerValue: JBigInteger = _bigInteger
-  @inline def bigDecimalValue: JBigDecimal = _bigDecimal
-  @inline def stringValue: String          = _string
-  @inline def tagValue: Tag                = _tag
+  @inline def stringValue: String          = _obj.asInstanceOf[String]
+  @inline def charBufValue: Array[Char]    = _obj.asInstanceOf[Array[Char]]
+  @inline def bigIntegerValue: JBigInteger = _obj.asInstanceOf[JBigInteger]
+  @inline def bigDecimalValue: JBigDecimal = _obj.asInstanceOf[JBigDecimal]
+  @inline def tagValue: Tag                = _obj.asInstanceOf[Tag]
 
   @inline def getBytes[Bytes](implicit byteAccess: ByteAccess[Bytes]): Bytes =
-    byteAccess.convert(_bytes)(_bytesAccess)
+    byteAccess.convert(_obj)(_bytesAccess)
 
   @inline def clear(): Unit = _dataItem = DataItem.None
 
@@ -89,17 +86,17 @@ private[borer] final class Receptacle extends Receiver with java.lang.Cloneable 
   }
 
   def onBigInteger(value: JBigInteger): Unit = {
-    _bigInteger = value
+    _obj = value
     _dataItem = DataItem.BigInteger
   }
 
   def onBigDecimal(value: JBigDecimal): Unit = {
-    _bigDecimal = value
+    _obj = value
     _dataItem = DataItem.BigDecimal
   }
 
   def onBytes[Bytes](value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Unit = {
-    _bytes = value
+    _obj = value
     _bytesAccess = byteAccess.asInstanceOf[ByteAccess[Any]]
     _dataItem = DataItem.Bytes
   }
@@ -107,12 +104,19 @@ private[borer] final class Receptacle extends Receiver with java.lang.Cloneable 
   def onBytesStart(): Unit = _dataItem = DataItem.BytesStart
 
   def onString(value: String): Unit = {
-    _string = value
+    _obj = value
     _dataItem = DataItem.String
   }
 
+  def onChars(buffer: Array[Char], from: Int, until: Int): Unit = {
+    _obj = buffer
+    _int = from
+    _long = until.toLong
+    _dataItem = DataItem.Chars
+  }
+
   def onText[Bytes](value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Unit = {
-    _bytes = value
+    _obj = value
     _bytesAccess = byteAccess.asInstanceOf[ByteAccess[Any]]
     _dataItem = DataItem.Text
   }
@@ -136,7 +140,7 @@ private[borer] final class Receptacle extends Receiver with java.lang.Cloneable 
   def onBreak(): Unit = _dataItem = DataItem.Break
 
   def onTag(value: Tag): Unit = {
-    _tag = value
+    _obj = value
     _dataItem = DataItem.Tag
   }
 
@@ -147,7 +151,5 @@ private[borer] final class Receptacle extends Receiver with java.lang.Cloneable 
 
   def onEndOfInput(): Unit = _dataItem = DataItem.EndOfInput
 
-  def target = this
-
-  def copy = super.clone().asInstanceOf[Receptacle]
+  override def copy = super.clone().asInstanceOf[Receptacle]
 }
