@@ -99,7 +99,7 @@ object MiscSpec extends BorerSpec {
 
     "Array Header Mismatch Error" - {
       val encoded = Cbor.encode(Writer.Script(_.writeArrayHeader(0))).toByteArray
-      val error   = Cbor.decode(encoded).to[Foo].left.get
+      val error   = Cbor.decode(encoded).to[Foo].valueEither.left.get
       assertMatch(error) {
         case Borer.Error.UnexpectedDataItem(_, "Array Header (3)", "Array Header (0)") ⇒
       }

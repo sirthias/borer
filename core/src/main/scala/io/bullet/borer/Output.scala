@@ -19,7 +19,7 @@ import scala.annotation.tailrec
   */
 trait Output {
   type Self <: Output
-  type Result
+  type Result <: AnyRef
 
   def writeByte(byte: Byte): Self
   def writeBytes(a: Byte, b: Byte): Self

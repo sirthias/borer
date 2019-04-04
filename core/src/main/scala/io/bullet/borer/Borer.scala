@@ -8,27 +8,24 @@
 
 package io.bullet.borer
 
-import java.nio.charset.StandardCharsets.UTF_8
+import java.lang.{StringBuilder ⇒ JStringBuilder}
 
-import io.bullet.borer.cbor.{CborParser, CborRenderer}
-import io.bullet.borer.json.{JsonParser, JsonRenderer}
-
-import scala.util.{Failure, Success, Try}
-import scala.util.control.NonFatal
+import io.bullet.borer.cbor._
+import io.bullet.borer.json._
 
 case object Cbor extends Borer.Target {
 
   /**
     * Entry point into the CBOR encoding mini-DSL.
     */
-  def encode[T: Encoder](value: T): Borer.EncodingSetup[T] =
-    new Borer.EncodingSetup[T](value, this, CborRenderer)
+  def encode[T: Encoder](value: T): EncodingSetup.Api[T] =
+    new EncodingSetup.Impl[T](value, this, CborRenderer)
 
   /**
     * Entry point into the CBOR decoding mini-DSL.
     */
-  def decode[Input: InputAccess](input: Input): Borer.DecodingSetup[Input] =
-    new Borer.DecodingSetup(input, this, CborParser)
+  def decode[Input: InputAccess](input: Input): DecodingSetup.Api[Input] =
+    new DecodingSetup.Impl(input, this, CborParser)
 
   /**
     * Constructs a new [[Writer]] that writes CBOR to the given [[Output]].
@@ -55,14 +52,14 @@ case object Json extends Borer.Target {
   /**
     * Entry point into the JSON encoding mini-DSL.
     */
-  def encode[T: Encoder](value: T): Borer.EncodingSetup[T] with JsonEncoding =
-    new Borer.EncodingSetup[T](value, this, JsonRenderer).asInstanceOf[Borer.EncodingSetup[T] with JsonEncoding]
+  def encode[T: Encoder](value: T): EncodingSetup.JsonApi[T] =
+    new EncodingSetup.Impl[T](value, this, JsonRenderer)
 
   /**
     * Entry point into the JSON decoding mini-DSL.
     */
-  def decode[Input: InputAccess](input: Input): Borer.DecodingSetup[Input] =
-    new Borer.DecodingSetup(input, this, new JsonParser)
+  def decode[Input: InputAccess](input: Input): DecodingSetup.Api[Input] =
+    new DecodingSetup.Impl(input, this, new JsonParser)
 
   /**
     * Constructs a new [[Writer]] that writes JSON to the given [[Output]].
@@ -82,17 +79,6 @@ case object Json extends Borer.Target {
                                  config: Reader.Config = Reader.Config.default,
                                  validationApplier: Receiver.Applier = Receiver.defaultApplier): Reader =
     new Reader(input, startIndex, new JsonParser, validationApplier, config, this)(InputAccess.asAny[Input])
-
-  sealed trait JsonEncoding
-
-  implicit final class EncodingExtraOps[T](val underlying: Borer.EncodingSetup[T] with JsonEncoding) extends AnyVal {
-
-    /**
-      * Short-cut for encoding to a plain byte array, throwing an exception in case of any failures,
-      * and then immediately UTF-8 decoding into a [[String]].
-      */
-    @inline def toUtf8String: String = new String(underlying.toByteArray, UTF_8)
-  }
 }
 
 /**
@@ -108,8 +94,9 @@ object Borer {
     * depending on whether the target is CBOR or JSON.
     */
   sealed abstract class Target {
-    def encode[T: Encoder](value: T): Borer.EncodingSetup[T]
-    def decode[Input: InputAccess](input: Input): Borer.DecodingSetup[Input]
+    def encode[T: Encoder](value: T): EncodingSetup.Api[T]
+
+    def decode[Input: InputAccess](input: Input): DecodingSetup.Api[Input]
 
     def writer(output: Output,
                config: Writer.Config = Writer.Config.default,
@@ -121,162 +108,28 @@ object Borer {
                                    validationApplier: Receiver.Applier = Receiver.defaultApplier): Reader
   }
 
-  final class EncodingSetup[T: Encoder] private[borer] (value: T,
-                                                        target: Target,
-                                                        rendererCreator: Output ⇒ Receiver.Renderer) {
+  private[borer] abstract class AbstractSetup {
+    protected var validationApplier: Receiver.Applier = Receiver.defaultApplier
 
-    private[this] var config: Writer.Config               = Writer.Config.default
-    private[this] var validationApplier: Receiver.Applier = Receiver.defaultApplier
-
-    /**
-      * Configures the [[Writer.Config]] for this encoding run.
-      */
-    @inline def withConfig(config: Writer.Config): this.type = {
-      this.config = config
-      this
-    }
-
-    /**
-      * Enables logging of the encoding progress to the console.
-      * Each data item that is written by the application is pretty printed to the console on its own line.
-      */
-    def withPrintLogging(maxShownByteArrayPrefixLen: Int = 20, maxShownStringPrefixLen: Int = 50): this.type = {
+    def withPrintLogging(maxShownByteArrayPrefixLen: Int, maxShownStringPrefixLen: Int): this.type = {
       withValidationApplier(
         Logging.afterValidation(Logging.PrintLogger(maxShownByteArrayPrefixLen, maxShownStringPrefixLen)))
       this
     }
 
-    /**
-      * Enables logging of the encoding progress to the given [[java.lang.StringBuilder]].
-      * Each data item that is written by the application is formatted and appended as its own line.
-      */
-    def withStringLogging(stringBuilder: java.lang.StringBuilder,
-                          maxShownByteArrayPrefixLen: Int = 20,
-                          maxShownStringPrefixLen: Int = 50,
-                          lineSeparator: String = System.lineSeparator()): this.type = {
+    def withStringLogging(stringBuilder: JStringBuilder,
+                          maxShownByteArrayPrefixLen: Int,
+                          maxShownStringPrefixLen: Int,
+                          lineSeparator: String): this.type = {
       withValidationApplier(
         Logging.afterValidation(
           Logging.ToStringLogger(stringBuilder, maxShownByteArrayPrefixLen, maxShownStringPrefixLen, lineSeparator)))
       this
     }
 
-    /**
-      * Allows for customizing the injection points around input validation.
-      * Used, for example, for on-the-side [[Logging]] of the encoding process.
-      */
-    @inline def withValidationApplier(validationApplier: Receiver.Applier): this.type = {
+    def withValidationApplier(validationApplier: Receiver.Applier): this.type = {
       this.validationApplier = validationApplier
       this
-    }
-
-    /**
-      * Short-cut for encoding to a plain byte array, throwing an exception in case of any failures.
-      */
-    @inline def toByteArray: Array[Byte] = to[Array[Byte]].bytes
-
-    /**
-      * Short-cut for encoding to a plain byte array, wrapped in a [[Try]] for error handling.
-      */
-    @inline def toByteArrayTry: Try[Array[Byte]] = to[Array[Byte]].bytesTry
-
-    /**
-      * Encodes an instance of [[T]] to the given `Bytes` type using the configured options.
-      */
-    def to[Bytes](implicit ba: ByteAccess[Bytes]): Either[Error[ba.Out], ba.Out] = {
-      val renderer = rendererCreator(ba.newOutput)
-      val receiver = validationApplier(Validation.creator(target, config.validation), renderer)
-      val writer   = new Writer(receiver, config, target)
-      def out      = renderer.out.asInstanceOf[ba.Out]
-      try {
-        writer
-          .write(value)
-          .writeEndOfInput() // doesn't actually write anything but triggers certain validation checks (if configured)
-        Right(out)
-      } catch {
-        case e: Error[_] ⇒ Left(e.asInstanceOf[Error[ba.Out]])
-        case NonFatal(e) ⇒ Left(Error.General(out, e))
-      }
-    }
-  }
-
-  final class DecodingSetup[Input: InputAccess] private[borer] (input: Input, target: Target, parser: Receiver.Parser) {
-    private[this] var startIndex: Long                    = _
-    private[this] var prefixOnly: Boolean                 = _
-    private[this] var config: Reader.Config               = Reader.Config.default
-    private[this] var validationApplier: Receiver.Applier = Receiver.defaultApplier
-
-    /**
-      * Indicates that this decoding run is not expected to consume the complete [[Input]].
-      */
-    @inline def withStartIndex(index: Long): this.type = {
-      this.startIndex = index
-      this
-    }
-
-    /**
-      * Indicates that this decoding run is not expected to consume the complete [[Input]].
-      */
-    @inline def withPrefixOnly: this.type = {
-      this.prefixOnly = true
-      this
-    }
-
-    /**
-      * Configures the [[Reader.Config]] for this decoding run.
-      */
-    @inline def withConfig(config: Reader.Config): this.type = {
-      this.config = config
-      this
-    }
-
-    /**
-      * Enables logging of this decoding run to the console.
-      * Each data item that is consumed from the underlying CBOR stream is pretty printed to the console
-      * on its own line.
-      */
-    def withPrintLogging(maxShownByteArrayPrefixLen: Int = 20, maxShownStringPrefixLen: Int = 50): this.type = {
-      withValidationApplier(
-        Logging.afterValidation(Logging.PrintLogger(maxShownByteArrayPrefixLen, maxShownStringPrefixLen)))
-      this
-    }
-
-    /**
-      * Enables logging of this decoding run to the given [[java.lang.StringBuilder]].
-      * Each data item that is consumed from the underlying CBOR stream is formatted and appended as its own line.
-      */
-    def withStringLogging(stringBuilder: java.lang.StringBuilder,
-                          maxShownByteArrayPrefixLen: Int = 20,
-                          maxShownStringPrefixLen: Int = 50,
-                          lineSeparator: String = System.lineSeparator()): this.type = {
-      withValidationApplier(
-        Logging.afterValidation(
-          Logging.ToStringLogger(stringBuilder, maxShownByteArrayPrefixLen, maxShownStringPrefixLen, lineSeparator)))
-      this
-    }
-
-    /**
-      * Allows for customizing the injection points around input validation.
-      * Used, for example, for on-the-side [[Logging]] of the decoding process.
-      */
-    @inline def withValidationApplier(validationApplier: Receiver.Applier): this.type = {
-      this.validationApplier = validationApplier
-      this
-    }
-
-    /**
-      * Decodes an instance of [[T]] from the configured [[Input]] using the configured options.
-      */
-    def to[T](implicit decoder: Decoder[T]): Either[Error[Position[Input]], (T, Long)] = {
-      val reader = new Reader(input, startIndex, parser, validationApplier, config, target)(InputAccess.asAny[Input])
-      try {
-        reader.pull() // fetch first data item
-        val value = decoder.read(reader)
-        if (!prefixOnly) reader.readEndOfInput()
-        Right(value → reader.cursor)
-      } catch {
-        case e: Error[_] ⇒ Left(e.asInstanceOf[Error[Position[Input]]])
-        case NonFatal(e) ⇒ Left(Error.General(Position(input, reader.cursor), e))
-      }
     }
   }
 
@@ -301,43 +154,5 @@ object Borer {
     final case class Overflow[IO](io: IO, msg: String) extends Error[IO](msg)
 
     final case class General[IO](io: IO, cause: Throwable) extends Error[IO](cause.toString, cause)
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    implicit final class EncodingResultOps[Out <: Output](val underlying: Either[Error[Out], Out]) extends AnyVal {
-
-      @inline def bytes: Out#Result = underlying match {
-        case Right(out) ⇒ out.result()
-        case Left(e)    ⇒ throw e
-      }
-
-      @inline def bytesTry: Try[Out#Result] = underlying match {
-        case Right(out) ⇒ Success(out.result())
-        case Left(e)    ⇒ Failure(e)
-      }
-
-      @inline def output: Out = underlying match {
-        case Right(out) ⇒ out
-        case Left(e)    ⇒ throw e
-      }
-
-      @inline def error: Error[Out] = underlying.left.get
-    }
-
-    implicit final class DecodingResultOps[Input, T](val underlying: Either[Error[Position[Input]], (T, Long)])
-        extends AnyVal {
-
-      @inline def value: T = underlying match {
-        case Right((x, _)) ⇒ x
-        case Left(e)       ⇒ throw e
-      }
-
-      @inline def valueTry: Try[T] = underlying match {
-        case Right((x, _)) ⇒ Success(x)
-        case Left(e)       ⇒ Failure(e)
-      }
-
-      @inline def error: Error[Position[Input]] = underlying.left.get
-    }
   }
 }
