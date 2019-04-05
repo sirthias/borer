@@ -51,8 +51,7 @@ import scala.annotation.{switch, tailrec}
 private[borer] final class JsonParser extends Receiver.Parser {
   import Borer.Error
 
-  private[this] var chars: Array[Char] = new Array[Char](16)
-  private[this] var charsCursor: Int   = _
+  private[this] var chars: Array[Char] = new Array[Char](32)
 
   /**
     * Reads the next data item from the input and sends it to the given [[Receiver]].
@@ -65,22 +64,19 @@ private[borer] final class JsonParser extends Receiver.Parser {
     def pos(ix: Long)              = Position(input, ix)
     def invalidJsonValue(ix: Long) = throw Error.InvalidJsonData(pos(ix), "Invalid JSON value")
 
-    @inline def clearChars(): Unit = charsCursor = 0
-
-    def appendChar(ix: Long, c: Char): Long = {
-      val newCursor = charsCursor + 1
+    def appendChar(ix: Long, strLen: Int, c: Char): Int = {
+      val newCursor = strLen + 1
       if (newCursor > 0) {
         if (newCursor > chars.length) {
           val newLen = math.max(chars.length << 1, newCursor)
           chars = util.Arrays.copyOf(chars, newLen)
         }
-        chars(charsCursor) = c
-        charsCursor = newCursor
-        ix
+        chars(strLen) = c
+        newCursor
       } else throw Error.Overflow(pos(ix), "JSON String too long")
     }
 
-    @inline def getString: String = if (charsCursor > 0) new String(chars, 0, charsCursor) else ""
+    @inline def getString(strLen: Int): String = if (strLen > 0) new String(chars, 0, strLen) else ""
 
     // format: OFF
     @inline def parseNull(ix: Long): Long =
@@ -112,43 +108,42 @@ private[borer] final class JsonParser extends Receiver.Parser {
       } else invalidJsonValue(ix)
     // format: ON
 
-    @tailrec def parseNonLongNumber(ix: Long): Long = {
+    @tailrec def parseNonLongNumber(ix: Long, strLen: Int): Long = {
       def result(): Long = {
-        receiver.onNumberString(getString)
+        receiver.onNumberString(getString(strLen))
         ix
       }
-
       if (ia.hasByteAtIndex(input, ix)) {
         val c = ia.byteAt(input, ix).toChar
         (c: @switch) match {
           case '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '.' | '+' | '-' | 'e' | 'E' ⇒
-            parseNonLongNumber(appendChar(ix, c) + 1)
+            parseNonLongNumber(ix + 1, appendChar(ix, strLen, c))
           case _ ⇒ result()
         }
       } else result()
     }
 
-    @tailrec def parseNumber(ix: Long, value: Long, negative: Boolean): Long = {
+    @tailrec def parseNumber(ix: Long, strLen: Int, value: Long, negative: Boolean): Long = {
       @inline def result(): Long = {
         val long = if (negative) -value else value
         if (Util.isInt(long)) receiver.onInt(long.toInt) else receiver.onLong(long)
         ix
       }
       if (ia.hasByteAtIndex(input, ix)) {
-        val c = ia.byteAt(input, ix).toChar
+        val c                         = ia.byteAt(input, ix).toChar
+        def breakOutToNonLongNumber() = parseNonLongNumber(ix + 1, appendChar(ix, strLen, c))
         (c: @switch) match {
           case '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' ⇒
-            val next = appendChar(ix, c) + 1
             // check whether by adding this digit we overflow the Long range or not
             if (value < Long.MaxValue / 10 || value == Long.MaxValue / 10 && c != '8' && c != '9') {
               val newValue = (value << 3) + (value << 1) + c - '0' // same as multiplication by 10
-              parseNumber(next, newValue, negative)
+              parseNumber(ix + 1, appendChar(ix, strLen, c), newValue, negative)
             } else if (negative && value == Long.MaxValue / 10 && c == '8' && // special case: Long.MinValue
                        !(ia.hasByteAtIndex(input, ix + 1) && "0123456789.eE".contains(ia.byteAt(input, ix + 1).toChar))) {
               receiver.onLong(Long.MinValue)
               ix + 1
-            } else parseNonLongNumber(next)
-          case '.' | 'e' | 'E' ⇒ parseNonLongNumber(appendChar(ix, c) + 1)
+            } else breakOutToNonLongNumber()
+          case '.' | 'e' | 'E' ⇒ breakOutToNonLongNumber()
           case _               ⇒ result()
         }
       } else result()
@@ -162,111 +157,100 @@ private[borer] final class JsonParser extends Receiver.Parser {
       if (ia.hasByteAtIndex(input, ix)) {
         val c = ia.byteAt(input, ix).toChar
         c match {
-          case '.' | 'e' | 'E' ⇒
-            clearChars()
-            parseNonLongNumber(appendChar(appendChar(ix, '0'), c) + 1)
-          case _ ⇒ result()
+          case '.' | 'e' | 'E' ⇒ parseNonLongNumber(ix + 1, appendChar(ix, appendChar(ix, 0, '0'), c))
+          case _               ⇒ result()
         }
       } else result()
     }
 
-    @tailrec def parseUtf8String(ix: Long): Long = {
+    @tailrec def parseUtf8String(ix: Long, strLen: Int): Long = {
       import Error.{InvalidJsonData ⇒ IJD}
+      def failUnterminated()             = throw IJD(pos(ix), "Unterminated String at end of Input")
+      def failIllegalCP(i: Long, c: Int) = throw IJD(pos(i), s"Illegal Unicode Code point [${Integer.toHexString(c)}]")
+      def failIllegalUtf8(i: Long)       = throw IJD(pos(i), "Illegal UTF-8 character encoding")
       if (ia.hasByteAtIndex(input, ix)) {
         var c = ia.byteAt(input, ix) & 0xFF
-        if ((c >> 7) == 0) { // single byte UTF-8 char
-          // simple bloom-filter that quick-matches all special chars and one good char (as collateral),
-          // specifically it matches: \u0000 - \u001f, '"', '\' and 'b'
-          if (((1L << (c - 32)) & ((31 - c) >> 31) & 0xeffffffffffffffbL) == 0) {
-            c match {
-              case '"' ⇒ receiver.onChars(chars, 0, charsCursor); ix + 1
-              case 'b' ⇒ parseUtf8String(appendChar(ix, 'b') + 1)
-              case '\\' ⇒
-                var i = ix + 1
-                if (ia.hasByteAtIndex(input, i)) {
-                  ia.byteAt(input, i).toInt match {
-                    case x @ ('"' | '/' | '\\') ⇒ c = x
-                    case 'b'                    ⇒ c = '\b'
-                    case 'f'                    ⇒ c = '\f'
-                    case 'n'                    ⇒ c = '\n'
-                    case 'r'                    ⇒ c = '\r'
-                    case 't'                    ⇒ c = '\t'
-                    case 'u' ⇒
-                      i += 4
-                      if (ia.hasByteAtIndex(input, i)) {
-                        c = Util.hexValue(ia.byteAt(input, i - 3).toChar)
-                        c = (c << 4) + Util.hexValue(ia.byteAt(input, i - 2).toChar)
-                        c = (c << 4) + Util.hexValue(ia.byteAt(input, i - 1).toChar)
-                        c = (c << 4) + Util.hexValue(ia.byteAt(input, i).toChar)
-                        if (0xD800 <= c && c < 0xE000) {
-                          throw IJD(pos(ix), s"Illegal Unicode Code point [${Integer.toHexString(c)}]")
-                        }
-                      } else throw IJD(pos(ix), "Unterminated String at end of Input")
-                    case _ ⇒ throw IJD(pos(ix), "Illegal JSON escape sequence")
-                  }
-                  parseUtf8String(appendChar(i, c.toChar) + 1)
-                } else throw IJD(pos(ix), "Unterminated String at end of Input")
-              case x ⇒ throw IJD(pos(ix), s"Illegal JSON String character [${Integer.toHexString(x)}]")
-            }
-          } else parseUtf8String(appendChar(ix, c.toChar) + 1)
-        } else if (ia.hasByteAtIndex(input, ix + 1)) { // multi-byte UTF-8 char
-          @inline def trailingByte(i: Long): Int = {
-            val x = ia.byteAt(input, i) & 0xFF
-            if ((x >> 6) != 2) throw IJD(pos(i), "Illegal UTF-8 character encoding")
-            x & 0x3F
-          }
+        if ((JsonParser.CharMask(c >> 6) & (1L << (c & 0x3F))) == 0) {
+          parseUtf8String(ix + 1, appendChar(ix, strLen, c.toChar))
+        } else if (c == '"') {
+          receiver.onChars(chars, 0, strLen)
+          ix + 1
+        } else if (c == '\\') {
           var i = ix + 1
-          if ((c >> 6) == 3) { // 2, 3 or 4-byte UTF-8 char
-            if ((c >> 5) == 7) { // 3 or 4-byte UTF-8 char
-              if ((c >> 3) == 0x1E) { // 4-byte UTF-8 char
-                c = (c & 7) << 6 | trailingByte(i)
+          if (ia.hasByteAtIndex(input, i)) {
+            ia.byteAt(input, i).toInt match {
+              case x @ ('"' | '/' | '\\') ⇒ c = x
+              case 'b'                    ⇒ c = '\b'
+              case 'f'                    ⇒ c = '\f'
+              case 'n'                    ⇒ c = '\n'
+              case 'r'                    ⇒ c = '\r'
+              case 't'                    ⇒ c = '\t'
+              case 'u' ⇒
+                i += 4
+                if (ia.hasByteAtIndex(input, i)) {
+                  c = Util.hexValue(ia.byteAt(input, i - 3).toChar)
+                  c = (c << 4) + Util.hexValue(ia.byteAt(input, i - 2).toChar)
+                  c = (c << 4) + Util.hexValue(ia.byteAt(input, i - 1).toChar)
+                  c = (c << 4) + Util.hexValue(ia.byteAt(input, i).toChar)
+                  if (0xD800 <= c && c < 0xE000) failIllegalCP(ix, c)
+                } else failUnterminated()
+              case _ ⇒ throw IJD(pos(ix), "Illegal JSON escape sequence")
+            }
+            parseUtf8String(i + 1, appendChar(i, strLen, c.toChar))
+          } else failUnterminated()
+        } else if (c > 128) { // multi-byte UTF-8 char
+          if (ia.hasByteAtIndex(input, ix + 1)) {
+            @inline def trailingByte(i: Long): Int = {
+              val x = ia.byteAt(input, i) & 0xFF
+              if ((x >> 6) != 2) failIllegalUtf8(i)
+              x & 0x3F
+            }
+            var i = ix + 1
+            if ((c >> 6) == 3) { // 2, 3 or 4-byte UTF-8 char
+              if ((c >> 5) == 7) { // 3 or 4-byte UTF-8 char
+                if ((c >> 3) == 0x1E) { // 4-byte UTF-8 char
+                  c = (c & 7) << 6 | trailingByte(i)
+                  i += 1
+                } else { // 3-byte UTF-8 char
+                  if ((c >> 4) != 0xE) failIllegalUtf8(i)
+                  c = c & 0xF
+                }
+                c = (c << 6) | trailingByte(i)
                 i += 1
-              } else { // 3-byte UTF-8 char
-                if ((c >> 4) != 0xE) throw IJD(pos(i), "Illegal UTF-8 character encoding")
-                c = c & 0xF
+              } else { // 2-byte UTF-8 char
+                if ((c >> 5) != 6) failIllegalUtf8(i)
+                c = c & 0x1F
               }
               c = (c << 6) | trailingByte(i)
-              i += 1
-            } else { // 2-byte UTF-8 char
-              if ((c >> 5) != 6) throw IJD(pos(i), "Illegal UTF-8 character encoding")
-              c = c & 0x1F
-            }
-            c = (c << 6) | trailingByte(i)
-          } else throw IJD(pos(i), "Illegal UTF-8 character encoding")
-          if (c < 0xD800 || 0xE000 <= c) parseUtf8String {
-            if (c > 0xFFFF) { // surrogate pair required?
-              appendChar(i, ((c >> 10) + 0xD800 - (0x10000 >> 10)).toChar) // high surrogate
-              appendChar(i + 1, (0xDC00 + (c & 0x3FF)).toChar)             // low surrogate
-            } else appendChar(i, c.toChar) + 1
-          } else throw IJD(pos(i), s"Illegal Unicode Code point [${Integer.toHexString(c)}]")
-        } else throw IJD(pos(ix), "Unterminated String at end of Input")
-      } else throw IJD(pos(ix), "Unterminated String at end of Input")
+            } else failIllegalUtf8(i)
+            if (c < 0xD800 || 0xE000 <= c) {
+              val newStrLen =
+                if (c > 0xFFFF) { // surrogate pair required?
+                  appendChar(i, strLen, ((c >> 10) + 0xD800 - (0x10000 >> 10)).toChar) // high surrogate
+                  appendChar(i, strLen + 1, (0xDC00 + (c & 0x3FF)).toChar)             // low surrogate
+                } else appendChar(i, strLen, c.toChar)
+              parseUtf8String(i + 1, newStrLen)
+            } else failIllegalCP(i, c)
+          } else failUnterminated()
+        } else throw IJD(pos(ix), s"Illegal JSON String character [${Integer.toHexString(c)}]")
+      } else failUnterminated()
     }
 
     if (ia.hasByteAtIndex(input, index)) {
       val ix = index + 1
       (ia.byteAt(input, index): @switch) match {
         case ' ' | '\t' | '\n' | '\r' | ',' | ':' ⇒ pull(input, ix, receiver)
-        case 'n'                                  ⇒ parseNull(ix)
-        case 'f'                                  ⇒ parseFalse(ix)
-        case 't'                                  ⇒ parseTrue(ix)
+        case '"'                                  ⇒ parseUtf8String(ix, 0)
         case '{'                                  ⇒ receiver.onMapStart(); ix
         case '['                                  ⇒ receiver.onArrayStart(); ix
         case '}' | ']'                            ⇒ receiver.onBreak(); ix
-
-        case '-' ⇒
-          clearChars()
-          parseNumber(appendChar(ix, '-'), 0, negative = true)
-
-        case '0' ⇒ parseNumber0(ix)
-
+        case 'n'                                  ⇒ parseNull(ix)
+        case 'f'                                  ⇒ parseFalse(ix)
+        case 't'                                  ⇒ parseTrue(ix)
+        case '-'                                  ⇒ parseNumber(ix, appendChar(ix, 0, '-'), 0, negative = true)
+        case '0'                                  ⇒ parseNumber0(ix)
         case c @ ('1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9') ⇒
-          clearChars()
-          parseNumber(appendChar(ix, c.toChar), (c - '0').toLong, negative = false)
-
-        case '"' ⇒
-          clearChars()
-          parseUtf8String(ix)
+          parseNumber(ix, appendChar(ix, 0, c.toChar), (c - '0').toLong, negative = false)
 
         case _ ⇒ invalidJsonValue(ix)
       }
@@ -274,5 +258,22 @@ private[borer] final class JsonParser extends Receiver.Parser {
       receiver.onEndOfInput()
       index
     }
+  }
+}
+
+private object JsonParser {
+
+  /**
+    * Bit mask holding a 1-bit for all special characters
+    */
+  private final val CharMask: Array[Long] = {
+    val mask                = new Array[Long](4)
+    def flag(c: Char): Unit = mask(c >> 6) |= (1L << (c & 0x3f))
+    ('\u0000' to '\u001f').foreach(flag)
+    flag('"')
+    flag('\\')
+    mask(2) = -1L // all chars > 127
+    mask(3) = -1L // need special handling
+    mask
   }
 }

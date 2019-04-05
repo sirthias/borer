@@ -69,7 +69,9 @@ abstract class DomBenchmark {
       "rick-morty.json",
       "temp-anomaly.json",
       "thai-cinemas.json",
-      "turkish.json"))
+      "turkish.json"
+    )
+  )
   var fileName: String = _
 
   var fileBytes: Array[Byte] = _
