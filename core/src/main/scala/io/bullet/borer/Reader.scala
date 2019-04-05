@@ -193,6 +193,7 @@ final class Reader(val input: Any,
       case _            ⇒ unexpectedDataItem(expected = "String or Text Bytes")
     }
 
+  def readString(s: String): this.type = if (tryReadString(s)) this else unexpectedDataItem(expected = '"' + s + '"')
   def tryReadString(s: String): Boolean =
     dataItem match {
       case DI.Chars ⇒
@@ -331,6 +332,11 @@ final class Reader(val input: Any,
     @tailrec def rec(b: mutable.Builder[T, M[T]]): M[T] =
       if (tryReadBreak()) b.result() else rec(b += read[T]())
     rec(cbf())
+  }
+
+  def readUntilBreak[T](zero: T)(f: T ⇒ T): T = {
+    @tailrec def rec(acc: T): T = if (tryReadBreak()) acc else rec(f(acc))
+    rec(zero)
   }
 
   @inline def pull(): Unit = {
