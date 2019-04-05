@@ -8,8 +8,6 @@
 
 package io.bullet.borer
 
-import java.math.{BigDecimal ⇒ JBigDecimal, BigInteger ⇒ JBigInteger}
-
 /**
   * The common interface of all types that consume CBOR data.
   * (On the reading as well as the writing side)
@@ -27,9 +25,7 @@ abstract class Receiver {
   def onFloat16(value: Float): Unit
   def onFloat(value: Float): Unit
   def onDouble(value: Double): Unit
-
-  def onBigInteger(value: JBigInteger): Unit
-  def onBigDecimal(value: JBigDecimal): Unit
+  def onNumberString(value: String): Unit
 
   def onBytes[Bytes: ByteAccess](value: Bytes): Unit
   def onBytesStart(): Unit
@@ -125,8 +121,7 @@ object Receiver {
     def onFloat16(value: Float)                             = default(DataItem.Float16)
     def onFloat(value: Float)                               = default(DataItem.Float)
     def onDouble(value: Double)                             = default(DataItem.Double)
-    def onBigInteger(value: JBigInteger)                    = default(DataItem.BigInteger)
-    def onBigDecimal(value: JBigDecimal)                    = default(DataItem.BigDecimal)
+    def onNumberString(value: String): Unit                 = default(DataItem.NumberString)
     def onBytes[Bytes: ByteAccess](value: Bytes)            = default(DataItem.Bytes)
     def onBytesStart()                                      = default(DataItem.BytesStart)
     def onString(value: String)                             = default(DataItem.String)

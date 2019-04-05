@@ -8,9 +8,9 @@
 
 package io.bullet.borer.cbor
 
-import io.bullet.borer._
 import java.nio.charset.StandardCharsets.UTF_8
-import java.math.{BigDecimal ⇒ JBigDecimal, BigInteger ⇒ JBigInteger}
+
+import io.bullet.borer._
 
 /**
   * Encapsulates basic CBOR encoding logic.
@@ -45,26 +45,8 @@ private[borer] final class CborRenderer(var out: Output) extends Receiver.Render
   def onDouble(value: Double): Unit =
     out = out.writeAsByte(0xFB).writeLong(java.lang.Double.doubleToLongBits(value))
 
-  def onBigInteger(value: JBigInteger): Unit =
-    value.bitLength match {
-      case n if n < 32            ⇒ onInt(value.intValue)
-      case n if n < 64            ⇒ onLong(value.longValue)
-      case 64 if value.signum > 0 ⇒ onOverLong(negative = false, value.longValue)
-      case 64                     ⇒ onOverLong(negative = true, ~value.longValue)
-      case _ ⇒
-        val bytes = value.toByteArray
-        onTag(if (value.signum < 0) { Util.inPlaceNegate(bytes); Tag.NegativeBigNum } else Tag.PositiveBigNum)
-        onBytes(bytes)
-    }
-
-  def onBigDecimal(value: JBigDecimal): Unit = {
-    if (value.scale != 0) {
-      onTag(Tag.DecimalFraction)
-      onArrayHeader(2)
-      onInt(value.scale)
-    }
-    onBigInteger(value.unscaledValue)
-  }
+  def onNumberString(value: String): Unit =
+    throw Borer.Error.InvalidCborData(out, s"The CBOR renderer doesn't support writing number strings")
 
   def onBytes[Bytes](value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Unit =
     out = writeInteger(byteAccess.sizeOf(value), 0x40).writeBytes(value)

@@ -8,8 +8,6 @@
 
 package io.bullet.borer.json
 
-import java.lang.{Double ⇒ JDouble}
-import java.math.{BigDecimal ⇒ JBigDecimal, BigInteger ⇒ JBigInteger}
 import java.util
 
 import io.bullet.borer._
@@ -114,30 +112,9 @@ private[borer] final class JsonParser extends Receiver.Parser {
       } else invalidJsonValue(ix)
     // format: ON
 
-    @tailrec def parseNonLongNumber(ix: Long, decimal: Boolean): Long = {
+    @tailrec def parseNonLongNumber(ix: Long): Long = {
       def result(): Long = {
-        if (decimal) {
-          // Unfortunately, once we are here, there don't appear to be any great options any more
-          // with regard to high performance logic. So, we focus on correctness and conciseness instead here.
-          // Improvement ideas are always welcome!
-          val s      = getString
-          val double = JDouble.parseDouble(s)
-          // Is there a better way to figure out whether the double parsing was lossless?
-          if (!double.isNaN && !double.isInfinite && Util.doubleToString(double) == s) {
-            val float = double.toFloat
-            if (float.toDouble == double) receiver.onFloat(float)
-            else receiver.onDouble(double)
-          } else receiver.onBigDecimal(new JBigDecimal(s))
-        } else {
-          val value = new JBigInteger(getString)
-          value.bitLength match {
-            case n if n < 32            ⇒ receiver.onInt(value.intValue)
-            case n if n < 64            ⇒ receiver.onLong(value.longValue)
-            case 64 if value.signum > 0 ⇒ receiver.onOverLong(negative = false, value.longValue)
-            case 64                     ⇒ receiver.onOverLong(negative = true, ~value.longValue)
-            case _                      ⇒ receiver.onBigInteger(value)
-          }
-        }
+        receiver.onNumberString(getString)
         ix
       }
 
@@ -145,7 +122,7 @@ private[borer] final class JsonParser extends Receiver.Parser {
         val c = ia.byteAt(input, ix).toChar
         (c: @switch) match {
           case '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '.' | '+' | '-' | 'e' | 'E' ⇒
-            parseNonLongNumber(appendChar(ix, c) + 1, decimal = decimal || c == '.')
+            parseNonLongNumber(appendChar(ix, c) + 1)
           case _ ⇒ result()
         }
       } else result()
@@ -162,11 +139,16 @@ private[borer] final class JsonParser extends Receiver.Parser {
         (c: @switch) match {
           case '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' ⇒
             val next = appendChar(ix, c) + 1
-            if (value <= Long.MaxValue / 10 - 1) { // largest value that cannot overflow below
+            // check whether by adding this digit we overflow the Long range or not
+            if (value < Long.MaxValue / 10 || value == Long.MaxValue / 10 && c != '8' && c != '9') {
               val newValue = (value << 3) + (value << 1) + c - '0' // same as multiplication by 10
               parseNumber(next, newValue, negative)
-            } else parseNonLongNumber(next, decimal = false) // can't be sure to not overflow, so break out
-          case '.' | 'e' | 'E' ⇒ parseNonLongNumber(appendChar(ix, c) + 1, decimal = c == '.')
+            } else if (negative && value == Long.MaxValue / 10 && c == '8' && // special case: Long.MinValue
+                       !(ia.hasByteAtIndex(input, ix + 1) && "0123456789.eE".contains(ia.byteAt(input, ix + 1).toChar))) {
+              receiver.onLong(Long.MinValue)
+              ix + 1
+            } else parseNonLongNumber(next)
+          case '.' | 'e' | 'E' ⇒ parseNonLongNumber(appendChar(ix, c) + 1)
           case _               ⇒ result()
         }
       } else result()
@@ -182,7 +164,7 @@ private[borer] final class JsonParser extends Receiver.Parser {
         c match {
           case '.' | 'e' | 'E' ⇒
             clearChars()
-            parseNonLongNumber(appendChar(appendChar(ix, '0'), c) + 1, decimal = c == '.')
+            parseNonLongNumber(appendChar(appendChar(ix, '0'), c) + 1)
           case _ ⇒ result()
         }
       } else result()

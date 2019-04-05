@@ -9,7 +9,7 @@
 package io.bullet.borer.json
 
 import io.bullet.borer._
-import java.math.{BigDecimal ⇒ JBigDecimal, BigInteger ⇒ JBigInteger}
+
 import scala.annotation.tailrec
 
 /**
@@ -73,9 +73,17 @@ private[borer] final class JsonRenderer(var out: Output) extends Receiver.Render
 
   def onOverLong(negative: Boolean, value: Long): Unit =
     out = count {
+      def writeOverLong(o: Output, v: Long) = {
+        val q = (v >>> 1) / 5 // value / 10
+        val r = v - (q << 3) - (q << 1) // value - 10*q
+        writeLong(o, q).writeAsByte('0' + r.toInt)
+      }
       val sep = separator
-      if (negative) writeOverLong(if (sep != '\u0000') out.writeAsBytes(sep, '-') else out.writeAsByte('-'), ~value)
-      else writeOverLong(if (sep != '\u0000') out.writeAsByte(sep) else out, value)
+      if (negative) {
+        val v = value + 1
+        if (v == 0) out.writeStringAsAsciiBytes("-18446744073709551616")
+        else writeOverLong(if (sep != '\u0000') out.writeAsBytes(sep, '-') else out.writeAsByte('-'), v)
+      } else writeOverLong(if (sep != '\u0000') out.writeAsByte(sep) else out, value)
     }
 
   def onFloat16(value: Float): Unit =
@@ -91,11 +99,8 @@ private[borer] final class JsonRenderer(var out: Output) extends Receiver.Render
       } else unsupported(out, "`Infinity` floating point values")
     } else unsupported(out, "`NaN` floating point values")
 
-  def onBigInteger(value: JBigInteger): Unit =
-    out = out.writeStringAsAsciiBytes(value.toString)
-
-  def onBigDecimal(value: JBigDecimal): Unit =
-    out = out.writeStringAsAsciiBytes(value.toString)
+  def onNumberString(value: String): Unit =
+    out = out.writeStringAsAsciiBytes(value)
 
   def onBytes[Bytes: ByteAccess](value: Bytes): Unit =
     unsupported(out, "byte strings")
@@ -214,12 +219,6 @@ private[borer] final class JsonRenderer(var out: Output) extends Receiver.Render
     if (isLevelMap) mapCount ^= 1 << level
     sepRequired = true
     out
-  }
-
-  private def writeOverLong(out: Output, value: Long): Output = {
-    val q = (value >>> 1) / 5
-    val r = value - (q << 3) - (q << 1)
-    writeLong(out, q).writeAsByte('0' + r.toInt)
   }
 
   private def writeLong(out: Output, value: Long): Output =

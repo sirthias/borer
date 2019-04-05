@@ -9,7 +9,6 @@
 package io.bullet.borer
 
 import java.nio.charset.StandardCharsets
-import java.math.{BigDecimal ⇒ JBigDecimal, BigInteger ⇒ JBigInteger}
 
 import scala.annotation.tailrec
 import scala.collection.generic.CanBuildFrom
@@ -128,44 +127,32 @@ final class Reader(val input: Any,
       result
     } else unexpectedDataItem(expected = "Float16")
 
-  @inline def hasFloat: Boolean = hasAnyOf(DI.Float16 | DI.Float)
+  @inline def hasFloat: Boolean = hasAnyOf(DI.Float16 | DI.Float | DI.NumberString)
   def readFloat(): Float =
     if (hasFloat) {
-      val result = receptacle.floatValue
+      val result =
+        if (!has(DI.NumberString)) receptacle.floatValue
+        else java.lang.Float.parseFloat(receptacle.stringValue)
       pull()
       result
     } else unexpectedDataItem(expected = "Float")
 
-  @inline def hasDouble: Boolean = hasAnyOf(DI.Float16 | DI.Float | DI.Double)
+  @inline def hasDouble: Boolean = hasAnyOf(DI.Float16 | DI.Float | DI.Double | DI.NumberString)
   def readDouble(): Double = {
     val result = dataItem match {
       case DI.Float16 | DI.Float ⇒ receptacle.floatValue.toDouble
       case DI.Double             ⇒ receptacle.doubleValue
+      case DI.NumberString       ⇒ java.lang.Double.parseDouble(receptacle.stringValue)
       case _                     ⇒ unexpectedDataItem(expected = "Double")
     }
     pull()
     result
   }
 
-  @inline def hasBigInteger: Boolean = hasAnyOf(DI.Int | DI.Long | DI.OverLong | DI.BigInteger)
-  def readBigInteger(): JBigInteger =
-    dataItem match {
-      case DI.Int | DI.Long ⇒ JBigInteger.valueOf(readLong())
-      case DI.OverLong ⇒
-        def value = new JBigInteger(1, Util.toBigEndianBytes(readOverLong()))
-        if (overLongNegative) value.not else value
-      case DI.BigInteger ⇒ pullReturn(receptacle.bigIntegerValue)
-      case _             ⇒ unexpectedDataItem(expected = "BigInteger")
-    }
-
-  @inline def hasBigDecimal: Boolean =
-    hasAnyOf(DI.Int | DI.Long | DI.OverLong | DI.Float16 | DI.Float | DI.Double | DI.BigDecimal)
-  def readBigDecimal(): JBigDecimal =
-    if (hasLong) JBigDecimal.valueOf(readLong())
-    else if (hasDouble) JBigDecimal.valueOf(readDouble())
-    else if (hasBigInteger) new JBigDecimal(readBigInteger(), 0)
-    else if (hasBigDecimal) pullReturn(receptacle.bigDecimalValue)
-    else unexpectedDataItem(expected = "BigDecimal")
+  @inline def hasNumberString: Boolean = has(DI.NumberString)
+  def readNumberString(): String =
+    if (hasNumberString) pullReturn(receptacle.stringValue)
+    else unexpectedDataItem(expected = "NumberString")
 
   @inline def hasByteArray: Boolean = hasBytes
   def readByteArray(): Array[Byte]  = readBytes[Array[Byte]]()

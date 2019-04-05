@@ -46,8 +46,8 @@ object JsonDerivationSpec extends TestSuite {
           Value.Int(-10000),
           Value.Int(1234567),
           Value.Int(-1),
-          Value.Float(1.5f),
-          Value.Double(26.8),
+          Value.NumberString("1.5"),
+          Value.NumberString("26.8"),
           Value.String("borer"),
           Array.indefinite(
             Array.indefinite(Value.Int(255), Value.Int(0), Value.Int(0), Value.Int(255)),
@@ -78,8 +78,8 @@ object JsonDerivationSpec extends TestSuite {
           "short"  → Value.Int(-10000),
           "int"    → Value.Int(1234567),
           "long"   → Value.Int(-1),
-          "float"  → Value.Float(1.5f),
-          "double" → Value.Double(26.8),
+          "float"  → Value.NumberString("1.5"),
+          "double" → Value.NumberString("26.8"),
           "string" → Value.String("borer"),
           "colors" → Array.indefinite(
             Map.indefinite("red" → Value.Int(255), "green" → Value.Int(0), "blue"   → Value.Int(0), "alpha"   → Value.Int(255)),
@@ -115,7 +115,7 @@ object JsonDerivationSpec extends TestSuite {
         import Dom.Element._
         Array.indefinite(
           Array.indefinite(Value.String("Dog"), Array.indefinite(Value.Int(12), Value.String("Fred"))),
-          Array.indefinite(Value.String("TheCAT"), Array.indefinite(Value.Float(1.0f), Value.String("none"), Value.String("there"))),
+          Array.indefinite(Value.String("TheCAT"), Array.indefinite(Value.NumberString("1.0"), Value.String("none"), Value.String("there"))),
           Array.indefinite(Value.String("Dog"), Array.indefinite(Value.Int(4), Value.String("Lolle"))),
           Array.indefinite(Value.Int(42), Value.Bool(true)))
       }

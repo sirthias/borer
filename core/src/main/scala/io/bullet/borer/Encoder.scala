@@ -66,19 +66,17 @@ object Encoder extends LowPrioEncoders {
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  implicit val forNull: Encoder[Null]               = Encoder((w, _) ⇒ w.writeNull())
-  implicit val forBoolean: Encoder[Boolean]         = Encoder(_ writeBool _)
-  implicit val forChar: Encoder[Char]               = Encoder(_ writeChar _)
-  implicit val forByte: Encoder[Byte]               = Encoder(_ writeByte _)
-  implicit val forShort: Encoder[Short]             = Encoder(_ writeShort _)
-  implicit val forInt: Encoder[Int]                 = Encoder(_ writeInt _)
-  implicit val forLong: Encoder[Long]               = Encoder(_ writeLong _)
-  implicit val forFloat: Encoder[Float]             = Encoder(_ writeFloat _)
-  implicit val forDouble: Encoder[Double]           = Encoder(_ writeDouble _)
-  implicit val forString: Encoder[String]           = Encoder(_ writeString _)
-  implicit val forByteArray: Encoder[Array[Byte]]   = Encoder(_ writeBytes _)
-  implicit val forJBigInteger: Encoder[JBigInteger] = Encoder(_ writeBigInteger _)
-  implicit val forJBigDecimal: Encoder[JBigDecimal] = Encoder(_ writeBigDecimal _)
+  implicit val forNull: Encoder[Null]             = Encoder((w, _) ⇒ w.writeNull())
+  implicit val forBoolean: Encoder[Boolean]       = Encoder(_ writeBool _)
+  implicit val forChar: Encoder[Char]             = Encoder(_ writeChar _)
+  implicit val forByte: Encoder[Byte]             = Encoder(_ writeByte _)
+  implicit val forShort: Encoder[Short]           = Encoder(_ writeShort _)
+  implicit val forInt: Encoder[Int]               = Encoder(_ writeInt _)
+  implicit val forLong: Encoder[Long]             = Encoder(_ writeLong _)
+  implicit val forFloat: Encoder[Float]           = Encoder(_ writeFloat _)
+  implicit val forDouble: Encoder[Double]         = Encoder(_ writeDouble _)
+  implicit val forString: Encoder[String]         = Encoder(_ writeString _)
+  implicit val forByteArray: Encoder[Array[Byte]] = Encoder(_ writeBytes _)
 
   implicit def forBoxedBoolean: Encoder[JBoolean] = forBoolean.asInstanceOf[Encoder[JBoolean]]
   implicit def forBoxedChar: Encoder[Character]   = forChar.asInstanceOf[Encoder[Character]]
@@ -89,7 +87,28 @@ object Encoder extends LowPrioEncoders {
   implicit def forBoxedFloat: Encoder[JFloat]     = forFloat.asInstanceOf[Encoder[JFloat]]
   implicit def forBoxedDouble: Encoder[JDouble]   = forDouble.asInstanceOf[Encoder[JDouble]]
 
+  implicit val forJBigInteger: Encoder[JBigInteger] =
+    Encoder { (w, x) ⇒
+      x.bitLength match {
+        case n if n < 32        ⇒ w.writeInt(x.intValue)
+        case n if n < 64        ⇒ w.writeLong(x.longValue)
+        case 64 if x.signum > 0 ⇒ w.writeOverLong(negative = false, x.longValue)
+        case 64                 ⇒ w.writeOverLong(negative = true, ~x.longValue)
+        case _ if w.writingCbor ⇒
+          val bytes = x.toByteArray
+          w.writeTag(if (x.signum < 0) { Util.inPlaceNegate(bytes); Tag.NegativeBigNum } else Tag.PositiveBigNum)
+          w.writeBytes(bytes)
+        case _ ⇒ w.writeNumberString(x.toString(10))
+      }
+    }
+
   implicit val forBigInt: Encoder[BigInt] = forJBigInteger.compose(_.bigInteger)
+
+  implicit val forJBigDecimal: Encoder[JBigDecimal] =
+    Encoder { (w, x) ⇒
+      if (x.scale != 0) w.writeTag(Tag.DecimalFraction).writeArrayHeader(2).writeInt(x.scale)
+      w.write(x.unscaledValue)
+    }
 
   implicit val forBigDecimal: Encoder[BigDecimal] = forJBigDecimal.compose(_.bigDecimal)
 

@@ -25,6 +25,7 @@ trait Decoder[T] {
 }
 
 object Decoder extends LowPrioDecoders {
+  import io.bullet.borer.{DataItem ⇒ DI}
 
   /**
     * Creates a [[Decoder]] from the given function.
@@ -45,16 +46,14 @@ object Decoder extends LowPrioDecoders {
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  implicit val forNull: Decoder[Null]               = Decoder(_.readNull())
-  implicit val forBoolean: Decoder[Boolean]         = Decoder(_.readBoolean())
-  implicit val forInt: Decoder[Int]                 = Decoder(_.readInt())
-  implicit val forLong: Decoder[Long]               = Decoder(_.readLong())
-  implicit val forFloat: Decoder[Float]             = Decoder(_.readFloat())
-  implicit val forDouble: Decoder[Double]           = Decoder(_.readDouble())
-  implicit val forJBigInteger: Decoder[JBigInteger] = Decoder(_.readBigInteger())
-  implicit val forJBigDecimal: Decoder[JBigDecimal] = Decoder(_.readBigDecimal())
-  implicit val forString: Decoder[String]           = Decoder(_.readString())
-  implicit val forByteArray: Decoder[Array[Byte]]   = Decoder(_.readByteArray())
+  implicit val forNull: Decoder[Null]             = Decoder(_.readNull())
+  implicit val forBoolean: Decoder[Boolean]       = Decoder(_.readBoolean())
+  implicit val forInt: Decoder[Int]               = Decoder(_.readInt())
+  implicit val forLong: Decoder[Long]             = Decoder(_.readLong())
+  implicit val forFloat: Decoder[Float]           = Decoder(_.readFloat())
+  implicit val forDouble: Decoder[Double]         = Decoder(_.readDouble())
+  implicit val forString: Decoder[String]         = Decoder(_.readString())
+  implicit val forByteArray: Decoder[Array[Byte]] = Decoder(_.readByteArray())
 
   implicit val forChar: Decoder[Char] = forInt.mapWithReader { (r, int) ⇒
     if ((int >> 16) != 0) r.validationFailure(s"Cannot convert int value $int to Char")
@@ -78,7 +77,44 @@ object Decoder extends LowPrioDecoders {
   implicit def forBoxedFloat: Decoder[JFloat]     = forFloat.asInstanceOf[Decoder[JFloat]]
   implicit def forBoxedDouble: Decoder[JDouble]   = forDouble.asInstanceOf[Decoder[JDouble]]
 
+  implicit val forJBigInteger: Decoder[JBigInteger] =
+    Decoder { r ⇒
+      def fromByteArray() = new JBigInteger(1, r.readByteArray())
+      r.dataItem match {
+        case DI.Int | DI.Long ⇒ JBigInteger.valueOf(r.readLong())
+        case DI.OverLong ⇒
+          def value = new JBigInteger(1, Util.toBigEndianBytes(r.readOverLong()))
+          if (r.overLongNegative) value.not else value
+        case DI.NumberString                       ⇒ new JBigInteger(r.readNumberString())
+        case _ if r.tryReadTag(Tag.PositiveBigNum) ⇒ fromByteArray()
+        case _ if r.tryReadTag(Tag.NegativeBigNum) ⇒ fromByteArray().not
+        case _                                     ⇒ r.unexpectedDataItem(expected = "BigInteger")
+      }
+    }
+
   implicit val forBigInteger: Decoder[BigInt] = forJBigInteger.map(BigInt(_))
+
+  implicit val forJBigDecimal: Decoder[JBigDecimal] =
+    Decoder { r ⇒
+      def fromBigInteger() = new JBigDecimal(forJBigInteger.read(r))
+      r.dataItem match {
+        case DI.Int | DI.Long | DI.OverLong                                   ⇒ fromBigInteger()
+        case DI.Double                                                        ⇒ JBigDecimal.valueOf(r.readDouble())
+        case DI.NumberString                                                  ⇒ new JBigDecimal(r.readNumberString())
+        case _ if r.hasTag(Tag.PositiveBigNum) | r.hasTag(Tag.NegativeBigNum) ⇒ fromBigInteger()
+        case _ if r.tryReadTag(Tag.DecimalFraction) ⇒
+          if (r.hasArrayHeader) {
+            val len = r.readArrayHeader()
+            if (len == 2) {
+              if (r.hasInt) {
+                val exp      = r.readInt()
+                val mantissa = forJBigInteger.read(r)
+                new JBigDecimal(mantissa, exp)
+              } else r.unexpectedDataItem(expected = "BigDecimal exponent as Int")
+            } else r.unexpectedDataItem("Array of length 2 for decoding a `BigDecimal`", s"Array of length $len")
+          } else r.unexpectedDataItem(expected = "BigDecimal")
+      }
+    }
 
   implicit val forBigDecimal: Decoder[BigDecimal] = forJBigDecimal.map(BigDecimal(_))
 

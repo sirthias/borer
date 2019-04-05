@@ -8,8 +8,6 @@
 
 package io.bullet.borer
 
-import java.math.{BigDecimal ⇒ JBigDecimal, BigInteger ⇒ JBigInteger}
-
 import scala.annotation.tailrec
 import scala.collection.LinearSeq
 
@@ -59,8 +57,7 @@ final class Writer(receiver: Receiver, val config: Writer.Config, val target: Bo
     this
   }
 
-  def writeBigInteger(value: JBigInteger): this.type = { receiver.onBigInteger(value); this }
-  def writeBigDecimal(value: JBigDecimal): this.type = { receiver.onBigDecimal(value); this }
+  def writeNumberString(value: String): this.type = { receiver.onNumberString(value); this }
 
   @inline def writeString(value: String): this.type          = { receiver.onString(value); this }
   def writeBytes[Bytes: ByteAccess](value: Bytes): this.type = { receiver.onBytes(value); this }

@@ -8,8 +8,6 @@
 
 package io.bullet.borer
 
-import java.math.{BigDecimal ⇒ JBigDecimal, BigInteger ⇒ JBigInteger}
-
 /**
   * A [[Receiver]] which simply buffers all incoming data in fields of the appropriate type,
   * for easy querying from the outside.
@@ -29,16 +27,14 @@ private[borer] final class Receptacle extends Receiver with java.lang.Cloneable 
 
   @inline def dataItem: Int = _dataItem
 
-  @inline def boolValue: Boolean           = _bool
-  @inline def intValue: Int                = _int
-  @inline def longValue: Long              = _long
-  @inline def floatValue: Float            = _float
-  @inline def doubleValue: Double          = _double
-  @inline def stringValue: String          = _obj.asInstanceOf[String]
-  @inline def charBufValue: Array[Char]    = _obj.asInstanceOf[Array[Char]]
-  @inline def bigIntegerValue: JBigInteger = _obj.asInstanceOf[JBigInteger]
-  @inline def bigDecimalValue: JBigDecimal = _obj.asInstanceOf[JBigDecimal]
-  @inline def tagValue: Tag                = _obj.asInstanceOf[Tag]
+  @inline def boolValue: Boolean        = _bool
+  @inline def intValue: Int             = _int
+  @inline def longValue: Long           = _long
+  @inline def floatValue: Float         = _float
+  @inline def doubleValue: Double       = _double
+  @inline def stringValue: String       = _obj.asInstanceOf[String]
+  @inline def charBufValue: Array[Char] = _obj.asInstanceOf[Array[Char]]
+  @inline def tagValue: Tag             = _obj.asInstanceOf[Tag]
 
   @inline def getBytes[Bytes](implicit byteAccess: ByteAccess[Bytes]): Bytes =
     byteAccess.convert(_obj)(_bytesAccess)
@@ -85,14 +81,9 @@ private[borer] final class Receptacle extends Receiver with java.lang.Cloneable 
     _dataItem = DataItem.Double
   }
 
-  def onBigInteger(value: JBigInteger): Unit = {
+  def onNumberString(value: String): Unit = {
     _obj = value
-    _dataItem = DataItem.BigInteger
-  }
-
-  def onBigDecimal(value: JBigDecimal): Unit = {
-    _obj = value
-    _dataItem = DataItem.BigDecimal
+    _dataItem = DataItem.NumberString
   }
 
   def onBytes[Bytes](value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Unit = {

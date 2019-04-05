@@ -9,7 +9,7 @@
 package io.bullet.borer.cbor
 
 import java.lang.{Double ⇒ JDouble, Float ⇒ JFloat}
-import java.math.{BigDecimal ⇒ JBigDecimal, BigInteger ⇒ JBigInteger}
+
 import io.bullet.borer._
 
 /**
@@ -79,27 +79,25 @@ private[borer] object CborParser extends Receiver.Parser {
       ix
     }
 
-    @inline def decodeTag(ix: Long, uLong: Long): Long =
+    def tag(uLong: Long): Tag =
       uLong match {
-        case 0 ⇒ receiver.onTag(Tag.DateTimeString); ix
-        case 1 ⇒ receiver.onTag(Tag.EpochDateTime); ix
-        case 2 ⇒ pull(input, ix, decodeBigInteger(input, ix, negative = false, receiver))
-        case 3 ⇒ pull(input, ix, decodeBigInteger(input, ix, negative = true, receiver))
-        case 4 ⇒
-          val rec = decodeBigDecimal(input, ix, receiver)
-          pull(input, pull(input, pull(input, ix, rec), rec), rec)
-        case 5     ⇒ receiver.onTag(Tag.BigFloat); ix
-        case 21    ⇒ receiver.onTag(Tag.HintBase64url); ix
-        case 22    ⇒ receiver.onTag(Tag.HintBase64); ix
-        case 23    ⇒ receiver.onTag(Tag.HintBase16); ix
-        case 24    ⇒ receiver.onTag(Tag.EmbeddedCBOR); ix
-        case 32    ⇒ receiver.onTag(Tag.TextUri); ix
-        case 33    ⇒ receiver.onTag(Tag.TextBase64Url); ix
-        case 34    ⇒ receiver.onTag(Tag.TextBase64); ix
-        case 35    ⇒ receiver.onTag(Tag.TextRegex); ix
-        case 36    ⇒ receiver.onTag(Tag.TextMime); ix
-        case 55799 ⇒ receiver.onTag(Tag.MagicHeader); ix
-        case x     ⇒ receiver.onTag(Tag.Other(x)); ix
+        case 0     ⇒ Tag.DateTimeString
+        case 1     ⇒ Tag.EpochDateTime
+        case 2     ⇒ Tag.PositiveBigNum
+        case 3     ⇒ Tag.NegativeBigNum
+        case 4     ⇒ Tag.DecimalFraction
+        case 5     ⇒ Tag.BigFloat
+        case 21    ⇒ Tag.HintBase64url
+        case 22    ⇒ Tag.HintBase64
+        case 23    ⇒ Tag.HintBase16
+        case 24    ⇒ Tag.EmbeddedCBOR
+        case 32    ⇒ Tag.TextUri
+        case 33    ⇒ Tag.TextBase64Url
+        case 34    ⇒ Tag.TextBase64
+        case 35    ⇒ Tag.TextRegex
+        case 36    ⇒ Tag.TextMime
+        case 55799 ⇒ Tag.MagicHeader
+        case x     ⇒ Tag.Other(x)
       }
 
     @inline def decodeExtra(ix: Long, info: Int, uLong: Long): Long = {
@@ -161,7 +159,7 @@ private[borer] object CborParser extends Receiver.Parser {
         case 3 ⇒ decodeTextString(ix, uLong, info == 31)
         case 4 ⇒ decodeArray(ix, uLong, info == 31)
         case 5 ⇒ decodeMap(ix, uLong, info == 31)
-        case 6 ⇒ decodeTag(ix, uLong)
+        case 6 ⇒ receiver.onTag(tag(uLong)); ix
         case 7 ⇒ decodeExtra(ix, info, uLong)
       }
     } else {
@@ -169,77 +167,4 @@ private[borer] object CborParser extends Receiver.Parser {
       index
     }
   }
-
-  private def decodeBigInteger[Input](input: Input, ix: Long, negative: Boolean, receiver: Receiver): Receiver =
-    new Receiver.Abstract {
-
-      override def onBytes[Bytes](value: Bytes)(implicit ba: ByteAccess[Bytes]): Unit = {
-        val bigInteger = new JBigInteger(1, ba.toByteArray(value))
-        receiver.onBigInteger(if (negative) bigInteger.not else bigInteger)
-      }
-
-      protected def default(dataItem: Int): Unit =
-        throw Error.UnexpectedDataItem(
-          Position(input, ix),
-          "ByteString for decoding a BigInteger",
-          DataItem.stringify(dataItem))
-    }
-
-  private def decodeBigDecimal[Input: InputAccess](input: Input, ix: Long, receiver: Receiver): Receiver =
-    new Receiver.Abstract {
-
-      // 0: expect ArrayHeader(2)
-      // 1: expect Int for exponent
-      // 2: expect Int, Long, OverLong or BigInteger for mantissa
-      private[this] var state         = 0
-      private[this] var exponent: Int = _
-
-      override def onArrayHeader(length: Long): Unit =
-        state match {
-          case 0 if length == 2 ⇒ state = 1
-          case _                ⇒ unexpected(actual = s"Array of length $length")
-        }
-
-      override def onInt(value: Int): Unit =
-        state match {
-          case 1 ⇒ exponent = value; state = 2
-          case 2 ⇒ result(JBigInteger.valueOf(value.toLong))
-          case _ ⇒ super.onInt(value)
-        }
-
-      override def onLong(value: Long): Unit =
-        state match {
-          case 2 ⇒ result(JBigInteger.valueOf(value))
-          case _ ⇒ super.onLong(value)
-        }
-
-      override def onOverLong(negative: Boolean, value: Long): Unit =
-        state match {
-          case 2 ⇒
-            val bi = new JBigInteger(1, Util.toBigEndianBytes(value))
-            result(if (negative) bi.not() else bi)
-          case _ ⇒ super.onOverLong(negative, value)
-        }
-
-      override def onBigInteger(value: JBigInteger): Unit =
-        state match {
-          case 2 ⇒ result(value)
-          case _ ⇒ super.onBigInteger(value)
-        }
-
-      protected def default(dataItem: Int): Unit = unexpected(DataItem.stringify(dataItem))
-
-      private def result(mantissa: JBigInteger): Unit = receiver.onBigDecimal(new JBigDecimal(mantissa, exponent))
-
-      import Error.{UnexpectedDataItem ⇒ UDI}
-
-      private def unexpected(actual: String) = {
-        def off = if (exponent <= 23) 2 else if (exponent >> 8 == 0) 3 else if (exponent >> 16 == 0) 4 else 5
-        state match {
-          case 0 ⇒ throw UDI(Position(input, ix), "Array of length 2 for decoding a BigDecimal", actual)
-          case 1 ⇒ throw UDI(Position(input, ix + 1), "BigDecimal exponent as Int", actual)
-          case 2 ⇒ throw UDI(Position(input, ix + off), "Integer or BigNum for decoding BigDecimal mantissa", actual)
-        }
-      }
-    }
 }

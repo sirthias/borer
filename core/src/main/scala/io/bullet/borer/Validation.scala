@@ -9,9 +9,10 @@
 package io.bullet.borer
 
 import java.util
-import java.math.{BigDecimal ⇒ JBigDecimal, BigInteger ⇒ JBigInteger}
-import scala.annotation.tailrec
+
 import io.bullet.borer
+
+import scala.annotation.tailrec
 
 object Validation {
 
@@ -118,16 +119,10 @@ object Validation {
       _target.onDouble(value)
     }
 
-    def onBigInteger(value: JBigInteger): Unit = {
-      checkAllowed(DI.BigInteger)
+    def onNumberString(value: String): Unit = {
+      checkAllowed(DI.NumberString)
       count()
-      _target.onBigInteger(value)
-    }
-
-    def onBigDecimal(value: JBigDecimal): Unit = {
-      checkAllowed(DI.BigDecimal)
-      count()
-      _target.onBigDecimal(value)
+      _target.onNumberString(value)
     }
 
     def onBytes[Bytes: ByteAccess](value: Bytes): Unit = {

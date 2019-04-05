@@ -11,7 +11,7 @@ package io.bullet.borer
 import java.lang.{StringBuilder ⇒ JStringBuilder}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util
-import java.math.{BigDecimal ⇒ JBigDecimal, BigInteger ⇒ JBigInteger}
+
 import io.bullet.borer
 
 import scala.annotation.tailrec
@@ -65,8 +65,7 @@ object Logging {
     def onFloat16(value: Float): Unit
     def onFloat(value: Float): Unit
     def onDouble(value: Double): Unit
-    def onBigInteger(value: JBigInteger): Unit
-    def onBigDecimal(value: JBigDecimal): Unit
+    def onNumberString(value: String): Unit
     def onBytes[Bytes: ByteAccess](value: Bytes): Unit
     def onBytesStart(): Unit
     def onString(value: String): Unit
@@ -98,8 +97,7 @@ object Logging {
     def onFloat16(value: Float): Unit                     = show(s"${Util.doubleToString(value.toDouble)}f16")
     def onFloat(value: Float): Unit                       = show(s"${Util.doubleToString(value.toDouble)}f")
     def onDouble(value: Double): Unit                     = show(Util.doubleToString(value))
-    def onBigInteger(value: JBigInteger): Unit            = show(s"BigInteger($value)")
-    def onBigDecimal(value: JBigDecimal): Unit            = show(s"BigDecimal($value)")
+    def onNumberString(value: String): Unit               = show(value + 's')
     def onBytes[Bytes: ByteAccess](value: Bytes): Unit    = show(formatBytes("BYTES[", value))
     def onBytesStart(): Unit                              = show("BYTES-STREAM[")
     def onString(value: String): Unit                     = show(formatString(value))
@@ -299,16 +297,10 @@ object Logging {
       target.onDouble(value)
     }
 
-    def onBigInteger(value: JBigInteger): Unit = {
-      logger.onBigInteger(value)
+    def onNumberString(value: String): Unit = {
+      logger.onNumberString(value)
       count()
-      target.onBigInteger(value)
-    }
-
-    def onBigDecimal(value: JBigDecimal): Unit = {
-      logger.onBigDecimal(value)
-      count()
-      target.onBigDecimal(value)
+      target.onNumberString(value)
     }
 
     def onBytes[Bytes: ByteAccess](value: Bytes): Unit = {
