@@ -46,31 +46,24 @@ object MapBasedCodecs {
     def combine[T](ctx: CaseClass[Decoder, T]): Decoder[T] = {
       val params              = ctx.parameters
       val len                 = params.size
-      def expected(s: String) = s"$s for decoding an instance of type [${ctx.typeName.full}]"
+      def typeName            = ctx.typeName.full
+      def expected(s: String) = s"$s for decoding an instance of type [$typeName]"
 
       Decoder { r ⇒
-        val constructorArgs     = new Array[AnyRef](len)
-        @tailrec def rec(ix: Int): T =
-          if (ix < len) {
-            val p = params(ix)
-            @tailrec def findParam(i: Int, end: Int): AnyRef =
-              if (i < end) {
-                if (r.tryReadString(p.label)) p.typeclass.read(r).asInstanceOf[AnyRef]
-                else findParam(i + 1, end)
-              } else if (end == len) findParam(0, ix)
-              else
-                r.unexpectedDataItem(
-                  s"a member of type [${ctx.typeName.full}]",
-                  s"member with name [${r.readString()}]")
-            constructorArgs(ix) = findParam(ix, len)
-            rec(ix + 1)
-          } else ctx.rawConstruct(constructorArgs)
-
+        def construct(): T = ctx.construct { param ⇒
+          @tailrec def rec(i: Int, end: Int): AnyRef =
+            if (i < end) {
+              if (r.tryReadString(param.label)) param.typeclass.read(r).asInstanceOf[AnyRef]
+              else rec(i + 1, end)
+            } else if (end == len) rec(0, param.index)
+            else r.unexpectedDataItem(s"a member of type [$typeName]", s"member with name [${r.readString()}]")
+          rec(param.index, len)
+        }
         if (r.tryReadMapStart()) {
-          val result = rec(0)
+          val result = construct()
           if (r.tryReadBreak()) result
           else r.unexpectedDataItem(expected(s"Map with $len elements"), "at least one extra element")
-        } else if (r.tryReadMapHeader(len)) rec(0)
+        } else if (r.tryReadMapHeader(len)) construct()
         else r.unexpectedDataItem(expected(s"Map Start or Map Header ($len)"))
       }
     }

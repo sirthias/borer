@@ -65,21 +65,16 @@ object ArrayBasedCodecs {
       def expected(s: String) = s"$s for decoding an instance of type [${ctx.typeName.full}]"
 
       Decoder { r ⇒
-        @tailrec def rec(ix: Int, constructorArgs: Array[AnyRef] = new Array(len)): T =
-          if (ix < len) {
-            constructorArgs(ix) = params(ix).typeclass.read(r).asInstanceOf[AnyRef]
-            rec(ix + 1, constructorArgs)
-          } else ctx.rawConstruct(constructorArgs)
-
+        def construct(): T = ctx.construct(_.typeclass.read(r))
         len match {
-          case 0 ⇒ ctx.rawConstruct(Nil)
-          case 1 ⇒ rec(0)
+          case 0 ⇒ ctx.construct(null)
+          case 1 ⇒ construct()
           case _ ⇒
             if (r.tryReadArrayStart()) {
-              val result = rec(0)
+              val result = construct()
               if (r.tryReadBreak()) result
               else r.unexpectedDataItem(expected(s"Array with $len elements"), "at least one extra element")
-            } else if (r.tryReadArrayHeader(len)) rec(0)
+            } else if (r.tryReadArrayHeader(len)) construct()
             else r.unexpectedDataItem(expected(s"Array Start or Array Header($len)"))
         }
       }
