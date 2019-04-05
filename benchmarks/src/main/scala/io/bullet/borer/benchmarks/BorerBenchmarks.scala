@@ -14,12 +14,45 @@ import org.openjdk.jmh.annotations._
 object BorerCodecs {
   import io.bullet.borer.derivation.MapBasedCodecs._
 
-  implicit val fooCodec    = deriveCodec[Foo]
-  implicit val foosEncoder = implicitly[Encoder[Map[String, Foo]]]
-  implicit val foosDecoder = implicitly[Decoder[Map[String, Foo]]]
-
   implicit val intsEncoder = implicitly[Encoder[List[Int]]]
   implicit val intsDecoder = implicitly[Decoder[List[Int]]]
+
+  object Derived {
+    implicit val fooCodec    = deriveCodec[Foo]
+    implicit val foosEncoder = implicitly[Encoder[Map[String, Foo]]]
+    implicit val foosDecoder = implicitly[Decoder[Map[String, Foo]]]
+  }
+
+  object Manual {
+    implicit val fooCodec = Codec.of[Foo](
+      encode = (w, x) ⇒ {
+        w.writeMapStart()
+          .writeString("string")
+          .writeString(x.string)
+          .writeString("double")
+          .writeDouble(x.double)
+          .writeString("int")
+          .writeInt(x.int)
+          .writeString("long")
+          .writeLong(x.long)
+        x.listOfBools.foldLeft(w.writeString("listOfBools").writeArrayStart())(_ writeBool _).writeBreak().writeBreak()
+      },
+      decode = { r ⇒
+        r.readMapStart()
+        val foo = Foo(
+          r.readString("string").readString(),
+          r.readString("double").readDouble(),
+          r.readString("int").readInt(),
+          r.readString("long").readLong(),
+          r.readString("listOfBools").read[List[Boolean]]()
+        )
+        r.readBreak()
+        foo
+      }
+    )
+    implicit val foosEncoder = implicitly[Encoder[Map[String, Foo]]]
+    implicit val foosDecoder = implicitly[Decoder[Map[String, Foo]]]
+  }
 }
 
 import BorerCodecs._
@@ -27,11 +60,21 @@ import BorerCodecs._
 class BorerEncodingBenchmark extends EncodingBenchmark {
 
   @Benchmark
-  def encodeFoosBorerV: Array[Byte] = Json.encode(foos).toByteArray
+  def encodeFoosBorerDV: Array[Byte] = Json.encode(foos)(Derived.foosEncoder).toByteArray
 
   @Benchmark
-  def encodeFoosBorerNV: Array[Byte] =
-    Json.encode(foos).withConfig(Writer.Config.defaultWithoutValidation).toByteArray
+  def encodeFoosBorerDNV: Array[Byte] =
+    Json
+      .encode(foos)(Derived.foosEncoder)
+      .withConfig(Writer.Config.defaultWithoutValidation)
+      .toByteArray
+
+  @Benchmark
+  def encodeFoosBorerMV: Array[Byte] = Json.encode(foos)(Manual.foosEncoder).toByteArray
+
+  @Benchmark
+  def encodeFoosBorerMNV: Array[Byte] =
+    Json.encode(foos)(Manual.foosEncoder).withConfig(Writer.Config.defaultWithoutValidation).toByteArray
 
   @Benchmark
   def encodeIntsBorerV: Array[Byte] = Json.encode(ints).toByteArray
@@ -44,11 +87,26 @@ class BorerEncodingBenchmark extends EncodingBenchmark {
 class BorerDecodingBenchmark extends DecodingBenchmark {
 
   @Benchmark
-  def decodeFoosBorerV: Map[String, Foo] = Json.decode(foosJson).to[Map[String, Foo]].value
+  def decodeFoosBorerDV: Map[String, Foo] = Json.decode(foosJson).to[Map[String, Foo]](Derived.foosDecoder).value
 
   @Benchmark
-  def decodeFoosBorerNV: Map[String, Foo] =
-    Json.decode(foosJson).withConfig(Reader.Config.defaultWithoutValidation).to[Map[String, Foo]].value
+  def decodeFoosBorerDNV: Map[String, Foo] =
+    Json
+      .decode(foosJson)
+      .withConfig(Reader.Config.defaultWithoutValidation)
+      .to[Map[String, Foo]](Derived.foosDecoder)
+      .value
+
+  @Benchmark
+  def decodeFoosBorerMV: Map[String, Foo] = Json.decode(foosJson).to[Map[String, Foo]](Manual.foosDecoder).value
+
+  @Benchmark
+  def decodeFoosBorerMNV: Map[String, Foo] =
+    Json
+      .decode(foosJson)
+      .withConfig(Reader.Config.defaultWithoutValidation)
+      .to[Map[String, Foo]](Manual.foosDecoder)
+      .value
 
   @Benchmark
   def decodeIntsBorerV: List[Int] = Json.decode(intsJson).to[List[Int]].value
