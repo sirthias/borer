@@ -16,9 +16,21 @@ trait InputAccess[Input] {
 
   def byteAccess: ByteAccess[Bytes]
 
-  def hasByteAtIndex(input: Input, index: Long): Boolean
+  /**
+    * Returns the number of bytes available from the given [[Input]].
+    */
+  def length(input: Input): Long
 
+  /**
+    * Returns the [[Input]] byte at the given index
+    * or throws an [[IndexOutOfBoundsException]].
+    */
   def byteAt(input: Input, index: Long): Byte
+
+  /**
+    * Returns the `length` [[Bytes]] of the [[Input]] at the given index
+    * or throws an [[IndexOutOfBoundsException]].
+    */
   def bytesAt(input: Input, index: Long, length: Long): Bytes
 }
 
@@ -34,8 +46,7 @@ object InputAccess {
 
     def byteAccess = ByteAccess.ForByteArray
 
-    @inline def hasByteAtIndex(input: Array[Byte], index: Long): Boolean =
-      0 <= index && index < input.length
+    @inline def length(input: Array[Byte]): Long = input.length.toLong
 
     @inline def byteAt(input: Array[Byte], index: Long): Byte = input(index.toInt)
 
@@ -47,6 +58,6 @@ object InputAccess {
           System.arraycopy(input, index.toInt, result, 0, len)
           result
         } else Array.emptyByteArray
-      } else throw Borer.Error.Overflow(Position(input, index), "Byte-array input is limited to size 2GB")
+      } else throw new Borer.Error.Overflow(Position(input, index), "Byte-array input is limited to size 2GB")
   }
 }

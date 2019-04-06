@@ -40,7 +40,7 @@ object JsonDerivationSpec extends TestSuite {
 
       Json.decode(encoded).to[Dom.Element].value ==> {
         import Dom.Element._
-        Array.indefinite(
+        Array.Unsized(
           Value.Int(120),
           Value.Int(66),
           Value.Int(-10000),
@@ -49,10 +49,10 @@ object JsonDerivationSpec extends TestSuite {
           Value.NumberString("1.5"),
           Value.NumberString("26.8"),
           Value.String("borer"),
-          Array.indefinite(
-            Array.indefinite(Value.Int(255), Value.Int(0), Value.Int(0), Value.Int(255)),
-            Array.indefinite(Value.Int(0), Value.Int(255), Value.Int(0), Value.Int(255)),
-            Array.indefinite(Value.Int(0), Value.Int(0), Value.Int(255), Value.Int(255))
+          Array.Unsized(
+            Array.Unsized(Value.Int(255), Value.Int(0), Value.Int(0), Value.Int(255)),
+            Array.Unsized(Value.Int(0), Value.Int(255), Value.Int(0), Value.Int(255)),
+            Array.Unsized(Value.Int(0), Value.Int(0), Value.Int(255), Value.Int(255))
           ))
       }
 
@@ -72,7 +72,7 @@ object JsonDerivationSpec extends TestSuite {
 
       Json.decode(encoded).to[Dom.Element].value ==> {
         import Dom.Element._
-        Map.indefinite(
+        Map.Unsized(
           "char"   → Value.Int(120),
           "byte"   → Value.Int(66),
           "short"  → Value.Int(-10000),
@@ -81,10 +81,12 @@ object JsonDerivationSpec extends TestSuite {
           "float"  → Value.NumberString("1.5"),
           "double" → Value.NumberString("26.8"),
           "string" → Value.String("borer"),
-          "colors" → Array.indefinite(
-            Map.indefinite("red" → Value.Int(255), "green" → Value.Int(0), "blue"   → Value.Int(0), "alpha"   → Value.Int(255)),
-            Map.indefinite("red" → Value.Int(0), "green"   → Value.Int(255), "blue" → Value.Int(0), "alpha"   → Value.Int(255)),
-            Map.indefinite("red" → Value.Int(0), "green"   → Value.Int(0), "blue"   → Value.Int(255), "alpha" → Value.Int(255))
+          "colors" → Array.Unsized(
+            Map
+              .Unsized("red" → Value.Int(255), "green" → Value.Int(0), "blue" → Value.Int(0), "alpha" → Value.Int(255)),
+            Map
+              .Unsized("red"  → Value.Int(0), "green" → Value.Int(255), "blue" → Value.Int(0), "alpha"   → Value.Int(255)),
+            Map.Unsized("red" → Value.Int(0), "green" → Value.Int(0), "blue"   → Value.Int(255), "alpha" → Value.Int(255))
           ))
       }
 
@@ -113,11 +115,13 @@ object JsonDerivationSpec extends TestSuite {
 
       Json.decode(encoded).to[Dom.Element].value ==> {
         import Dom.Element._
-        Array.indefinite(
-          Array.indefinite(Value.String("Dog"), Array.indefinite(Value.Int(12), Value.String("Fred"))),
-          Array.indefinite(Value.String("TheCAT"), Array.indefinite(Value.NumberString("1.0"), Value.String("none"), Value.String("there"))),
-          Array.indefinite(Value.String("Dog"), Array.indefinite(Value.Int(4), Value.String("Lolle"))),
-          Array.indefinite(Value.Int(42), Value.Bool(true)))
+        Array.Unsized(
+          Array.Unsized(Value.String("Dog"), Array.Unsized(Value.Int(12), Value.String("Fred"))),
+          Array.Unsized(
+            Value.String("TheCAT"),
+            Array.Unsized(Value.NumberString("1.0"), Value.String("none"), Value.String("there"))),
+          Array.Unsized(Value.String("Dog"), Array.Unsized(Value.Int(4), Value.String("Lolle"))),
+          Array.Unsized(Value.Int(42), Value.Bool(true)))
       }
 
       Json.decode(encoded).to[List[Animal]].value ==> animals

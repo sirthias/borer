@@ -116,7 +116,7 @@ object EncodingSetup {
         Success(render(renderer).out.result())
       } catch {
         case e: Borer.Error[_] ⇒ Failure(e)
-        case NonFatal(e)       ⇒ Failure(Borer.Error.General(renderer.out, e))
+        case NonFatal(e)       ⇒ Failure(new Borer.Error.General(renderer.out, e))
       }
     }
 
@@ -126,7 +126,7 @@ object EncodingSetup {
         Right(render(renderer).out.result())
       } catch {
         case e: Borer.Error[_] ⇒ Left(e.asInstanceOf[Borer.Error[Output]])
-        case NonFatal(e)       ⇒ Left(Borer.Error.General(renderer.out, e))
+        case NonFatal(e)       ⇒ Left(new Borer.Error.General(renderer.out, e))
       }
     }
 
@@ -138,7 +138,7 @@ object EncodingSetup {
         Success(render(renderer).out)
       } catch {
         case e: Borer.Error[_] ⇒ Failure(e)
-        case NonFatal(e)       ⇒ Failure(Borer.Error.General(renderer.out, e))
+        case NonFatal(e)       ⇒ Failure(new Borer.Error.General(renderer.out, e))
       }
     }
 
@@ -148,7 +148,7 @@ object EncodingSetup {
         Right(render(renderer).out)
       } catch {
         case e: Borer.Error[_] ⇒ Left(e.asInstanceOf[Borer.Error[Output]])
-        case NonFatal(e)       ⇒ Left(Borer.Error.General(renderer.out, e))
+        case NonFatal(e)       ⇒ Left(new Borer.Error.General(renderer.out, e))
       }
     }
 

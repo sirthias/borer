@@ -148,6 +148,6 @@ object Output {
         buffer = util.Arrays.copyOf(buffer, newLen)
       }
 
-    private def overflow() = throw Borer.Error.Overflow(this, "Cannot output to byte array with > 2^31 bytes")
+    private def overflow() = throw new Borer.Error.Overflow(this, "Cannot output to byte array with > 2^31 bytes")
   }
 }

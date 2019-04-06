@@ -46,7 +46,7 @@ private[borer] final class CborRenderer(var out: Output) extends Receiver.Render
     out = out.writeAsByte(0xFB).writeLong(java.lang.Double.doubleToLongBits(value))
 
   def onNumberString(value: String): Unit =
-    throw Borer.Error.InvalidCborData(out, s"The CBOR renderer doesn't support writing number strings")
+    throw new Borer.Error.InvalidCborData(out, s"The CBOR renderer doesn't support writing number strings")
 
   def onBytes[Bytes](value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Unit =
     out = writeInteger(byteAccess.sizeOf(value), 0x40).writeBytes(value)
@@ -87,7 +87,7 @@ private[borer] final class CborRenderer(var out: Output) extends Receiver.Render
   def onSimpleValue(value: Int): Unit =
     out = if (!SimpleValue.isLegal(value)) {
       val msg = s"$value must be in the range ${SimpleValue.legalRange}, but was $value"
-      throw Borer.Error.InvalidCborData(out, msg)
+      throw new Borer.Error.InvalidCborData(out, msg)
     } else writeInteger(value.toLong, 0xE0)
 
   def onEndOfInput(): Unit = () // no actual action here

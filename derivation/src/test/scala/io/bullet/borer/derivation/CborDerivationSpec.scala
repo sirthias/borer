@@ -40,7 +40,7 @@ object CborDerivationSpec extends TestSuite {
 
       Cbor.decode(encoded).to[Dom.Element].value ==> {
         import Dom.Element._
-        Array(
+        Array.Sized(
           Value.Int(120),
           Value.Int(66),
           Value.Int(-10000),
@@ -49,10 +49,10 @@ object CborDerivationSpec extends TestSuite {
           Value.Float16(1.5f),
           Value.Double(26.8),
           Value.String("borer"),
-          Array.indefinite(
-            Array(Value.Int(255), Value.Int(0), Value.Int(0), Value.Int(255)),
-            Array(Value.Int(0), Value.Int(255), Value.Int(0), Value.Int(255)),
-            Array(Value.Int(0), Value.Int(0), Value.Int(255), Value.Int(255))
+          Array.Unsized(
+            Array.Sized(Value.Int(255), Value.Int(0), Value.Int(0), Value.Int(255)),
+            Array.Sized(Value.Int(0), Value.Int(255), Value.Int(0), Value.Int(255)),
+            Array.Sized(Value.Int(0), Value.Int(0), Value.Int(255), Value.Int(255))
           ))
       }
 
@@ -72,7 +72,7 @@ object CborDerivationSpec extends TestSuite {
 
       Cbor.decode(encoded).to[Dom.Element].value ==> {
         import Dom.Element._
-        Map(
+        Map.Sized(
           "char"   → Value.Int(120),
           "byte"   → Value.Int(66),
           "short"  → Value.Int(-10000),
@@ -81,10 +81,10 @@ object CborDerivationSpec extends TestSuite {
           "float"  → Value.Float16(1.5f),
           "double" → Value.Double(26.8),
           "string" → Value.String("borer"),
-          "colors" → Array.indefinite(
-            Map("red" → Value.Int(255), "green" → Value.Int(0), "blue"   → Value.Int(0), "alpha"   → Value.Int(255)),
-            Map("red" → Value.Int(0), "green"   → Value.Int(255), "blue" → Value.Int(0), "alpha"   → Value.Int(255)),
-            Map("red" → Value.Int(0), "green"   → Value.Int(0), "blue"   → Value.Int(255), "alpha" → Value.Int(255))
+          "colors" → Array.Unsized(
+            Map.Sized("red" → Value.Int(255), "green" → Value.Int(0), "blue"   → Value.Int(0), "alpha"   → Value.Int(255)),
+            Map.Sized("red" → Value.Int(0), "green"   → Value.Int(255), "blue" → Value.Int(0), "alpha"   → Value.Int(255)),
+            Map.Sized("red" → Value.Int(0), "green"   → Value.Int(0), "blue"   → Value.Int(255), "alpha" → Value.Int(255))
           ))
       }
 
@@ -113,11 +113,13 @@ object CborDerivationSpec extends TestSuite {
 
       Cbor.decode(encoded).to[Dom.Element].value ==> {
         import Dom.Element._
-        Array.indefinite(
-          Array(Value.String("Dog"), Array(Value.Int(12), Value.String("Fred"))),
-          Array(Value.String("TheCAT"), Array(Value.Float16(1.0f), Value.String("none"), Value.String("there"))),
-          Array(Value.String("Dog"), Array(Value.Int(4), Value.String("Lolle"))),
-          Array(Value.Int(42), Value.Bool(true)))
+        Array.Unsized(
+          Array.Sized(Value.String("Dog"), Array.Sized(Value.Int(12), Value.String("Fred"))),
+          Array.Sized(
+            Value.String("TheCAT"),
+            Array.Sized(Value.Float16(1.0f), Value.String("none"), Value.String("there"))),
+          Array.Sized(Value.String("Dog"), Array.Sized(Value.Int(4), Value.String("Lolle"))),
+          Array.Sized(Value.Int(42), Value.Bool(true)))
       }
 
       Cbor.decode(encoded).to[List[Animal]].value ==> animals

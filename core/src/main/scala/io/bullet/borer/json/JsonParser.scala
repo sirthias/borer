@@ -62,7 +62,7 @@ private[borer] final class JsonParser extends Receiver.Parser {
   @tailrec def pull[Input](input: Input, index: Long, receiver: Receiver)(implicit ia: InputAccess[Input]): Long = {
 
     def pos(ix: Long)              = Position(input, ix)
-    def invalidJsonValue(ix: Long) = throw Error.InvalidJsonData(pos(ix), "Invalid JSON value")
+    def invalidJsonValue(ix: Long) = throw new Error.InvalidJsonData(pos(ix), "Invalid JSON value")
 
     def appendChar(ix: Long, strLen: Int, c: Char): Int = {
       val newCursor = strLen + 1
@@ -73,24 +73,20 @@ private[borer] final class JsonParser extends Receiver.Parser {
         }
         chars(strLen) = c
         newCursor
-      } else throw Error.Overflow(pos(ix), "JSON String too long")
+      } else throw new Error.Overflow(pos(ix), "JSON String too long")
     }
 
     @inline def getString(strLen: Int): String = if (strLen > 0) new String(chars, 0, strLen) else ""
 
     // format: OFF
     @inline def parseNull(ix: Long): Long =
-      if (ia.hasByteAtIndex(input, ix + 2) &&
-        ia.byteAt(input, ix) == 'u' &&
-        ia.byteAt(input, ix + 1) == 'l' &&
-        ia.byteAt(input, ix + 2) == 'l') {
+      if (ia.byteAt(input, ix) == 'u' && ia.byteAt(input, ix + 1) == 'l' && ia.byteAt(input, ix + 2) == 'l') {
         receiver.onNull()
         ix + 3
       } else invalidJsonValue(ix)
 
     @inline def parseFalse(ix: Long): Long =
-      if (ia.hasByteAtIndex(input, ix + 3) &&
-        ia.byteAt(input, ix) == 'a' &&
+      if (ia.byteAt(input, ix) == 'a' &&
         ia.byteAt(input, ix + 1) == 'l' &&
         ia.byteAt(input, ix + 2) == 's' &&
         ia.byteAt(input, ix + 3) == 'e') {
@@ -99,8 +95,7 @@ private[borer] final class JsonParser extends Receiver.Parser {
       } else invalidJsonValue(ix)
 
     @inline def parseTrue(ix: Long): Long =
-      if (ia.hasByteAtIndex(input, ix + 2) &&
-        ia.byteAt(input, ix) == 'r' &&
+      if (ia.byteAt(input, ix) == 'r' &&
         ia.byteAt(input, ix + 1) == 'u' &&
         ia.byteAt(input, ix + 2) == 'e') {
         receiver.onBool(value = true)
@@ -113,7 +108,7 @@ private[borer] final class JsonParser extends Receiver.Parser {
         receiver.onNumberString(getString(strLen))
         ix
       }
-      if (ia.hasByteAtIndex(input, ix)) {
+      if (ix < ia.length(input)) {
         val c = ia.byteAt(input, ix).toChar
         (c: @switch) match {
           case '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '.' | '+' | '-' | 'e' | 'E' ⇒
@@ -129,7 +124,7 @@ private[borer] final class JsonParser extends Receiver.Parser {
         if (Util.isInt(long)) receiver.onInt(long.toInt) else receiver.onLong(long)
         ix
       }
-      if (ia.hasByteAtIndex(input, ix)) {
+      if (ix < ia.length(input)) {
         val c                         = ia.byteAt(input, ix).toChar
         def breakOutToNonLongNumber() = parseNonLongNumber(ix + 1, appendChar(ix, strLen, c))
         (c: @switch) match {
@@ -139,7 +134,7 @@ private[borer] final class JsonParser extends Receiver.Parser {
               val newValue = (value << 3) + (value << 1) + c - '0' // same as multiplication by 10
               parseNumber(ix + 1, appendChar(ix, strLen, c), newValue, negative)
             } else if (negative && value == Long.MaxValue / 10 && c == '8' && // special case: Long.MinValue
-                       !(ia.hasByteAtIndex(input, ix + 1) && "0123456789.eE".contains(ia.byteAt(input, ix + 1).toChar))) {
+                       !(ix < (ia.length(input) - 1) && "0123456789.eE".contains(ia.byteAt(input, ix + 1).toChar))) {
               receiver.onLong(Long.MinValue)
               ix + 1
             } else breakOutToNonLongNumber()
@@ -154,7 +149,7 @@ private[borer] final class JsonParser extends Receiver.Parser {
         receiver.onInt(0)
         ix
       }
-      if (ia.hasByteAtIndex(input, ix)) {
+      if (ix < ia.length(input)) {
         val c = ia.byteAt(input, ix).toChar
         c match {
           case '.' | 'e' | 'E' ⇒ parseNonLongNumber(ix + 1, appendChar(ix, appendChar(ix, 0, '0'), c))
@@ -165,78 +160,70 @@ private[borer] final class JsonParser extends Receiver.Parser {
 
     @tailrec def parseUtf8String(ix: Long, strLen: Int): Long = {
       import Error.{InvalidJsonData ⇒ IJD}
-      def failUnterminated()             = throw IJD(pos(ix), "Unterminated String at end of Input")
-      def failIllegalCP(i: Long, c: Int) = throw IJD(pos(i), s"Illegal Unicode Code point [${Integer.toHexString(c)}]")
-      def failIllegalUtf8(i: Long)       = throw IJD(pos(i), "Illegal UTF-8 character encoding")
-      if (ia.hasByteAtIndex(input, ix)) {
-        var c = ia.byteAt(input, ix) & 0xFF
-        if ((JsonParser.CharMask(c >> 6) & (1L << (c & 0x3F))) == 0) {
-          parseUtf8String(ix + 1, appendChar(ix, strLen, c.toChar))
-        } else if (c == '"') {
-          receiver.onChars(chars, 0, strLen)
-          ix + 1
-        } else if (c == '\\') {
-          var i = ix + 1
-          if (ia.hasByteAtIndex(input, i)) {
-            ia.byteAt(input, i).toInt match {
-              case x @ ('"' | '/' | '\\') ⇒ c = x
-              case 'b'                    ⇒ c = '\b'
-              case 'f'                    ⇒ c = '\f'
-              case 'n'                    ⇒ c = '\n'
-              case 'r'                    ⇒ c = '\r'
-              case 't'                    ⇒ c = '\t'
-              case 'u' ⇒
-                i += 4
-                if (ia.hasByteAtIndex(input, i)) {
-                  c = Util.hexValue(ia.byteAt(input, i - 3).toChar)
-                  c = (c << 4) + Util.hexValue(ia.byteAt(input, i - 2).toChar)
-                  c = (c << 4) + Util.hexValue(ia.byteAt(input, i - 1).toChar)
-                  c = (c << 4) + Util.hexValue(ia.byteAt(input, i).toChar)
-                  if (0xD800 <= c && c < 0xE000) failIllegalCP(ix, c)
-                } else failUnterminated()
-              case _ ⇒ throw IJD(pos(ix), "Illegal JSON escape sequence")
+      def failIllegalCP(i: Long, c: Int) =
+        throw new IJD(pos(i), s"Illegal Unicode Code point [${Integer.toHexString(c)}]")
+      def failIllegalUtf8(i: Long) = throw new IJD(pos(i), "Illegal UTF-8 character encoding")
+      var c                        = ia.byteAt(input, ix) & 0xFF
+      if ((JsonParser.CharMask(c >> 6) & (1L << (c & 0x3F))) == 0) {
+        parseUtf8String(ix + 1, appendChar(ix, strLen, c.toChar))
+      } else if (c == '"') {
+        receiver.onChars(chars, 0, strLen)
+        ix + 1
+      } else if (c == '\\') {
+        var i = ix + 1
+        ia.byteAt(input, i).toInt match {
+          case x @ ('"' | '/' | '\\') ⇒ c = x
+          case 'b'                    ⇒ c = '\b'
+          case 'f'                    ⇒ c = '\f'
+          case 'n'                    ⇒ c = '\n'
+          case 'r'                    ⇒ c = '\r'
+          case 't'                    ⇒ c = '\t'
+          case 'u' ⇒
+            i += 4
+            c = Util.hexValue(ia.byteAt(input, i - 3).toChar)
+            c = (c << 4) + Util.hexValue(ia.byteAt(input, i - 2).toChar)
+            c = (c << 4) + Util.hexValue(ia.byteAt(input, i - 1).toChar)
+            c = (c << 4) + Util.hexValue(ia.byteAt(input, i).toChar)
+            if (0xD800 <= c && c < 0xE000) failIllegalCP(ix, c)
+          case _ ⇒ throw new IJD(pos(ix), "Illegal JSON escape sequence")
+        }
+        parseUtf8String(i + 1, appendChar(i, strLen, c.toChar))
+      } else if (c > 128) { // multi-byte UTF-8 char
+        @inline def trailingByte(i: Long): Int = {
+          val x = ia.byteAt(input, i) & 0xFF
+          if ((x >> 6) != 2) failIllegalUtf8(i)
+          x & 0x3F
+        }
+        var i = ix + 1
+        if ((c >> 6) == 3) { // 2, 3 or 4-byte UTF-8 char
+          if ((c >> 5) == 7) { // 3 or 4-byte UTF-8 char
+            if ((c >> 3) == 0x1E) { // 4-byte UTF-8 char
+              c = (c & 7) << 6 | trailingByte(i)
+              i += 1
+            } else { // 3-byte UTF-8 char
+              if ((c >> 4) != 0xE) failIllegalUtf8(i)
+              c = c & 0xF
             }
-            parseUtf8String(i + 1, appendChar(i, strLen, c.toChar))
-          } else failUnterminated()
-        } else if (c > 128) { // multi-byte UTF-8 char
-          if (ia.hasByteAtIndex(input, ix + 1)) {
-            @inline def trailingByte(i: Long): Int = {
-              val x = ia.byteAt(input, i) & 0xFF
-              if ((x >> 6) != 2) failIllegalUtf8(i)
-              x & 0x3F
-            }
-            var i = ix + 1
-            if ((c >> 6) == 3) { // 2, 3 or 4-byte UTF-8 char
-              if ((c >> 5) == 7) { // 3 or 4-byte UTF-8 char
-                if ((c >> 3) == 0x1E) { // 4-byte UTF-8 char
-                  c = (c & 7) << 6 | trailingByte(i)
-                  i += 1
-                } else { // 3-byte UTF-8 char
-                  if ((c >> 4) != 0xE) failIllegalUtf8(i)
-                  c = c & 0xF
-                }
-                c = (c << 6) | trailingByte(i)
-                i += 1
-              } else { // 2-byte UTF-8 char
-                if ((c >> 5) != 6) failIllegalUtf8(i)
-                c = c & 0x1F
-              }
-              c = (c << 6) | trailingByte(i)
-            } else failIllegalUtf8(i)
-            if (c < 0xD800 || 0xE000 <= c) {
-              val newStrLen =
-                if (c > 0xFFFF) { // surrogate pair required?
-                  appendChar(i, strLen, ((c >> 10) + 0xD800 - (0x10000 >> 10)).toChar) // high surrogate
-                  appendChar(i, strLen + 1, (0xDC00 + (c & 0x3FF)).toChar)             // low surrogate
-                } else appendChar(i, strLen, c.toChar)
-              parseUtf8String(i + 1, newStrLen)
-            } else failIllegalCP(i, c)
-          } else failUnterminated()
-        } else throw IJD(pos(ix), s"Illegal JSON String character [${Integer.toHexString(c)}]")
-      } else failUnterminated()
+            c = (c << 6) | trailingByte(i)
+            i += 1
+          } else { // 2-byte UTF-8 char
+            if ((c >> 5) != 6) failIllegalUtf8(i)
+            c = c & 0x1F
+          }
+          c = (c << 6) | trailingByte(i)
+        } else failIllegalUtf8(i)
+        if (c < 0xD800 || 0xE000 <= c) {
+          val newStrLen =
+            if (c > 0xFFFF) { // surrogate pair required?
+              appendChar(i, strLen, ((c >> 10) + 0xD800 - (0x10000 >> 10)).toChar) // high surrogate
+              appendChar(i, strLen + 1, (0xDC00 + (c & 0x3FF)).toChar)             // low surrogate
+            } else appendChar(i, strLen, c.toChar)
+          parseUtf8String(i + 1, newStrLen)
+        } else failIllegalCP(i, c)
+      } else throw new IJD(pos(ix), s"Illegal JSON String character [${Integer.toHexString(c)}]")
     }
 
-    if (ia.hasByteAtIndex(input, index)) {
+    if (index < ia.length(input)) {
       val ix = index + 1
       (ia.byteAt(input, index): @switch) match {
         case ' ' | '\t' | '\n' | '\r' | ',' | ':' ⇒ pull(input, ix, receiver)

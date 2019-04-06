@@ -38,6 +38,8 @@ final class Reader(val input: Any,
   @inline def readingJson: Boolean = target eq Json
   @inline def readingCbor: Boolean = target eq Cbor
 
+  @inline def position[Input]: Position[Input] = Position(input.asInstanceOf[Input], cursor)
+
   /**
     * Checks whether this [[Reader]] currently has a data item of the given type.
     *
@@ -352,10 +354,10 @@ final class Reader(val input: Any,
   @inline private def pullIfTrue(value: Boolean): Boolean = value && { pull(); true }
 
   @inline def validationFailure(msg: String): Nothing =
-    throw Borer.Error.ValidationFailure(input, msg)
+    throw new Borer.Error.ValidationFailure(position, msg)
 
   @inline def overflow(msg: String): Nothing =
-    throw Borer.Error.Overflow(input, msg)
+    throw new Borer.Error.Overflow(position, msg)
 
   def unexpectedDataItem(expected: String): Nothing = {
     val actual = dataItem match {
@@ -368,7 +370,7 @@ final class Reader(val input: Any,
   }
 
   @inline def unexpectedDataItem(expected: String, actual: String): Nothing =
-    throw Borer.Error.UnexpectedDataItem(input, expected, actual)
+    throw new Borer.Error.UnexpectedDataItem(position, expected, actual)
 
   @inline def saveState: Reader.SavedState = new Reader.SavedStateImpl(_cursor, receiver.copy)
 

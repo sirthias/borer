@@ -59,8 +59,7 @@ object scodec {
 
     def byteAccess = ByteVectorByteAccess
 
-    def hasByteAtIndex(input: ByteVector, index: Long): Boolean =
-      0 <= index && index < input.length
+    @inline def length(input: ByteVector): Long = input.size
 
     def byteAt(input: ByteVector, index: Long): Byte = input(index)
 
@@ -68,7 +67,7 @@ object scodec {
       if (length > 0) {
         val end = index + length
         if (end >= 0) input.slice(index, end)
-        else throw Borer.Error.Overflow(Position(input, index), "ByteVector input is limited to 2^63 bytes")
+        else throw new Borer.Error.Overflow(Position(input, index), "ByteVector input is limited to 2^63 bytes")
       } else ByteVector.empty
   }
 
@@ -175,6 +174,6 @@ object scodec {
         buffer = util.Arrays.copyOf(buffer, newLen)
       }
 
-    private def overflow() = throw Borer.Error.Overflow(this, "Cannot output to byte array with > 2^31 bytes")
+    private def overflow() = throw new Borer.Error.Overflow(this, "Cannot output to byte array with > 2^31 bytes")
   }
 }

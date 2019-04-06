@@ -48,34 +48,30 @@ private[borer] object CborParser extends Receiver.Parser {
         receiver.onBytesStart()
         ix
       } else if (Util.isUnsignedLong(uLong)) {
-        if (ia.hasByteAtIndex(input, ix + uLong - 1)) {
-          receiver.onBytes(ia.bytesAt(input, ix, uLong))(ia.byteAccess)
-          ix + uLong
-        } else throw Error.InsufficientInput(pos(ix), uLong)
-      } else throw Error.Overflow(pos(ix), "This decoder does not support byte strings with size >= 2^63")
+        receiver.onBytes(ia.bytesAt(input, ix, uLong))(ia.byteAccess)
+        ix + uLong
+      } else throw new Error.Overflow(pos(ix), "This decoder does not support byte strings with size >= 2^63")
 
     @inline def decodeTextString(ix: Long, uLong: Long, indefiniteLength: Boolean): Long =
       if (indefiniteLength) {
         receiver.onTextStart()
         ix
       } else if (Util.isUnsignedLong(uLong)) {
-        if (ia.hasByteAtIndex(input, ix + uLong - 1)) {
-          receiver.onText(ia.bytesAt(input, ix, uLong))(ia.byteAccess)
-          ix + uLong
-        } else throw Error.InsufficientInput(pos(ix), uLong)
-      } else throw Error.Overflow(pos(ix), "This decoder does not support text strings with size >= 2^63")
+        receiver.onText(ia.bytesAt(input, ix, uLong))(ia.byteAccess)
+        ix + uLong
+      } else throw new Error.Overflow(pos(ix), "This decoder does not support text strings with size >= 2^63")
 
     @inline def decodeArray(ix: Long, uLong: Long, indefiniteLength: Boolean): Long = {
       if (indefiniteLength) receiver.onArrayStart()
       else if (Util.isUnsignedLong(uLong)) receiver.onArrayHeader(uLong)
-      else throw Error.Overflow(pos(ix), "This decoder does not support arrays with >= 2^63 elements")
+      else throw new Error.Overflow(pos(ix), "This decoder does not support arrays with >= 2^63 elements")
       ix
     }
 
     @inline def decodeMap(ix: Long, uLong: Long, indefiniteLength: Boolean): Long = {
       if (indefiniteLength) receiver.onMapStart()
       else if (Util.isUnsignedLong(uLong)) receiver.onMapHeader(uLong)
-      else throw Error.Overflow(pos(ix), "This decoder does not support maps with >= 2^63 entries")
+      else throw new Error.Overflow(pos(ix), "This decoder does not support maps with >= 2^63 entries")
       ix
     }
 
@@ -111,19 +107,19 @@ private[borer] object CborParser extends Receiver.Parser {
             case x if SimpleValue.isLegal(x) ⇒ receiver.onSimpleValue(x)
             case x ⇒
               val msg = s"Simple value must be in the range ${SimpleValue.legalRange}, but was $x"
-              throw Error.InvalidCborData(pos(ix), msg)
+              throw new Error.InvalidCborData(pos(ix), msg)
           }
         case 25          ⇒ receiver.onFloat16(Float16.shortToFloat(uLong.toInt))
         case 26          ⇒ receiver.onFloat(JFloat.intBitsToFloat(uLong.toInt))
         case 27          ⇒ receiver.onDouble(JDouble.longBitsToDouble(uLong))
         case 31          ⇒ receiver.onBreak()
         case x if x < 20 ⇒ receiver.onSimpleValue(x)
-        case x           ⇒ throw Error.Unsupported(pos(ix), s"CBOR major type 7 code $x is unsupported by this decoder")
+        case x           ⇒ throw new Error.Unsupported(pos(ix), s"CBOR major type 7 code $x is unsupported by this decoder")
       }
       ix
     }
 
-    if (ia.hasByteAtIndex(input, index)) {
+    if (index < ia.length(input)) {
       val byte      = Util.toUnsignedInt(ia.byteAt(input, index))
       var ix        = index + 1
       val majorType = byte >> 5
@@ -133,24 +129,23 @@ private[borer] object CborParser extends Receiver.Parser {
           val byteCount     = 1 << (info - 24)
           val byteCountLong = byteCount.toLong
           ix += byteCountLong
-          if (ia.hasByteAtIndex(input, index + byteCountLong)) {
-            var x = Util.toUnsignedLong(ia.byteAt(input, index + 1))
-            if (byteCount >= 2) {
-              x = x << 8 | Util.toUnsignedLong(ia.byteAt(input, index + 2))
-              if (byteCount >= 4) {
-                x = x << 8 | Util.toUnsignedLong(ia.byteAt(input, index + 3))
-                x = x << 8 | Util.toUnsignedLong(ia.byteAt(input, index + 4))
-                if (byteCount == 8) {
-                  x = x << 8 | Util.toUnsignedLong(ia.byteAt(input, index + 5))
-                  x = x << 8 | Util.toUnsignedLong(ia.byteAt(input, index + 6))
-                  x = x << 8 | Util.toUnsignedLong(ia.byteAt(input, index + 7))
-                  x << 8 | Util.toUnsignedLong(ia.byteAt(input, index + 8))
-                } else x
+          var x = Util.toUnsignedLong(ia.byteAt(input, index + 1))
+          if (byteCount >= 2) {
+            x = x << 8 | Util.toUnsignedLong(ia.byteAt(input, index + 2))
+            if (byteCount >= 4) {
+              x = x << 8 | Util.toUnsignedLong(ia.byteAt(input, index + 3))
+              x = x << 8 | Util.toUnsignedLong(ia.byteAt(input, index + 4))
+              if (byteCount == 8) {
+                x = x << 8 | Util.toUnsignedLong(ia.byteAt(input, index + 5))
+                x = x << 8 | Util.toUnsignedLong(ia.byteAt(input, index + 6))
+                x = x << 8 | Util.toUnsignedLong(ia.byteAt(input, index + 7))
+                x << 8 | Util.toUnsignedLong(ia.byteAt(input, index + 8))
               } else x
             } else x
-          } else throw Error.InsufficientInput(pos(index), byteCountLong)
+          } else x
         } else if (info == 31 && 2 <= majorType && majorType <= 7 && majorType != 6) 0L // handled specially
-        else throw Error.InvalidCborData(pos(index), s"Additional info [$info] is invalid (major type [$majorType])")
+        else
+          throw new Error.InvalidCborData(pos(index), s"Additional info [$info] is invalid (major type [$majorType])")
       } else info.toLong // can never be negative
       majorType match {
         case 0 ⇒ decodePositiveInteger(ix, uLong)

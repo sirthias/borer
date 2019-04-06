@@ -10,7 +10,7 @@ package io.bullet.borer
 
 import java.util
 
-import scala.collection.immutable.{ListMap, VectorBuilder}
+import scala.collection.immutable
 
 /**
   * Simple Document Object Model (DOM) for CBOR.
@@ -64,22 +64,47 @@ object Dom {
       final case class Simple(value: SimpleValue) extends Value
     }
 
-    final case class Array(value: Vector[Element], indefiniteLength: Boolean = false) extends Element {
-      override def toString = value.mkString(if (indefiniteLength) "*[" else "[", ", ", "]")
-    }
-    object Array {
-      def apply(elements: Element*): Array      = new Array(elements.toVector, indefiniteLength = false)
-      def indefinite(elements: Element*): Array = new Array(elements.toVector, indefiniteLength = true)
+    sealed trait Array extends Element {
+      def elements: Vector[Element]
     }
 
-    final case class Map(value: ListMap[Element, Element], indefiniteLength: Boolean = false) extends Element {
-      override def toString = value.map(x ⇒ x._1 + ": " + x._2).mkString(if (indefiniteLength) "*{" else "{", ", ", "}")
+    object Array {
+      final case class Sized(elements: Vector[Element]) extends Array {
+        override def toString = elements.mkString("[", ", ", "]")
+      }
+      object Sized {
+        def apply(elements: Element*) = new Sized(elements.toVector)
+      }
+
+      final case class Unsized(elements: Vector[Element]) extends Array {
+        override def toString = elements.mkString("*[", ", ", "]")
+      }
+      object Unsized {
+        def apply(elements: Element*) = new Unsized(elements.toVector)
+      }
     }
+
+    sealed trait Map extends Element {
+      def entries: immutable.Map[Element, Element]
+    }
+
     object Map {
-      def apply(entries: (String, Element)*): Map      = new Map(asMap(entries), indefiniteLength = false)
-      def indefinite(entries: (String, Element)*): Map = new Map(asMap(entries), indefiniteLength = true)
-      private def asMap(entries: Seq[(String, Element)]): ListMap[Element, Element] =
-        entries.foldLeft(ListMap.empty[Element, Element])((m, x) ⇒ m.updated(Value.String(x._1), x._2))
+      final case class Sized(entries: immutable.Map[Element, Element]) extends Map {
+        override def toString = entries.map(x ⇒ x._1 + ": " + x._2).mkString("{", ", ", "}")
+      }
+      object Sized {
+        def apply(entries: (String, Element)*) = new Sized(asListMap(entries))
+      }
+
+      final case class Unsized(entries: immutable.Map[Element, Element]) extends Map {
+        override def toString = entries.map(x ⇒ x._1 + ": " + x._2).mkString("*{", ", ", "}")
+      }
+      object Unsized {
+        def apply(entries: (String, Element)*) = new Unsized(asListMap(entries))
+      }
+
+      private def asListMap(entries: Seq[(String, Element)]): immutable.ListMap[Element, Element] =
+        entries.foldLeft(immutable.ListMap.empty[Element, Element])((m, x) ⇒ m.updated(Value.String(x._1), x._2))
     }
 
     final case class Tagged(tag: Tag, value: Element) extends Element
@@ -92,31 +117,31 @@ object Dom {
     val writeEntry   = (w: Writer, x: (Element, Element)) ⇒ w.write(x._1).write(x._2)
 
     Encoder {
-      case (w, Element.Value.Null)      ⇒ w.writeNull()
-      case (w, Element.Value.Undefined) ⇒ w.writeUndefined()
-      case (w, Element.Value.Bool(x))   ⇒ w.writeBool(x)
+      case (w, Element.Value.String(x))  ⇒ w.writeString(x)
+      case (w, Element.Array.Unsized(x)) ⇒ x.foldLeft(w.writeArrayStart())(writeElement).writeBreak()
+      case (w, Element.Array.Sized(x))   ⇒ x.foldLeft(w.writeArrayHeader(x.size))(writeElement)
+      case (w, Element.Map.Unsized(x))   ⇒ x.foldLeft(w.writeMapStart())(writeEntry).writeBreak()
+      case (w, Element.Map.Sized(x))     ⇒ x.foldLeft(w.writeMapHeader(x.size))(writeEntry)
 
       case (w, Element.Value.Int(x))          ⇒ w.writeInt(x)
       case (w, Element.Value.Long(x))         ⇒ w.writeLong(x)
-      case (w, Element.Value.OverLong(n, x))  ⇒ w.writeOverLong(n, x)
-      case (w, Element.Value.Float16(x))      ⇒ w.writeFloat16(x)
-      case (w, Element.Value.Float(x))        ⇒ w.writeFloat(x)
-      case (w, Element.Value.Double(x))       ⇒ w.writeDouble(x)
       case (w, Element.Value.NumberString(x)) ⇒ w.writeNumberString(x)
+      case (w, Element.Value.Bool(x))         ⇒ w.writeBool(x)
+      case (w, Element.Value.Double(x))       ⇒ w.writeDouble(x)
+
+      case (w, Element.Value.Null)      ⇒ w.writeNull()
+      case (w, Element.Value.Undefined) ⇒ w.writeUndefined()
+
+      case (w, Element.Value.OverLong(n, x)) ⇒ w.writeOverLong(n, x)
+      case (w, Element.Value.Float16(x))     ⇒ w.writeFloat16(x)
+      case (w, Element.Value.Float(x))       ⇒ w.writeFloat(x)
 
       case (w, Element.Value.ByteArray(x))   ⇒ w.writeBytes(x)
       case (w, Element.Value.BytesStream(x)) ⇒ x.foldLeft(w.writeBytesStart())(writeElement).writeBreak()
 
-      case (w, Element.Value.String(x))     ⇒ w.writeString(x)
       case (w, Element.Value.TextStream(x)) ⇒ x.foldLeft(w.writeTextStart())(writeElement).writeBreak()
 
       case (w, Element.Value.Simple(x)) ⇒ w.writeSimpleValue(x.value)
-
-      case (w, Element.Array(x, false)) ⇒ x.foldLeft(w.writeArrayHeader(x.size))(writeElement)
-      case (w, Element.Array(x, true))  ⇒ x.foldLeft(w.writeArrayStart())(writeElement).writeBreak()
-
-      case (w, Element.Map(x, false)) ⇒ x.foldLeft(w.writeMapHeader(x.size))(writeEntry)
-      case (w, Element.Map(x, true))  ⇒ x.foldLeft(w.writeMapStart())(writeEntry).writeBreak()
 
       case (w, Element.Tagged(tag, x)) ⇒ w.writeTag(tag).write(x)
     }
@@ -127,13 +152,13 @@ object Dom {
   val elementDecoder: Decoder[Element] = {
     val bytesDecoder: Decoder[Vector[Element.Value.Bytes]] = Decoder { r ⇒
       r.readBytesStart()
-      val b = new VectorBuilder[Element.Value.Bytes]
+      val b = new immutable.VectorBuilder[Element.Value.Bytes]
       while (!r.tryReadBreak()) b += r.read[Element.Value.Bytes]()
       b.result()
     }
     val textDecoder: Decoder[Vector[Element.Value.Text]] = Decoder { r ⇒
       r.readTextStart()
-      val b = new VectorBuilder[Element.Value.Text]
+      val b = new immutable.VectorBuilder[Element.Value.Text]
       while (!r.tryReadBreak()) b += r.read[Element.Value.Text]()
       b.result()
     }
@@ -161,11 +186,11 @@ object Dom {
 
         case DI.SimpleValue ⇒ Element.Value.Simple(SimpleValue(r.readSimpleValue()))
 
-        case DI.ArrayHeader ⇒ Element.Array(r.read[Vector[Element]]())
-        case DI.ArrayStart  ⇒ Element.Array(r.read[Vector[Element]](), indefiniteLength = true)
+        case DI.ArrayHeader ⇒ Element.Array.Sized(r.read[Vector[Element]]())
+        case DI.ArrayStart  ⇒ Element.Array.Unsized(r.read[Vector[Element]]())
 
-        case DI.MapHeader ⇒ Element.Map(r.read[ListMap[Element, Element]]())
-        case DI.MapStart  ⇒ Element.Map(r.read[ListMap[Element, Element]](), indefiniteLength = true)
+        case DI.MapHeader ⇒ Element.Map.Sized(r.read[immutable.ListMap[Element, Element]]())
+        case DI.MapStart  ⇒ Element.Map.Unsized(r.read[immutable.ListMap[Element, Element]]())
 
         case DI.Tag ⇒ Element.Tagged(r.readTag(), r.read[Element]())
       }

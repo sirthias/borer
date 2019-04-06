@@ -112,7 +112,7 @@ private[borer] final class JsonRenderer(var out: Output) extends Receiver.Render
     @tailrec def rec(out: Output, ix: Int): Output =
       if (ix < value.length) {
         def escaped(c: Char)  = out.writeAsBytes('\\', c)
-        def fail(msg: String) = throw Borer.Error.ValidationFailure(out, msg)
+        def fail(msg: String) = throw new Borer.Error.ValidationFailure(out, msg)
 
         value.charAt(ix) match {
           case '"'  ⇒ rec(escaped('"'), ix + 1)
@@ -195,7 +195,7 @@ private[borer] final class JsonRenderer(var out: Output) extends Receiver.Render
   def onBreak(): Unit = {
     val c = if (isLevelMap) '}' else ']'
     if (level > 0) level -= 1
-    else throw Borer.Error.InvalidJsonData(out, "Received BREAK without corresponding ArrayStart or MapStart")
+    else throw new Borer.Error.InvalidJsonData(out, "Received BREAK without corresponding ArrayStart or MapStart")
     out = count(out.writeAsByte(c)) // level-entering items are only counted when the level is exited, not when entered
   }
 
@@ -264,7 +264,7 @@ private[borer] final class JsonRenderer(var out: Output) extends Receiver.Render
   }
 
   private def unsupported(out: Output, what: String) =
-    throw Borer.Error.InvalidJsonData(out, s"The JSON renderer doesn't support $what")
+    throw new Borer.Error.InvalidJsonData(out, s"The JSON renderer doesn't support $what")
 }
 
 object JsonRenderer extends (Output ⇒ JsonRenderer) {

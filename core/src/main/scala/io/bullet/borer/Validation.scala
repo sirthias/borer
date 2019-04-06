@@ -168,7 +168,7 @@ object Validation {
         _target.onArrayHeader(length)
       } else {
         val msg = s"Array length $length is greater than the configured maximum of ${config.maxArrayLength}"
-        throw Borer.Error.Unsupported(Position.unavailable, msg)
+        throw new Borer.Error.Unsupported(null, msg)
       }
     }
 
@@ -185,7 +185,7 @@ object Validation {
         _target.onMapHeader(length)
       } else {
         val msg = s"Map length $length is greater than the configured maximum of ${config.maxMapLength}"
-        throw Borer.Error.Unsupported(Position.unavailable, msg)
+        throw new Borer.Error.Unsupported(null, msg)
       }
     }
 
@@ -202,8 +202,8 @@ object Validation {
           exitLevel()
           count() // level-entering items are only counted when the level is exited, not when they are entered
           _target.onBreak()
-        } else throw Borer.Error.UnexpectedDataItem(Position.unavailable, "map entry value data item", "BREAK")
-      } else throw Borer.Error.UnexpectedDataItem(Position.unavailable, "any data item except for BREAK", "BREAK")
+        } else throw new Borer.Error.UnexpectedDataItem(null, "map entry value data item", "BREAK")
+      } else throw new Borer.Error.UnexpectedDataItem(null, "any data item except for BREAK", "BREAK")
 
     def onTag(value: Tag): Unit = {
       value match {
@@ -240,7 +240,7 @@ object Validation {
     }
 
     def onEndOfInput(): Unit =
-      if (level >= 0) throw Borer.Error.InsufficientInput(Position.unavailable, 1)
+      if (level >= 0) throw new Borer.Error.InsufficientInput(null)
       else _target.onEndOfInput()
 
     override def copy = {
@@ -253,7 +253,7 @@ object Validation {
 
     private def checkAllowed(dataItem: Int): Unit =
       if (!isMasked(dataItem)) {
-        throw Borer.Error.UnexpectedDataItem(Position.unavailable, DataItem stringify mask, DataItem stringify dataItem)
+        throw new Borer.Error.UnexpectedDataItem(null, DataItem stringify mask, DataItem stringify dataItem)
       }
 
     @inline private def isMasked(test: Int): Boolean = (mask & test) != 0
@@ -267,7 +267,7 @@ object Validation {
         def ok(): Unit = levelRemaining(l) = remaining
         def overflow(tpe: String, max: Long): Nothing = {
           val msg = s"Unbounded $tpe length ${-remaining} is greater than the configured maximum of $max"
-          throw Borer.Error.Overflow(Position.unavailable, msg)
+          throw new Borer.Error.Overflow(null, msg)
         }
         if (isMasked(UNBOUNDED)) {
           if (isMasked(MAP)) {
@@ -301,8 +301,7 @@ object Validation {
         levelMasks(l) = mask
         this.mask = mask
       } else
-        throw Borer.Error
-          .Overflow(Position.unavailable, s"Exceeded ${config.maxNestingLevels} maximum array/map nesting levels")
+        throw new Borer.Error.Overflow(null, s"Exceeded ${config.maxNestingLevels} maximum array/map nesting levels")
     }
 
     private def exitLevel(): Unit = {

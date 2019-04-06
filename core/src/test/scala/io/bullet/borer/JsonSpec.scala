@@ -43,23 +43,23 @@ object JsonSpec extends BorerSpec {
     }
 
     "Negative Ints" - {
-//      verifyDecoding("-0", 0)
-//      roundTrip("-1", -1)
-//      roundTrip("-23", -23)
-//      roundTrip("-345", -345)
-//      roundTrip("-4567", -4567)
-//      roundTrip("-78901", -78901)
-//      roundTrip("-890123", -890123)
-//      roundTrip("-1000000", -1000000)
-//      roundTrip("-2147483648", Int.MinValue)
-//      roundTrip("-1000000000000", -1000000000000L)
-//      roundTrip("-9223372036854775808", Long.MinValue)
+      verifyDecoding("-0", 0)
+      roundTrip("-1", -1)
+      roundTrip("-23", -23)
+      roundTrip("-345", -345)
+      roundTrip("-4567", -4567)
+      roundTrip("-78901", -78901)
+      roundTrip("-890123", -890123)
+      roundTrip("-1000000", -1000000)
+      roundTrip("-2147483648", Int.MinValue)
+      roundTrip("-1000000000000", -1000000000000L)
+      roundTrip("-9223372036854775808", Long.MinValue)
       roundTrip("-18446744073709551616", new BigInteger("-18446744073709551616"))
       roundTrip("-18446744073709551617", new BigInteger("-18446744073709551617"))
     }
 
     "Floating Point Numbers" - {
-      intercept[Borer.Error.InvalidJsonData[_]](encode(Float16(0.0f)))
+      intercept[Borer.Error.InvalidJsonData[_ <: AnyRef]](encode(Float16(0.0f)))
 
       roundTrip("0.0", 0.0f)
       roundTrip("0.0", 0.0)
@@ -98,25 +98,25 @@ object JsonSpec extends BorerSpec {
 
       roundTrip("-4.1", -4.1)
 
-      intercept[Borer.Error.InvalidJsonData[_]](encode(Double.NegativeInfinity))
-      intercept[Borer.Error.InvalidJsonData[_]](encode(Double.PositiveInfinity))
-      intercept[Borer.Error.InvalidJsonData[_]](encode(Double.NaN))
+      intercept[Borer.Error.InvalidJsonData[_ <: AnyRef]](encode(Double.NegativeInfinity))
+      intercept[Borer.Error.InvalidJsonData[_ <: AnyRef]](encode(Double.PositiveInfinity))
+      intercept[Borer.Error.InvalidJsonData[_ <: AnyRef]](encode(Double.NaN))
     }
 
     "Simple Values" - {
       roundTrip("false", false)
       roundTrip("true", true)
       roundTrip("null", null)
-      intercept[Borer.Error.InvalidJsonData[_]](encode(Undefined))
-      intercept[Borer.Error.InvalidJsonData[_]](encode(SimpleValue(16)))
+      intercept[Borer.Error.InvalidJsonData[_ <: AnyRef]](encode(Undefined))
+      intercept[Borer.Error.InvalidJsonData[_ <: AnyRef]](encode(SimpleValue(16)))
     }
 
     "Tags, Byte Strings and Text Byte Strings" - {
-      intercept[Borer.Error.InvalidJsonData[_]](encode[Tag](Tag.MagicHeader))
-      intercept[Borer.Error.InvalidJsonData[_]](encode(Writer.Script(_.writeBytes(Array.emptyByteArray))))
-      intercept[Borer.Error.InvalidJsonData[_]](encode(Writer.Script(_.writeBytesStart())))
-      intercept[Borer.Error.InvalidJsonData[_]](encode(Writer.Script(_.writeText(Array.emptyByteArray))))
-      intercept[Borer.Error.InvalidJsonData[_]](encode(Writer.Script(_.writeTextStart())))
+      intercept[Borer.Error.InvalidJsonData[_ <: AnyRef]](encode[Tag](Tag.MagicHeader))
+      intercept[Borer.Error.InvalidJsonData[_ <: AnyRef]](encode(Writer.Script(_.writeBytes(Array.emptyByteArray))))
+      intercept[Borer.Error.InvalidJsonData[_ <: AnyRef]](encode(Writer.Script(_.writeBytesStart())))
+      intercept[Borer.Error.InvalidJsonData[_ <: AnyRef]](encode(Writer.Script(_.writeText(Array.emptyByteArray))))
+      intercept[Borer.Error.InvalidJsonData[_ <: AnyRef]](encode(Writer.Script(_.writeTextStart())))
     }
 
     "Strings" - {
@@ -137,7 +137,7 @@ object JsonSpec extends BorerSpec {
     }
 
     "Arrays" - {
-      intercept[Borer.Error.InvalidJsonData[_]](encode(Writer.Script(_.writeArrayHeader(0))))
+      intercept[Borer.Error.InvalidJsonData[_ <: AnyRef]](encode(Writer.Script(_.writeArrayHeader(0))))
       roundTrip("[]", List.empty[String])
       roundTrip("[1,2,3]", List(1, 2, 3))
 
@@ -147,7 +147,7 @@ object JsonSpec extends BorerSpec {
 
     "Maps" - {
       roundTrip("{}", Map.empty[Int, String])
-      intercept[Borer.Error.UnexpectedDataItem[_]](encode(TreeMap(1 → 2)))
+      intercept[Borer.Error.UnexpectedDataItem[_ <: AnyRef]](encode(TreeMap(1 → 2)))
       roundTrip("""{"":2,"foo":4}""", TreeMap(""                   → 2, "foo"     → 4))
       roundTrip("""{"a":[[1],[]],"b":[[],[[2,3]]]}""", TreeMap("a" → Left(1), "b" → Right(Vector(2, 3))))
       roundTrip("""[[[],["a"]],[[{"b":"c"}],[]]]""", Vector(Right("a"), Left(TreeMap("b" → "c"))))

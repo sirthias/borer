@@ -60,8 +60,7 @@ object akka {
 
     def byteAccess = ByteStringByteAccess
 
-    def hasByteAtIndex(input: ByteString, index: Long): Boolean =
-      0 <= index && index < input.length
+    @inline def length(input: ByteString): Long = input.length.toLong
 
     def byteAt(input: ByteString, index: Long): Byte = input(index.toInt)
 
@@ -70,9 +69,9 @@ object akka {
         if (length != 0) {
           val end = index + length
           if ((end >> 31) == 0) input.slice(index.toInt, end.toInt)
-          else throw Borer.Error.Overflow(Position(input, index), "ByteString input is limited to size 2GB")
+          else throw new Borer.Error.Overflow(Position(input, index), "ByteString input is limited to size 2GB")
         } else ByteString.empty
-      } else throw Borer.Error.Overflow(Position(input, index), "ByteString input is limited to size 2GB")
+      } else throw new Borer.Error.Overflow(Position(input, index), "ByteString input is limited to size 2GB")
   }
 
   /**

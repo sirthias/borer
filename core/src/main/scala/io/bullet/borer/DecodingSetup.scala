@@ -103,15 +103,24 @@ object DecodingSetup {
       this.asInstanceOf[Sealed[Input, T]]
     }
 
-    def value: AnyRef = decodeFrom(newReader())
+    def value: AnyRef = {
+      val reader = newReader()
+      try {
+        decodeFrom(reader)
+      } catch {
+        case _: IndexOutOfBoundsException ⇒ throw new Borer.Error.InsufficientInput(reader.position)
+        case e: Borer.Error[_]            ⇒ throw e.withPosOf(reader)
+      }
+    }
 
     def valueTry: Try[AnyRef] = {
       val reader = newReader()
       try {
         Success(decodeFrom(reader))
       } catch {
-        case e: Borer.Error[_] ⇒ Failure(e)
-        case NonFatal(e)       ⇒ Failure(Borer.Error.General(Position(input, reader.cursor), e))
+        case e: Borer.Error[_]            ⇒ Failure(e.withPosOf(reader))
+        case _: IndexOutOfBoundsException ⇒ Failure(new Borer.Error.InsufficientInput(reader.position))
+        case NonFatal(e)                  ⇒ Failure(new Borer.Error.General(reader.position, e))
       }
     }
 
@@ -120,14 +129,19 @@ object DecodingSetup {
       try {
         Right(decodeFrom(reader))
       } catch {
-        case e: Borer.Error[_] ⇒ Left(e.asInstanceOf[Borer.Error[Position[Input]]])
-        case NonFatal(e)       ⇒ Left(Borer.Error.General(Position(input, reader.cursor), e))
+        case e: Borer.Error[_]            ⇒ Left(e.withPosOf(reader))
+        case _: IndexOutOfBoundsException ⇒ Left(new Borer.Error.InsufficientInput(reader.position))
+        case NonFatal(e)                  ⇒ Left(new Borer.Error.General(reader.position, e))
       }
     }
 
     def valueAndIndex: (AnyRef, Long) = {
       val reader = newReader()
-      decodeFrom(reader) → reader.cursor
+      try {
+        decodeFrom(reader) → reader.cursor
+      } catch {
+        case _: IndexOutOfBoundsException ⇒ throw new Borer.Error.InsufficientInput(reader.position)
+      }
     }
 
     def valueAndIndexTry: Try[(AnyRef, Long)] = {
@@ -135,8 +149,9 @@ object DecodingSetup {
       try {
         Success(decodeFrom(reader) → reader.cursor)
       } catch {
-        case e: Borer.Error[_] ⇒ Failure(e)
-        case NonFatal(e)       ⇒ Failure(Borer.Error.General(Position(input, reader.cursor), e))
+        case e: Borer.Error[_]            ⇒ Failure(e.withPosOf(reader))
+        case _: IndexOutOfBoundsException ⇒ Failure(new Borer.Error.InsufficientInput(reader.position))
+        case NonFatal(e)                  ⇒ Failure(new Borer.Error.General(reader.position, e))
       }
     }
 
@@ -145,8 +160,9 @@ object DecodingSetup {
       try {
         Right(decodeFrom(reader) → reader.cursor)
       } catch {
-        case e: Borer.Error[_] ⇒ Left(e.asInstanceOf[Borer.Error[Position[Input]]])
-        case NonFatal(e)       ⇒ Left(Borer.Error.General(Position(input, reader.cursor), e))
+        case e: Borer.Error[_]            ⇒ Left(e.withPosOf(reader))
+        case _: IndexOutOfBoundsException ⇒ Left(new Borer.Error.InsufficientInput(reader.position))
+        case NonFatal(e)                  ⇒ Left(new Borer.Error.General(reader.position, e))
       }
     }
 

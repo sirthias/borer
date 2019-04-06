@@ -21,7 +21,7 @@ object LoggingSpec extends TestSuite {
   val tests = Tests {
 
     "simple values" - roundTripLogEquals {
-      Element.Array(
+      Element.Array.Sized(
         Value.Null,
         Value.Undefined,
         Value.Bool(true),
@@ -52,7 +52,7 @@ object LoggingSpec extends TestSuite {
     }
 
     "byte arrays" - roundTripLogEquals {
-      Element.Array(
+      Element.Array.Sized(
         Value.ByteArray(alphabet.take(8).getBytes),
         Value.ByteArray(alphabet.getBytes),
         Value.BytesStream(alphabet.grouped(4).map(s ⇒ Value.ByteArray(s.getBytes)).toVector))
@@ -75,7 +75,7 @@ object LoggingSpec extends TestSuite {
     }
 
     "text arrays" - roundTripLogEquals {
-      Element.Array(
+      Element.Array.Sized(
         Value.String(alphabet.take(8)),
         Value.String(alphabet),
         Value.TextStream(alphabet.grouped(4).map(Value.String).toVector))
@@ -98,10 +98,10 @@ object LoggingSpec extends TestSuite {
     }
 
     "arrays" - roundTripLogEquals {
-      Element.Array(
-        Element.Array(Value.Int(1), Value.Int(2), Value.Int(3)),
-        Element.Array(),
-        Element.Array(Vector(Value.Int(1), Value.Int(2), Value.Int(3)), indefiniteLength = true))
+      Element.Array.Sized(
+        Element.Array.Sized(Value.Int(1), Value.Int(2), Value.Int(3)),
+        Element.Array.Sized(),
+        Element.Array.Unsized(Vector(Value.Int(1), Value.Int(2), Value.Int(3))))
     } {
       """1: [
         |    1/3: [
@@ -124,10 +124,10 @@ object LoggingSpec extends TestSuite {
       val tuples = "abc".map { c ⇒
         val x = Element.Value.String(c.toString); x → x
       }
-      Element.Map(
+      Element.Map.Sized(
         "foo"   → Element.Value.Int(42),
-        "empty" → Element.Map(),
-        "bar"   → Element.Map(ListMap(tuples: _*), indefiniteLength = true))
+        "empty" → Element.Map.Sized(),
+        "bar"   → Element.Map.Unsized(ListMap[Element, Element](tuples: _*)))
     } {
       """1: {
         |    1/3: "foo"

@@ -9,7 +9,3 @@
 package io.bullet.borer
 
 final case class Position[Input](input: Input, index: Long)
-
-object Position {
-  val unavailable = Position(Array.emptyByteArray, -1)
-}
