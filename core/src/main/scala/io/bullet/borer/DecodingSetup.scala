@@ -108,9 +108,9 @@ object DecodingSetup {
       try {
         decodeFrom(reader)
       } catch {
-        //case e: IndexOutOfBoundsException ⇒ throw new Borer.Error.InsufficientInput(reader.position, e)
-        case e: Borer.Error[_] ⇒ throw e.withPosOf(reader)
-        case NonFatal(e)       ⇒ throw new Borer.Error.General(reader.position, e)
+        case e: IndexOutOfBoundsException ⇒ throw new Borer.Error.UnexpectedEndOfInput(reader.position, e)
+        case e: Borer.Error[_]            ⇒ throw e.withPosOf(reader)
+        case NonFatal(e)                  ⇒ throw new Borer.Error.General(reader.position, e)
       }
     }
 
@@ -119,8 +119,8 @@ object DecodingSetup {
       try {
         Success(decodeFrom(reader))
       } catch {
-        case e: Borer.Error[_]            ⇒ Failure(e.withPosOf(reader))
         case e: IndexOutOfBoundsException ⇒ Failure(new Borer.Error.UnexpectedEndOfInput(reader.position, e))
+        case e: Borer.Error[_]            ⇒ Failure(e.withPosOf(reader))
         case NonFatal(e)                  ⇒ Failure(new Borer.Error.General(reader.position, e))
       }
     }
@@ -130,8 +130,8 @@ object DecodingSetup {
       try {
         Right(decodeFrom(reader))
       } catch {
-        case e: Borer.Error[_]            ⇒ Left(e.withPosOf(reader))
         case e: IndexOutOfBoundsException ⇒ Left(new Borer.Error.UnexpectedEndOfInput(reader.position, e))
+        case e: Borer.Error[_]            ⇒ Left(e.withPosOf(reader))
         case NonFatal(e)                  ⇒ Left(new Borer.Error.General(reader.position, e))
       }
     }
@@ -152,8 +152,8 @@ object DecodingSetup {
       try {
         Success(decodeFrom(reader) → reader.cursor)
       } catch {
-        case e: Borer.Error[_]            ⇒ Failure(e.withPosOf(reader))
         case e: IndexOutOfBoundsException ⇒ Failure(new Borer.Error.UnexpectedEndOfInput(reader.position, e))
+        case e: Borer.Error[_]            ⇒ Failure(e.withPosOf(reader))
         case NonFatal(e)                  ⇒ Failure(new Borer.Error.General(reader.position, e))
       }
     }
@@ -163,8 +163,8 @@ object DecodingSetup {
       try {
         Right(decodeFrom(reader) → reader.cursor)
       } catch {
-        case e: Borer.Error[_]            ⇒ Left(e.withPosOf(reader))
         case e: IndexOutOfBoundsException ⇒ Left(new Borer.Error.UnexpectedEndOfInput(reader.position, e))
+        case e: Borer.Error[_]            ⇒ Left(e.withPosOf(reader))
         case NonFatal(e)                  ⇒ Left(new Borer.Error.General(reader.position, e))
       }
     }

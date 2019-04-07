@@ -122,8 +122,10 @@ class BorerDomBenchmark extends DomBenchmark {
   def setup(): Unit             = root = Json.decode(fileBytes).to[Dom.Element].value
 
   @Benchmark
-  def encodeDomBorer: Array[Byte] = Json.encode(root).toByteArray
+  def encodeDomBorer: Array[Byte] =
+    Json.encode(root).withConfig(Writer.Config.defaultWithoutValidation).toByteArray
 
   @Benchmark
-  def decodeDomBorer: Dom.Element = Json.decode(fileBytes).to[Dom.Element].value
+  def decodeDomBorer: Dom.Element =
+    Json.decode(fileBytes).withConfig(Reader.Config.defaultWithoutValidation).to[Dom.Element].value
 }

@@ -11,7 +11,7 @@ package io.bullet.borer.json
 import java.util
 
 import io.bullet.borer.{Borer, _}
-import io.bullet.borer.internal.Util
+import io.bullet.borer.internal.{CharArrayOut, Util}
 
 import scala.annotation.{switch, tailrec}
 
@@ -86,7 +86,7 @@ private[borer] final class JsonParser extends Receiver.Parser {
       val newLen = strLen + 1
       if (newLen > 0) {
         ensureCharsLen(newLen)
-        chars(strLen) = c
+        CharArrayOut.instance.writeChar(chars, strLen, c)
         newLen
       } else failStringTooLong(ix)
     }
@@ -254,91 +254,63 @@ private[borer] final class JsonParser extends Receiver.Parser {
       val newLen = strLen + 2
       if (newLen > 0) {
         ensureCharsLen(newLen)
-        chars(strLen) = (octa >>> 56).toChar
-        chars(strLen + 1) = ((octa >>> 48) & 0xFFL).toChar
+        CharArrayOut.instance.write2(chars, strLen, octa)
         newLen
-      } else throw new Error.Overflow(pos(ix), "JSON String too long")
+      } else failStringTooLong(ix)
     }
 
     def append3(ix: Long, strLen: Int, octa: Long): Int = {
       val newLen = strLen + 3
       if (newLen > 0) {
         ensureCharsLen(newLen)
-        chars(strLen) = (octa >>> 56).toChar
-        chars(strLen + 1) = ((octa >>> 48) & 0xFFL).toChar
-        chars(strLen + 2) = ((octa >>> 40) & 0xFFL).toChar
+        CharArrayOut.instance.write3(chars, strLen, octa)
         newLen
-      } else throw new Error.Overflow(pos(ix), "JSON String too long")
+      } else failStringTooLong(ix)
     }
 
     def append4(ix: Long, strLen: Int, octa: Long): Int = {
       val newLen = strLen + 4
       if (newLen > 0) {
         ensureCharsLen(newLen)
-        chars(strLen) = (octa >>> 56).toChar
-        chars(strLen + 1) = ((octa >>> 48) & 0xFFL).toChar
-        chars(strLen + 2) = ((octa >>> 40) & 0xFFL).toChar
-        chars(strLen + 3) = ((octa >>> 32) & 0xFFL).toChar
+        CharArrayOut.instance.write4(chars, strLen, octa)
         newLen
-      } else throw new Error.Overflow(pos(ix), "JSON String too long")
+      } else failStringTooLong(ix)
     }
 
     def append5(ix: Long, strLen: Int, octa: Long): Int = {
       val newLen = strLen + 5
       if (newLen > 0) {
         ensureCharsLen(newLen)
-        chars(strLen) = (octa >>> 56).toChar
-        chars(strLen + 1) = ((octa >>> 48) & 0xFFL).toChar
-        chars(strLen + 2) = ((octa >>> 40) & 0xFFL).toChar
-        chars(strLen + 3) = ((octa >>> 32) & 0xFFL).toChar
-        chars(strLen + 4) = ((octa >>> 24) & 0xFFL).toChar
+        CharArrayOut.instance.write5(chars, strLen, octa)
         newLen
-      } else throw new Error.Overflow(pos(ix), "JSON String too long")
+      } else failStringTooLong(ix)
     }
 
     def append6(ix: Long, strLen: Int, octa: Long): Int = {
       val newLen = strLen + 6
       if (newLen > 0) {
         ensureCharsLen(newLen)
-        chars(strLen) = (octa >>> 56).toChar
-        chars(strLen + 1) = ((octa >>> 48) & 0xFFL).toChar
-        chars(strLen + 2) = ((octa >>> 40) & 0xFFL).toChar
-        chars(strLen + 3) = ((octa >>> 32) & 0xFFL).toChar
-        chars(strLen + 4) = ((octa >>> 24) & 0xFFL).toChar
-        chars(strLen + 5) = ((octa >>> 16) & 0xFFL).toChar
+        CharArrayOut.instance.write6(chars, strLen, octa)
         newLen
-      } else throw new Error.Overflow(pos(ix), "JSON String too long")
+      } else failStringTooLong(ix)
     }
 
     def append7(ix: Long, strLen: Int, octa: Long): Int = {
       val newLen = strLen + 7
       if (newLen > 0) {
         ensureCharsLen(newLen)
-        chars(strLen) = (octa >>> 56).toChar
-        chars(strLen + 1) = ((octa >>> 48) & 0xFFL).toChar
-        chars(strLen + 2) = ((octa >>> 40) & 0xFFL).toChar
-        chars(strLen + 3) = ((octa >>> 32) & 0xFFL).toChar
-        chars(strLen + 4) = ((octa >>> 24) & 0xFFL).toChar
-        chars(strLen + 5) = ((octa >>> 16) & 0xFFL).toChar
-        chars(strLen + 6) = ((octa >>> 8) & 0xFFL).toChar
+        CharArrayOut.instance.write7(chars, strLen, octa)
         newLen
-      } else throw new Error.Overflow(pos(ix), "JSON String too long")
+      } else failStringTooLong(ix)
     }
 
     def append8(ix: Long, strLen: Int, octa: Long): Int = {
       val newLen = strLen + 8
       if (newLen > 0) {
         ensureCharsLen(newLen)
-        chars(strLen) = (octa >>> 56).toChar
-        chars(strLen + 1) = ((octa >>> 48) & 0xFFL).toChar
-        chars(strLen + 2) = ((octa >>> 40) & 0xFFL).toChar
-        chars(strLen + 3) = ((octa >>> 32) & 0xFFL).toChar
-        chars(strLen + 4) = ((octa >>> 24) & 0xFFL).toChar
-        chars(strLen + 5) = ((octa >>> 16) & 0xFFL).toChar
-        chars(strLen + 6) = ((octa >>> 8) & 0xFFL).toChar
-        chars(strLen + 7) = (octa & 0xFFL).toChar
+        CharArrayOut.instance.write8(chars, strLen, octa)
         newLen
-      } else throw new Error.Overflow(pos(ix), "JSON String too long")
+      } else failStringTooLong(ix)
     }
 
     @tailrec def parseUtf8String(ix: Long, strLen: Int): Long =
