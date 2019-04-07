@@ -6,7 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package io.bullet.borer
+package io.bullet.borer.internal
 
 import scala.reflect.macros.blackbox
 

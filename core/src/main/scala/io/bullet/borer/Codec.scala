@@ -8,6 +8,8 @@
 
 package io.bullet.borer
 
+import io.bullet.borer.internal.Macros
+
 /**
   * A simple encapsulation of an [[Encoder]] and [[Decoder]] for the same type, as one entity.
   *

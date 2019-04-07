@@ -10,6 +10,8 @@ package io.bullet.borer
 
 import java.nio.charset.StandardCharsets
 
+import io.bullet.borer.internal.{Receptacle, Util}
+
 import scala.annotation.tailrec
 import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable

@@ -11,6 +11,7 @@ package io.bullet.borer.json
 import java.util
 
 import io.bullet.borer.{Borer, _}
+import io.bullet.borer.internal.Util
 
 import scala.annotation.{switch, tailrec}
 

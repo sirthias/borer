@@ -11,6 +11,7 @@ package io.bullet.borer
 import java.util
 
 import io.bullet.borer
+import io.bullet.borer.internal.Util
 
 import scala.annotation.tailrec
 

@@ -9,6 +9,7 @@
 package io.bullet.borer.json
 
 import io.bullet.borer._
+import io.bullet.borer.internal.Util
 
 import scala.annotation.tailrec
 

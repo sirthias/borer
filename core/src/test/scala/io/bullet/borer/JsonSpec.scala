@@ -11,6 +11,7 @@ package io.bullet.borer
 import java.math.BigInteger
 import java.nio.charset.StandardCharsets.UTF_8
 
+import io.bullet.borer.internal.Util
 import utest._
 
 import scala.collection.immutable.ListMap

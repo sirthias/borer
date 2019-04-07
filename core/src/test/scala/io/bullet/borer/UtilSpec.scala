@@ -8,6 +8,7 @@
 
 package io.bullet.borer
 
+import io.bullet.borer.internal.Util
 import utest._
 
 object UtilSpec extends TestSuite {

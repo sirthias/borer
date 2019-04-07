@@ -8,6 +8,8 @@
 
 package io.bullet.borer
 
+import io.bullet.borer.internal.Util
+
 /**
   * Abstraction for a "tag" in CBOR-speak.
   *

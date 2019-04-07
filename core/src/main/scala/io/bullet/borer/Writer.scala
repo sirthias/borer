@@ -8,6 +8,8 @@
 
 package io.bullet.borer
 
+import io.bullet.borer.internal.Util
+
 import scala.annotation.tailrec
 import scala.collection.LinearSeq
 

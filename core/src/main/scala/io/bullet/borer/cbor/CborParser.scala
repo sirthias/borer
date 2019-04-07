@@ -11,6 +11,7 @@ package io.bullet.borer.cbor
 import java.lang.{Double ⇒ JDouble, Float ⇒ JFloat}
 
 import io.bullet.borer.{Borer, _}
+import io.bullet.borer.internal.Util
 
 /**
   * Encapsulates the basic CBOR decoding logic.

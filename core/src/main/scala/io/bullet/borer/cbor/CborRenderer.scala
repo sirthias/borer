@@ -11,6 +11,7 @@ package io.bullet.borer.cbor
 import java.nio.charset.StandardCharsets.UTF_8
 
 import io.bullet.borer._
+import io.bullet.borer.internal.Util
 
 /**
   * Encapsulates basic CBOR encoding logic.

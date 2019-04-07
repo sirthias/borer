@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.util
 
 import io.bullet.borer
+import io.bullet.borer.internal.Util
 
 import scala.annotation.tailrec
 
