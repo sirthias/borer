@@ -13,7 +13,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 
 import utest._
 
-import scala.collection.immutable.TreeMap
+import scala.collection.immutable.ListMap
 
 object JsonSpec extends BorerSpec {
 
@@ -134,6 +134,13 @@ object JsonSpec extends BorerSpec {
       roundTrip("\"\ud834\udd1e\"", "\ud834\udd1e") // 4-byte UTF-8
       roundTrip("\"árvíztűrő ütvefúrógép\"", "árvíztűrő ütvefúrógép")
       roundTrip("\"飞机因此受到损伤\"", "飞机因此受到损伤")
+
+      val strings = ('a' to 'z').mkString.inits.toList.init
+      val all = for {
+        escapes ← "abdgkpv".inits.toList.init
+        str     ← strings
+      } yield escapes.foldLeft(str)((s, c) ⇒ s.replace(c, '\n'))
+      roundTrip(all.map(_.replace("\n", "\\n")).mkString("[\"", "\",\"", "\"]"), all)
     }
 
     "Arrays" - {
@@ -147,13 +154,17 @@ object JsonSpec extends BorerSpec {
 
     "Maps" - {
       roundTrip("{}", Map.empty[Int, String])
-      intercept[Borer.Error.UnexpectedDataItem[_ <: AnyRef]](encode(TreeMap(1 → 2)))
-      roundTrip("""{"":2,"foo":4}""", TreeMap(""                   → 2, "foo"     → 4))
-      roundTrip("""{"a":[[1],[]],"b":[[],[[2,3]]]}""", TreeMap("a" → Left(1), "b" → Right(Vector(2, 3))))
-      roundTrip("""[[[],["a"]],[[{"b":"c"}],[]]]""", Vector(Right("a"), Left(TreeMap("b" → "c"))))
+      intercept[Borer.Error.UnexpectedDataItem[_ <: AnyRef]](encode(ListMap(1 → 2)))
+      roundTrip("""{"":2,"foo":4}""", ListMap(""                   → 2, "foo"     → 4))
+      roundTrip("""{"a":[[1],[]],"b":[[],[[2,3]]]}""", ListMap("a" → Left(1), "b" → Right(Vector(2, 3))))
+      roundTrip("""[[[],["a"]],[[{"b":"c"}],[]]]""", Vector(Right("a"), Left(ListMap("b" → "c"))))
       roundTrip(
         """{"a":"A","b":"B","c":"C","d":"D","e":"E"}""",
-        TreeMap("a" → "A", "b" → "B", "c" → "C", "d" → "D", "e" → "E"))
+        ListMap("a" → "A", "b" → "B", "c" → "C", "d" → "D", "e" → "E"))
+
+      verifyDecoding(
+        "{\"addr\":\"1x6YnuBVeeE65dQRZztRWgUPwyBjHCA5g\"\n}\n    ",
+        ListMap("addr" → "1x6YnuBVeeE65dQRZztRWgUPwyBjHCA5g"))
     }
 
     "Complex Case Classes" - {

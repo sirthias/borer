@@ -143,10 +143,10 @@ object Validation {
       _target.onString(value)
     }
 
-    def onChars(buffer: Array[Char], from: Int, until: Int): Unit = {
+    def onChars(length: Int, buffer: Array[Char]): Unit = {
       checkAllowed(DI.Chars)
       count()
-      _target.onChars(buffer, from, until)
+      _target.onChars(length, buffer)
     }
 
     def onText[Bytes: ByteAccess](value: Bytes): Unit = {
@@ -240,7 +240,7 @@ object Validation {
     }
 
     def onEndOfInput(): Unit =
-      if (level >= 0) throw new Borer.Error.InsufficientInput(null)
+      if (level >= 0) throw new Borer.Error.UnexpectedEndOfInput(null)
       else _target.onEndOfInput()
 
     override def copy = {

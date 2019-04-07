@@ -144,8 +144,7 @@ object Output {
 
     @inline private def ensureLength(minSize: Int): Unit =
       if (buffer.length < minSize) {
-        val newLen = math.max(buffer.length << 1, minSize)
-        buffer = util.Arrays.copyOf(buffer, newLen)
+        buffer = util.Arrays.copyOf(buffer, math.max(buffer.length << 1, minSize))
       }
 
     private def overflow() = throw new Borer.Error.Overflow(this, "Cannot output to byte array with > 2^31 bytes")

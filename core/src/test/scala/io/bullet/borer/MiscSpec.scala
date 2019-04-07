@@ -107,7 +107,7 @@ object MiscSpec extends BorerSpec {
     }
 
     "Illegal Map Termination Error" - {
-      intercept[Borer.Error.InsufficientInput[_]](
+      intercept[Borer.Error.UnexpectedEndOfInput[_]](
         encode(Writer.Script(_.writeMapHeader(2).writeInt(1).writeInt(2).writeInt(3)))
       )
 

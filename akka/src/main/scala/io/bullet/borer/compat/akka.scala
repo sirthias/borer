@@ -62,9 +62,37 @@ object akka {
 
     @inline def length(input: ByteString): Long = input.length.toLong
 
-    def byteAt(input: ByteString, index: Long): Byte = input(index.toInt)
+    def safeByte(input: ByteString, index: Long): Byte = input(index.toInt)
 
-    def bytesAt(input: ByteString, index: Long, length: Long): ByteString =
+    def unsafeByte(input: ByteString, index: Long): Byte = input(index.toInt)
+
+    def doubleByteBigEndian(input: ByteString, index: Long): Int = {
+      val i = index.toInt
+      (input(i) & 0xFF) << 8 |
+      (input(i + 1) & 0xFF)
+    }
+
+    def quadByteBigEndian(input: ByteString, index: Long): Int = {
+      val i = index.toInt
+      (input(i) & 0xFF) << 24 |
+      (input(i + 1) & 0xFF) << 16 |
+      (input(i + 2) & 0xFF) << 8 |
+      (input(i + 3) & 0xFF)
+    }
+
+    def octaByteBigEndian(input: ByteString, index: Long): Long = {
+      val i = index.toInt
+      (input(i) & 0xFFL) << 56 |
+      (input(i + 1) & 0xFFL) << 48 |
+      (input(i + 2) & 0xFFL) << 40 |
+      (input(i + 3) & 0xFFL) << 32 |
+      (input(i + 4) & 0xFFL) << 24 |
+      (input(i + 5) & 0xFFL) << 16 |
+      (input(i + 6) & 0xFFL) << 8 |
+      (input(i + 7) & 0xFFL)
+    }
+
+    def bytes(input: ByteString, index: Long, length: Long): ByteString =
       if ((index | length) >> 31 == 0) {
         if (length != 0) {
           val end = index + length

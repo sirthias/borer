@@ -155,8 +155,8 @@ private[borer] final class JsonRenderer(var out: Output) extends Receiver.Render
     out = count(rec(if (sep != '\u0000') out.writeAsBytes(sep, '"') else out.writeAsByte('"'), 0).writeAsByte('"'))
   }
 
-  def onChars(buffer: Array[Char], from: Int, until: Int): Unit =
-    onString(new String(buffer, from, until - from))
+  def onChars(length: Int, buffer: Array[Char]): Unit =
+    onString(new String(buffer, 0, length))
 
   def onText[Bytes](value: Bytes)(implicit ba: ByteAccess[Bytes]): Unit =
     unsupported(out, "text byte strings")

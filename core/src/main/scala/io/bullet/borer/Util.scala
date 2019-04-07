@@ -42,18 +42,15 @@ object Util {
   @inline def isUnsignedInt(uLong: Long): Boolean  = uLong >> 31 == 0
   @inline def isUnsignedLong(uLong: Long): Boolean = uLong >= 0
 
-  @inline def toUnsignedInt(byte: Byte): Int   = byte.toInt & 0xFF
-  @inline def toUnsignedLong(byte: Byte): Long = byte.toLong & 0xFFL
-
   def toBigEndianBytes(uLong: Long): Array[Byte] = {
     val bytes = new Array[Byte](8)
-    bytes(0) = (uLong >> 56).toByte
-    bytes(1) = (uLong >> 48).toByte
-    bytes(2) = (uLong >> 40).toByte
-    bytes(3) = (uLong >> 32).toByte
-    bytes(4) = (uLong >> 24).toByte
-    bytes(5) = (uLong >> 16).toByte
-    bytes(6) = (uLong >> 8).toByte
+    bytes(0) = (uLong >>> 56).toByte
+    bytes(1) = (uLong >>> 48).toByte
+    bytes(2) = (uLong >>> 40).toByte
+    bytes(3) = (uLong >>> 32).toByte
+    bytes(4) = (uLong >>> 24).toByte
+    bytes(5) = (uLong >>> 16).toByte
+    bytes(6) = (uLong >>> 8).toByte
     bytes(7) = uLong.toByte
     bytes
   }

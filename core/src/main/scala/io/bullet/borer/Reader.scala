@@ -188,7 +188,7 @@ final class Reader(val input: Any,
   @inline def hasString: Boolean = hasAnyOf(DI.StringLike | DI.Text | DI.TextStart)
   def readString(): String =
     dataItem match {
-      case DI.Chars     ⇒ pullReturn(new String(receptacle.charBufValue, receptacle.intValue, receptacle.longValue.toInt))
+      case DI.Chars     ⇒ pullReturn(new String(receptacle.charBufValue, 0, receptacle.intValue))
       case DI.String    ⇒ pullReturn(receptacle.stringValue)
       case DI.Text      ⇒ stringOf(readSizedTextBytes[Array[Byte]]())
       case DI.TextStart ⇒ stringOf(readUnsizedTextBytes[Array[Byte]]())
@@ -199,11 +199,9 @@ final class Reader(val input: Any,
   def tryReadString(s: String): Boolean =
     dataItem match {
       case DI.Chars ⇒
-        @tailrec def rec(buf: Array[Char], ix: Int, end: Int, six: Int): Boolean =
-          ix == end || buf(ix) == s.charAt(six) && rec(buf, ix + 1, end, six + 1)
-        val from  = receptacle.intValue
-        val until = receptacle.longValue.toInt
-        pullIfTrue((until - from) == s.length && rec(receptacle.charBufValue, from, until, 0))
+        val len                                              = receptacle.intValue
+        @tailrec def rec(buf: Array[Char], ix: Int): Boolean = ix == len || buf(ix) == s.charAt(ix) && rec(buf, ix + 1)
+        pullIfTrue(len == s.length && rec(receptacle.charBufValue, 0))
       case DI.String ⇒ pullIfTrue(receptacle.stringValue == s)
       case DI.Text   ⇒ pullIfTrue(stringOf(receptacle.getBytes[Array[Byte]]) == s)
       case DI.TextStart ⇒

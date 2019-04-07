@@ -8,6 +8,8 @@
 
 package io.bullet.borer
 
-final case class Position[Input](input: Input, index: Long) {
-  override def toString = s"input position $index"
+object Unsafe {
+
+  def byteArrayInputAccess: InputAccess[Array[Byte]] { type Bytes = Array[Byte] } = null
+
 }

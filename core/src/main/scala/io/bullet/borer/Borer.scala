@@ -152,7 +152,8 @@ object Borer {
 
     final class ValidationFailure[IO <: AnyRef](io: IO, msg: String) extends Error[IO](io, msg)
 
-    final class InsufficientInput[IO <: AnyRef](io: IO) extends Error[IO](io, "Insufficient Input")
+    final class UnexpectedEndOfInput[IO <: AnyRef](io: IO, cause: Throwable = null)
+        extends Error[IO](io, "Unexpected End of Input", cause)
 
     final class UnexpectedDataItem[IO <: AnyRef](io: IO, val expected: String, val actual: String)
         extends Error[IO](io, s"Unexpected data item: Expected [$expected] but got [$actual]")
@@ -161,6 +162,6 @@ object Borer {
 
     final class Overflow[IO <: AnyRef](io: IO, msg: String) extends Error[IO](io, msg)
 
-    final class General[IO <: AnyRef](io: IO, cause: Throwable) extends Error[IO](io, cause.toString, cause)
+    final class General[IO <: AnyRef](io: IO, cause: Throwable) extends Error[IO](io, s"[$cause] at $io", cause)
   }
 }

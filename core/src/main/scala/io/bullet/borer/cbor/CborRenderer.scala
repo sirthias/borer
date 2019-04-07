@@ -57,8 +57,8 @@ private[borer] final class CborRenderer(var out: Output) extends Receiver.Render
   def onString(value: String): Unit =
     onText(value getBytes UTF_8)
 
-  def onChars(buffer: Array[Char], from: Int, until: Int): Unit =
-    onString(new String(buffer, from, until - from))
+  def onChars(length: Int, buffer: Array[Char]): Unit =
+    onString(new String(buffer, 0, length))
 
   def onText[Bytes](value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Unit =
     out = writeInteger(byteAccess.sizeOf(value), 0x60).writeBytes(value)

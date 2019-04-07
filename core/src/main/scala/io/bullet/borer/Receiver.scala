@@ -31,7 +31,7 @@ abstract class Receiver {
   def onBytesStart(): Unit
 
   def onString(value: String): Unit
-  def onChars(buffer: Array[Char], from: Int, until: Int): Unit
+  def onChars(length: Int, buffer: Array[Char]): Unit
   def onText[Bytes: ByteAccess](value: Bytes): Unit
   def onTextStart(): Unit
 
@@ -112,30 +112,30 @@ object Receiver {
   }
 
   abstract class Abstract extends Receiver {
-    def onNull()                                            = default(DataItem.Null)
-    def onUndefined()                                       = default(DataItem.Undefined)
-    def onBool(value: Boolean)                              = default(DataItem.Bool)
-    def onInt(value: Int)                                   = default(DataItem.Int)
-    def onLong(value: Long)                                 = default(DataItem.Long)
-    def onOverLong(negative: Boolean, value: Long)          = default(DataItem.OverLong)
-    def onFloat16(value: Float)                             = default(DataItem.Float16)
-    def onFloat(value: Float)                               = default(DataItem.Float)
-    def onDouble(value: Double)                             = default(DataItem.Double)
-    def onNumberString(value: String): Unit                 = default(DataItem.NumberString)
-    def onBytes[Bytes: ByteAccess](value: Bytes)            = default(DataItem.Bytes)
-    def onBytesStart()                                      = default(DataItem.BytesStart)
-    def onString(value: String)                             = default(DataItem.String)
-    def onChars(buffer: Array[Char], from: Int, until: Int) = default(DataItem.Chars)
-    def onText[Bytes: ByteAccess](value: Bytes)             = default(DataItem.Text)
-    def onTextStart()                                       = default(DataItem.TextStart)
-    def onArrayHeader(length: Long)                         = default(DataItem.ArrayHeader)
-    def onArrayStart()                                      = default(DataItem.ArrayStart)
-    def onMapHeader(length: Long)                           = default(DataItem.MapHeader)
-    def onMapStart()                                        = default(DataItem.MapStart)
-    def onBreak()                                           = default(DataItem.Break)
-    def onTag(value: Tag)                                   = default(DataItem.Tag)
-    def onSimpleValue(value: Int)                           = default(DataItem.SimpleValue)
-    def onEndOfInput()                                      = default(DataItem.EndOfInput)
+    def onNull()                                   = default(DataItem.Null)
+    def onUndefined()                              = default(DataItem.Undefined)
+    def onBool(value: Boolean)                     = default(DataItem.Bool)
+    def onInt(value: Int)                          = default(DataItem.Int)
+    def onLong(value: Long)                        = default(DataItem.Long)
+    def onOverLong(negative: Boolean, value: Long) = default(DataItem.OverLong)
+    def onFloat16(value: Float)                    = default(DataItem.Float16)
+    def onFloat(value: Float)                      = default(DataItem.Float)
+    def onDouble(value: Double)                    = default(DataItem.Double)
+    def onNumberString(value: String): Unit        = default(DataItem.NumberString)
+    def onBytes[Bytes: ByteAccess](value: Bytes)   = default(DataItem.Bytes)
+    def onBytesStart()                             = default(DataItem.BytesStart)
+    def onString(value: String)                    = default(DataItem.String)
+    def onChars(length: Int, buffer: Array[Char])  = default(DataItem.Chars)
+    def onText[Bytes: ByteAccess](value: Bytes)    = default(DataItem.Text)
+    def onTextStart()                              = default(DataItem.TextStart)
+    def onArrayHeader(length: Long)                = default(DataItem.ArrayHeader)
+    def onArrayStart()                             = default(DataItem.ArrayStart)
+    def onMapHeader(length: Long)                  = default(DataItem.MapHeader)
+    def onMapStart()                               = default(DataItem.MapStart)
+    def onBreak()                                  = default(DataItem.Break)
+    def onTag(value: Tag)                          = default(DataItem.Tag)
+    def onSimpleValue(value: Int)                  = default(DataItem.SimpleValue)
+    def onEndOfInput()                             = default(DataItem.EndOfInput)
     protected def default(dataItem: Int): Unit
   }
 }

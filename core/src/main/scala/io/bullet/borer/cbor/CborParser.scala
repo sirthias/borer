@@ -10,7 +10,7 @@ package io.bullet.borer.cbor
 
 import java.lang.{Double ⇒ JDouble, Float ⇒ JFloat}
 
-import io.bullet.borer._
+import io.bullet.borer.{Borer, _}
 
 /**
   * Encapsulates the basic CBOR decoding logic.
@@ -48,7 +48,7 @@ private[borer] object CborParser extends Receiver.Parser {
         receiver.onBytesStart()
         ix
       } else if (Util.isUnsignedLong(uLong)) {
-        receiver.onBytes(ia.bytesAt(input, ix, uLong))(ia.byteAccess)
+        receiver.onBytes(ia.bytes(input, ix, uLong))(ia.byteAccess)
         ix + uLong
       } else throw new Error.Overflow(pos(ix), "This decoder does not support byte strings with size >= 2^63")
 
@@ -57,7 +57,7 @@ private[borer] object CborParser extends Receiver.Parser {
         receiver.onTextStart()
         ix
       } else if (Util.isUnsignedLong(uLong)) {
-        receiver.onText(ia.bytesAt(input, ix, uLong))(ia.byteAccess)
+        receiver.onText(ia.bytes(input, ix, uLong))(ia.byteAccess)
         ix + uLong
       } else throw new Error.Overflow(pos(ix), "This decoder does not support text strings with size >= 2^63")
 
@@ -120,33 +120,39 @@ private[borer] object CborParser extends Receiver.Parser {
     }
 
     if (index < ia.length(input)) {
-      val byte      = Util.toUnsignedInt(ia.byteAt(input, index))
-      var ix        = index + 1
+      val byte      = ia.unsafeByte(input, index) & 0xFF
+      var ix        = index
       val majorType = byte >> 5
       val info      = byte & 0x1F
-      val uLong = if (info >= 24) {
-        if (info <= 27) {
-          val byteCount     = 1 << (info - 24)
-          val byteCountLong = byteCount.toLong
-          ix += byteCountLong
-          var x = Util.toUnsignedLong(ia.byteAt(input, index + 1))
-          if (byteCount >= 2) {
-            x = x << 8 | Util.toUnsignedLong(ia.byteAt(input, index + 2))
-            if (byteCount >= 4) {
-              x = x << 8 | Util.toUnsignedLong(ia.byteAt(input, index + 3))
-              x = x << 8 | Util.toUnsignedLong(ia.byteAt(input, index + 4))
-              if (byteCount == 8) {
-                x = x << 8 | Util.toUnsignedLong(ia.byteAt(input, index + 5))
-                x = x << 8 | Util.toUnsignedLong(ia.byteAt(input, index + 6))
-                x = x << 8 | Util.toUnsignedLong(ia.byteAt(input, index + 7))
-                x << 8 | Util.toUnsignedLong(ia.byteAt(input, index + 8))
-              } else x
-            } else x
-          } else x
-        } else if (info == 31 && 2 <= majorType && majorType <= 7 && majorType != 6) 0L // handled specially
-        else
-          throw new Error.InvalidCborData(pos(index), s"Additional info [$info] is invalid (major type [$majorType])")
-      } else info.toLong // can never be negative
+      val uLong =
+        info match {
+          case 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 |
+              23 ⇒
+            ix += 1
+            info.toLong
+          case 24 ⇒
+            ix += 2
+            if (ix > ia.length(input)) throw new Borer.Error.UnexpectedEndOfInput(pos(ix))
+            ia.unsafeByte(input, index + 1) & 0xFFL
+          case 25 ⇒
+            ix += 3
+            if (ix > ia.length(input)) throw new Borer.Error.UnexpectedEndOfInput(pos(ix))
+            ia.doubleByteBigEndian(input, index + 1) & 0xFFFFL
+          case 26 ⇒
+            ix += 5
+            if (ix > ia.length(input)) throw new Borer.Error.UnexpectedEndOfInput(pos(ix))
+            ia.quadByteBigEndian(input, index + 1) & 0xFFFFFFFFL
+          case 27 ⇒
+            ix += 9
+            if (ix > ia.length(input)) throw new Borer.Error.UnexpectedEndOfInput(pos(ix))
+            ia.octaByteBigEndian(input, index + 1)
+          case 31 if 2 <= majorType && majorType <= 5 || majorType == 7 ⇒
+            ix += 1
+            0L // handled specially
+          case 28 | 29 | 30 ⇒
+            throw new Error.InvalidCborData(pos(index), s"Additional info [$info] is invalid (major type [$majorType])")
+        }
+
       majorType match {
         case 0 ⇒ decodePositiveInteger(ix, uLong)
         case 1 ⇒ decodeNegativeInteger(ix, uLong)
