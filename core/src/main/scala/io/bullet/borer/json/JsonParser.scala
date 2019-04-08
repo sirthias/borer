@@ -315,7 +315,7 @@ private[borer] final class JsonParser extends Receiver.Parser {
 
     @tailrec def parseUtf8String(ix: Long, strLen: Int): Long =
       if (ix < ia.length(input) - 8) {
-        // fetch 8 chars at the same time from the input, the first becoming the (left-most) MSB of the `octa` long
+        // fetch 8 bytes (chars) at the same time with the first becoming the (left-most) MSB of the `octa` long
         val octa = ia.octaByteBigEndian(input, ix)
 
         // the following bit-level logic is heavily inspired by hackers delight 6-1 ("Find First 0-Byte")
@@ -340,7 +340,7 @@ private[borer] final class JsonParser extends Receiver.Parser {
         // the number of leading zeros in the (shifted) or-ed masks uniquely identifies the first "special" char
         val code = java.lang.Long.numberOfLeadingZeros(qMask | (bMask >>> 1) | (hMask >>> 2) | (cMask >>> 3))
 
-        // convert to contiguous number range for optimized jump locality
+        // convert to contiguous number range for compact table-switch and optimized jump locality
         (((code & 3) << 3) | (7 - (code >> 3)): @switch) match {
           case -1 ⇒ // 8 normal chars
             parseUtf8String(ix + 8, append8(ix, strLen, octa))
@@ -416,26 +416,70 @@ private[borer] final class JsonParser extends Receiver.Parser {
       } else parseUtf8StringSlow(ix, strLen)
 
     if (index < ia.length(input)) {
+      import JsonParser._
       val ix = index + 1
-      (ia.unsafeByte(input, index): @switch) match {
-        case ' ' | '\t' | '\n' | '\r' | ',' | ':' ⇒ pull(input, ix, receiver)
-        case '"'                                  ⇒ parseUtf8String(ix, 0)
-        case '{'                                  ⇒ receiver.onMapStart(); ix
-        case '['                                  ⇒ receiver.onArrayStart(); ix
-        case '}' | ']'                            ⇒ receiver.onBreak(); ix
-        case 'n'                                  ⇒ parseNull(index)
-        case 'f'                                  ⇒ parseFalse(ix)
-        case 't'                                  ⇒ parseTrue(index)
-        case '-'                                  ⇒ parseNumber(ix, appendChar(ix, 0, '-'), 0, negative = true)
-        case '0'                                  ⇒ parseNumber0(ix)
-        case c @ ('1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9') ⇒
-          parseNumber(ix, appendChar(ix, 0, c.toChar), (c - '0').toLong, negative = false)
-
-        case _ ⇒ failInvalidJsonValue(ix)
+      val c  = ia.unsafeByte(input, index).toInt
+      (LookupTable(c): @switch) match {
+        case WHITESPACE ⇒ pull(input, ix, receiver)
+        case DQUOTE     ⇒ parseUtf8String(ix, 0)
+        case MAP_START  ⇒ receiver.onMapStart(); ix
+        case ARR_START  ⇒ receiver.onArrayStart(); ix
+        case BREAK      ⇒ receiver.onBreak(); ix
+        case LOWER_N    ⇒ parseNull(index)
+        case LOWER_F    ⇒ parseFalse(ix)
+        case LOWER_T    ⇒ parseTrue(index)
+        case DASH       ⇒ parseNumber(ix, appendChar(ix, 0, '-'), 0, negative = true)
+        case ZERO       ⇒ parseNumber0(ix)
+        case DIGIT19    ⇒ parseNumber(ix, appendChar(ix, 0, c.toChar), (c - '0').toLong, negative = false)
+        case _          ⇒ failInvalidJsonValue(ix)
       }
     } else {
       receiver.onEndOfInput()
       index
     }
+  }
+}
+
+private[borer] object JsonParser {
+  private final val WHITESPACE = 1
+  private final val DQUOTE     = 2
+  private final val MAP_START  = 3
+  private final val ARR_START  = 4
+  private final val BREAK      = 5
+  private final val LOWER_N    = 6
+  private final val LOWER_F    = 7
+  private final val LOWER_T    = 8
+  private final val DASH       = 9
+  private final val ZERO       = 10
+  private final val DIGIT19    = 11
+
+  private final val LookupTable: Array[Byte] = {
+    val array = new Array[Byte](256)
+    array(' '.toInt) = WHITESPACE
+    array('\t'.toInt) = WHITESPACE
+    array('\n'.toInt) = WHITESPACE
+    array('\r'.toInt) = WHITESPACE
+    array(','.toInt) = WHITESPACE
+    array(':'.toInt) = WHITESPACE
+    array('"'.toInt) = DQUOTE
+    array('{'.toInt) = MAP_START
+    array('['.toInt) = ARR_START
+    array('}'.toInt) = BREAK
+    array(']'.toInt) = BREAK
+    array('n'.toInt) = LOWER_N
+    array('f'.toInt) = LOWER_F
+    array('t'.toInt) = LOWER_T
+    array('-'.toInt) = DASH
+    array('0'.toInt) = ZERO
+    array('1'.toInt) = DIGIT19
+    array('2'.toInt) = DIGIT19
+    array('3'.toInt) = DIGIT19
+    array('4'.toInt) = DIGIT19
+    array('5'.toInt) = DIGIT19
+    array('6'.toInt) = DIGIT19
+    array('7'.toInt) = DIGIT19
+    array('8'.toInt) = DIGIT19
+    array('9'.toInt) = DIGIT19
+    array
   }
 }
