@@ -59,6 +59,8 @@ final class Writer(receiver: Receiver, val config: Writer.Config, val target: Bo
     this
   }
 
+  def writeDecimal(integer: Long, fraction: Int): this.type = { receiver.onDecimal(integer, fraction); this }
+
   def writeNumberString(value: String): this.type = { receiver.onNumberString(value); this }
 
   @inline def writeString(value: String): this.type          = { receiver.onString(value); this }

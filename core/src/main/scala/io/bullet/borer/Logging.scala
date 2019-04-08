@@ -66,6 +66,7 @@ object Logging {
     def onFloat16(value: Float): Unit
     def onFloat(value: Float): Unit
     def onDouble(value: Double): Unit
+    def onDecimal(integer: Long, fraction: Int): Unit
     def onNumberString(value: String): Unit
     def onBytes[Bytes: ByteAccess](value: Bytes): Unit
     def onBytesStart(): Unit
@@ -98,6 +99,7 @@ object Logging {
     def onFloat16(value: Float): Unit                    = show(s"${Util.doubleToString(value.toDouble)}f16")
     def onFloat(value: Float): Unit                      = show(s"${Util.doubleToString(value.toDouble)}f")
     def onDouble(value: Double): Unit                    = show(Util.doubleToString(value))
+    def onDecimal(integer: Long, fraction: Int): Unit    = show(s"$integer.${fraction}d")
     def onNumberString(value: String): Unit              = show(value + 's')
     def onBytes[Bytes: ByteAccess](value: Bytes): Unit   = show(formatBytes("BYTES[", value))
     def onBytesStart(): Unit                             = show("BYTES-STREAM[")
@@ -296,6 +298,12 @@ object Logging {
       logger.onDouble(value)
       count()
       target.onDouble(value)
+    }
+
+    def onDecimal(integer: Long, fraction: Int): Unit = {
+      logger.onDecimal(integer, fraction)
+      count()
+      target.onDecimal(integer, fraction)
     }
 
     def onNumberString(value: String): Unit = {

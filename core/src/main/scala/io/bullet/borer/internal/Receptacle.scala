@@ -83,6 +83,12 @@ private[borer] final class Receptacle extends Receiver with java.lang.Cloneable 
     _dataItem = DataItem.Double
   }
 
+  def onDecimal(integer: Long, fraction: Int): Unit = {
+    _long = integer
+    _int = fraction
+    _dataItem = DataItem.Decimal
+  }
+
   def onNumberString(value: String): Unit = {
     _obj = value
     _dataItem = DataItem.NumberString

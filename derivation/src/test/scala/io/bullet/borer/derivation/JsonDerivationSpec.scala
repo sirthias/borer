@@ -46,8 +46,8 @@ object JsonDerivationSpec extends TestSuite {
           Value.Int(-10000),
           Value.Int(1234567),
           Value.Int(-1),
-          Value.NumberString("1.5"),
-          Value.NumberString("26.8"),
+          Value.Decimal(1, 5),
+          Value.Decimal(26, 8),
           Value.String("borer"),
           Array.Unsized(
             Array.Unsized(Value.Int(255), Value.Int(0), Value.Int(0), Value.Int(255)),
@@ -78,8 +78,8 @@ object JsonDerivationSpec extends TestSuite {
           "short"  → Value.Int(-10000),
           "int"    → Value.Int(1234567),
           "long"   → Value.Int(-1),
-          "float"  → Value.NumberString("1.5"),
-          "double" → Value.NumberString("26.8"),
+          "float"  → Value.Decimal(1, 5),
+          "double" → Value.Decimal(26, 8),
           "string" → Value.String("borer"),
           "colors" → Array.Unsized(
             Map
@@ -119,7 +119,7 @@ object JsonDerivationSpec extends TestSuite {
           Array.Unsized(Value.String("Dog"), Array.Unsized(Value.Int(12), Value.String("Fred"))),
           Array.Unsized(
             Value.String("TheCAT"),
-            Array.Unsized(Value.NumberString("1.0"), Value.String("none"), Value.String("there"))),
+            Array.Unsized(Value.Decimal(1, 0), Value.String("none"), Value.String("there"))),
           Array.Unsized(Value.String("Dog"), Array.Unsized(Value.Int(4), Value.String("Lolle"))),
           Array.Unsized(Value.Int(42), Value.Bool(true)))
       }

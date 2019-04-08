@@ -40,10 +40,11 @@ object Dom {
       final case class Long(value: scala.Long)                        extends Value
       final case class OverLong(negative: Boolean, value: scala.Long) extends Value
 
-      final case class Float16(value: scala.Float)           extends Value
-      final case class Float(value: scala.Float)             extends Value
-      final case class Double(value: scala.Double)           extends Value
-      final case class NumberString(value: java.lang.String) extends Value
+      final case class Float16(value: scala.Float)                       extends Value
+      final case class Float(value: scala.Float)                         extends Value
+      final case class Double(value: scala.Double)                       extends Value
+      final case class Decimal(integer: scala.Long, fraction: scala.Int) extends Value
+      final case class NumberString(value: java.lang.String)             extends Value
 
       sealed trait Bytes extends Value
 
@@ -125,9 +126,10 @@ object Dom {
 
       case (w, Element.Value.Int(x))          ⇒ w.writeInt(x)
       case (w, Element.Value.Long(x))         ⇒ w.writeLong(x)
-      case (w, Element.Value.NumberString(x)) ⇒ w.writeNumberString(x)
       case (w, Element.Value.Bool(x))         ⇒ w.writeBool(x)
       case (w, Element.Value.Double(x))       ⇒ w.writeDouble(x)
+      case (w, Element.Value.Decimal(x, y))   ⇒ w.writeDecimal(x, y)
+      case (w, Element.Value.NumberString(x)) ⇒ w.writeNumberString(x)
 
       case (w, Element.Value.Null)      ⇒ w.writeNull()
       case (w, Element.Value.Undefined) ⇒ w.writeUndefined()
@@ -176,6 +178,7 @@ object Dom {
         case DI.Float16      ⇒ Element.Value.Float16(r.readFloat16())
         case DI.Float        ⇒ Element.Value.Float(r.readFloat())
         case DI.Double       ⇒ Element.Value.Double(r.readDouble())
+        case DI.Decimal      ⇒ Element.Value.Decimal(r.decimalInteger, r.readDecimalFraction())
         case DI.NumberString ⇒ Element.Value.NumberString(r.readNumberString())
 
         case DI.Bytes      ⇒ Element.Value.ByteArray(r.readByteArray())

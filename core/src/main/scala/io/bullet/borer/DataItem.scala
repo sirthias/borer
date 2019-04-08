@@ -25,34 +25,35 @@ object DataItem {
   final val Float16      = 1 << 6
   final val Float        = 1 << 7
   final val Double       = 1 << 8
-  final val NumberString = 1 << 9
+  final val Decimal      = 1 << 9
+  final val NumberString = 1 << 10
 
-  final val String    = 1 << 10
-  final val Chars     = 1 << 11
-  final val Text      = 1 << 12
-  final val TextStart = 1 << 13
+  final val String    = 1 << 11
+  final val Chars     = 1 << 12
+  final val Text      = 1 << 13
+  final val TextStart = 1 << 14
 
-  final val Bytes      = 1 << 14
-  final val BytesStart = 1 << 15
+  final val Bytes      = 1 << 15
+  final val BytesStart = 1 << 16
 
-  final val ArrayHeader = 1 << 16
-  final val ArrayStart  = 1 << 17
+  final val ArrayHeader = 1 << 17
+  final val ArrayStart  = 1 << 18
 
-  final val MapHeader = 1 << 18
-  final val MapStart  = 1 << 19
+  final val MapHeader = 1 << 19
+  final val MapStart  = 1 << 20
 
-  final val Break = 1 << 20
-  final val Tag   = 1 << 21
+  final val Break = 1 << 21
+  final val Tag   = 1 << 22
 
-  final val SimpleValue = 1 << 22
+  final val SimpleValue = 1 << 23
 
-  final val EndOfInput = 1 << 23
+  final val EndOfInput = 1 << 24
 
   //////////////////////////////// COMPOUND ////////////////////////////////
 
   final val None        = 0
   final val StringLike  = String | Chars
-  final val AllButBreak = 0x00FFFFFF & ~Break
+  final val AllButBreak = ((EndOfInput << 1) - 1) & ~Break
 
   //////////////////////////////////////////////////////////////////////////
 
@@ -74,6 +75,7 @@ object DataItem {
             case Float16      ⇒ "Float16"
             case Float        ⇒ "Float"
             case Double       ⇒ "Double"
+            case Decimal      ⇒ "Decimal"
             case NumberString ⇒ "NumberString"
 
             case String    ⇒ "String"
@@ -105,5 +107,5 @@ object DataItem {
         case x :: Nil ⇒ x
         case x        ⇒ x.init.mkString("", ", ", " or " + x.last)
       }
-    } else "Any Data-Item except for BREAK"
+    } else "Any DataItem except BREAK"
 }

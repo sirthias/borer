@@ -101,7 +101,10 @@ private[borer] final class JsonRenderer(var out: Output) extends Receiver.Render
     } else unsupported(out, "`NaN` floating point values")
 
   def onNumberString(value: String): Unit =
-    out = out.writeStringAsAsciiBytes(value)
+    out = count(sep(out).writeStringAsAsciiBytes(value))
+
+  def onDecimal(integer: Long, fraction: Int): Unit =
+    out = count(writeLong(writeLong(sep(out), integer).writeAsByte('.'), fraction.toLong))
 
   def onBytes[Bytes: ByteAccess](value: Bytes): Unit =
     unsupported(out, "byte strings")
@@ -234,15 +237,6 @@ private[borer] final class JsonRenderer(var out: Output) extends Receiver.Render
         def mul10(i: Int)   = (i << 3) + (i << 1)
         def mul100(l: Long) = (l << 6) + (l << 5) + (l << 2)
 
-        // for large numbers we bite the bullet of performing one division every two digits
-        def phase1(l: Long): Output =
-          if (l > 65535L) {
-            val q  = l / 100
-            val r  = (l - mul100(q)).toInt
-            val rq = div10(r)
-            phase1(q).writeBytes(('0' + rq).toByte, ('0' + r - mul10(rq)).toByte)
-          } else phase2(l.toInt)
-
         // for small numbers we can use the "fast-path"
         def phase2(i: Int): Output = {
           val q = div10(i)
@@ -253,6 +247,15 @@ private[borer] final class JsonRenderer(var out: Output) extends Receiver.Render
             else out
           newOut.writeAsByte('0' + r)
         }
+
+        // for large numbers we bite the bullet of performing one division every two digits
+        def phase1(l: Long): Output =
+          if (l > 65535L) {
+            val q  = l / 100
+            val r  = (l - mul100(q)).toInt
+            val rq = div10(r)
+            phase1(q).writeBytes(('0' + rq).toByte, ('0' + r - mul10(rq)).toByte)
+          } else phase2(l.toInt)
 
         phase1(math.abs(value))
       } else out.writeStringAsAsciiBytes("-9223372036854775808")

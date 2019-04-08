@@ -46,6 +46,9 @@ private[borer] final class CborRenderer(var out: Output) extends Receiver.Render
   def onDouble(value: Double): Unit =
     out = out.writeAsByte(0xFB).writeLong(java.lang.Double.doubleToLongBits(value))
 
+  def onDecimal(integer: Long, fraction: Int): Unit =
+    throw new Borer.Error.InvalidCborData(out, s"The CBOR renderer doesn't support writing decimals")
+
   def onNumberString(value: String): Unit =
     throw new Borer.Error.InvalidCborData(out, s"The CBOR renderer doesn't support writing number strings")
 

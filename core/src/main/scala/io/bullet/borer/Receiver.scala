@@ -25,6 +25,7 @@ abstract class Receiver {
   def onFloat16(value: Float): Unit
   def onFloat(value: Float): Unit
   def onDouble(value: Double): Unit
+  def onDecimal(integer: Long, fraction: Int): Unit
   def onNumberString(value: String): Unit
 
   def onBytes[Bytes: ByteAccess](value: Bytes): Unit
