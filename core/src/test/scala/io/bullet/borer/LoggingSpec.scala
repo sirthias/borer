@@ -13,26 +13,25 @@ import utest._
 import scala.collection.immutable.ListMap
 
 object LoggingSpec extends TestSuite {
-  import Dom.Element
-  import Dom.Element.Value
+  import Dom._
 
   val alphabet = ('A' to 'Z').mkString
 
   val tests = Tests {
 
     "simple values" - roundTripLogEquals {
-      Element.Array.Sized(
-        Value.Null,
-        Value.Undefined,
-        Value.Bool(true),
-        Value.Int(42),
-        Value.Long(Int.MaxValue + 1L),
-        Value.OverLong(negative = false, -1),
-        Value.OverLong(negative = true, -1),
-        Value.Float16(1.0f),
-        Value.Float(100000.0f),
-        Value.Double(1.6),
-        Value.Simple(SimpleValue(18)))
+      ArrayElem.Sized(
+        NullElem,
+        UndefinedElem,
+        BoolElem(true),
+        IntElem(42),
+        LongElem(Int.MaxValue + 1L),
+        OverLongElem(negative = false, -1),
+        OverLongElem(negative = true, -1),
+        Float16Elem(1.0f),
+        FloatElem(100000.0f),
+        DoubleElem(1.6),
+        SimpleValueElem(SimpleValue(18)))
     } {
       """1: [
         |     1/11: null
@@ -52,10 +51,10 @@ object LoggingSpec extends TestSuite {
     }
 
     "byte arrays" - roundTripLogEquals {
-      Element.Array.Sized(
-        Value.ByteArray(alphabet.take(8).getBytes),
-        Value.ByteArray(alphabet.getBytes),
-        Value.BytesStream(alphabet.grouped(4).map(s ⇒ Value.ByteArray(s.getBytes)).toVector))
+      ArrayElem.Sized(
+        ByteArrayElem(alphabet.take(8).getBytes),
+        ByteArrayElem(alphabet.getBytes),
+        BytesStreamElem(alphabet.grouped(4).map(s ⇒ ByteArrayElem(s.getBytes)).toVector))
     } {
       """1: [
         |    1/3: BYTES[41 42 43 44 45 46 47 48]
@@ -75,10 +74,10 @@ object LoggingSpec extends TestSuite {
     }
 
     "text arrays" - roundTripLogEquals {
-      Element.Array.Sized(
-        Value.String(alphabet.take(8)),
-        Value.String(alphabet),
-        Value.TextStream(alphabet.grouped(4).map(Value.String).toVector))
+      ArrayElem.Sized(
+        StringElem(alphabet.take(8)),
+        StringElem(alphabet),
+        TextStreamElem(alphabet.grouped(4).map(StringElem).toVector))
     } {
       """1: [
         |    1/3: "ABCDEFGH"
@@ -98,10 +97,10 @@ object LoggingSpec extends TestSuite {
     }
 
     "arrays" - roundTripLogEquals {
-      Element.Array.Sized(
-        Element.Array.Sized(Value.Int(1), Value.Int(2), Value.Int(3)),
-        Element.Array.Sized(),
-        Element.Array.Unsized(Vector(Value.Int(1), Value.Int(2), Value.Int(3))))
+      ArrayElem.Sized(
+        ArrayElem.Sized(IntElem(1), IntElem(2), IntElem(3)),
+        ArrayElem.Sized(),
+        ArrayElem.Unsized(Vector(IntElem(1), IntElem(2), IntElem(3))))
     } {
       """1: [
         |    1/3: [
@@ -122,12 +121,12 @@ object LoggingSpec extends TestSuite {
 
     "maps" - roundTripLogEquals {
       val tuples = "abc".map { c ⇒
-        val x = Element.Value.String(c.toString); x → x
+        val x = StringElem(c.toString); x → x
       }
-      Element.Map.Sized(
-        "foo"   → Element.Value.Int(42),
-        "empty" → Element.Map.Sized(),
-        "bar"   → Element.Map.Unsized(ListMap[Element, Element](tuples: _*)))
+      MapElem.Sized(
+        "foo"   → IntElem(42),
+        "empty" → MapElem.Sized(),
+        "bar"   → MapElem.Unsized(ListMap[Element, Element](tuples: _*)))
     } {
       """1: {
         |    1/3: "foo"

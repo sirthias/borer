@@ -19,97 +19,91 @@ import scala.collection.immutable
   * Provided as an alternative to plain [[Writer]]-based encoding and [[Reader]]-based decoding.
   */
 object Dom {
+  import DataItem.{Shifts ⇒ DIS}
 
-  sealed trait Element
+  sealed abstract class Element(val dataItemShift: Int)
 
-  object Element {
+  final case object NullElem                extends Element(DIS.Null)
+  final case object UndefinedElem           extends Element(DIS.Undefined)
+  final case class BoolElem(value: Boolean) extends Element(DIS.Bool)
 
-    sealed trait Value extends Element
-
-    object Value {
-      final case object Null                extends Value
-      final case object Undefined           extends Value
-      final case class Bool(value: Boolean) extends Value
-
-      object Bool {
-        val True  = Bool(true)
-        val False = Bool(false)
-      }
-
-      final case class Int(value: scala.Int)                          extends Value
-      final case class Long(value: scala.Long)                        extends Value
-      final case class OverLong(negative: Boolean, value: scala.Long) extends Value
-
-      final case class Float16(value: scala.Float)                       extends Value
-      final case class Float(value: scala.Float)                         extends Value
-      final case class Double(value: scala.Double)                       extends Value
-      final case class Decimal(integer: scala.Long, fraction: scala.Int) extends Value
-      final case class NumberString(value: java.lang.String)             extends Value
-
-      sealed trait Bytes extends Value
-
-      final case class ByteArray(value: scala.Array[Byte]) extends Bytes {
-        override def hashCode() = util.Arrays.hashCode(value)
-        override def equals(obj: Any) = obj match {
-          case ByteArray(x) ⇒ util.Arrays.equals(value, x)
-          case _            ⇒ false
-        }
-      }
-
-      final case class BytesStream(value: Vector[Bytes]) extends Bytes
-
-      sealed trait Text                                extends Value
-      final case class String(value: java.lang.String) extends Text
-      final case class TextStream(value: Vector[Text]) extends Text
-
-      final case class Simple(value: SimpleValue) extends Value
-    }
-
-    sealed trait Array extends Element {
-      def elements: Vector[Element]
-    }
-
-    object Array {
-      final case class Sized(elements: Vector[Element]) extends Array {
-        override def toString = elements.mkString("[", ", ", "]")
-      }
-      object Sized {
-        def apply(elements: Element*) = new Sized(elements.toVector)
-      }
-
-      final case class Unsized(elements: Vector[Element]) extends Array {
-        override def toString = elements.mkString("*[", ", ", "]")
-      }
-      object Unsized {
-        def apply(elements: Element*) = new Unsized(elements.toVector)
-      }
-    }
-
-    sealed trait Map extends Element {
-      def entries: immutable.Map[Element, Element]
-    }
-
-    object Map {
-      final case class Sized(entries: immutable.Map[Element, Element]) extends Map {
-        override def toString = entries.map(x ⇒ x._1 + ": " + x._2).mkString("{", ", ", "}")
-      }
-      object Sized {
-        def apply(entries: (String, Element)*) = new Sized(asListMap(entries))
-      }
-
-      final case class Unsized(entries: immutable.Map[Element, Element]) extends Map {
-        override def toString = entries.map(x ⇒ x._1 + ": " + x._2).mkString("*{", ", ", "}")
-      }
-      object Unsized {
-        def apply(entries: (String, Element)*) = new Unsized(asListMap(entries))
-      }
-
-      private def asListMap(entries: Seq[(String, Element)]): immutable.ListMap[Element, Element] =
-        entries.foldLeft(immutable.ListMap.empty[Element, Element])((m, x) ⇒ m.updated(Value.String(x._1), x._2))
-    }
-
-    final case class Tagged(tag: Tag, value: Element) extends Element
+  object BoolElem {
+    val True  = BoolElem(true)
+    val False = BoolElem(false)
   }
+
+  final case class IntElem(value: Int)                          extends Element(DIS.Int)
+  final case class LongElem(value: Long)                        extends Element(DIS.Long)
+  final case class OverLongElem(negative: Boolean, value: Long) extends Element(DIS.OverLong)
+  final case class Float16Elem(value: Float)                    extends Element(DIS.Float16)
+  final case class FloatElem(value: Float)                      extends Element(DIS.Float)
+  final case class DoubleElem(value: Double)                    extends Element(DIS.Double)
+  final case class DecimalElem(integer: Long, fraction: Int)    extends Element(DIS.Decimal)
+  final case class NumberStringElem(value: String)              extends Element(DIS.NumberString)
+
+  sealed abstract class AbstractBytesElem(dataItem: Int) extends Element(dataItem)
+
+  final case class ByteArrayElem(value: Array[Byte]) extends AbstractBytesElem(DIS.Bytes) {
+    override def hashCode() = util.Arrays.hashCode(value)
+    override def equals(obj: Any) = obj match {
+      case ByteArrayElem(x) ⇒ util.Arrays.equals(value, x)
+      case _                ⇒ false
+    }
+  }
+
+  final case class BytesStreamElem(value: Vector[AbstractBytesElem]) extends AbstractBytesElem(DIS.BytesStart)
+
+  sealed abstract class AbstractTextElem(dataItem: Int) extends Element(dataItem)
+
+  final case class StringElem(value: String)                       extends AbstractTextElem(DIS.String)
+  final case class TextStreamElem(value: Vector[AbstractTextElem]) extends AbstractTextElem(DIS.TextStart)
+
+  final case class SimpleValueElem(value: SimpleValue) extends Element(DIS.SimpleValue)
+
+  sealed abstract class ArrayElem(dataItem: Int) extends Element(dataItem) {
+    def elements: Vector[Element]
+  }
+
+  object ArrayElem {
+    final case class Sized(elements: Vector[Element]) extends ArrayElem(DIS.ArrayHeader) {
+      override def toString = elements.mkString("[", ", ", "]")
+    }
+    object Sized {
+      def apply(elements: Element*) = new Sized(elements.toVector)
+    }
+
+    final case class Unsized(elements: Vector[Element]) extends ArrayElem(DIS.ArrayStart) {
+      override def toString = elements.mkString("*[", ", ", "]")
+    }
+    object Unsized {
+      def apply(elements: Element*) = new Unsized(elements.toVector)
+    }
+  }
+
+  sealed abstract class MapElem(dataItem: Int) extends Element(dataItem) {
+    def entries: immutable.Map[Element, Element]
+  }
+
+  object MapElem {
+    final case class Sized(entries: immutable.Map[Element, Element]) extends MapElem(DIS.MapHeader) {
+      override def toString = entries.map(x ⇒ x._1 + ": " + x._2).mkString("{", ", ", "}")
+    }
+    object Sized {
+      def apply(entries: (String, Element)*) = new Sized(asListMap(entries))
+    }
+
+    final case class Unsized(entries: immutable.Map[Element, Element]) extends MapElem(DIS.MapStart) {
+      override def toString = entries.map(x ⇒ x._1 + ": " + x._2).mkString("*{", ", ", "}")
+    }
+    object Unsized {
+      def apply(entries: (String, Element)*) = new Unsized(asListMap(entries))
+    }
+
+    private def asListMap(entries: Seq[(String, Element)]): immutable.ListMap[Element, Element] =
+      entries.foldLeft(immutable.ListMap.empty[Element, Element])((m, x) ⇒ m.updated(StringElem(x._1), x._2))
+  }
+
+  final case class TaggedElem(tag: Tag, value: Element) extends Element(DIS.Tag)
 
   implicit def encoder[T <: Element]: Encoder[T] = elementEncoder.asInstanceOf[Encoder[T]]
 
@@ -117,85 +111,94 @@ object Dom {
     val writeElement = (w: Writer, x: Element) ⇒ w.write(x)
     val writeEntry   = (w: Writer, x: (Element, Element)) ⇒ w.write(x._1).write(x._2)
 
-    Encoder {
-      case (w, Element.Value.String(x))  ⇒ w.writeString(x)
-      case (w, Element.Array.Unsized(x)) ⇒ x.foldLeft(w.writeArrayStart())(writeElement).writeBreak()
-      case (w, Element.Array.Sized(x))   ⇒ x.foldLeft(w.writeArrayHeader(x.size))(writeElement)
-      case (w, Element.Map.Unsized(x))   ⇒ x.foldLeft(w.writeMapStart())(writeEntry).writeBreak()
-      case (w, Element.Map.Sized(x))     ⇒ x.foldLeft(w.writeMapHeader(x.size))(writeEntry)
+    Encoder { (w, x) ⇒
+      x.dataItemShift match {
+        case DIS.Null      ⇒ w.writeNull()
+        case DIS.Undefined ⇒ w.writeUndefined()
+        case DIS.Bool      ⇒ w.writeBool(x.asInstanceOf[BoolElem].value)
 
-      case (w, Element.Value.Int(x))          ⇒ w.writeInt(x)
-      case (w, Element.Value.Long(x))         ⇒ w.writeLong(x)
-      case (w, Element.Value.Bool(x))         ⇒ w.writeBool(x)
-      case (w, Element.Value.Double(x))       ⇒ w.writeDouble(x)
-      case (w, Element.Value.Decimal(x, y))   ⇒ w.writeDecimal(x, y)
-      case (w, Element.Value.NumberString(x)) ⇒ w.writeNumberString(x)
+        case DIS.Int          ⇒ w.writeInt(x.asInstanceOf[IntElem].value)
+        case DIS.Long         ⇒ w.writeLong(x.asInstanceOf[LongElem].value)
+        case DIS.OverLong     ⇒ val n = x.asInstanceOf[OverLongElem]; w.writeOverLong(n.negative, n.value)
+        case DIS.Float16      ⇒ w.writeFloat16(x.asInstanceOf[Float16Elem].value)
+        case DIS.Float        ⇒ w.writeFloat(x.asInstanceOf[FloatElem].value)
+        case DIS.Double       ⇒ w.writeDouble(x.asInstanceOf[DoubleElem].value)
+        case DIS.Decimal      ⇒ val n = x.asInstanceOf[DecimalElem]; w.writeDecimal(n.integer, n.fraction)
+        case DIS.NumberString ⇒ w.writeNumberString(x.asInstanceOf[NumberStringElem].value)
 
-      case (w, Element.Value.Null)      ⇒ w.writeNull()
-      case (w, Element.Value.Undefined) ⇒ w.writeUndefined()
+        case DIS.String ⇒ w.writeString(x.asInstanceOf[StringElem].value)
+        case DIS.TextStart ⇒
+          x.asInstanceOf[TextStreamElem].value.foldLeft(w.writeTextStart())(writeElement).writeBreak()
 
-      case (w, Element.Value.OverLong(n, x)) ⇒ w.writeOverLong(n, x)
-      case (w, Element.Value.Float16(x))     ⇒ w.writeFloat16(x)
-      case (w, Element.Value.Float(x))       ⇒ w.writeFloat(x)
+        case DIS.Bytes ⇒ w.writeBytes(x.asInstanceOf[ByteArrayElem].value)
+        case DIS.BytesStart ⇒
+          x.asInstanceOf[BytesStreamElem].value.foldLeft(w.writeBytesStart())(writeElement).writeBreak()
 
-      case (w, Element.Value.ByteArray(x))   ⇒ w.writeBytes(x)
-      case (w, Element.Value.BytesStream(x)) ⇒ x.foldLeft(w.writeBytesStart())(writeElement).writeBreak()
+        case DIS.SimpleValue ⇒ w.write(x.asInstanceOf[SimpleValueElem].value)
 
-      case (w, Element.Value.TextStream(x)) ⇒ x.foldLeft(w.writeTextStart())(writeElement).writeBreak()
+        case DIS.ArrayHeader ⇒
+          val a = x.asInstanceOf[ArrayElem.Sized]
+          a.elements.foldLeft(w.writeArrayHeader(a.elements.size))(writeElement)
+        case DIS.ArrayStart ⇒
+          x.asInstanceOf[ArrayElem.Unsized].elements.foldLeft(w.writeArrayStart())(writeElement).writeBreak()
 
-      case (w, Element.Value.Simple(x)) ⇒ w.writeSimpleValue(x.value)
+        case DIS.MapHeader ⇒
+          val m = x.asInstanceOf[MapElem.Sized]
+          m.entries.foldLeft(w.writeMapHeader(m.entries.size))(writeEntry)
+        case DIS.MapStart ⇒
+          x.asInstanceOf[MapElem.Unsized].entries.foldLeft(w.writeMapStart())(writeEntry).writeBreak()
 
-      case (w, Element.Tagged(tag, x)) ⇒ w.writeTag(tag).write(x)
+        case DIS.Tag ⇒ val n = x.asInstanceOf[TaggedElem]; w.writeTag(n.tag).write(n.value)
+      }
     }
   }
 
   implicit def decoder[T <: Element]: Decoder[T] = elementDecoder.asInstanceOf[Decoder[T]]
 
   val elementDecoder: Decoder[Element] = {
-    val bytesDecoder: Decoder[Vector[Element.Value.Bytes]] = Decoder { r ⇒
+    val bytesDecoder: Decoder[Vector[AbstractBytesElem]] = Decoder { r ⇒
       r.readBytesStart()
-      val b = new immutable.VectorBuilder[Element.Value.Bytes]
-      while (!r.tryReadBreak()) b += r.read[Element.Value.Bytes]()
+      val b = new immutable.VectorBuilder[AbstractBytesElem]
+      while (!r.tryReadBreak()) b += r.read[AbstractBytesElem]()
       b.result()
     }
-    val textDecoder: Decoder[Vector[Element.Value.Text]] = Decoder { r ⇒
+    val textDecoder: Decoder[Vector[AbstractTextElem]] = Decoder { r ⇒
       r.readTextStart()
-      val b = new immutable.VectorBuilder[Element.Value.Text]
-      while (!r.tryReadBreak()) b += r.read[Element.Value.Text]()
+      val b = new immutable.VectorBuilder[AbstractTextElem]
+      while (!r.tryReadBreak()) b += r.read[AbstractTextElem]()
       b.result()
     }
 
     Decoder { r ⇒
-      import io.bullet.borer.{DataItem ⇒ DI}
-      r.dataItem match {
-        case DI.Null      ⇒ r.readNull(); Element.Value.Null
-        case DI.Undefined ⇒ r.readUndefined(); Element.Value.Undefined
-        case DI.Bool      ⇒ if (r.readBoolean()) Element.Value.Bool.True else Element.Value.Bool.False
+      31 - Integer.numberOfLeadingZeros(r.dataItem) match {
+        case DIS.Null      ⇒ r.readNull(); NullElem
+        case DIS.Undefined ⇒ r.readUndefined(); UndefinedElem
+        case DIS.Bool      ⇒ if (r.readBoolean()) BoolElem.True else BoolElem.False
 
-        case DI.Int          ⇒ Element.Value.Int(r.readInt())
-        case DI.Long         ⇒ Element.Value.Long(r.readLong())
-        case DI.OverLong     ⇒ Element.Value.OverLong(r.overLongNegative, r.readOverLong())
-        case DI.Float16      ⇒ Element.Value.Float16(r.readFloat16())
-        case DI.Float        ⇒ Element.Value.Float(r.readFloat())
-        case DI.Double       ⇒ Element.Value.Double(r.readDouble())
-        case DI.Decimal      ⇒ Element.Value.Decimal(r.decimalInteger, r.readDecimalFraction())
-        case DI.NumberString ⇒ Element.Value.NumberString(r.readNumberString())
+        case DIS.Int          ⇒ IntElem(r.readInt())
+        case DIS.Long         ⇒ LongElem(r.readLong())
+        case DIS.OverLong     ⇒ OverLongElem(r.overLongNegative, r.readOverLong())
+        case DIS.Float16      ⇒ Float16Elem(r.readFloat16())
+        case DIS.Float        ⇒ FloatElem(r.readFloat())
+        case DIS.Double       ⇒ DoubleElem(r.readDouble())
+        case DIS.Decimal      ⇒ DecimalElem(r.decimalInteger, r.readDecimalFraction())
+        case DIS.NumberString ⇒ NumberStringElem(r.readNumberString())
 
-        case DI.Bytes      ⇒ Element.Value.ByteArray(r.readByteArray())
-        case DI.BytesStart ⇒ Element.Value.BytesStream(r.read()(bytesDecoder))
+        case DIS.Bytes      ⇒ ByteArrayElem(r.readByteArray())
+        case DIS.BytesStart ⇒ BytesStreamElem(r.read()(bytesDecoder))
 
-        case DI.Chars | DI.String | DI.Text ⇒ Element.Value.String(r.readString())
-        case DI.TextStart                   ⇒ Element.Value.TextStream(r.read()(textDecoder))
+        case DIS.Chars | DIS.String | DIS.Text ⇒ StringElem(r.readString())
+        case DIS.TextStart                     ⇒ TextStreamElem(r.read()(textDecoder))
 
-        case DI.SimpleValue ⇒ Element.Value.Simple(SimpleValue(r.readSimpleValue()))
+        case DIS.SimpleValue ⇒ SimpleValueElem(SimpleValue(r.readSimpleValue()))
 
-        case DI.ArrayHeader ⇒ Element.Array.Sized(r.read[Vector[Element]]())
-        case DI.ArrayStart  ⇒ Element.Array.Unsized(r.read[Vector[Element]]())
+        case DIS.ArrayHeader ⇒ ArrayElem.Sized(r.read[Vector[Element]]())
+        case DIS.ArrayStart  ⇒ ArrayElem.Unsized(r.read[Vector[Element]]())
 
-        case DI.MapHeader ⇒ Element.Map.Sized(r.read[immutable.ListMap[Element, Element]]())
-        case DI.MapStart  ⇒ Element.Map.Unsized(r.read[immutable.ListMap[Element, Element]]())
+        case DIS.MapHeader ⇒ MapElem.Sized(r.read[immutable.ListMap[Element, Element]]())
+        case DIS.MapStart  ⇒ MapElem.Unsized(r.read[immutable.ListMap[Element, Element]]())
 
-        case DI.Tag ⇒ Element.Tagged(r.readTag(), r.read[Element]())
+        case DIS.Tag ⇒ TaggedElem(r.readTag(), r.read[Element]())
       }
     }
   }

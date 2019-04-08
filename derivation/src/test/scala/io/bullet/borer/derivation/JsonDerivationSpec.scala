@@ -12,6 +12,7 @@ import io.bullet.borer.{Dom, Json}
 import utest._
 
 object JsonDerivationSpec extends TestSuite {
+  import Dom._
 
   case class Color(red: Int = 0, green: Int = 0, blue: Int = 0, alpha: Int = 0xFF)
 
@@ -39,20 +40,19 @@ object JsonDerivationSpec extends TestSuite {
       val encoded = Json.encode(foo).to[Array[Byte]].bytes
 
       Json.decode(encoded).to[Dom.Element].value ==> {
-        import Dom.Element._
-        Array.Unsized(
-          Value.Int(120),
-          Value.Int(66),
-          Value.Int(-10000),
-          Value.Int(1234567),
-          Value.Int(-1),
-          Value.Decimal(1, 5),
-          Value.Decimal(26, 8),
-          Value.String("borer"),
-          Array.Unsized(
-            Array.Unsized(Value.Int(255), Value.Int(0), Value.Int(0), Value.Int(255)),
-            Array.Unsized(Value.Int(0), Value.Int(255), Value.Int(0), Value.Int(255)),
-            Array.Unsized(Value.Int(0), Value.Int(0), Value.Int(255), Value.Int(255))
+        ArrayElem.Unsized(
+          IntElem(120),
+          IntElem(66),
+          IntElem(-10000),
+          IntElem(1234567),
+          IntElem(-1),
+          DecimalElem(1, 5),
+          DecimalElem(26, 8),
+          StringElem("borer"),
+          ArrayElem.Unsized(
+            ArrayElem.Unsized(IntElem(255), IntElem(0), IntElem(0), IntElem(255)),
+            ArrayElem.Unsized(IntElem(0), IntElem(255), IntElem(0), IntElem(255)),
+            ArrayElem.Unsized(IntElem(0), IntElem(0), IntElem(255), IntElem(255))
           ))
       }
 
@@ -71,22 +71,19 @@ object JsonDerivationSpec extends TestSuite {
       val encoded = Json.encode(foo).to[Array[Byte]].bytes
 
       Json.decode(encoded).to[Dom.Element].value ==> {
-        import Dom.Element._
-        Map.Unsized(
-          "char"   → Value.Int(120),
-          "byte"   → Value.Int(66),
-          "short"  → Value.Int(-10000),
-          "int"    → Value.Int(1234567),
-          "long"   → Value.Int(-1),
-          "float"  → Value.Decimal(1, 5),
-          "double" → Value.Decimal(26, 8),
-          "string" → Value.String("borer"),
-          "colors" → Array.Unsized(
-            Map
-              .Unsized("red" → Value.Int(255), "green" → Value.Int(0), "blue" → Value.Int(0), "alpha" → Value.Int(255)),
-            Map
-              .Unsized("red"  → Value.Int(0), "green" → Value.Int(255), "blue" → Value.Int(0), "alpha"   → Value.Int(255)),
-            Map.Unsized("red" → Value.Int(0), "green" → Value.Int(0), "blue"   → Value.Int(255), "alpha" → Value.Int(255))
+        MapElem.Unsized(
+          "char"   → IntElem(120),
+          "byte"   → IntElem(66),
+          "short"  → IntElem(-10000),
+          "int"    → IntElem(1234567),
+          "long"   → IntElem(-1),
+          "float"  → DecimalElem(1, 5),
+          "double" → DecimalElem(26, 8),
+          "string" → StringElem("borer"),
+          "colors" → ArrayElem.Unsized(
+            MapElem.Unsized("red" → IntElem(255), "green" → IntElem(0), "blue"   → IntElem(0), "alpha"   → IntElem(255)),
+            MapElem.Unsized("red" → IntElem(0), "green"   → IntElem(255), "blue" → IntElem(0), "alpha"   → IntElem(255)),
+            MapElem.Unsized("red" → IntElem(0), "green"   → IntElem(0), "blue"   → IntElem(255), "alpha" → IntElem(255))
           ))
       }
 
@@ -114,14 +111,13 @@ object JsonDerivationSpec extends TestSuite {
       val encoded = Json.encode(animals).to[Array[Byte]].bytes
 
       Json.decode(encoded).to[Dom.Element].value ==> {
-        import Dom.Element._
-        Array.Unsized(
-          Array.Unsized(Value.String("Dog"), Array.Unsized(Value.Int(12), Value.String("Fred"))),
-          Array.Unsized(
-            Value.String("TheCAT"),
-            Array.Unsized(Value.Decimal(1, 0), Value.String("none"), Value.String("there"))),
-          Array.Unsized(Value.String("Dog"), Array.Unsized(Value.Int(4), Value.String("Lolle"))),
-          Array.Unsized(Value.Int(42), Value.Bool(true)))
+        ArrayElem.Unsized(
+          ArrayElem.Unsized(StringElem("Dog"), ArrayElem.Unsized(IntElem(12), StringElem("Fred"))),
+          ArrayElem.Unsized(
+            StringElem("TheCAT"),
+            ArrayElem.Unsized(DecimalElem(1, 0), StringElem("none"), StringElem("there"))),
+          ArrayElem.Unsized(StringElem("Dog"), ArrayElem.Unsized(IntElem(4), StringElem("Lolle"))),
+          ArrayElem.Unsized(IntElem(42), BoolElem.True))
       }
 
       Json.decode(encoded).to[List[Animal]].value ==> animals

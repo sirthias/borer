@@ -12,6 +12,7 @@ import io.bullet.borer.{Cbor, Dom}
 import utest._
 
 object CborDerivationSpec extends TestSuite {
+  import Dom._
 
   case class Color(red: Int = 0, green: Int = 0, blue: Int = 0, alpha: Int = 0xFF)
 
@@ -39,20 +40,19 @@ object CborDerivationSpec extends TestSuite {
       val encoded = Cbor.encode(foo).to[Array[Byte]].bytes
 
       Cbor.decode(encoded).to[Dom.Element].value ==> {
-        import Dom.Element._
-        Array.Sized(
-          Value.Int(120),
-          Value.Int(66),
-          Value.Int(-10000),
-          Value.Int(1234567),
-          Value.Int(-1),
-          Value.Float16(1.5f),
-          Value.Double(26.8),
-          Value.String("borer"),
-          Array.Unsized(
-            Array.Sized(Value.Int(255), Value.Int(0), Value.Int(0), Value.Int(255)),
-            Array.Sized(Value.Int(0), Value.Int(255), Value.Int(0), Value.Int(255)),
-            Array.Sized(Value.Int(0), Value.Int(0), Value.Int(255), Value.Int(255))
+        ArrayElem.Sized(
+          IntElem(120),
+          IntElem(66),
+          IntElem(-10000),
+          IntElem(1234567),
+          IntElem(-1),
+          Float16Elem(1.5f),
+          DoubleElem(26.8),
+          StringElem("borer"),
+          ArrayElem.Unsized(
+            ArrayElem.Sized(IntElem(255), IntElem(0), IntElem(0), IntElem(255)),
+            ArrayElem.Sized(IntElem(0), IntElem(255), IntElem(0), IntElem(255)),
+            ArrayElem.Sized(IntElem(0), IntElem(0), IntElem(255), IntElem(255))
           ))
       }
 
@@ -71,20 +71,19 @@ object CborDerivationSpec extends TestSuite {
       val encoded = Cbor.encode(foo).to[Array[Byte]].bytes
 
       Cbor.decode(encoded).to[Dom.Element].value ==> {
-        import Dom.Element._
-        Map.Sized(
-          "char"   → Value.Int(120),
-          "byte"   → Value.Int(66),
-          "short"  → Value.Int(-10000),
-          "int"    → Value.Int(1234567),
-          "long"   → Value.Int(-1),
-          "float"  → Value.Float16(1.5f),
-          "double" → Value.Double(26.8),
-          "string" → Value.String("borer"),
-          "colors" → Array.Unsized(
-            Map.Sized("red" → Value.Int(255), "green" → Value.Int(0), "blue"   → Value.Int(0), "alpha"   → Value.Int(255)),
-            Map.Sized("red" → Value.Int(0), "green"   → Value.Int(255), "blue" → Value.Int(0), "alpha"   → Value.Int(255)),
-            Map.Sized("red" → Value.Int(0), "green"   → Value.Int(0), "blue"   → Value.Int(255), "alpha" → Value.Int(255))
+        MapElem.Sized(
+          "char"   → IntElem(120),
+          "byte"   → IntElem(66),
+          "short"  → IntElem(-10000),
+          "int"    → IntElem(1234567),
+          "long"   → IntElem(-1),
+          "float"  → Float16Elem(1.5f),
+          "double" → DoubleElem(26.8),
+          "string" → StringElem("borer"),
+          "colors" → ArrayElem.Unsized(
+            MapElem.Sized("red" → IntElem(255), "green" → IntElem(0), "blue"   → IntElem(0), "alpha"   → IntElem(255)),
+            MapElem.Sized("red" → IntElem(0), "green"   → IntElem(255), "blue" → IntElem(0), "alpha"   → IntElem(255)),
+            MapElem.Sized("red" → IntElem(0), "green"   → IntElem(0), "blue"   → IntElem(255), "alpha" → IntElem(255))
           ))
       }
 
@@ -112,14 +111,12 @@ object CborDerivationSpec extends TestSuite {
       val encoded = Cbor.encode(animals).to[Array[Byte]].bytes
 
       Cbor.decode(encoded).to[Dom.Element].value ==> {
-        import Dom.Element._
-        Array.Unsized(
-          Array.Sized(Value.String("Dog"), Array.Sized(Value.Int(12), Value.String("Fred"))),
-          Array.Sized(
-            Value.String("TheCAT"),
-            Array.Sized(Value.Float16(1.0f), Value.String("none"), Value.String("there"))),
-          Array.Sized(Value.String("Dog"), Array.Sized(Value.Int(4), Value.String("Lolle"))),
-          Array.Sized(Value.Int(42), Value.Bool(true)))
+        ArrayElem.Unsized(
+          ArrayElem.Sized(StringElem("Dog"), ArrayElem.Sized(IntElem(12), StringElem("Fred"))),
+          ArrayElem
+            .Sized(StringElem("TheCAT"), ArrayElem.Sized(Float16Elem(1.0f), StringElem("none"), StringElem("there"))),
+          ArrayElem.Sized(StringElem("Dog"), ArrayElem.Sized(IntElem(4), StringElem("Lolle"))),
+          ArrayElem.Sized(IntElem(42), BoolElem.True))
       }
 
       Cbor.decode(encoded).to[List[Animal]].value ==> animals
