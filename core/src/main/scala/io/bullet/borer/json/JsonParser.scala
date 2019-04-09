@@ -164,40 +164,42 @@ private[borer] final class JsonParser extends Receiver.Parser {
       } else result()
     }
 
-    @tailrec def parseNumberFraction(ix: Long, integer: Long, fraction: Int): Long = {
-      @inline def result(): Long = {
-        receiver.onDecimal(integer, fraction)
-        ix
-      }
-      def breakOutToNumberString() = {
-        val x =
-          if (integer < 0) appendNonNegativeLong(ix, appendChar(ix, 0, '-'), -integer)
-          else appendNonNegativeLong(ix, 0, integer)
-        parseNumberString(ix, appendNonNegativeLong(ix, appendChar(ix, x, '.'), fraction.toLong))
+    @tailrec def parseDecimalNumber(ix: Long, significand: Long, scale: Int, negative: Boolean): Long = {
+      @inline def result(): Long =
+        if (scale > 0) {
+          var double = significand.toDouble / double10pow(scale)
+          if (negative) double = -double
+          val float = double.toFloat
+          if (float.toDouble == double) receiver.onFloat(float)
+          else receiver.onDouble(double)
+          ix
+        } else failInvalidJsonValue(ix)
+      def breakOutToNumberString(c: Char) = {
+        val charCursor =
+          if (significand < 0) appendNonNegativeLong(ix, appendChar(ix, 0, '-'), -significand)
+          else appendNonNegativeLong(ix, 0, significand)
+        val newCharCursor =
+          if (scale > 0) {
+            val newCursor = charCursor + 1
+            if (newCursor > 0) {
+              ensureCharsLen(newCursor)
+              System.arraycopy(chars, charCursor - scale, chars, newCursor - scale, scale)
+              chars(charCursor - scale) = '.'
+              newCursor
+            } else failStringTooLong(ix)
+          } else charCursor
+        parseNumberString(ix + 1, appendChar(ix, newCharCursor, c))
       }
       if (ix < len) {
-        if (fraction < Int.MaxValue / 10) {
-          val i     = ix + 1
-          val mul10 = (fraction << 3) + (fraction << 1)
-          (unsafeLookup(ix) >> 4: @switch) match {
-            case NUM_DIGIT0 ⇒ parseNumberFraction(i, integer, mul10)
-            case NUM_DIGIT1 ⇒ parseNumberFraction(i, integer, mul10 + 1)
-            case NUM_DIGIT2 ⇒ parseNumberFraction(i, integer, mul10 + 2)
-            case NUM_DIGIT3 ⇒ parseNumberFraction(i, integer, mul10 + 3)
-            case NUM_DIGIT4 ⇒ parseNumberFraction(i, integer, mul10 + 4)
-            case NUM_DIGIT5 ⇒ parseNumberFraction(i, integer, mul10 + 5)
-            case NUM_DIGIT6 ⇒ parseNumberFraction(i, integer, mul10 + 6)
-            case NUM_DIGIT7 ⇒ parseNumberFraction(i, integer, mul10 + 7)
-            case NUM_DIGIT8 ⇒
-              if (fraction == Int.MaxValue / 10) breakOutToNumberString()
-              else parseNumberFraction(i, integer, mul10 + 8)
-            case NUM_DIGIT9 ⇒
-              if (fraction == Int.MaxValue / 10) breakOutToNumberString()
-              else parseNumberFraction(i, integer, mul10 + 9)
-            case NUM_LETTER_E ⇒ breakOutToNumberString()
-            case _            ⇒ result()
-          }
-        } else breakOutToNumberString()
+        val c = ia.unsafeByte(input, ix).toInt
+        if ('0' <= c && c <= '9') {
+          val newScale = scale + 1
+          // check whether we can safely multiply by 10 and add 9 and still have significand fit wholy into a Double
+          if (significand < ((1L << 52) / 10 - 1) && newScale < double10pow.length) {
+            parseDecimalNumber(ix + 1, (significand << 3) + (significand << 1) + c - '0', newScale, negative)
+          } else breakOutToNumberString(c.toChar)
+        } else if ((c | 0x20) == 'e') breakOutToNumberString(c.toChar)
+        else result()
       } else result()
     }
 
@@ -232,7 +234,7 @@ private[borer] final class JsonParser extends Receiver.Parser {
             case NUM_DIGIT9 ⇒
               if (value == Long.MaxValue / 10) breakOutToNumberString()
               else parseNumber(i, mul10 + 9, negative)
-            case NUM_DOT      ⇒ parseNumberFraction(i, if (negative) -value else value, 0)
+            case NUM_DOT      ⇒ parseDecimalNumber(i, value, 0, negative)
             case NUM_LETTER_E ⇒ breakOutToNumberString()
             case _            ⇒ result()
           }
@@ -247,7 +249,7 @@ private[borer] final class JsonParser extends Receiver.Parser {
       }
       if (ix < len) {
         val c = ia.unsafeByte(input, ix).toInt
-        if (c == '.') parseNumberFraction(ix + 1, 0, 0)
+        if (c == '.') parseDecimalNumber(ix + 1, 0, 0, negative = false)
         else if ((c | 0x20) == 'e') parseNumberString(ix + 1, appendChar(ix, appendChar(ix, 0, '0'), 'e'))
         else result()
       } else result()
@@ -581,4 +583,8 @@ private[borer] object JsonParser {
     array('e'.toInt) = (NUM_LETTER_E << 4).toByte
     array
   }
+
+  // powers of 10 which can be represented exactly in a `Double`
+  private val double10pow = Array(1.0e0, 1.0e1, 1.0e2, 1.0e3, 1.0e4, 1.0e5, 1.0e6, 1.0e7, 1.0e8, 1.0e9, 1.0e10, 1.0e11,
+    1.0e12, 1.0e13, 1.0e14, 1.0e15, 1.0e16, 1.0e17, 1.0e18, 1.0e19, 1.0e20, 1.0e21, 1.0e22)
 }

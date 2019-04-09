@@ -46,8 +46,8 @@ object JsonDerivationSpec extends TestSuite {
           IntElem(-10000),
           IntElem(1234567),
           IntElem(-1),
-          DecimalElem(1, 5),
-          DecimalElem(26, 8),
+          FloatElem(1.5f),
+          DoubleElem(26.8),
           StringElem("borer"),
           ArrayElem.Unsized(
             ArrayElem.Unsized(IntElem(255), IntElem(0), IntElem(0), IntElem(255)),
@@ -77,8 +77,8 @@ object JsonDerivationSpec extends TestSuite {
           "short"  → IntElem(-10000),
           "int"    → IntElem(1234567),
           "long"   → IntElem(-1),
-          "float"  → DecimalElem(1, 5),
-          "double" → DecimalElem(26, 8),
+          "float"  → FloatElem(1.5f),
+          "double" → DoubleElem(26.8),
           "string" → StringElem("borer"),
           "colors" → ArrayElem.Unsized(
             MapElem.Unsized("red" → IntElem(255), "green" → IntElem(0), "blue"   → IntElem(0), "alpha"   → IntElem(255)),
@@ -113,9 +113,8 @@ object JsonDerivationSpec extends TestSuite {
       Json.decode(encoded).to[Dom.Element].value ==> {
         ArrayElem.Unsized(
           ArrayElem.Unsized(StringElem("Dog"), ArrayElem.Unsized(IntElem(12), StringElem("Fred"))),
-          ArrayElem.Unsized(
-            StringElem("TheCAT"),
-            ArrayElem.Unsized(DecimalElem(1, 0), StringElem("none"), StringElem("there"))),
+          ArrayElem
+            .Unsized(StringElem("TheCAT"), ArrayElem.Unsized(FloatElem(1.0f), StringElem("none"), StringElem("there"))),
           ArrayElem.Unsized(StringElem("Dog"), ArrayElem.Unsized(IntElem(4), StringElem("Lolle"))),
           ArrayElem.Unsized(IntElem(42), BoolElem.True))
       }
