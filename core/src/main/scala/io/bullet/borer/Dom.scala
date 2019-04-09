@@ -68,6 +68,7 @@ object Dom {
       override def toString = elements.mkString("[", ", ", "]")
     }
     object Sized {
+      val empty                     = new Sized(Vector.empty)
       def apply(elements: Element*) = new Sized(elements.toVector)
     }
 
@@ -75,6 +76,7 @@ object Dom {
       override def toString = elements.mkString("*[", ", ", "]")
     }
     object Unsized {
+      val empty                     = new Unsized(Vector.empty)
       def apply(elements: Element*) = new Unsized(elements.toVector)
     }
   }
@@ -88,6 +90,7 @@ object Dom {
       override def toString = entries.map(x ⇒ x._1 + ": " + x._2).mkString("{", ", ", "}")
     }
     object Sized {
+      val empty                              = new Sized(immutable.Map.empty)
       def apply(entries: (String, Element)*) = new Sized(asListMap(entries))
     }
 
@@ -95,6 +98,7 @@ object Dom {
       override def toString = entries.map(x ⇒ x._1 + ": " + x._2).mkString("*{", ", ", "}")
     }
     object Unsized {
+      val empty                              = new Unsized(immutable.Map.empty)
       def apply(entries: (String, Element)*) = new Unsized(asListMap(entries))
     }
 
@@ -156,15 +160,19 @@ object Dom {
   val elementDecoder: Decoder[Element] = {
     val bytesDecoder: Decoder[Vector[AbstractBytesElem]] = Decoder { r ⇒
       r.readBytesStart()
-      val b = new immutable.VectorBuilder[AbstractBytesElem]
-      while (!r.tryReadBreak()) b += r.read[AbstractBytesElem]()
-      b.result()
+      if (!r.tryReadBreak()) {
+        val b = new immutable.VectorBuilder[AbstractBytesElem]
+        while (!r.tryReadBreak()) b += r.read[AbstractBytesElem]()
+        b.result()
+      } else Vector.empty
     }
     val textDecoder: Decoder[Vector[AbstractTextElem]] = Decoder { r ⇒
       r.readTextStart()
-      val b = new immutable.VectorBuilder[AbstractTextElem]
-      while (!r.tryReadBreak()) b += r.read[AbstractTextElem]()
-      b.result()
+      if (!r.tryReadBreak()) {
+        val b = new immutable.VectorBuilder[AbstractTextElem]
+        while (!r.tryReadBreak()) b += r.read[AbstractTextElem]()
+        b.result()
+      } else Vector.empty
     }
 
     Decoder { r ⇒
@@ -189,11 +197,19 @@ object Dom {
 
         case DIS.SimpleValue ⇒ SimpleValueElem(SimpleValue(r.readSimpleValue()))
 
-        case DIS.ArrayHeader ⇒ ArrayElem.Sized(r.read[Vector[Element]]())
-        case DIS.ArrayStart  ⇒ ArrayElem.Unsized(r.read[Vector[Element]]())
+        case DIS.ArrayHeader ⇒
+          if (r.tryReadArrayHeader(0)) ArrayElem.Sized.empty
+          else ArrayElem.Sized(r.read[Vector[Element]]())
+        case DIS.ArrayStart ⇒
+          if (r.tryReadBreak()) ArrayElem.Unsized.empty
+          else ArrayElem.Unsized(r.read[Vector[Element]]())
 
-        case DIS.MapHeader ⇒ MapElem.Sized(r.read[immutable.ListMap[Element, Element]]())
-        case DIS.MapStart  ⇒ MapElem.Unsized(r.read[immutable.ListMap[Element, Element]]())
+        case DIS.MapHeader ⇒
+          if (r.tryReadMapHeader(0)) MapElem.Sized.empty
+          else MapElem.Sized(r.read[immutable.ListMap[Element, Element]]())
+        case DIS.MapStart ⇒
+          if (r.tryReadBreak()) MapElem.Unsized.empty
+          else MapElem.Unsized(r.read[immutable.ListMap[Element, Element]]())
 
         case DIS.Tag ⇒ TaggedElem(r.readTag(), r.read[Element]())
       }

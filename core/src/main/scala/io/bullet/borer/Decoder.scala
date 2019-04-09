@@ -153,28 +153,33 @@ object Decoder extends LowPrioDecoders {
           builder.sizeHint(intSize)
           rec(intSize, builder)
         } else r.overflow(s"Cannot deserialize Iterable with size $size (> Int.MaxValue)")
-      } else if (r.tryReadArrayStart()) r.readUntilBreak[M, T]()
-      else r.unexpectedDataItem(expected = "Array for deserializing an Iterable instance")
+      } else if (r.tryReadArrayStart()) {
+        r.readUntilBreak[M, T]()
+      } else r.unexpectedDataItem(expected = "Array for deserializing an Iterable instance")
     }
 
   implicit def forArray[T <: AnyRef: Decoder]: Decoder[Array[T]] =
     Decoder { r ⇒
       if (r.hasArrayHeader) {
         val size = r.readArrayHeader()
-        if (size <= Int.MaxValue) {
-          val intSize = size.toInt
-          val array   = new Array[AnyRef](intSize).asInstanceOf[Array[T]]
+        if (size > 0) {
+          if (size <= Int.MaxValue) {
+            val intSize = size.toInt
+            val array   = new Array[AnyRef](intSize).asInstanceOf[Array[T]]
 
-          @tailrec def rec(ix: Int): Array[T] =
-            if (ix < intSize) {
-              array(ix) = r[T]; rec(ix + 1)
-            } else array
+            @tailrec def rec(ix: Int): Array[T] =
+              if (ix < intSize) {
+                array(ix) = r[T]; rec(ix + 1)
+              } else array
 
-          rec(intSize)
-        } else r.overflow(s"Cannot deserialize Array with size $size (> Int.MaxValue)")
+            rec(intSize)
+          } else r.overflow(s"Cannot deserialize Array with size $size (> Int.MaxValue)")
+        } else Array.emptyObjectArray.asInstanceOf[Array[T]]
       } else if (r.tryReadArrayStart()) {
-        val classTag = ClassTag.AnyRef.asInstanceOf[ClassTag[T]]
-        r.readUntilBreak[mutable.ArrayBuffer, T]().toArray[T](classTag)
+        if (!r.tryReadBreak()) {
+          val classTag = ClassTag.AnyRef.asInstanceOf[ClassTag[T]]
+          r.readUntilBreak[mutable.ArrayBuffer, T]().toArray[T](classTag)
+        } else Array.emptyObjectArray.asInstanceOf[Array[T]]
       } else r.unexpectedDataItem(expected = "Array")
     }
 
