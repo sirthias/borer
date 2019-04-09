@@ -25,19 +25,25 @@ import SprayCodecs._
 class SprayEncodingBenchmark extends EncodingBenchmark {
 
   @Benchmark
-  def encodeFoosSpray: Array[Byte] = foosFormat.write(foos).compactPrint.getBytes(UTF_8)
+  def encodeFoos: Array[Byte] = foosFormat.write(foos).compactPrint.getBytes(UTF_8)
 
   @Benchmark
-  def encodeIntsSpray: Array[Byte] = intsFormat.write(ints).compactPrint.getBytes(UTF_8)
+  def encodeInts: Array[Byte] = intsFormat.write(ints).compactPrint.getBytes(UTF_8)
+
+  @Benchmark
+  def encodeEmptyArray: Array[Byte] = intsFormat.write(Nil).compactPrint.getBytes(UTF_8)
 }
 
 class SprayDecodingBenchmark extends DecodingBenchmark {
 
   @Benchmark
-  def decodeFoosSpray: Map[String, Foo] = JsonParser(new String(foosJson, UTF_8)).convertTo[Map[String, Foo]]
+  def decodeFoos: Map[String, Foo] = JsonParser(new String(foosJson, UTF_8)).convertTo[Map[String, Foo]]
 
   @Benchmark
-  def decodeIntsSpray: List[Int] = JsonParser(new String(intsJson, UTF_8)).convertTo[List[Int]]
+  def decodeInts: List[Int] = JsonParser(new String(intsJson, UTF_8)).convertTo[List[Int]]
+
+  @Benchmark
+  def decodeEmptyArray: List[Int] = JsonParser(new String(emptyArrayJson, UTF_8)).convertTo[List[Int]]
 }
 
 class SprayDomBenchmark extends DomBenchmark {
@@ -46,8 +52,8 @@ class SprayDomBenchmark extends DomBenchmark {
   def setup(): Unit         = root = JsonParser(new String(fileBytes, UTF_8))
 
   @Benchmark
-  def encodeDomSpray: Array[Byte] = root.compactPrint.getBytes(UTF_8)
+  def encodeDom: Array[Byte] = root.compactPrint.getBytes(UTF_8)
 
   @Benchmark
-  def decodeDomSpray: JsValue = JsonParser(new String(fileBytes, UTF_8))
+  def decodeDom: JsValue = JsonParser(new String(fileBytes, UTF_8))
 }

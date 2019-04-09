@@ -26,19 +26,25 @@ import io.bullet.borer.benchmarks.JacksonCodecs._
 class JacksonEncodingBenchmark extends EncodingBenchmark {
 
   @Benchmark
-  def encodeFoosJackson: Array[Byte] = mapper.writeValueAsBytes(foos)
+  def encodeFoos: Array[Byte] = mapper.writeValueAsBytes(foos)
 
   @Benchmark
-  def encodeIntsJackson: Array[Byte] = mapper.writeValueAsBytes(ints)
+  def encodeInts: Array[Byte] = mapper.writeValueAsBytes(ints)
+
+  @Benchmark
+  def encodeEmptyArray: Array[Byte] = mapper.writeValueAsBytes(List.empty[Int])
 }
 
 class JacksonDecodingBenchmark extends DecodingBenchmark {
 
   @Benchmark
-  def decodeFoosJackson: Map[String, Foo] = mapper.readValue(foosJson, foosTypeRef)
+  def decodeFoos: Map[String, Foo] = mapper.readValue(foosJson, foosTypeRef)
 
   @Benchmark
-  def decodeIntsJackson: List[Int] = mapper.readValue(intsJson, intsTypeRef)
+  def decodeInts: List[Int] = mapper.readValue(intsJson, intsTypeRef)
+
+  @Benchmark
+  def decodeEmptyArray: List[Int] = mapper.readValue(emptyArrayJson, intsTypeRef)
 }
 
 class JacksonDomBenchmark extends DomBenchmark {
@@ -47,8 +53,8 @@ class JacksonDomBenchmark extends DomBenchmark {
   def setup(): Unit          = root = mapper.readTree(fileBytes)
 
   @Benchmark
-  def encodeDomJackson: Array[Byte] = mapper.writeValueAsBytes(root)
+  def encodeDom: Array[Byte] = mapper.writeValueAsBytes(root)
 
   @Benchmark
-  def decodeDomJackson: JsonNode = mapper.readTree(fileBytes)
+  def decodeDom: JsonNode = mapper.readTree(fileBytes)
 }

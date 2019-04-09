@@ -30,19 +30,25 @@ import io.bullet.borer.benchmarks.CirceCodecs._
 class CirceEncodingBenchmark extends EncodingBenchmark {
 
   @Benchmark
-  def encodeFoosCirce: Array[Byte] = foosEncoder(foos).noSpaces.getBytes(UTF_8)
+  def encodeFoos: Array[Byte] = foosEncoder(foos).noSpaces.getBytes(UTF_8)
 
   @Benchmark
-  def encodeIntsCirce: Array[Byte] = intsEncoder(ints).noSpaces.getBytes(UTF_8)
+  def encodeInts: Array[Byte] = intsEncoder(ints).noSpaces.getBytes(UTF_8)
+
+  @Benchmark
+  def encodeEmptyArray: Array[Byte] = intsEncoder(Nil).noSpaces.getBytes(UTF_8)
 }
 
 class CirceDecodingBenchmark extends DecodingBenchmark {
 
   @Benchmark
-  def decodeFoosCirce: Map[String, Foo] = decode[Map[String, Foo]](new String(foosJson, UTF_8)).right.get
+  def decodeFoos: Map[String, Foo] = decode[Map[String, Foo]](new String(foosJson, UTF_8)).right.get
 
   @Benchmark
-  def decodeIntsCirce: List[Int] = decode[List[Int]](new String(intsJson, UTF_8)).right.get
+  def decodeInts: List[Int] = decode[List[Int]](new String(intsJson, UTF_8)).right.get
+
+  @Benchmark
+  def decodeEmptyArray: List[Int] = decode[List[Int]](new String(emptyArrayJson, UTF_8)).right.get
 }
 
 class CirceDomBenchmark extends DomBenchmark {
@@ -51,8 +57,8 @@ class CirceDomBenchmark extends DomBenchmark {
   def setup(): Unit      = root = parse(new String(fileBytes, UTF_8)).right.get
 
   @Benchmark
-  def encodeDomCirce: Array[Byte] = root.noSpaces.getBytes(UTF_8)
+  def encodeDom: Array[Byte] = root.noSpaces.getBytes(UTF_8)
 
   @Benchmark
-  def decodeDomCirce: Json = parse(new String(fileBytes, UTF_8)).right.get
+  def decodeDom: Json = parse(new String(fileBytes, UTF_8)).right.get
 }

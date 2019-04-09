@@ -60,37 +60,41 @@ import BorerCodecs._
 class BorerEncodingBenchmark extends EncodingBenchmark {
 
   @Benchmark
-  def encodeFoosBorerDV: Array[Byte] = Json.encode(foos)(Derived.foosEncoder).toByteArray
+  def encodeFoosDV: Array[Byte] = Json.encode(foos)(Derived.foosEncoder).toByteArray
 
   @Benchmark
-  def encodeFoosBorerDNV: Array[Byte] =
+  def encodeFoosDNV: Array[Byte] =
     Json
       .encode(foos)(Derived.foosEncoder)
       .withConfig(Writer.Config.defaultWithoutValidation)
       .toByteArray
 
   @Benchmark
-  def encodeFoosBorerMV: Array[Byte] = Json.encode(foos)(Manual.foosEncoder).toByteArray
+  def encodeFoosMV: Array[Byte] = Json.encode(foos)(Manual.foosEncoder).toByteArray
 
   @Benchmark
-  def encodeFoosBorerMNV: Array[Byte] =
+  def encodeFoosMNV: Array[Byte] =
     Json.encode(foos)(Manual.foosEncoder).withConfig(Writer.Config.defaultWithoutValidation).toByteArray
 
   @Benchmark
-  def encodeIntsBorerV: Array[Byte] = Json.encode(ints).toByteArray
+  def encodeIntsV: Array[Byte] = Json.encode(ints).toByteArray
 
   @Benchmark
-  def encodeIntsBorerNV: Array[Byte] =
+  def encodeIntsNV: Array[Byte] =
     Json.encode(ints).withConfig(Writer.Config.defaultWithoutValidation).toByteArray
+
+  @Benchmark
+  def encodeEmptyArray: Array[Byte] =
+    Json.encode(List.empty[Int]).withConfig(Writer.Config.defaultWithoutValidation).toByteArray
 }
 
 class BorerDecodingBenchmark extends DecodingBenchmark {
 
   @Benchmark
-  def decodeFoosBorerDV: Map[String, Foo] = Json.decode(foosJson).to[Map[String, Foo]](Derived.foosDecoder).value
+  def decodeFoosDV: Map[String, Foo] = Json.decode(foosJson).to[Map[String, Foo]](Derived.foosDecoder).value
 
   @Benchmark
-  def decodeFoosBorerDNV: Map[String, Foo] =
+  def decodeFoosDNV: Map[String, Foo] =
     Json
       .decode(foosJson)
       .withConfig(Reader.Config.defaultWithoutValidation)
@@ -98,10 +102,10 @@ class BorerDecodingBenchmark extends DecodingBenchmark {
       .value
 
   @Benchmark
-  def decodeFoosBorerMV: Map[String, Foo] = Json.decode(foosJson).to[Map[String, Foo]](Manual.foosDecoder).value
+  def decodeFoosMV: Map[String, Foo] = Json.decode(foosJson).to[Map[String, Foo]](Manual.foosDecoder).value
 
   @Benchmark
-  def decodeFoosBorerMNV: Map[String, Foo] =
+  def decodeFoosMNV: Map[String, Foo] =
     Json
       .decode(foosJson)
       .withConfig(Reader.Config.defaultWithoutValidation)
@@ -109,11 +113,15 @@ class BorerDecodingBenchmark extends DecodingBenchmark {
       .value
 
   @Benchmark
-  def decodeIntsBorerV: List[Int] = Json.decode(intsJson).to[List[Int]].value
+  def decodeIntsV: List[Int] = Json.decode(intsJson).to[List[Int]].value
 
   @Benchmark
-  def decodeIntsBorerNV: List[Int] =
+  def decodeIntsNV: List[Int] =
     Json.decode(intsJson).withConfig(Reader.Config.defaultWithoutValidation).to[List[Int]].value
+
+  @Benchmark
+  def decodeEmptyArray: List[Int] =
+    Json.decode(emptyArrayJson).withConfig(Reader.Config.defaultWithoutValidation).to[List[Int]].value
 }
 
 class BorerDomBenchmark extends DomBenchmark {
@@ -122,10 +130,10 @@ class BorerDomBenchmark extends DomBenchmark {
   def setup(): Unit             = root = Json.decode(fileBytes).to[Dom.Element].value
 
   @Benchmark
-  def encodeDomBorer: Array[Byte] =
+  def encodeDom: Array[Byte] =
     Json.encode(root).withConfig(Writer.Config.defaultWithoutValidation).toByteArray
 
   @Benchmark
-  def decodeDomBorer: Dom.Element =
+  def decodeDom: Dom.Element =
     Json.decode(fileBytes).withConfig(Reader.Config.defaultWithoutValidation).to[Dom.Element].value
 }

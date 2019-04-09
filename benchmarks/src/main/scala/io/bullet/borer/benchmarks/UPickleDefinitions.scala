@@ -26,19 +26,25 @@ import UPickleCodecs._
 class UPickleEncodingBenchmark extends EncodingBenchmark {
 
   @Benchmark
-  def encodeFoosUPickle: Array[Byte] = upickle.default.write(foos).getBytes(UTF_8)
+  def encodeFoos: Array[Byte] = upickle.default.write(foos).getBytes(UTF_8)
 
   @Benchmark
-  def encodeIntsUPickle: Array[Byte] = upickle.default.write(ints).getBytes(UTF_8)
+  def encodeInts: Array[Byte] = upickle.default.write(ints).getBytes(UTF_8)
+
+  @Benchmark
+  def encodeEmptyArray: Array[Byte] = upickle.default.write(List.empty[Int]).getBytes(UTF_8)
 }
 
 class UPickleDecodingBenchmark extends DecodingBenchmark {
 
   @Benchmark
-  def decodeFoosUPickle: Map[String, Foo] = upickle.default.read[Map[String, Foo]](new String(foosJson, UTF_8))
+  def decodeFoos: Map[String, Foo] = upickle.default.read[Map[String, Foo]](new String(foosJson, UTF_8))
 
   @Benchmark
-  def decodeIntsUPickle: List[Int] = upickle.default.read[List[Int]](new String(intsJson, UTF_8))
+  def decodeInts: List[Int] = upickle.default.read[List[Int]](new String(intsJson, UTF_8))
+
+  @Benchmark
+  def decodeEmptyArray: List[Int] = upickle.default.read[List[Int]](new String(emptyArrayJson, UTF_8))
 }
 
 class UPickleDomBenchmark extends DomBenchmark {
@@ -47,8 +53,8 @@ class UPickleDomBenchmark extends DomBenchmark {
   def setup(): Unit             = root = upickle.default.read[ujson.Value](new String(fileBytes, UTF_8))
 
   @Benchmark
-  def encodeDomUPickle: Array[Byte] = upickle.default.write(root).getBytes(UTF_8)
+  def encodeDom: Array[Byte] = upickle.default.write(root).getBytes(UTF_8)
 
   @Benchmark
-  def decodeDomUPickle: ujson.Value = upickle.default.read[ujson.Value](new String(fileBytes, UTF_8))
+  def decodeDom: ujson.Value = upickle.default.read[ujson.Value](new String(fileBytes, UTF_8))
 }

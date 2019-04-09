@@ -111,4 +111,6 @@ sealed abstract class EncodingDecodingExampleData {
     import CirceCodecs._
     implicitly[Encoder[Map[String, Foo]]].apply(foos).noSpaces.getBytes(UTF_8)
   }
+
+  val emptyArrayJson: Array[Byte] = "[]".getBytes(UTF_8)
 }
