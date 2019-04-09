@@ -67,7 +67,17 @@ object Receiver {
   /**
     * Common parent type of [[io.bullet.borer.cbor.CborParser]] and [[io.bullet.borer.json.JsonParser]]
     */
-  abstract class Parser {
+  abstract class Parser[Input] {
+
+    /**
+      * The [[Input]] the parser is parsing from.
+      */
+    def input: Input
+
+    /**
+      * The input [[Position]] for the given index.
+      */
+    final def pos(index: Long): Position[Input] = Position(input, index)
 
     /**
       * Reads the next data item from the input and sends it to the given [[Receiver]].
@@ -75,7 +85,7 @@ object Receiver {
       * The returned `Long` is the index of the next byte to consume from the input
       * (and can be used for the subsequent call to this method).
       */
-    def pull[Input: InputAccess](input: Input, index: Long, receiver: Receiver): Long
+    def pull(index: Long, receiver: Receiver): Long
   }
 
   /**

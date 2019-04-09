@@ -75,7 +75,7 @@ object DecodingSetup {
     def valueAndIndexEither: Either[Borer.Error[Position[Input]], (T, Long)]
   }
 
-  private[borer] final class Impl[Input: InputAccess](input: Input, target: Borer.Target, parser: Receiver.Parser)
+  private[borer] final class Impl[Input: InputAccess](target: Borer.Target, parser: Receiver.Parser[Input])
       extends Borer.AbstractSetup with Api[Input] with Sealed[Input, AnyRef] {
 
     private[this] var startIndex: Long         = _
@@ -169,8 +169,8 @@ object DecodingSetup {
       }
     }
 
-    private def newReader(): Reader =
-      new Reader(input, startIndex, parser, validationApplier, config, target)(InputAccess.asAny[Input])
+    private def newReader(): InputReader[Input] =
+      new InputReader(startIndex, parser, validationApplier, config, target)
 
     private def decodeFrom(reader: Reader): AnyRef = {
       reader.pull() // fetch first data item

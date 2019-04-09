@@ -15,10 +15,13 @@ import io.bullet.borer.internal.Util
 
 /**
   * Encapsulates the basic CBOR decoding logic.
-  * Has no internal state and can therefore be a singleton object.
+  * Stateless.
   */
-private[borer] object CborParser extends Receiver.Parser {
+private[borer] final class CborParser[Input](val input: Input)(implicit ia: InputAccess[Input])
+    extends Receiver.Parser[Input] {
   import Borer.Error
+
+  private[this] val inputLen = ia.length(input)
 
   /**
     * Reads the next data item from the input and sends it to the given [[Receiver]].
@@ -26,9 +29,7 @@ private[borer] object CborParser extends Receiver.Parser {
     * The returned `Long` is the index of the next byte to consume from the input
     * (and can be used for the subsequent call to this method).
     */
-  def pull[Input](input: Input, index: Long, receiver: Receiver)(implicit ia: InputAccess[Input]): Long = {
-
-    def pos(ix: Long) = Position(input, ix)
+  def pull(index: Long, receiver: Receiver): Long = {
 
     @inline def decodePositiveInteger(ix: Long, uLong: Long): Long = {
       if (Util.isUnsignedInt(uLong)) receiver.onInt(uLong.toInt)
@@ -120,7 +121,7 @@ private[borer] object CborParser extends Receiver.Parser {
       ix
     }
 
-    if (index < ia.length(input)) {
+    if (index < inputLen) {
       val byte      = ia.unsafeByte(input, index) & 0xFF
       var ix        = index
       val majorType = byte >> 5
@@ -133,19 +134,19 @@ private[borer] object CborParser extends Receiver.Parser {
             info.toLong
           case 24 ⇒
             ix += 2
-            if (ix > ia.length(input)) throw new Borer.Error.UnexpectedEndOfInput(pos(ix))
+            if (ix > inputLen) throw new Borer.Error.UnexpectedEndOfInput(pos(ix))
             ia.unsafeByte(input, index + 1) & 0xFFL
           case 25 ⇒
             ix += 3
-            if (ix > ia.length(input)) throw new Borer.Error.UnexpectedEndOfInput(pos(ix))
+            if (ix > inputLen) throw new Borer.Error.UnexpectedEndOfInput(pos(ix))
             ia.doubleByteBigEndian(input, index + 1) & 0xFFFFL
           case 26 ⇒
             ix += 5
-            if (ix > ia.length(input)) throw new Borer.Error.UnexpectedEndOfInput(pos(ix))
+            if (ix > inputLen) throw new Borer.Error.UnexpectedEndOfInput(pos(ix))
             ia.quadByteBigEndian(input, index + 1) & 0xFFFFFFFFL
           case 27 ⇒
             ix += 9
-            if (ix > ia.length(input)) throw new Borer.Error.UnexpectedEndOfInput(pos(ix))
+            if (ix > inputLen) throw new Borer.Error.UnexpectedEndOfInput(pos(ix))
             ia.octaByteBigEndian(input, index + 1)
           case 31 if 2 <= majorType && majorType <= 5 || majorType == 7 ⇒
             ix += 1

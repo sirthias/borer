@@ -124,15 +124,15 @@ object JsonSpec extends BorerSpec {
       roundTrip("\"\"", "")
       roundTrip("\"foo\"", "foo")
       roundTrip(""""\"\\\b\f\n\r\t"""", "\"\\\b\f\n\r\t")
-      roundTrip("\"\\u0000\"", "\u0000")            // control char
-      roundTrip("\"\\u0001\"", "\u0001")            // control char
-      roundTrip("\"\\u0010\"", "\u0010")            // control char
-      roundTrip("\"\\u001e\"", "\u001e")            // control char
-      roundTrip("\"\u007f\"", "\u007f")             // 1-byte UTF-8 (normal ASCII char)
-      roundTrip("\"\u00fc\"", "\u00fc")             // 2-byte UTF-8
-      roundTrip("\"\u6c34\"", "\u6c34")             // 3-byte UTF-8
-      roundTrip("\"\ud800\udd51\"", "\ud800\udd51") // 4-byte UTF-8
-      roundTrip("\"\ud834\udd1e\"", "\ud834\udd1e") // 4-byte UTF-8
+      roundTrip("\"\\u0000\"", "\u0000")                   // control char
+      roundTrip("\"\\u0001\"", "\u0001")                   // control char
+      roundTrip("\"\\u0010\"", "\u0010")                   // control char
+      roundTrip("\"\\u001e\"", "\u001e")                   // control char
+      roundTrip("\"\u007f\"", "\u007f")                    // 1-byte UTF-8 (normal ASCII char)
+      roundTrip("\"\u00fc\"", "\u00fc")                    // 2-byte UTF-8
+      roundTrip("\"\u6c34\"", "\u6c34")                    // 3-byte UTF-8
+      roundTrip("\"\ud800\udd51\"", "\ud800\udd51")        // 4-byte UTF-8
+      verifyDecoding("\"\\uDBFF\\uDFFF\"", "\uDBFF\uDFFF") // 4-byte UTF-8
       roundTrip("\"árvíztűrő ütvefúrógép\"", "árvíztűrő ütvefúrógép")
       roundTrip("\"飞机因此受到损伤\"", "飞机因此受到损伤")
 
@@ -166,6 +166,10 @@ object JsonSpec extends BorerSpec {
       verifyDecoding(
         "{\"addr\":\"1x6YnuBVeeE65dQRZztRWgUPwyBjHCA5g\"\n}\n    ",
         ListMap("addr" → "1x6YnuBVeeE65dQRZztRWgUPwyBjHCA5g"))
+    }
+
+    "Invalid Syntax" - {
+      intercept[Borer.Error.InvalidJsonData[_ <: AnyRef]](decode[List[String]]("[],,"))
     }
 
     "Complex Case Classes" - {

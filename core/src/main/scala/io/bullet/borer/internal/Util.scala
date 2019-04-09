@@ -70,13 +70,6 @@ object Util {
 
   @inline def canBeRepresentedAsFloat(value: Double): Boolean = value.isNaN || value.toFloat.toDouble == value
 
-  /**
-    * Returns the int value of a given hex digit char.
-    * Note: this implementation is very fast (since it's branchless) and therefore
-    * does not perform ANY range checks!
-    */
-  @inline def hexValue(c: Char): Int = (c & 0x1f) + ((c >> 6) * 0x19) - 0x10
-
   def inPlaceNegate(bytes: Array[Byte]): Unit = {
     @tailrec def rec(ix: Int): Unit = if (ix < bytes.length) { bytes(ix) = (~bytes(ix).toInt).toByte; rec(ix + 1) }
     rec(0)

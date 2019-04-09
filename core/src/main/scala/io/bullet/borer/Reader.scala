@@ -20,12 +20,11 @@ import scala.util.control.NonFatal
 /**
   * Stateful, mutable abstraction for reading a stream of CBOR or JSON data from the given `input`.
   */
-final class Reader(val input: Any,
-                   startCursor: Long,
-                   parser: Receiver.Parser,
-                   validationApplier: Receiver.Applier,
-                   val config: Reader.Config,
-                   val target: Borer.Target)(implicit inputAccess: InputAccess[Any]) {
+final class InputReader[Input](startCursor: Long,
+                               parser: Receiver.Parser[Input],
+                               validationApplier: Receiver.Applier,
+                               val config: Reader.Config,
+                               val target: Borer.Target)(implicit inputAccess: InputAccess[Input]) {
 
   import io.bullet.borer.{DataItem ⇒ DI}
 
@@ -40,7 +39,7 @@ final class Reader(val input: Any,
   @inline def readingJson: Boolean = target eq Json
   @inline def readingCbor: Boolean = target eq Cbor
 
-  @inline def position[Input]: Position[Input] = Position(input.asInstanceOf[Input], cursor)
+  @inline def position: Position[Input] = Position(parser.input, cursor)
 
   /**
     * Checks whether this [[Reader]] currently has a data item of the given type.
@@ -344,7 +343,7 @@ final class Reader(val input: Any,
 
   @inline def pull(): Unit = {
     receptacle.clear()
-    _cursor = parser.pull(input, _cursor, receiver)
+    _cursor = parser.pull(_cursor, receiver)
   }
 
   @inline private def pullReturn[T](value: T): T = {
@@ -406,5 +405,5 @@ object Reader {
     def cursor: Long
   }
 
-  private final class SavedStateImpl(val cursor: Long, val receiver: Receiver) extends SavedState
+  private[borer] final class SavedStateImpl(val cursor: Long, val receiver: Receiver) extends SavedState
 }

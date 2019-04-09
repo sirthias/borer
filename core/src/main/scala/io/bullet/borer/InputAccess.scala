@@ -63,8 +63,6 @@ trait InputAccess[Input] {
 
 object InputAccess {
 
-  private[borer] def asAny[Input](implicit ia: InputAccess[Input]) = ia.asInstanceOf[InputAccess[Any]]
-
   /**
     * `InputAccess` for plain byte arrays.
     */

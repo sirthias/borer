@@ -25,7 +25,7 @@ case object Cbor extends Borer.Target {
     * Entry point into the CBOR decoding mini-DSL.
     */
   def decode[Input: InputAccess](input: Input): DecodingSetup.Api[Input] =
-    new DecodingSetup.Impl(input, this, CborParser)
+    new DecodingSetup.Impl(this, new CborParser(input))
 
   /**
     * Constructs a new [[Writer]] that writes CBOR to the given [[Output]].
@@ -44,7 +44,7 @@ case object Cbor extends Borer.Target {
                                  startIndex: Long = 0,
                                  config: Reader.Config = Reader.Config.default,
                                  validationApplier: Receiver.Applier = Receiver.defaultApplier): Reader =
-    new Reader(input, startIndex, CborParser, validationApplier, config, this)(InputAccess.asAny[Input])
+    new InputReader(startIndex, new CborParser(input), validationApplier, config, this)
 }
 
 case object Json extends Borer.Target {
@@ -59,7 +59,7 @@ case object Json extends Borer.Target {
     * Entry point into the JSON decoding mini-DSL.
     */
   def decode[Input: InputAccess](input: Input): DecodingSetup.Api[Input] =
-    new DecodingSetup.Impl(input, this, new JsonParser)
+    new DecodingSetup.Impl(this, new JsonParser(input))
 
   /**
     * Constructs a new [[Writer]] that writes JSON to the given [[Output]].
@@ -78,7 +78,7 @@ case object Json extends Borer.Target {
                                  startIndex: Long = 0,
                                  config: Reader.Config = Reader.Config.default,
                                  validationApplier: Receiver.Applier = Receiver.defaultApplier): Reader =
-    new Reader(input, startIndex, new JsonParser, validationApplier, config, this)(InputAccess.asAny[Input])
+    new InputReader(startIndex, new JsonParser(input), validationApplier, config, this)
 }
 
 /**
@@ -138,9 +138,9 @@ object Borer {
 
     final def io: IO = _io
 
-    private[borer] def withPosOf[Input](reader: Reader): Error[Position[Input]] = {
+    private[borer] def withPosOf[Input](reader: InputReader[Input]): Error[Position[Input]] = {
       val thiz = this.asInstanceOf[Error[Position[Input]]]
-      if (thiz._io eq null) thiz._io = reader.position[Input]
+      if (thiz._io eq null) thiz._io = reader.position
       thiz
     }
   }
