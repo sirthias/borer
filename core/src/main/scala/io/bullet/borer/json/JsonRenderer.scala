@@ -103,9 +103,6 @@ private[borer] final class JsonRenderer(var out: Output) extends Receiver.Render
   def onNumberString(value: String): Unit =
     out = count(sep(out).writeStringAsAsciiBytes(value))
 
-  def onDecimal(integer: Long, fraction: Int): Unit =
-    out = count(writeLong(writeLong(sep(out), integer).writeAsByte('.'), fraction.toLong))
-
   def onBytes[Bytes: ByteAccess](value: Bytes): Unit =
     unsupported(out, "byte strings")
 

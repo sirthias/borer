@@ -38,7 +38,6 @@ object Dom {
   final case class Float16Elem(value: Float)                    extends Element(DIS.Float16)
   final case class FloatElem(value: Float)                      extends Element(DIS.Float)
   final case class DoubleElem(value: Double)                    extends Element(DIS.Double)
-  final case class DecimalElem(integer: Long, fraction: Int)    extends Element(DIS.Decimal)
   final case class NumberStringElem(value: String)              extends Element(DIS.NumberString)
 
   sealed abstract class AbstractBytesElem(dataItem: Int) extends Element(dataItem)
@@ -123,7 +122,6 @@ object Dom {
         case DIS.Float16      ⇒ w.writeFloat16(x.asInstanceOf[Float16Elem].value)
         case DIS.Float        ⇒ w.writeFloat(x.asInstanceOf[FloatElem].value)
         case DIS.Double       ⇒ w.writeDouble(x.asInstanceOf[DoubleElem].value)
-        case DIS.Decimal      ⇒ val n = x.asInstanceOf[DecimalElem]; w.writeDecimal(n.integer, n.fraction)
         case DIS.NumberString ⇒ w.writeNumberString(x.asInstanceOf[NumberStringElem].value)
 
         case DIS.String ⇒ w.writeString(x.asInstanceOf[StringElem].value)
@@ -181,7 +179,6 @@ object Dom {
         case DIS.Float16      ⇒ Float16Elem(r.readFloat16())
         case DIS.Float        ⇒ FloatElem(r.readFloat())
         case DIS.Double       ⇒ DoubleElem(r.readDouble())
-        case DIS.Decimal      ⇒ DecimalElem(r.decimalInteger, r.readDecimalFraction())
         case DIS.NumberString ⇒ NumberStringElem(r.readNumberString())
 
         case DIS.Bytes      ⇒ ByteArrayElem(r.readByteArray())

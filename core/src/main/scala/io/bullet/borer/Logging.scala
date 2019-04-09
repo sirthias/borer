@@ -300,12 +300,6 @@ object Logging {
       target.onDouble(value)
     }
 
-    def onDecimal(integer: Long, fraction: Int): Unit = {
-      logger.onDecimal(integer, fraction)
-      count()
-      target.onDecimal(integer, fraction)
-    }
-
     def onNumberString(value: String): Unit = {
       logger.onNumberString(value)
       count()

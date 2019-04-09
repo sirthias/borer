@@ -120,12 +120,6 @@ object Validation {
       _target.onDouble(value)
     }
 
-    def onDecimal(integer: Long, fraction: Int): Unit = {
-      checkAllowed(DI.Decimal)
-      count()
-      _target.onDecimal(integer, fraction)
-    }
-
     def onNumberString(value: String): Unit = {
       checkAllowed(DI.NumberString)
       count()
@@ -216,7 +210,7 @@ object Validation {
       value match {
         case Tag.EpochDateTime ⇒
           checkAllowed(DI.Tag)
-          enterLevel(1L, DI.Int | DI.Long | DI.Float16 | DI.Float | DI.Double | DI.Decimal | DI.NumberString)
+          enterLevel(1L, DI.Int | DI.Long | DI.Float16 | DI.Float | DI.Double | DI.NumberString)
 
         case Tag.PositiveBigNum | Tag.NegativeBigNum ⇒
           checkAllowed(DI.Tag)

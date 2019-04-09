@@ -131,39 +131,28 @@ final class Reader(val input: Any,
       result
     } else unexpectedDataItem(expected = "Float16")
 
-  @inline def hasFloat: Boolean = hasAnyOf(DI.Float16 | DI.Float | DI.Decimal | DI.NumberString)
+  @inline def hasFloat: Boolean = hasAnyOf(DI.Float16 | DI.Float | DI.NumberString)
   def readFloat(): Float = {
-    val result = dataItem match {
-      case DI.Float16 | DI.Float ⇒ receptacle.floatValue
-      case DI.Decimal            ⇒ java.lang.Float.parseFloat(s"${receptacle.longValue}.${receptacle.intValue}")
-      case DI.NumberString       ⇒ java.lang.Float.parseFloat(receptacle.stringValue)
-      case _                     ⇒ unexpectedDataItem(expected = "Float")
-    }
+    val result =
+      if (hasFloat) {
+        if (hasNumberString) java.lang.Float.parseFloat(receptacle.stringValue)
+        else receptacle.floatValue
+      } else unexpectedDataItem(expected = "Float")
     pull()
     result
   }
 
-  @inline def hasDouble: Boolean = hasAnyOf(DI.Float16 | DI.Float | DI.Double | DI.Decimal | DI.NumberString)
+  @inline def hasDouble: Boolean = hasAnyOf(DI.Float16 | DI.Float | DI.Double | DI.NumberString)
   def readDouble(): Double = {
     val result = dataItem match {
       case DI.Float16 | DI.Float ⇒ receptacle.floatValue.toDouble
       case DI.Double             ⇒ receptacle.doubleValue
-      case DI.Decimal            ⇒ java.lang.Double.parseDouble(s"${receptacle.longValue}.${receptacle.intValue}")
       case DI.NumberString       ⇒ java.lang.Double.parseDouble(receptacle.stringValue)
       case _                     ⇒ unexpectedDataItem(expected = "Double")
     }
     pull()
     result
   }
-
-  @inline def hasDecimal: Boolean = has(DI.Decimal)
-  def decimalInteger: Long        = if (hasDecimal) receptacle.longValue else unexpectedDataItem(expected = "Decimal")
-  def readDecimalFraction(): Int =
-    if (hasDecimal) {
-      val result = receptacle.intValue
-      pull()
-      result
-    } else unexpectedDataItem(expected = "Decimal")
 
   @inline def hasNumberString: Boolean = has(DI.NumberString)
   def readNumberString(): String =

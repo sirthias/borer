@@ -23,22 +23,21 @@ object DataItem {
     final val Float16      = 6
     final val Float        = 7
     final val Double       = 8
-    final val Decimal      = 9
-    final val NumberString = 10
-    final val String       = 11
-    final val Chars        = 12
-    final val Text         = 13
-    final val TextStart    = 14
-    final val Bytes        = 15
-    final val BytesStart   = 16
-    final val ArrayHeader  = 17
-    final val ArrayStart   = 18
-    final val MapHeader    = 19
-    final val MapStart     = 20
-    final val Break        = 21
-    final val Tag          = 22
-    final val SimpleValue  = 23
-    final val EndOfInput   = 24
+    final val NumberString = 9
+    final val String       = 10
+    final val Chars        = 11
+    final val Text         = 12
+    final val TextStart    = 13
+    final val Bytes        = 14
+    final val BytesStart   = 15
+    final val ArrayHeader  = 16
+    final val ArrayStart   = 17
+    final val MapHeader    = 18
+    final val MapStart     = 19
+    final val Break        = 20
+    final val Tag          = 21
+    final val SimpleValue  = 22
+    final val EndOfInput   = 23
   }
 
   //////////////////////////////// BASIC ////////////////////////////////
@@ -52,7 +51,6 @@ object DataItem {
   final val Float16      = 1 << Shifts.Float16
   final val Float        = 1 << Shifts.Float
   final val Double       = 1 << Shifts.Double
-  final val Decimal      = 1 << Shifts.Decimal
   final val NumberString = 1 << Shifts.NumberString
   final val String       = 1 << Shifts.String
   final val Chars        = 1 << Shifts.Chars
@@ -95,7 +93,6 @@ object DataItem {
             case Float16      ⇒ "Float16"
             case Float        ⇒ "Float"
             case Double       ⇒ "Double"
-            case Decimal      ⇒ "Decimal"
             case NumberString ⇒ "NumberString"
 
             case String    ⇒ "String"
