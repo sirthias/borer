@@ -296,80 +296,35 @@ private[borer] final class JsonParser[Input](val input: Input)(implicit ia: Inpu
         cMask = ~(cMask | octa | 0x7f7f7f7f7f7f7f7fL) // ctrl chars become 0x80, all others 0x00
 
         // the number of leading zeros in the (shifted) or-ed masks uniquely identifies the first "special" char
-        val code = java.lang.Long.numberOfLeadingZeros(qMask | (bMask >>> 1) | (hMask >>> 2) | (cMask >>> 3))
+        val code      = java.lang.Long.numberOfLeadingZeros(qMask | (bMask >>> 1) | (hMask >>> 2) | (cMask >>> 3))
+        val charCount = code >> 3 // the number of "good" normal chars before a special char [0..8]
 
-        // convert to contiguous number range for compact table-switch and optimized jump locality
-        (((code & 3) << 3) | (7 - (code >> 3)): @switch) match {
-          case -1 ⇒ // 8 normal chars
-            parseUtf8String(ix + 8, append8(ix, charCursor, octa))
+        // write all good chars to the char buffer
+        var newCursor = charCursor
+        if (charCount > 0) {
+          newCursor += charCount
+          ensureCharsLen(newCursor)
+          CharArrayOut.instance.write(chars, charCursor, octa, charCount)
+        }
 
-          case 0 ⇒ // char #7 is '"'
-            receiver.onChars(append7(ix, charCursor, octa), chars); ix + 8
-          case 1 ⇒ // char #6 is '"'
-            receiver.onChars(append6(ix, charCursor, octa), chars); ix + 7
-          case 2 ⇒ // char #5 is '"'
-            receiver.onChars(append5(ix, charCursor, octa), chars); ix + 6
-          case 3 ⇒ // char #4 is '"'
-            receiver.onChars(append4(ix, charCursor, octa), chars); ix + 5
-          case 4 ⇒ // char #3 is '"'
-            receiver.onChars(append3(ix, charCursor, octa), chars); ix + 4
-          case 5 ⇒ // char #2 is '"'
-            receiver.onChars(append2(ix, charCursor, octa), chars); ix + 3
-          case 6 ⇒ // char #1 is '"'
-            receiver.onChars(append1(ix, charCursor, octa), chars); ix + 2
-          case 7 ⇒ // char #0 is '"'
-            receiver.onChars(charCursor, chars); ix + 1
+        // branchless for: if (charCount <= 7) code & 3 else -1
+        ((code & 3) | ((7 - charCount) >> 31): @switch) match {
 
-          case 8 ⇒ // char #7 is '\'
-            parseUtf8String(parseEscapeSeq(ix + 8, append7(ix, charCursor, octa)), aux)
-          case 9 ⇒ // char #6 is '\'
-            parseUtf8String(parseEscapeSeq(ix + 7, append6(ix, charCursor, octa)), aux)
-          case 10 ⇒ // char #5 is '\'
-            parseUtf8String(parseEscapeSeq(ix + 6, append5(ix, charCursor, octa)), aux)
-          case 11 ⇒ // char #4 is '\'
-            parseUtf8String(parseEscapeSeq(ix + 5, append4(ix, charCursor, octa)), aux)
-          case 12 ⇒ // char #3 is '\'
-            parseUtf8String(parseEscapeSeq(ix + 4, append3(ix, charCursor, octa)), aux)
-          case 13 ⇒ // char #2 is '\'
-            parseUtf8String(parseEscapeSeq(ix + 3, append2(ix, charCursor, octa)), aux)
-          case 14 ⇒ // char #1 is '\'
-            parseUtf8String(parseEscapeSeq(ix + 2, append1(ix, charCursor, octa)), aux)
-          case 15 ⇒ // char #0 is '\'
-            parseUtf8String(parseEscapeSeq(ix + 1, charCursor), aux)
+          case -1 ⇒ // we have written eight good 7-bit chars, so we can recurse immediately
+            parseUtf8String(ix + 8, newCursor)
 
-          case 16 ⇒ // char #7 is 8-bit
-            parseUtf8String(parseMultiByteUtf8Char(ix + 7, append7(ix, charCursor, octa)), aux)
-          case 17 ⇒ // char #6 is 8-bit
-            parseUtf8String(parseMultiByteUtf8Char(ix + 6, append6(ix, charCursor, octa)), aux)
-          case 18 ⇒ // char #5 is 8-bit
-            parseUtf8String(parseMultiByteUtf8Char(ix + 5, append5(ix, charCursor, octa)), aux)
-          case 19 ⇒ // char #4 is 8-bit
-            parseUtf8String(parseMultiByteUtf8Char(ix + 4, append4(ix, charCursor, octa)), aux)
-          case 20 ⇒ // char #3 is 8-bit
-            parseUtf8String(parseMultiByteUtf8Char(ix + 3, append3(ix, charCursor, octa)), aux)
-          case 21 ⇒ // char #2 is 8-bit
-            parseUtf8String(parseMultiByteUtf8Char(ix + 2, append2(ix, charCursor, octa)), aux)
-          case 22 ⇒ // char #1 is 8-bit
-            parseUtf8String(parseMultiByteUtf8Char(ix + 1, append1(ix, charCursor, octa)), aux)
-          case 23 ⇒ // char #0 is 8-bit
-            parseUtf8String(parseMultiByteUtf8Char(ix, charCursor), aux)
+          case 0 ⇒ // we have written `charCount` 7-bit chars before a '"', so we are done with this string
+            receiver.onChars(newCursor, chars)
+            ix + charCount + 1
 
-          case 24 ⇒ // char #7 is CTRL char
-            failIllegalCharacter(ix + 7, octa.toByte.toInt)
-          case 25 ⇒ // char #6 is CTRL char
-            failIllegalCharacter(ix + 6, (octa >>> 8).toByte.toInt)
-          case 26 ⇒ // char #5 is CTRL char
-            failIllegalCharacter(ix + 5, (octa >>> 16).toByte.toInt)
-          case 27 ⇒ // char #4 is CTRL char
-            failIllegalCharacter(ix + 4, (octa >>> 24).toByte.toInt)
-          case 28 ⇒ // char #3 is CTRL char
-            failIllegalCharacter(ix + 3, (octa >>> 32).toByte.toInt)
-          case 29 ⇒ // char #2 is CTRL char
-            failIllegalCharacter(ix + 2, (octa >>> 40).toByte.toInt)
-          case 30 ⇒ // char #1 is CTRL char
-            failIllegalCharacter(ix + 1, (octa >>> 48).toByte.toInt)
-          case 31 ⇒ // char #0 is CTRL char
-            failIllegalCharacter(ix, (octa >>> 56).toInt)
+          case 1 ⇒ // we have written `charCount` 7-bit chars before a '\', so handle the escape and recurse
+            parseUtf8String(parseEscapeSeq(ix + charCount + 1, newCursor), aux)
+
+          case 2 ⇒ // we have `charCount` 7-bit chars before an 8-bit, so utf8-decode and recurce
+            parseUtf8String(parseMultiByteUtf8Char(ix + charCount, newCursor), aux)
+
+          case 3 ⇒ // we have `charCount` good chars before a CTRL char, so fail
+            failIllegalCharacter(ix + charCount, (octa >>> ((7 - charCount) << 3)).toByte.toInt)
         }
       } else parseUtf8StringSlow(ix, charCursor)
 
@@ -415,9 +370,6 @@ private[borer] final class JsonParser[Input](val input: Input)(implicit ia: Inpu
     } else failStringTooLong(ix)
   }
 
-  private def append1(ix: Long, charCursor: Int, octa: Long): Int =
-    appendChar(ix, charCursor, (octa >>> 56).toChar)
-
   private def append2(ix: Long, charCursor: Int, octa: Long): Int = {
     val newCursor = charCursor + 2
     if (newCursor > 0) {
@@ -432,51 +384,6 @@ private[borer] final class JsonParser[Input](val input: Input)(implicit ia: Inpu
     if (newCursor > 0) {
       ensureCharsLen(newCursor)
       CharArrayOut.instance.write3(chars, charCursor, octa)
-      newCursor
-    } else failStringTooLong(ix)
-  }
-
-  private def append4(ix: Long, charCursor: Int, octa: Long): Int = {
-    val newCursor = charCursor + 4
-    if (newCursor > 0) {
-      ensureCharsLen(newCursor)
-      CharArrayOut.instance.write4(chars, charCursor, octa)
-      newCursor
-    } else failStringTooLong(ix)
-  }
-
-  private def append5(ix: Long, charCursor: Int, octa: Long): Int = {
-    val newCursor = charCursor + 5
-    if (newCursor > 0) {
-      ensureCharsLen(newCursor)
-      CharArrayOut.instance.write5(chars, charCursor, octa)
-      newCursor
-    } else failStringTooLong(ix)
-  }
-
-  private def append6(ix: Long, charCursor: Int, octa: Long): Int = {
-    val newCursor = charCursor + 6
-    if (newCursor > 0) {
-      ensureCharsLen(newCursor)
-      CharArrayOut.instance.write6(chars, charCursor, octa)
-      newCursor
-    } else failStringTooLong(ix)
-  }
-
-  private def append7(ix: Long, charCursor: Int, octa: Long): Int = {
-    val newCursor = charCursor + 7
-    if (newCursor > 0) {
-      ensureCharsLen(newCursor)
-      CharArrayOut.instance.write7(chars, charCursor, octa)
-      newCursor
-    } else failStringTooLong(ix)
-  }
-
-  private def append8(ix: Long, charCursor: Int, octa: Long): Int = {
-    val newCursor = charCursor + 8
-    if (newCursor > 0) {
-      ensureCharsLen(newCursor)
-      CharArrayOut.instance.write8(chars, charCursor, octa)
       newCursor
     } else failStringTooLong(ix)
   }

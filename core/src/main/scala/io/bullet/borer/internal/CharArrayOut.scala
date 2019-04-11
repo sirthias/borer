@@ -26,6 +26,19 @@ private[borer] abstract class CharArrayOut {
   def write7(buf: Array[Char], index: Int, octa: Long): Unit
 
   def write8(buf: Array[Char], index: Int, octa: Long): Unit
+
+  final def write(buf: Array[Char], index: Int, octa: Long, count: Int): Unit =
+    count match {
+      case 0 ⇒ // nothing to do
+      case 1 ⇒ writeChar(buf, index, (octa >>> 56).toChar)
+      case 2 ⇒ write2(buf, index, octa)
+      case 3 ⇒ write3(buf, index, octa)
+      case 4 ⇒ write4(buf, index, octa)
+      case 5 ⇒ write5(buf, index, octa)
+      case 6 ⇒ write6(buf, index, octa)
+      case 7 ⇒ write7(buf, index, octa)
+      case 8 ⇒ write8(buf, index, octa)
+    }
 }
 
 object CharArrayOut {
