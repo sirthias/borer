@@ -15,7 +15,7 @@ import io.bullet.borer.internal.{Macros, Util}
 
 import scala.annotation.tailrec
 import scala.collection.generic.CanBuildFrom
-import scala.collection.immutable.{ListMap, TreeMap}
+import scala.collection.immutable.{HashMap, ListMap, TreeMap}
 import scala.collection.mutable
 import scala.reflect.ClassTag
 
@@ -188,6 +188,9 @@ object Decoder extends LowPrioDecoders {
 
   implicit def forListMap[A: Decoder, B: Decoder]: Decoder[ListMap[A, B]] =
     constructForMap[A, B, ListMap[A, B]](ListMap.empty)
+
+  implicit def forHashMap[A: Decoder, B: Decoder]: Decoder[HashMap[A, B]] =
+    constructForMap[A, B, HashMap[A, B]](HashMap.empty)
 
   implicit def forEither[A: Decoder, B: Decoder]: Decoder[Either[A, B]] =
     Decoder { r ⇒
