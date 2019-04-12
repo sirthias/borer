@@ -1,16 +1,16 @@
 BORER
 =====
 
-A [CBOR] (de)serialization implementation in [Scala] sporting these features:
+A [CBOR] and [JSON] (de)serialization implementation in [Scala] sporting these features:
 
 - complete (supports all [CBOR] features, incl. "over long" integers, 16-bit half-precision floats, `BigInteger` and
   `BigDecimal`, custom tags and "simple values")
 - lightweight (`core` module has zero dependencies)
-- fast (allocation-free in the core code paths, no DOM, pull-parser style)
+- fast (can be allocation-free in the core code paths, no DOM, pull-parser style)
 - easy integration (type class-based design)
 - efficiently supports custom "byte string" abstractions (like `akka.util.ByteString` or `scodec.bits.ByteVector`)
 
-_BORER_ also supports high-performance de- and encoding from and to [JSON] through the same API.
+Apart from [CBOR] _BORER_ also supports high-performance de- and encoding from and to [JSON] through the same API.
 One example where this is useful is providing "bilingual" REST APIs that can consume and produce both [CBOR] and [JSON].
 _BORER_ makes this very easy.  
 
@@ -83,7 +83,8 @@ import io.bullet.borer.Cbor
 
 val value = List("foo", "bar", "baz") // example value
 
-val bytes: Array[Byte] = Cbor.encode(value).toByteArray // throws on error
+val bytes: Array[Byte] =
+  Cbor.encode(value).toByteArray // throws on error
 ```
 
 Decoding a plain `Array[Byte]` back to a certain type:
@@ -91,19 +92,22 @@ Decoding a plain `Array[Byte]` back to a certain type:
 ```scala
 import io.bullet.borer.Cbor
 
-val list: List[String] = Cbor.decode(bytes).to[List[String]].value // throws on error
+val list: List[String] =
+  Cbor.decode(bytes).to[List[String]].value // throws on error
 ```
 
 If you don't want _BORER_ to throw exceptions you can use the following variants to give you a `Try` instead:
 
 ```scala
-val encoded: Try[Array[Byte]] = Cbor.encode(value).toByteArrayTry
+val encoded: Try[Array[Byte]] =
+  Cbor.encode(value).toByteArrayTry
 ```
 
 and
 
 ```scala
-val decoded: Try[List[String]] = Cbor.decode(bytes).to[List[String]].valueTry
+val decoded: Try[List[String]] =
+  Cbor.decode(bytes).to[List[String]].valueTry
 ```
 
 Or, if you prefer encoding/decoding to an `Either` instance:
@@ -111,7 +115,8 @@ Or, if you prefer encoding/decoding to an `Either` instance:
 ```scala
 import io.bullet.borer.{Cbor, Output}
 
-val encoded: Either[Cbor.Error[Output], Output] = Cbor.encode(value)
+val encoded: Either[Cbor.Error[Output], Output] =
+  Cbor.encode(value).bytesEither
 ```
 
 and
@@ -119,10 +124,11 @@ and
 ```scala
 import io.bullet.borer.{Cbor, Input}
 
-val decoded: Either[Cbor.Error[Input], (List[String], Input)] = Cbor.decode(bytes).to[List[String]]
+val decoded: Either[Cbor.Error[Input], (List[String], Input)] =
+  Cbor.decode(bytes).to[List[String]].valueEither
 ```
 
-Check the sources of the central _BORER_ API entry point [here][Cbor Source] for more info.
+Check the sources of the central _BORER_ API entry point [here][Borer Source] for more info.
  
 
 
@@ -347,8 +353,7 @@ The `io.bullet.borer.Json` object supports the same API as the `io.bullet.borer.
 
 From _BORER_'s point of view [JSON] is simply a slightly different binary format that only supports a subset of the
 models data primitives. Like with [CBOR] _BORER_ encodes and decodes [JSON] in a *single pass*, UTF-8 encoding and
-decoding to and from raw bytes on the fly, which should make it one of the fastest [JSON] implementations on the JVM
-for directly producing and consuming raw bytes (benchmarks pending).
+decoding to and from raw bytes on the fly.
 
 All higher-level infrastructure (i.e. `Writer`, `Reader`, `Encoder`, `Decoder`, `Codec`, etc.) is essentially agnostic
 to the (de)serialization target format. However, the `Writer` and `Reader` types do have a `target` member, which
@@ -369,7 +374,21 @@ def writeEmptyArray(w: Writer): w.type =
 
 However, as long as you don't use the `Reader` and `Writer` APIs to directly write low-level data primitives (like
 Arrays and Maps), but simply construct your (de)serialization logic from the _BORER_'s built-in Encoders and Decoders,
-your application should be able to support both [CBOR] and [JSON] at the same time without any special casing.      
+your application should be able to support both [CBOR] and [JSON] at the same time without any special casing.
+
+
+## When (not) to use _BORER_ for JSON
+
+Since _BORER_ treats JSON as a binary format and reads/writes from/to raw bytes it isn't optimized for reading from
+`String` input. (Strings have to first be UTF-8 encoded in order to be readable by _BORER_.)
+So, if you need to frequently consume `String` input other [JSON] libraries will likely perform better.
+Also, if you need to manipulate the JSON structures in any way between (de)serializing from/to the wire and from/to
+your data model then _BORER_ will not help you and a DOM/AST-based JSON solution (like [Circe]) will likely be the
+better choice.
+
+However, if all you need is an efficient way to convert raw network- or disk-bytes holding UTF-8 encoded JSON to and
+from your data model types, with no (or few) dependencies and maybe even with the option to target [CBOR] with no
+additional work required from your side, then _BORER_ should be a good choice.      
 
 
 Document Object Model (DOM)
@@ -385,11 +404,11 @@ which you can use like this:
 
 ```scala
 import io.bullet.borer.Cbor
-import io.bullet.borer.Dom.Element
+import io.bullet.borer.Dom._
 
-val dom = Element.Map(
-  "foo" -> Element.Array(Element.Value.Int(42), Element.Value.String("rocks")),
-  "bar" -> Element.Value.Double(26.8)
+val dom = MapElem(
+  "foo" -> ArrayElem(IntElem(42), StringElem("rocks")),
+  "bar" -> DoubleElem(26.8)
 )  
 
 val encoded = Cbor.encode(dom).toByteArray
@@ -410,7 +429,7 @@ with the `.withPrintLogging()` modifier.
 For example, this snippet:
 
 ```scala
-import io.bullet.borer.Cbot
+import io.bullet.borer.Cbor
 
 val value =
   Map(
@@ -424,6 +443,7 @@ val decoded =
     .decode(encoded)
     .withPrintLogging() // just insert this line to enable logging
     .to[Map[String, Either[Int, List[String]]]]
+    .value
 ``` 
 
 produces this logging output to the console:
@@ -585,10 +605,11 @@ Contributions are always welcome!
   [Magnolia]: https://propensive.com/opensource/magnolia
   [scodec]: http://scodec.org/
   [MPL 2.0]: https://www.mozilla.org/en-US/MPL/2.0/
-  [Cbor Source]: https://github.com/sirthias/borer/blob/master/core/src/main/scala/io/bullet/borerCbor.scala
+  [Cbor Source]: https://github.com/sirthias/borer/blob/master/core/src/main/scala/io/bullet/borer/Borer.scala
   [Writer Source]: https://github.com/sirthias/borer/blob/master/core/src/main/scala/io/bullet/borer/Writer.scala
   [Reader Source]: https://github.com/sirthias/borer/blob/master/core/src/main/scala/io/bullet/borer/Reader.scala
   [Dom Source]: https://github.com/sirthias/borer/blob/master/core/src/main/scala/io/bullet/borer/Dom.scala
   [TypeId Source]: https://github.com/sirthias/borer/blob/master/derivation/src/main/scala/io/bullet/borer/derivation/TypeId.scala
   [79]: https://github.com/propensive/magnolia/issues/79
   [114]: https://github.com/propensive/magnolia/issues/114
+  [Circe]: https://circe.github.io/circe/
