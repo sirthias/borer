@@ -56,7 +56,6 @@ private[borer] final class JsonParser[Input](val input: Input)(implicit ia: Inpu
   private[this] val inputLen           = ia.length(input)
   private[this] var chars: Array[Char] = new Array[Char](32)
   private[this] var aux: Int           = _
-  private[this] var tokenMask: Int     = MASK_VALUE_START
 
   /**
     * Reads the next data item from the input and sends it to the given [[Receiver]].
@@ -124,7 +123,7 @@ private[borer] final class JsonParser[Input](val input: Input)(implicit ia: Inpu
       if (ix < inputLen) {
         val c = getInputByteUnsafe(ix) & 0xFFL
         (toToken(c): @switch) match {
-          case DIGIT ⇒
+          case DIGIT0 | DIGIT19 ⇒
             val newScale = scale + 1
             // check whether we can safely multiply by 10 and add 9 and still have significand fit wholy into a Double
             if (significand < ((1L << 52) / 10 - 1) && newScale < double10pow.length) {
@@ -151,9 +150,9 @@ private[borer] final class JsonParser[Input](val input: Input)(implicit ia: Inpu
           val i     = ix + 1
           val mul10 = (value << 3) + (value << 1)
           (toToken(c): @switch) match {
-            case DIGIT ⇒
+            case DIGIT0 | DIGIT19 ⇒
               if (value == Long.MaxValue / 10 && (c == '8' || c == '9')) { // special case: Long.MinValue
-                if (c == '8' && negative && (i >= inputLen || toToken(getInputByteUnsafe(i) & 0xFFL) < DIGIT)) {
+                if (c == '8' && negative && (i >= inputLen || toToken(getInputByteUnsafe(i) & 0xFFL) < DIGIT0)) {
                   receiver.onLong(Long.MinValue)
                   i
                 } else breakOutToNumberString(c.toChar)
@@ -176,10 +175,10 @@ private[borer] final class JsonParser[Input](val input: Input)(implicit ia: Inpu
       if (ix < inputLen) {
         val c = getInputByteUnsafe(ix) & 0xFFL
         (toToken(c): @switch) match {
-          case DOT      ⇒ parseDecimalNumber(ix + 1, 0, 0, append(0x2d302e, 0x302e), negative = false)
-          case LETTER_E ⇒ parseNumberString(ix + 1, append(0x2d3065, 0x3065))
-          case DIGIT    ⇒ failInvalidJsonSyntax(ix)
-          case _        ⇒ result()
+          case DOT              ⇒ parseDecimalNumber(ix + 1, 0, 0, append(0x2d302e, 0x302e), negative = false)
+          case LETTER_E         ⇒ parseNumberString(ix + 1, append(0x2d3065, 0x3065))
+          case DIGIT0 | DIGIT19 ⇒ failInvalidJsonSyntax(ix)
+          case _                ⇒ result()
         }
       } else result()
     }
@@ -271,8 +270,8 @@ private[borer] final class JsonParser[Input](val input: Input)(implicit ia: Inpu
       }
     }
 
-    @tailrec def parseUtf8String(ix: Long, charCursor: Int): Long =
-      if (ix < inputLen - 8) {
+    @tailrec def parseUtf8String(ix: Long, charCursor: Int, endIx: Long): Long =
+      if (ix < endIx) {
         // fetch 8 bytes (chars) at the same time with the first becoming the (left-most) MSB of the `octa` long
         val octa = ia.octaByteBigEndian(input, ix)
 
@@ -311,17 +310,17 @@ private[borer] final class JsonParser[Input](val input: Input)(implicit ia: Inpu
         ((code & 3) | ((7 - charCount) >> 31): @switch) match {
 
           case -1 ⇒ // we have written eight good 7-bit chars, so we can recurse immediately
-            parseUtf8String(ix + 8, newCursor)
+            parseUtf8String(ix + 8, newCursor, endIx)
 
           case 0 ⇒ // we have written `charCount` 7-bit chars before a '"', so we are done with this string
             receiver.onChars(newCursor, chars)
             ix + charCount + 1
 
           case 1 ⇒ // we have written `charCount` 7-bit chars before a '\', so handle the escape and recurse
-            parseUtf8String(parseEscapeSeq(ix + charCount + 1, newCursor), aux)
+            parseUtf8String(parseEscapeSeq(ix + charCount + 1, newCursor), aux, endIx)
 
           case 2 ⇒ // we have `charCount` 7-bit chars before an 8-bit, so utf8-decode and recurce
-            parseUtf8String(parseMultiByteUtf8Char(ix + charCount, newCursor), aux)
+            parseUtf8String(parseMultiByteUtf8Char(ix + charCount, newCursor), aux, endIx)
 
           case 3 ⇒ // we have `charCount` good chars before a CTRL char, so fail
             failIllegalCharacter(ix + charCount, (octa >>> ((7 - charCount) << 3)).toByte.toInt)
@@ -329,25 +328,21 @@ private[borer] final class JsonParser[Input](val input: Input)(implicit ia: Inpu
       } else parseUtf8StringSlow(ix, charCursor)
 
     if (index < inputLen) {
-      val ix    = index + 1
-      val c     = getInputByteUnsafe(index) & 0xFFL
-      val token = toToken(c).toInt
-      (((tokenMask << token) >> 31) & token: @switch) match {
-        case WHITESPACE    ⇒ pull(ix, receiver)
-        case COMMA | COLON ⇒ tokenMask = MASK_VALUE_START; pull(ix, receiver)
-        case DQUOTE        ⇒ tokenMask = MASK_COMMA_COLON_OR_BREAK; parseUtf8String(ix, 0)
-        case MAP_START     ⇒ tokenMask = MASK_DQUOTE_BREAK; receiver.onMapStart(); ix
-        case ARRAY_START   ⇒ tokenMask = MASK_VALUE_START_OR_BREAK; receiver.onArrayStart(); ix
-        case BREAK         ⇒ tokenMask = MASK_COMMA_OR_BREAK; receiver.onBreak(); ix
-        case LOWER_N       ⇒ tokenMask = MASK_COMMA_OR_BREAK; parseNull(index)
-        case LOWER_F       ⇒ tokenMask = MASK_COMMA_OR_BREAK; parseFalse(ix)
-        case LOWER_T       ⇒ tokenMask = MASK_COMMA_OR_BREAK; parseTrue(index)
-        case MINUS         ⇒ tokenMask = MASK_COMMA_OR_BREAK; parseNegNumber(ix)
-        case DIGIT ⇒
-          tokenMask = MASK_COMMA_OR_BREAK
-          if (c == '0') parseNumber0(ix, negative = false)
-          else parseNumber(ix, c - '0', appendChar(ix, 0, c.toChar), negative = false)
-        case _ ⇒ failInvalidJsonSyntax(ix)
+      val ix = index + 1
+      val c  = getInputByteUnsafe(index) & 0xFFL
+      (toToken(c).toInt: @switch) match {
+        case WHITESPACE  ⇒ pull(ix, receiver)
+        case DQUOTE      ⇒ parseUtf8String(ix, 0, inputLen - 8)
+        case MAP_START   ⇒ receiver.onMapStart(); ix
+        case ARRAY_START ⇒ receiver.onArrayStart(); ix
+        case BREAK       ⇒ receiver.onBreak(); ix
+        case LOWER_N     ⇒ parseNull(index)
+        case LOWER_F     ⇒ parseFalse(ix)
+        case LOWER_T     ⇒ parseTrue(index)
+        case MINUS       ⇒ parseNegNumber(ix)
+        case DIGIT0      ⇒ parseNumber0(ix, negative = false)
+        case DIGIT19     ⇒ parseNumber(ix, c - '0', appendChar(ix, 0, c.toChar), negative = false)
+        case _           ⇒ failInvalidJsonSyntax(ix)
       }
     } else {
       receiver.onEndOfInput()
@@ -412,52 +407,19 @@ private[borer] final class JsonParser[Input](val input: Input)(implicit ia: Inpu
 
 private[borer] object JsonParser {
   private final val WHITESPACE  = 1
-  private final val COMMA       = 2
-  private final val COLON       = 3
-  private final val DQUOTE      = 4
-  private final val MAP_START   = 5
-  private final val ARRAY_START = 6
-  private final val BREAK       = 7
-  private final val LOWER_N     = 8
-  private final val LOWER_F     = 9
-  private final val LOWER_T     = 10
-  private final val MINUS       = 11
-  private final val DIGIT       = 12
-  private final val PLUS        = 13
-  private final val DOT         = 14
-  private final val LETTER_E    = 15
-
-  private final val MASK_MSB = 1 << 31
-  private final val MASK_VALUE_START =
-    (MASK_MSB >>> WHITESPACE) |
-      (MASK_MSB >>> DQUOTE) |
-      (MASK_MSB >>> MAP_START) |
-      (MASK_MSB >>> ARRAY_START) |
-      (MASK_MSB >>> LOWER_N) |
-      (MASK_MSB >>> LOWER_F) |
-      (MASK_MSB >>> LOWER_T) |
-      (MASK_MSB >>> MINUS) |
-      (MASK_MSB >>> DIGIT)
-
-  private final val MASK_VALUE_START_OR_BREAK =
-    MASK_VALUE_START |
-      (MASK_MSB >>> BREAK)
-
-  private final val MASK_COMMA_OR_BREAK =
-    (MASK_MSB >>> WHITESPACE) |
-      (MASK_MSB >>> COMMA) |
-      (MASK_MSB >>> BREAK)
-
-  private final val MASK_COMMA_COLON_OR_BREAK =
-    (MASK_MSB >>> WHITESPACE) |
-      (MASK_MSB >>> COMMA) |
-      (MASK_MSB >>> COLON) |
-      (MASK_MSB >>> BREAK)
-
-  private final val MASK_DQUOTE_BREAK =
-    (MASK_MSB >>> WHITESPACE) |
-      (MASK_MSB >>> DQUOTE) |
-      (MASK_MSB >>> BREAK)
+  private final val DQUOTE      = 2
+  private final val MAP_START   = 3
+  private final val ARRAY_START = 4
+  private final val BREAK       = 5
+  private final val LOWER_N     = 6
+  private final val LOWER_F     = 7
+  private final val LOWER_T     = 8
+  private final val MINUS       = 9
+  private final val DIGIT0      = 10
+  private final val DIGIT19     = 11
+  private final val PLUS        = 12
+  private final val DOT         = 13
+  private final val LETTER_E    = 14
 
   private final val TokenTable: Array[Byte] = {
     val array = new Array[Byte](256)
@@ -465,8 +427,8 @@ private[borer] object JsonParser {
     array('\t'.toInt) = WHITESPACE
     array('\n'.toInt) = WHITESPACE
     array('\r'.toInt) = WHITESPACE
-    array(','.toInt) = COMMA
-    array(':'.toInt) = COLON
+    array(','.toInt) = WHITESPACE
+    array(':'.toInt) = WHITESPACE
     array('"'.toInt) = DQUOTE
     array('{'.toInt) = MAP_START
     array('['.toInt) = ARRAY_START
@@ -476,16 +438,16 @@ private[borer] object JsonParser {
     array('f'.toInt) = LOWER_F
     array('t'.toInt) = LOWER_T
     array('-'.toInt) = MINUS
-    array('0'.toInt) = DIGIT
-    array('1'.toInt) = DIGIT
-    array('2'.toInt) = DIGIT
-    array('3'.toInt) = DIGIT
-    array('4'.toInt) = DIGIT
-    array('5'.toInt) = DIGIT
-    array('6'.toInt) = DIGIT
-    array('7'.toInt) = DIGIT
-    array('8'.toInt) = DIGIT
-    array('9'.toInt) = DIGIT
+    array('0'.toInt) = DIGIT0
+    array('1'.toInt) = DIGIT19
+    array('2'.toInt) = DIGIT19
+    array('3'.toInt) = DIGIT19
+    array('4'.toInt) = DIGIT19
+    array('5'.toInt) = DIGIT19
+    array('6'.toInt) = DIGIT19
+    array('7'.toInt) = DIGIT19
+    array('8'.toInt) = DIGIT19
+    array('9'.toInt) = DIGIT19
     array('+'.toInt) = PLUS
     array('.'.toInt) = DOT
     array('E'.toInt) = LETTER_E

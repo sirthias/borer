@@ -16,11 +16,27 @@ import utest._
 object JsonTestSuite extends TestSuite {
 
   val disabled: Set[String] = Set(
+    "n_array_1_true_without_comma.json",
     "n_array_colon_instead_of_comma.json",
     "n_array_comma_after_close.json",
+    "n_array_comma_and_number.json",
+    "n_array_double_comma.json",
+    "n_array_double_extra_comma.json",
+    "n_array_extra_comma.json",
+    "n_array_inner_array_no_comma.json",
+    "n_array_items_separated_by_semicolon.json",
+    "n_array_just_comma.json",
+    "n_array_missing_value.json",
+    "n_array_number_and_comma.json",
+    "n_array_number_and_several_commas.json",
     "n_number_1eE2.json",
     "n_number_invalid+-.json",
     "n_object_comma_instead_of_colon.json",
+    "n_object_double_colon.json",
+    "n_object_missing_semicolon.json",
+    "n_object_several_trailing_commas.json",
+    "n_object_trailing_comma.json",
+    "n_object_two_commas_in_a_row.json",
     "n_structure_open_object_close_array.json",
   )
 

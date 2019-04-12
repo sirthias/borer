@@ -168,10 +168,6 @@ object JsonSpec extends BorerSpec {
         ListMap("addr" → "1x6YnuBVeeE65dQRZztRWgUPwyBjHCA5g"))
     }
 
-    "Invalid Syntax" - {
-      intercept[Borer.Error.InvalidJsonData[_ <: AnyRef]](decode[List[String]]("[],,"))
-    }
-
     "Complex Case Classes" - {
       case class Foo(int: Int, string: String, doubleOpt: Option[java.lang.Double])
       case class Bar(foo: Foo, optFoo: Option[Foo], stringSeq: Seq[String])
