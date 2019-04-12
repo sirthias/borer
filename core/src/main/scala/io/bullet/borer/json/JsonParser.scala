@@ -279,20 +279,20 @@ private[borer] final class JsonParser[Input](val input: Input)(implicit ia: Inpu
 
         // mask '"' characters
         val quotes = octa ^ 0x2222222222222222L // bytes containing '"' become zero
-        var qMask  = (quotes & 0x7f7f7f7f7f7f7f7fL) + 0x7f7f7f7f7f7f7f7fL
-        qMask = ~(qMask | quotes | 0x7f7f7f7f7f7f7f7fL) // '"' bytes become 0x80, all others 0x00
+        var qMask  = (quotes & ALL7F) + ALL7F
+        qMask = ~(qMask | quotes | ALL7F) // '"' bytes become 0x80, all others 0x00
 
         // mask '\' characters
         val bSlashed = octa ^ 0x5c5c5c5c5c5c5c5cL // bytes containing '\' become zero
-        var bMask    = (bSlashed & 0x7f7f7f7f7f7f7f7fL) + 0x7f7f7f7f7f7f7f7fL
-        bMask = ~(bMask | bSlashed | 0x7f7f7f7f7f7f7f7fL) // '\' bytes become 0x80, all others 0x00
+        var bMask    = (bSlashed & ALL7F) + ALL7F
+        bMask = ~(bMask | bSlashed | ALL7F) // '\' bytes become 0x80, all others 0x00
 
         // mask 8-bit characters (> 127)
-        val hMask = octa & 0x8080808080808080L // // bytes containing 8-bit chars become 0x80, all others 0x00
+        val hMask = octa & ALL80 // // bytes containing 8-bit chars become 0x80, all others 0x00
 
         // mask ctrl characters (0 - 31)
-        var cMask = (octa & 0x7f7f7f7f7f7f7f7fL) + 0x6060606060606060L
-        cMask = ~(cMask | octa | 0x7f7f7f7f7f7f7f7fL) // ctrl chars become 0x80, all others 0x00
+        var cMask = (octa & ALL7F) + 0x6060606060606060L
+        cMask = ~(cMask | octa | ALL7F) // ctrl chars become 0x80, all others 0x00
 
         // the number of leading zeros in the (shifted) or-ed masks uniquely identifies the first "special" char
         val code      = java.lang.Long.numberOfLeadingZeros(qMask | (bMask >>> 1) | (hMask >>> 2) | (cMask >>> 3))
@@ -327,11 +327,33 @@ private[borer] final class JsonParser[Input](val input: Input)(implicit ia: Inpu
         }
       } else parseUtf8StringSlow(ix, charCursor)
 
+    @tailrec def skipWhiteSpaceSlow(ix: Long): Long =
+      if (ix < inputLen && toToken(getInputByteUnsafe(ix) & 0xFFL) == WHITESPACE) {
+        skipWhiteSpaceSlow(ix + 1)
+      } else ix
+
+    @tailrec def skipWhiteSpace(ix: Long, endIx: Long): Long =
+      if (ix < endIx) {
+        // fetch 8 bytes (chars) at the same time with the first becoming the (left-most) MSB of the `octa` long
+        val octa = ia.octaByteBigEndian(input, ix)
+
+        // bytes containing [0..32] or [128-160] become 0xff, all others 0x7f
+        var mask = (octa & ALL7F) + 0x5f5f5f5f5f5f5f5fL
+
+        // bytes containing [0..32] become zero, all others 0x80
+        mask = (octa | mask | ALL7F) ^ ALL7F
+
+        val wsCharCount = java.lang.Long.numberOfLeadingZeros(mask) >> 3
+        if (wsCharCount < 8) ix + wsCharCount
+        else skipWhiteSpace(ix + 8, endIx)
+      } else skipWhiteSpaceSlow(ix)
+
     if (index < inputLen) {
       val ix = index + 1
       val c  = getInputByteUnsafe(index) & 0xFFL
       (toToken(c).toInt: @switch) match {
-        case WHITESPACE  ⇒ pull(ix, receiver)
+        case WHITESPACE  ⇒ pull(skipWhiteSpace(ix, inputLen - 8), receiver)
+        case SEPARATOR   ⇒ pull(ix, receiver)
         case DQUOTE      ⇒ parseUtf8String(ix, 0, inputLen - 8)
         case MAP_START   ⇒ receiver.onMapStart(); ix
         case ARRAY_START ⇒ receiver.onArrayStart(); ix
@@ -407,19 +429,23 @@ private[borer] final class JsonParser[Input](val input: Input)(implicit ia: Inpu
 
 private[borer] object JsonParser {
   private final val WHITESPACE  = 1
-  private final val DQUOTE      = 2
-  private final val MAP_START   = 3
-  private final val ARRAY_START = 4
-  private final val BREAK       = 5
-  private final val LOWER_N     = 6
-  private final val LOWER_F     = 7
-  private final val LOWER_T     = 8
-  private final val MINUS       = 9
-  private final val DIGIT0      = 10
-  private final val DIGIT19     = 11
-  private final val PLUS        = 12
-  private final val DOT         = 13
-  private final val LETTER_E    = 14
+  private final val SEPARATOR   = 2
+  private final val DQUOTE      = 3
+  private final val MAP_START   = 4
+  private final val ARRAY_START = 5
+  private final val BREAK       = 6
+  private final val LOWER_N     = 7
+  private final val LOWER_F     = 8
+  private final val LOWER_T     = 9
+  private final val MINUS       = 10
+  private final val DIGIT0      = 11
+  private final val DIGIT19     = 12
+  private final val PLUS        = 13
+  private final val DOT         = 14
+  private final val LETTER_E    = 15
+
+  private final val ALL7F = 0x7f7f7f7f7f7f7f7fL
+  private final val ALL80 = 0x8080808080808080L
 
   private final val TokenTable: Array[Byte] = {
     val array = new Array[Byte](256)
@@ -427,8 +453,8 @@ private[borer] object JsonParser {
     array('\t'.toInt) = WHITESPACE
     array('\n'.toInt) = WHITESPACE
     array('\r'.toInt) = WHITESPACE
-    array(','.toInt) = WHITESPACE
-    array(':'.toInt) = WHITESPACE
+    array(','.toInt) = SEPARATOR
+    array(':'.toInt) = SEPARATOR
     array('"'.toInt) = DQUOTE
     array('{'.toInt) = MAP_START
     array('['.toInt) = ARRAY_START

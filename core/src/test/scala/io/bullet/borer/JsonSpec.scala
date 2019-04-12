@@ -15,6 +15,7 @@ import io.bullet.borer.internal.Util
 import utest._
 
 import scala.collection.immutable.ListMap
+import scala.util.Random
 
 object JsonSpec extends BorerSpec {
 
@@ -166,6 +167,18 @@ object JsonSpec extends BorerSpec {
       verifyDecoding(
         "{\"addr\":\"1x6YnuBVeeE65dQRZztRWgUPwyBjHCA5g\"\n}\n    ",
         ListMap("addr" → "1x6YnuBVeeE65dQRZztRWgUPwyBjHCA5g"))
+    }
+
+    "Whitespace" - {
+      val wschars    = " \t\n\r"
+      val random     = new Random()
+      val wsCharIter = Iterator.continually(wschars.charAt(random.nextInt(wschars.length)))
+      val wsStrings  = Iterator.continually(wsCharIter.take(random.nextInt(20)).mkString)
+      def ws         = wsStrings.next()
+      val list       = List(1, 2, 3)
+      (1 to 100).foreach { _ ⇒
+        verifyDecoding(s"$ws[${ws}1$ws,${ws}2$ws,${ws}3$ws]$ws", list)
+      }
     }
 
     "Complex Case Classes" - {
