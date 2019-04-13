@@ -208,6 +208,7 @@ lazy val benchmarks = project
   .dependsOn(coreJVM, derivationJVM)
   .settings(commonSettings)
   .settings(
+    publishArtifact := false,
     libraryDependencies ++= Seq(
       "com.fasterxml.jackson.module"  %% "jackson-module-scala" % "2.9.8",
       "com.lihaoyi"                   %% "upickle"              % "0.7.1",
