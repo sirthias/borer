@@ -22,7 +22,7 @@ object MapBasedCodecs {
       val params = ctx.parameters
       val len    = params.size
       Encoder { (w, value) ⇒
-        @tailrec def rec(w: Writer, ix: Int): w.type =
+        @tailrec def rec(w: Writer, ix: Int): Writer =
           if (ix < len) {
             val p = params(ix)
             w.writeString(p.label)

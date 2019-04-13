@@ -24,8 +24,8 @@ object BorerCodecs {
   }
 
   object Manual {
-    implicit val fooCodec = Codec.of[Foo](
-      encode = (w, x) ⇒ {
+    implicit val fooCodec = Codec[Foo](
+      encoder = (w, x) ⇒ {
         w.writeMapStart()
           .writeString("string")
           .writeString(x.string)
@@ -37,7 +37,7 @@ object BorerCodecs {
           .writeLong(x.long)
         x.listOfBools.foldLeft(w.writeString("listOfBools").writeArrayStart())(_ writeBool _).writeBreak().writeBreak()
       },
-      decode = { r ⇒
+      decoder = { r ⇒
         r.readMapStart()
         val foo = Foo(
           r.readString("string").readString(),

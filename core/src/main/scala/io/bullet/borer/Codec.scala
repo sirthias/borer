@@ -27,9 +27,6 @@ final case class Codec[T](encoder: Encoder[T], decoder: Decoder[T])
 
 object Codec {
 
-  def of[T](encode: (Writer, T) ⇒ Unit, decode: Reader ⇒ T): Codec[T] =
-    Codec(Encoder(encode), Decoder(decode))
-
   /**
     * Simple macro shortening `Coder(Encoder.forCaseClass[Foo], Decoder.forCaseClass[Foo])` to `Codec.forCaseClass[Foo]`
     */

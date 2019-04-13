@@ -82,7 +82,8 @@ final class Writer(receiver: Receiver, val config: Writer.Config, val target: Bo
 
   @inline def writeEndOfInput(): this.type = { receiver.onEndOfInput(); this }
 
-  @inline def write[T](value: T)(implicit encoder: Encoder[T]): this.type = encoder.write(this, value)
+  @inline def write[T](value: T)(implicit encoder: Encoder[T]): this.type =
+    encoder.write(this, value).asInstanceOf[this.type]
 
   def writeEmptyArray(): this.type = if (writingJson) writeArrayStart().writeBreak() else writeArrayHeader(0)
 
@@ -178,7 +179,7 @@ object Writer {
   /**
     * Simple encapsulation of encoding logic in a stand-alone object.
     */
-  final case class Script(encode: Writer ⇒ Unit)
+  final case class Script(encode: Writer ⇒ Writer)
 
   object Script {
     val Undefined  = Script(_.writeUndefined())

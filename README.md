@@ -206,7 +206,7 @@ implicit val encoder = Encoder.from(Color.unapply _)
 implicit val decoder = Decoder.from(Color.apply _)
 
 // alternative: provide an Encoder and Decoder at the same time
-implicit val codec = Codec.of[T](Color.unapply _, Color.apply _)
+implicit val codec = Codec[T](Color.unapply _, Color.apply _)
 
 // alternative: sugar for the above 
 implicit val enc = Encoder.forCaseClass[Color] 

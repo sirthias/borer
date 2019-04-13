@@ -175,7 +175,7 @@ object Tag {
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  implicit val codec = Codec.of[Tag](_ writeTag _, _.readTag())
+  implicit val codec = Codec[Tag](_ writeTag _, _.readTag())
 }
 
 final case class TaggedValue[T](tag: Tag, value: T)

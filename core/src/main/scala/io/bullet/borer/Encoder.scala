@@ -20,7 +20,7 @@ import scala.collection.LinearSeq
   * Type class responsible for writing an instance of type [[T]] to a [[Writer]].
   */
 trait Encoder[T] {
-  def write(w: Writer, value: T): w.type
+  def write(w: Writer, value: T): Writer
 }
 
 object Encoder extends LowPrioEncoders {
@@ -28,13 +28,7 @@ object Encoder extends LowPrioEncoders {
   /**
     * Creates an [[Encoder]] from the given function.
     */
-  def apply[T, U](f: (Writer, T) ⇒ U): Encoder[T] =
-    new Encoder[T] {
-      def write(w: Writer, value: T): w.type = {
-        f(w, value)
-        w
-      }
-    }
+  def apply[T, U](encoder: Encoder[T]): Encoder[T] = encoder
 
   /**
     * Allows for concise [[Encoder]] definition for case classes, without any macro magic.

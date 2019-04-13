@@ -23,7 +23,7 @@ object ArrayBasedCodecs {
       val params = ctx.parameters
       val len    = params.size
       Encoder { (w, value) ⇒
-        @tailrec def rec(w: Writer, ix: Int): w.type =
+        @tailrec def rec(w: Writer, ix: Int): Writer =
           if (ix < len) {
             val p = params(ix)
             rec(p.typeclass.write(w, p.dereference(value)), ix + 1)
@@ -42,7 +42,7 @@ object ArrayBasedCodecs {
       val len      = subtypes.size
       val typeIds  = getTypeIds(ctx.typeName.full, subtypes)
       Encoder { (w, value) ⇒
-        @tailrec def rec(ix: Int): Unit =
+        @tailrec def rec(ix: Int): Writer =
           if (ix < len) {
             val sub = subtypes(ix)
             if (sub.cast isDefinedAt value) {

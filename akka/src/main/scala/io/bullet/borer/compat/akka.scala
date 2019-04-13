@@ -50,7 +50,7 @@ object akka {
   /**
     * Encoding and Decoding for [[ByteString]].
     */
-  implicit val ByteStringCodec = Codec.of[ByteString](_ writeBytes _, _.readBytes())
+  implicit val ByteStringCodec = Codec[ByteString](_ writeBytes _, _.readBytes())
 
   /**
     * [[InputAccess]] for [[ByteString]].
