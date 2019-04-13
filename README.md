@@ -379,8 +379,8 @@ your application should be able to support both [CBOR] and [JSON] at the same ti
 
 ## When (not) to use _BORER_ for JSON
 
-Since _BORER_ treats JSON as a binary format and reads/writes from/to raw bytes it isn't optimized for reading from
-`String` input. (Strings have to first be UTF-8 encoded in order to be readable by _BORER_.)
+Since _BORER_ treats JSON as a binary format and reads/writes from/to raw bytes it isn't optimized for consuming or
+producing Strings. (Strings have to first be UTF-8 encoded in order to be readable by _BORER_.)
 So, if you need to frequently consume `String` input other [JSON] libraries will likely perform better.
 Also, if you need to manipulate the JSON structures in any way between (de)serializing from/to the wire and from/to
 your data model then _BORER_ will not help you and a DOM/AST-based JSON solution (like [Circe]) will likely be the
@@ -449,7 +449,6 @@ val decoded =
 produces this logging output to the console:
 
 ```
-RESET
 1: {
     1/2: "foo"
     1/2: -> {

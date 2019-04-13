@@ -1,7 +1,21 @@
+Version 0.8.0 (2019-04-13)
+--------------------------
+
+- added JSON support
+- simplified package structure (`io.bullet.borer.core.Cbor` is now `io.bullet.borer.Cbor`)
+- added @inline annotations to selected methods likely relevant for JS perf
+- flexibilized derived codecs to always accept indefinite-length as well
+- added comparative performance benchmarks (JSON only so far)
+- introduced "NumberString" abstraction for cleaner & faster JSON decoding
+- added missing pre-defined decoder for `HashMap[T]`
+- extended pre-defined `Array` codec to also support primitives (issue #2)
+- many other larger and smaller improvements across the whole library
+
+
 Version 0.7.0 (2019-03-08)
 --------------------------
 
-borer-code:
+borer-core:
 - simplify API by removing explicit `Bytes` type parameter from all abstractions
 - allow for mixed `ByteAccess` in a single encoding / decoding run
 - various smaller improvements
