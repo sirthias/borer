@@ -158,28 +158,28 @@ object Decoder extends LowPrioDecoders {
       } else r.unexpectedDataItem(expected = "Array for deserializing an Iterable instance")
     }
 
-  implicit def forArray[T <: AnyRef: Decoder]: Decoder[Array[T]] =
+  implicit def forArray[T: ClassTag: Decoder]: Decoder[Array[T]] =
     Decoder { r ⇒
       if (r.hasArrayHeader) {
         val size = r.readArrayHeader()
         if (size > 0) {
           if (size <= Int.MaxValue) {
             val intSize = size.toInt
-            val array   = new Array[AnyRef](intSize).asInstanceOf[Array[T]]
+            val array   = Array.ofDim[T](intSize)
 
             @tailrec def rec(ix: Int): Array[T] =
               if (ix < intSize) {
-                array(ix) = r[T]; rec(ix + 1)
+                array(ix) = r.read[T]()
+                rec(ix + 1)
               } else array
 
-            rec(intSize)
+            rec(0)
           } else r.overflow(s"Cannot deserialize Array with size $size (> Int.MaxValue)")
-        } else Array.emptyObjectArray.asInstanceOf[Array[T]]
+        } else Util.emptyArray[T]
       } else if (r.tryReadArrayStart()) {
         if (!r.tryReadBreak()) {
-          val classTag = ClassTag.AnyRef.asInstanceOf[ClassTag[T]]
-          r.readUntilBreak[mutable.ArrayBuffer, T]().toArray[T](classTag)
-        } else Array.emptyObjectArray.asInstanceOf[Array[T]]
+          r.readUntilBreak(mutable.ArrayBuilder.make[T]())(_ += r.read[T]()).result()
+        } else Util.emptyArray[T]
       } else r.unexpectedDataItem(expected = "Array")
     }
 

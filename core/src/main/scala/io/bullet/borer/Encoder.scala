@@ -141,7 +141,7 @@ object Encoder extends LowPrioEncoders {
   implicit def forLinearSeq[T: Encoder, M[X] <: LinearSeq[X]]: Encoder[M[T]]          = Encoder(_ writeLinearSeq _)
   implicit def forMap[A: Encoder, B: Encoder, M[X, Y] <: Map[X, Y]]: Encoder[M[A, B]] = Encoder(_ writeMap _)
 
-  implicit def forArray[T <: AnyRef: Encoder]: Encoder[Array[T]] =
+  implicit def forArray[T: Encoder]: Encoder[Array[T]] =
     Encoder { (w, x) ⇒
       @tailrec def rec(w: Writer, ix: Int): w.type = if (ix < x.length) rec(w.write(x(ix)), ix + 1) else w
       if (w.writingJson) rec(w.writeArrayStart(), 0).writeBreak()

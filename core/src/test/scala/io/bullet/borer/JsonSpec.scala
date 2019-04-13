@@ -148,7 +148,7 @@ object JsonSpec extends BorerSpec {
     "Arrays" - {
       intercept[Borer.Error.InvalidJsonData[_ <: AnyRef]](encode(Writer.Script(_.writeArrayHeader(0))))
       roundTrip("[]", List.empty[String])
-      roundTrip("[1,2,3]", List(1, 2, 3))
+      roundTrip("[1,2,3]", Array(1, 2, 3))
 
       roundTrip("[1,[2,3],[4,5]]", (1, Vector(2, 3), List(4, 5)))
       roundTrip("[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]", 1 to 25: Iterable[Int])

@@ -106,6 +106,10 @@ object MiscSpec extends BorerSpec {
       }
     }
 
+    "Int Array" - {
+      roundTrip("8301182a190159", Array(1, 42, 345))
+    }
+
     "Illegal Map Termination Error" - {
       intercept[Borer.Error.UnexpectedEndOfInput[_]](
         encode(Writer.Script(_.writeMapHeader(2).writeInt(1).writeInt(2).writeInt(3)))

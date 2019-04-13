@@ -9,6 +9,7 @@
 package io.bullet.borer.internal
 
 import scala.annotation.tailrec
+import scala.reflect.ClassTag
 
 object Util {
 
@@ -41,6 +42,19 @@ object Util {
   @inline def isInt(x: Long): Boolean              = (x >> 31) == (x >> 63)
   @inline def isUnsignedInt(uLong: Long): Boolean  = uLong >> 31 == 0
   @inline def isUnsignedLong(uLong: Long): Boolean = uLong >= 0
+
+  def emptyArray[T](implicit ct: ClassTag[T]): Array[T] =
+    (ct.runtimeClass match {
+      case java.lang.Byte.TYPE      ⇒ Array.emptyByteArray
+      case java.lang.Short.TYPE     ⇒ Array.emptyShortArray
+      case java.lang.Character.TYPE ⇒ Array.emptyCharArray
+      case java.lang.Integer.TYPE   ⇒ Array.emptyIntArray
+      case java.lang.Long.TYPE      ⇒ Array.emptyLongArray
+      case java.lang.Float.TYPE     ⇒ Array.emptyFloatArray
+      case java.lang.Double.TYPE    ⇒ Array.emptyDoubleArray
+      case java.lang.Boolean.TYPE   ⇒ Array.emptyBooleanArray
+      case _                        ⇒ Array.emptyObjectArray
+    }).asInstanceOf[Array[T]]
 
   def toBigEndianBytes(uLong: Long): Array[Byte] = {
     val bytes = new Array[Byte](8)
