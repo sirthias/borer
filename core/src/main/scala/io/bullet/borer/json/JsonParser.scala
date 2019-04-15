@@ -11,7 +11,7 @@ package io.bullet.borer.json
 import java.util
 
 import io.bullet.borer.{Borer, _}
-import io.bullet.borer.internal.{CharArrayOut, Util}
+import io.bullet.borer.internal.Util
 
 import scala.annotation.{switch, tailrec}
 
@@ -24,19 +24,16 @@ import scala.annotation.{switch, tailrec}
   * - Boolean
   * - Int
   * - Long
-  * - PosOverLong
-  * - NegOverLong
-  * - Float
-  * - Double
+  * - Float (if a decimal number can be (easily) represented as a float)
+  * - Double (if a decimal number can be (easily) represented as a double)
+  * - NumberString (if a decimal number cannot easily be represented as a float or double)
   * - String
   * - Indefinite-Length Array
   * - Indefinite-Length Map
   *
-  * Depending on the `nonLongNumberHandling` parameter, JSON numbers that cannot be represented as an [[Int]] or
-  * [[Long]] are either produced as [[Double]] or [[String]] values.
-  *
   * These data items are never produced:
   * - undefined
+  * - Overlong
   * - Float16
   * - Byte String
   * - Byte String Stream
@@ -260,60 +257,81 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
     @tailrec def parseUtf8String(ix: Long, charCursor: Int, endIx: Long = inputLen - 8): Long =
       if (ix < endIx) {
         // fetch 8 bytes (chars) at the same time with the first becoming the (left-most) MSB of the `octa` long
-        val octa = ia.octaByteBigEndian(input, ix)
+        val octa     = ia.octaByteBigEndian(input, ix)
+        val octa7bit = octa & ALL7F
 
-        // the following bit-level logic is heavily inspired by hackers delight 6-1 ("Find First 0-Byte")
+        // mask '"' characters: only '"' becomes 0x80, all others become < 0x80
+        val qMask = (octa7bit ^ 0x5d5d5d5d5d5d5d5dL) + 0x0101010101010101L
 
-        // mask '"' characters
-        val quotes = octa ^ 0x2222222222222222L // bytes containing '"' become zero
-        var qMask  = (quotes & ALL7F) + ALL7F
-        qMask = ~(qMask | quotes | ALL7F) // '"' bytes become 0x80, all others 0x00
+        // mask '\' characters: only '\' becomes 0x80, all others become < 0x80
+        val bMask = (octa7bit ^ 0x2323232323232323L) + 0x0101010101010101L
 
-        // mask '\' characters
-        val bSlashed = octa ^ 0x5c5c5c5c5c5c5c5cL // bytes containing '\' become zero
-        var bMask    = (bSlashed & ALL7F) + ALL7F
-        bMask = ~(bMask | bSlashed | ALL7F) // '\' bytes become 0x80, all others 0x00
+        // mask ctrl characters (0 - 31): of all 7-bit chars only ctrl chars get their high-bit set
+        var mask = (octa | 0x1f1f1f1f1f1f1f1fL) - 0x2020202020202020L
 
-        // mask 8-bit characters (> 127)
-        val hMask = octa & ALL80 // // bytes containing 8-bit chars become 0x80, all others 0x00
+        // the special chars '"', '\', 8-bit (> 127) and ctrl chars become 0x80, all normal chars zero
+        mask = (octa | qMask | bMask | mask) & ALL80
 
-        // mask ctrl characters (0 - 31)
-        var cMask = (octa & ALL7F) + 0x6060606060606060L
-        cMask = ~(cMask | octa | ALL7F) // ctrl chars become 0x80, all others 0x00
+        val nlz       = java.lang.Long.numberOfLeadingZeros(mask)
+        val charCount = nlz >> 3 // the number of "good" normal chars before a special char [0..8]
 
-        // the number of leading zeros in the (shifted) or-ed masks uniquely identifies the first "special" char
-        val code      = java.lang.Long.numberOfLeadingZeros(qMask | (bMask >>> 1) | (hMask >>> 2) | (cMask >>> 3))
-        val charCount = code >> 3 // the number of "good" normal chars before a special char [0..8]
-
-        // write all good chars to the char buffer
-        var newCursor = charCursor
-        if (charCount > 0) {
-          newCursor += charCount
-          if (newCursor < config.maxStringLength) {
-            ensureCharsLen(newCursor)
-            CharArrayOut.instance.write(chars, charCursor, octa, charCount)
-          } else failStringTooLong(ix - charCursor.toLong + config.maxStringLength.toLong)
+        val newCursor = charCursor + charCount
+        if (charCount > 0) { // write all good chars to the char buffer
+          if (newCursor > maxStringLength) failStringTooLong(ix - charCursor.toLong + maxStringLength.toLong)
+          ensureCharsLen(newCursor)
+          chars(charCursor) = (octa >>> 56).toChar
+          charCount match {
+            case 1 ⇒ // no more characters to write
+            case 2 ⇒
+              chars(charCursor + 1) = ((octa << 8) >>> 56).toChar
+            case 3 ⇒
+              chars(charCursor + 1) = ((octa << 8) >>> 56).toChar
+              chars(charCursor + 2) = ((octa << 16) >>> 56).toChar
+            case 4 ⇒
+              chars(charCursor + 1) = ((octa << 8) >>> 56).toChar
+              chars(charCursor + 2) = ((octa << 16) >>> 56).toChar
+              chars(charCursor + 3) = ((octa << 24) >>> 56).toChar
+            case 5 ⇒
+              chars(charCursor + 1) = ((octa << 8) >>> 56).toChar
+              chars(charCursor + 2) = ((octa << 16) >>> 56).toChar
+              chars(charCursor + 3) = ((octa << 24) >>> 56).toChar
+              chars(charCursor + 4) = ((octa << 32) >>> 56).toChar
+            case 6 ⇒
+              chars(charCursor + 1) = ((octa << 8) >>> 56).toChar
+              chars(charCursor + 2) = ((octa << 16) >>> 56).toChar
+              chars(charCursor + 3) = ((octa << 24) >>> 56).toChar
+              chars(charCursor + 4) = ((octa << 32) >>> 56).toChar
+              chars(charCursor + 5) = ((octa << 40) >>> 56).toChar
+            case 7 ⇒
+              chars(charCursor + 1) = ((octa << 8) >>> 56).toChar
+              chars(charCursor + 2) = ((octa << 16) >>> 56).toChar
+              chars(charCursor + 3) = ((octa << 24) >>> 56).toChar
+              chars(charCursor + 4) = ((octa << 32) >>> 56).toChar
+              chars(charCursor + 5) = ((octa << 40) >>> 56).toChar
+              chars(charCursor + 6) = ((octa << 48) >>> 56).toChar
+            case 8 ⇒
+              chars(charCursor + 1) = ((octa << 8) >>> 56).toChar
+              chars(charCursor + 2) = ((octa << 16) >>> 56).toChar
+              chars(charCursor + 3) = ((octa << 24) >>> 56).toChar
+              chars(charCursor + 4) = ((octa << 32) >>> 56).toChar
+              chars(charCursor + 5) = ((octa << 40) >>> 56).toChar
+              chars(charCursor + 6) = ((octa << 48) >>> 56).toChar
+              chars(charCursor + 7) = (octa & 0xFFL).toChar
+          }
         }
-
-        // branchless for: if (charCount <= 7) code & 3 else -1
-        ((code & 3) | ((7 - charCount) >> 31): @switch) match {
-
-          case -1 ⇒ // we have written eight good 7-bit chars, so we can recurse immediately
-            parseUtf8String(ix + 8, newCursor, endIx)
-
-          case 0 ⇒ // we have written `charCount` 7-bit chars before a '"', so we are done with this string
+        if (charCount < 8) {
+          val byteMask = 0x8000000000000000L >>> nlz
+          if ((qMask & byteMask) != 0) { // first special char is '"'
             receiver.onChars(newCursor, chars)
             ix + charCount + 1
-
-          case 1 ⇒ // we have written `charCount` 7-bit chars before a '\', so handle the escape and recurse
+          } else if ((bMask & byteMask) != 0) { // first special char is '\'
             parseUtf8String(parseEscapeSeq(ix + charCount + 1, newCursor), aux, endIx)
-
-          case 2 ⇒ // we have `charCount` 7-bit chars before an 8-bit, so utf8-decode and recurce
+          } else if ((octa & byteMask) != 0) { // first special char is 8-bit
             parseUtf8String(parseMultiByteUtf8Char(ix + charCount, newCursor), aux, endIx)
-
-          case 3 ⇒ // we have `charCount` good chars before a CTRL char, so fail
-            failSyntaxError(ix + charCount, "JSON string character", (octa >>> ((7 - charCount) << 3)) & 0xFFL)
-        }
+          } else { // first special char is a ctrl char
+            failSyntaxError(ix, "JSON string character", (octa << nlz) >>> 56)
+          }
+        } else parseUtf8String(ix + 8, newCursor, endIx) // we have written 8 normal chars, so recurse immediately
       } else parseUtf8StringSlow(ix, charCursor)
 
     def pushArray(ix: Long): Long =
@@ -369,7 +387,7 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
       if (c == ',') {
         var c  = getInputByteOrEOI(nextIx) & 0xFFL
         var ix = nextIx + 1
-        if (isWhiteSpace(c)) {
+        if (c <= ' ') {
           ix = skipWhiteSpace(ix)
           c = aux.toLong
         }
@@ -389,7 +407,7 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
       if (c == ',') {
         var c  = getInputByteOrEOI(nextIx) & 0xFFL
         var ix = nextIx + 1
-        if (isWhiteSpace(c)) {
+        if (c <= ' ') {
           ix = skipWhiteSpace(ix)
           c = aux.toLong
         }
@@ -404,7 +422,7 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
       if (c == ':') {
         var c  = getInputByteOrEOI(nextIx) & 0xFFL
         var ix = nextIx + 1
-        if (isWhiteSpace(c)) {
+        if (c <= ' ') {
           ix = skipWhiteSpace(ix)
           c = aux.toLong
         }
@@ -420,7 +438,7 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
 
     var nextIx = index + 1
     var c      = getInputByteOrEOI(index) & 0xFFL
-    if (isWhiteSpace(c)) {
+    if (c <= ' ') {
       nextIx = skipWhiteSpace(nextIx)
       c = aux.toLong
     }
@@ -449,14 +467,14 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
       val nlz         = java.lang.Long.numberOfLeadingZeros(mask)
       val wsCharCount = nlz >> 3
       if (wsCharCount < 8) {
-        aux = (octa >> (56 - nlz)).toInt & 0xFF // "return" the first non-whitespace char
+        aux = ((octa << nlz) >>> 56).toInt // "return" the first non-whitespace char
         ix + wsCharCount + 1 // and the index of the character after the first non-whitespace char
       } else skipWhiteSpace(ix + 8, endIx)
     } else skipWhiteSpaceSlow(ix)
 
   @tailrec private def skipWhiteSpaceSlow(ix: Long): Long = {
     val c = getInputByteOrEOI(ix) & 0xFFL
-    if (!isWhiteSpace(c)) {
+    if (c > ' ') {
       aux = c.toInt
       ix + 1
     } else skipWhiteSpaceSlow(ix + 1)
@@ -468,13 +486,11 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
 
   @inline private def toToken(c: Long): Byte = InputAccess.ForByteArray.unsafeByte(TokenTable, c)
 
-  @inline private def isWhiteSpace(c: Long): Boolean = toToken(c) == WHITESPACE
-
   private def appendChar(ix: Long, charCursor: Int, c: Char): Int = {
     val newCursor = charCursor + 1
     if (newCursor <= maxStringLength) {
       ensureCharsLen(newCursor)
-      CharArrayOut.instance.writeChar(chars, charCursor, c)
+      chars(charCursor) = c
       newCursor
     } else failStringTooLong(ix)
   }
@@ -483,7 +499,8 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
     val newCursor = charCursor + 2
     if (newCursor <= maxStringLength) {
       ensureCharsLen(newCursor)
-      CharArrayOut.instance.write2(chars, charCursor, octa)
+      chars(charCursor) = (octa >>> 56).toChar
+      chars(charCursor + 1) = ((octa << 8) >>> 56).toChar
       newCursor
     } else failStringTooLong(ix)
   }
@@ -492,7 +509,9 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
     val newCursor = charCursor + 3
     if (newCursor <= maxStringLength) {
       ensureCharsLen(newCursor)
-      CharArrayOut.instance.write3(chars, charCursor, octa)
+      chars(charCursor) = (octa >>> 56).toChar
+      chars(charCursor + 1) = ((octa << 8) >>> 56).toChar
+      chars(charCursor + 2) = ((octa << 16) >>> 56).toChar
       newCursor
     } else failStringTooLong(ix)
   }
@@ -508,7 +527,7 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
   private def failIllegalCodepoint(ix: Long, c: Int) =
     throw new Borer.Error.InvalidInputData(pos(ix), s"Illegal Unicode Code point [${Integer.toHexString(c)}]")
   private def failStringTooLong(ix: Long) =
-    failOverflow(ix, s"JSON String longer than configured maximum of ${maxStringLength} characters")
+    failOverflow(ix, s"JSON String longer than configured maximum of $maxStringLength characters")
   private def failOverflow(ix: Long, msg: String) =
     throw new Borer.Error.Overflow(pos(ix), msg)
   private def failIllegalUtf8(ix: Long) =
@@ -548,19 +567,18 @@ private[borer] object JsonParser {
   private final val EXPECT_VALUE                          = 6
   private final val EXPECT_END_OF_INPUT                   = 7
 
-  private final val WHITESPACE  = 1
-  private final val DQUOTE      = 2
-  private final val MAP_START   = 3
-  private final val ARRAY_START = 4
-  private final val LOWER_N     = 5
-  private final val LOWER_F     = 6
-  private final val LOWER_T     = 7
-  private final val MINUS       = 8
-  private final val DIGIT0      = 9
-  private final val DIGIT19     = 10
-  private final val PLUS        = 11
-  private final val DOT         = 12
-  private final val LETTER_E    = 13
+  private final val DQUOTE      = 0
+  private final val MAP_START   = 1
+  private final val ARRAY_START = 2
+  private final val LOWER_N     = 3
+  private final val LOWER_F     = 4
+  private final val LOWER_T     = 5
+  private final val MINUS       = 6
+  private final val DIGIT0      = 7
+  private final val DIGIT19     = 8
+  private final val PLUS        = 9
+  private final val DOT         = 10
+  private final val LETTER_E    = 11
 
   private final val ALL7F = 0x7f7f7f7f7f7f7f7fL
   private final val ALL80 = 0x8080808080808080L
@@ -569,10 +587,7 @@ private[borer] object JsonParser {
 
   private final val TokenTable: Array[Byte] = {
     val array = new Array[Byte](256)
-    array(' '.toInt) = WHITESPACE
-    array('\t'.toInt) = WHITESPACE
-    array('\n'.toInt) = WHITESPACE
-    array('\r'.toInt) = WHITESPACE
+    java.util.Arrays.fill(array, -1.toByte)
     array('"'.toInt) = DQUOTE
     array('{'.toInt) = MAP_START
     array('['.toInt) = ARRAY_START
