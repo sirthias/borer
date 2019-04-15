@@ -13,11 +13,14 @@ import java.lang.{Double ⇒ JDouble, Float ⇒ JFloat}
 import io.bullet.borer.{Borer, _}
 import io.bullet.borer.internal.Util
 
+import scala.annotation.switch
+
 /**
   * Encapsulates the basic CBOR decoding logic.
   * Stateless.
   */
-private[borer] final class CborParser[Input](val input: Input)(implicit ia: InputAccess[Input])
+private[borer] final class CborParser[Input](val input: Input, config: CborParser.Config)(
+    implicit ia: InputAccess[Input])
     extends Receiver.Parser[Input] {
   import Borer.Error
 
@@ -99,7 +102,7 @@ private[borer] final class CborParser[Input](val input: Input)(implicit ia: Inpu
       }
 
     @inline def decodeExtra(ix: Long, info: Int, uLong: Long): Long = {
-      info match {
+      (info: @switch) match {
         case 20 ⇒ receiver.onBool(value = false)
         case 21 ⇒ receiver.onBool(value = true)
         case 22 ⇒ receiver.onNull()
@@ -109,7 +112,7 @@ private[borer] final class CborParser[Input](val input: Input)(implicit ia: Inpu
             case x if SimpleValue.isLegal(x) ⇒ receiver.onSimpleValue(x)
             case x ⇒
               val msg = s"Simple value must be in the range ${SimpleValue.legalRange}, but was $x"
-              throw new Error.InvalidCborData(pos(ix), msg)
+              throw new Error.InvalidInputData(pos(ix), msg)
           }
         case 25          ⇒ receiver.onFloat16(Float16.shortToFloat(uLong.toInt))
         case 26          ⇒ receiver.onFloat(JFloat.intBitsToFloat(uLong.toInt))
@@ -123,39 +126,39 @@ private[borer] final class CborParser[Input](val input: Input)(implicit ia: Inpu
 
     if (index < inputLen) {
       val byte      = ia.unsafeByte(input, index) & 0xFF
-      var ix        = index
+      var ix        = index + 1
       val majorType = byte >> 5
       val info      = byte & 0x1F
       val uLong =
-        info match {
+        (info: @switch) match {
           case 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 |
               23 ⇒
-            ix += 1
             info.toLong
           case 24 ⇒
-            ix += 2
-            if (ix > inputLen) throw new Borer.Error.UnexpectedEndOfInput(pos(ix))
+            ix += 1
+            if (ix > inputLen) throw new Borer.Error.UnexpectedEndOfInput(pos(index + 1), "8-bit integer")
             ia.unsafeByte(input, index + 1) & 0xFFL
           case 25 ⇒
-            ix += 3
-            if (ix > inputLen) throw new Borer.Error.UnexpectedEndOfInput(pos(ix))
+            ix += 2
+            if (ix > inputLen) throw new Borer.Error.UnexpectedEndOfInput(pos(index + 1), "16-bit integer")
             ia.doubleByteBigEndian(input, index + 1) & 0xFFFFL
           case 26 ⇒
-            ix += 5
-            if (ix > inputLen) throw new Borer.Error.UnexpectedEndOfInput(pos(ix))
+            ix += 4
+            if (ix > inputLen) throw new Borer.Error.UnexpectedEndOfInput(pos(index + 1), "32-bit integer")
             ia.quadByteBigEndian(input, index + 1) & 0xFFFFFFFFL
           case 27 ⇒
-            ix += 9
-            if (ix > inputLen) throw new Borer.Error.UnexpectedEndOfInput(pos(ix))
+            ix += 8
+            if (ix > inputLen) throw new Borer.Error.UnexpectedEndOfInput(pos(index + 1), "64-bit integer")
             ia.octaByteBigEndian(input, index + 1)
           case 31 if 2 <= majorType && majorType <= 5 || majorType == 7 ⇒
-            ix += 1
             0L // handled specially
           case 28 | 29 | 30 ⇒
-            throw new Error.InvalidCborData(pos(index), s"Additional info [$info] is invalid (major type [$majorType])")
+            throw new Error.InvalidInputData(
+              pos(index),
+              s"Additional info [$info] is invalid (major type [$majorType])")
         }
 
-      majorType match {
+      (majorType: @switch) match {
         case 0 ⇒ decodePositiveInteger(ix, uLong)
         case 1 ⇒ decodeNegativeInteger(ix, uLong)
         case 2 ⇒ decodeByteString(ix, uLong, info == 31)
@@ -170,4 +173,18 @@ private[borer] final class CborParser[Input](val input: Input)(implicit ia: Inpu
       index
     }
   }
+}
+
+object CborParser {
+
+  trait Config {
+    def maxByteStringLength: Int
+    def maxTextStringLength: Int
+  }
+
+  private[this] val _creator: Receiver.ParserCreator[Any, CborParser.Config] =
+    (input, config, inputAccess) ⇒ new CborParser[Any](input, config)(inputAccess)
+
+  def creator[Input, C <: CborParser.Config]: Receiver.ParserCreator[Input, C] =
+    _creator.asInstanceOf[Receiver.ParserCreator[Input, C]]
 }

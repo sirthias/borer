@@ -6,41 +6,38 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package io.bullet.borer
+package io.bullet.borer.internal
 
 import java.util
 
 import io.bullet.borer
-import io.bullet.borer.internal.Util
+import io.bullet.borer._
+import io.bullet.borer.Borer.Error
 
 import scala.annotation.tailrec
 
-object Validation {
+object CborValidation {
 
-  /**
-    * Validation config settings
-    *
-    * @param maxArrayLength the maximum array length to accept
-    * @param maxMapLength the maximum map length to accept
-    * @param maxNestingLevels the maximum number of nesting levels to accept
-    */
-  final case class Config(maxArrayLength: Long = Int.MaxValue,
-                          maxMapLength: Long = Int.MaxValue,
-                          maxNestingLevels: Int = 1000) {
+  trait Config {
 
-    Util.requireNonNegative(maxArrayLength, "maxArrayLength")
-    Util.requireNonNegative(maxMapLength, "maxMapLength")
-    Util.requireNonNegative(maxNestingLevels, "maxNestingLevels")
+    /**
+      * @return the maximum array length to accept
+      */
+    def maxArrayLength: Long
 
-    if (maxMapLength > Long.MaxValue / 2)
-      throw new IllegalArgumentException(s"maxMapLength must be <= ${Long.MaxValue / 2}, but was $maxMapLength")
+    /**
+      * @return the maximum map length to accept
+      */
+    def maxMapLength: Long
+
+    /**
+      * @return the maximum number of nesting levels to accept
+      */
+    def maxNestingLevels: Int
   }
 
-  def creator(target: Borer.Target, config: Option[Config]): Receiver.Creator =
-    config match {
-      case Some(x) ⇒ new Validation.Receiver(_, target eq Json, x)
-      case None    ⇒ Util.identityFunc
-    }
+  private[this] val _wrapper: borer.Receiver.Wrapper[Config] = new Receiver(_, _)
+  def wrapper[C <: Config]: borer.Receiver.Wrapper[C]        = _wrapper.asInstanceOf[borer.Receiver.Wrapper[C]]
 
   /**
     * A [[Receiver]] wrapping another [[Receiver]].
@@ -49,7 +46,7 @@ object Validation {
     *
     * Throws [[Borer.Error]] exceptions upon detecting any problem with the input.
     */
-  final class Receiver(private var _target: borer.Receiver, isJson: Boolean, config: Config)
+  final class Receiver(private var _target: borer.Receiver, config: Config)
       extends borer.Receiver with java.lang.Cloneable {
 
     import io.bullet.borer.{DataItem ⇒ DI}
@@ -158,7 +155,7 @@ object Validation {
 
     def onTextStart(): Unit = {
       checkAllowed(DI.TextStart)
-      enterLevel(0, DI.StringLike | DI.Text | DI.TextStart | UNBOUNDED)
+      enterLevel(0, DI.String | DI.Chars | DI.Text | DI.TextStart | UNBOUNDED)
       _target.onTextStart()
     }
 
@@ -193,18 +190,26 @@ object Validation {
     def onMapStart(): Unit = {
       checkAllowed(DI.MapStart)
       enterLevel(0, DEFAULT_MASK | MAP | UNBOUNDED)
-      if (isJson) mask = DI.StringLike | MAP | UNBOUNDED
       _target.onMapStart()
     }
 
-    def onBreak(): Unit =
-      if (level >= 0 && isMasked(UNBOUNDED)) {
-        if (!isMasked(MAP) || isEvenNumberedElement) {
-          exitLevel()
-          count() // level-entering items are only counted when the level is exited, not when they are entered
-          _target.onBreak()
-        } else throw new Borer.Error.UnexpectedDataItem(null, "map entry value data item", "BREAK")
-      } else throw new Borer.Error.UnexpectedDataItem(null, "any data item except for BREAK", "BREAK")
+    def onBreak(): Unit = {
+      def failBreak() =
+        if (level == 0) {
+          if (isMasked(UNBOUNDED)) {
+            failInvalid("map entry value data item", "BREAK")
+          } else {
+            val tpe = if (isMasked(MAP)) "map" else "array"
+            failInvalid(s"${levelRemaining(level)} more data items of definite-length $tpe", "BREAK")
+          }
+        } else failInvalid("next data item on outermost CBOR structure level", "BREAK")
+
+      if (level >= 0 && isMasked(UNBOUNDED) && (!isMasked(MAP) || isEvenNumberedElement)) {
+        exitLevel()
+        count() // level-entering items are only counted when the level is exited, not when they are entered
+        _target.onBreak()
+      } else failBreak()
+    }
 
     def onTag(value: Tag): Unit = {
       value match {
@@ -222,7 +227,7 @@ object Validation {
 
         case Tag.DateTimeString | Tag.TextUri | Tag.TextBase64Url | Tag.TextBase64 | Tag.TextRegex | Tag.TextMime ⇒
           checkAllowed(DI.Tag)
-          enterLevel(1L, DI.StringLike | DI.Text)
+          enterLevel(1L, DI.String | DI.Chars | DI.Text)
 
         case Tag.DecimalFraction | Tag.BigFloat ⇒
           checkAllowed(DI.Tag)
@@ -241,8 +246,19 @@ object Validation {
     }
 
     def onEndOfInput(): Unit =
-      if (level >= 0) throw new Borer.Error.UnexpectedEndOfInput(null)
-      else _target.onEndOfInput()
+      if (level >= 0) {
+        def remaining = levelRemaining(level)
+        val msg =
+          (isMasked(MAP), isMasked(UNBOUNDED), isEvenNumberedElement) match {
+            case (false, false, _)    ⇒ s"$remaining more data items of definite-length array"
+            case (false, true, _)     ⇒ "next array data item or BREAK"
+            case (true, false, false) ⇒ s"next map data value and ${remaining / 2} more entries of definite-length map"
+            case (true, false, true)  ⇒ s"$remaining more data items of definite-length map"
+            case (true, true, false)  ⇒ "next map data value"
+            case (true, true, true)   ⇒ "next map entry or BREAK"
+          }
+        throw new Borer.Error.UnexpectedEndOfInput(null, msg)
+      } else _target.onEndOfInput()
 
     override def copy = {
       val clone = super.clone().asInstanceOf[Receiver]
@@ -254,7 +270,7 @@ object Validation {
 
     private def checkAllowed(dataItem: Int): Unit =
       if (!isMasked(dataItem)) {
-        throw new Borer.Error.UnexpectedDataItem(null, DataItem stringify mask, DataItem stringify dataItem)
+        throw new Error.InvalidInputData(null, DataItem stringify mask, DataItem stringify dataItem)
       }
 
     @inline private def isMasked(test: Int): Boolean = (mask & test) != 0
@@ -272,9 +288,6 @@ object Validation {
         }
         if (isMasked(UNBOUNDED)) {
           if (isMasked(MAP)) {
-            if (isJson) {
-              mask = if (isEvenNumberedElement) DEFAULT_MASK | MAP | UNBOUNDED else DI.StringLike | MAP | UNBOUNDED
-            }
             if (remaining < -config.maxMapLength) overflow("map", config.maxMapLength) else ok()
           } else {
             if (remaining < -config.maxArrayLength) overflow("array", config.maxArrayLength) else ok()
@@ -310,5 +323,8 @@ object Validation {
       level = l
       mask = if (l >= 0) levelMasks(l) else DEFAULT_MASK
     }
+
+    private def failInvalid(expected: String, actual: String) =
+      throw new Borer.Error.InvalidInputData(null, expected, actual)
   }
 }

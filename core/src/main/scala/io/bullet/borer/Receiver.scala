@@ -88,29 +88,19 @@ object Receiver {
     def pull(index: Long, receiver: Receiver): Long
   }
 
+  type ParserCreator[Input, Config] = (Input, Config, InputAccess[Input]) ⇒ Parser[Input]
+
+  type Wrapper[Config] = (Receiver, Config) ⇒ Receiver
+  private[this] val _nopWrapper: Wrapper[Any] = (receiver, _) ⇒ receiver
+
+  def nopWrapper[Config]: Wrapper[Config] = _nopWrapper.asInstanceOf[Wrapper[Config]]
+
   /**
     * Common parent type of [[io.bullet.borer.cbor.CborRenderer]] and [[io.bullet.borer.json.JsonRenderer]]
     */
   abstract class Renderer extends Receiver {
     def out: Output
   }
-
-  /**
-    * A creator function for [[Receiver]] instances.
-    */
-  type Creator = Receiver ⇒ Receiver
-
-  /**
-    * A function which applies a given [[Creator]] to a given [[Receiver]] and therefore has the chance
-    * to wrap either the given [[Receiver]] or the created [[Receiver]] with custom logic, e.g. [[Logging]].
-    */
-  type Applier = (Creator, Receiver) ⇒ Receiver
-
-  /**
-    * The default [[Applier]] which simply applies the given [[Creator]] to the given [[Receiver]] without
-    * any additional logic.
-    */
-  val defaultApplier: Applier = _(_)
 
   implicit final class ReceiverOps(val underlying: Receiver) extends AnyVal {
 

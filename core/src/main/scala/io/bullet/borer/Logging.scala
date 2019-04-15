@@ -31,11 +31,8 @@ import scala.annotation.tailrec
   */
 object Logging {
 
-  def afterValidation(createLogger: LevelInfo ⇒ Logger): Receiver.Applier =
-    (creator, target) ⇒ creator(new Receiver(target, createLogger))
-
-  def beforeValidation(createLogger: LevelInfo ⇒ Logger): Receiver.Applier =
-    (creator, target) ⇒ new Receiver(creator(target), createLogger)
+  def apply[Config](createLogger: LevelInfo ⇒ Logger): borer.Receiver.Wrapper[Config] =
+    (target, _) ⇒ new Receiver(target, createLogger)
 
   trait LevelInfo {
     def level: Int

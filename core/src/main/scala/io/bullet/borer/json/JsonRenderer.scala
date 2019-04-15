@@ -48,72 +48,80 @@ private[borer] final class JsonRenderer(var out: Output) extends Receiver.Render
 
   private[this] var level: Int           = _ // valid range: 0 - 63
   private[this] var levelType: Long      = _ // keeps the type of each level as a bit map: 0 -> Array, 1 -> Map
+  private[this] var levelCount: Long     = _ // for each level: last bit of element count
   private[this] var sepRequired: Boolean = _ // whether a separator required before the next element
-  private[this] var mapCount: Long       = _ // for each map level: 0 -> next element is key, 1 -> next element is value
-
-  @inline private def isLevelMap: Boolean = ((levelType >> level) & 1) != 0
 
   def onNull(): Unit =
-    out = count(sep(out).writeAsBytes('n', 'u', 'l', 'l'))
+    if (isNotMapKey) {
+      out = count(sep(out).writeAsBytes('n', 'u', 'l', 'l'))
+    } else failCannotBeMapKey("null")
 
   def onUndefined(): Unit =
-    unsupported(out, "the `undefined` value")
+    failUnsupported(out, "the `undefined` value")
 
   def onBool(value: Boolean): Unit =
-    out = count {
-      val sep = separator
-      if (value) (if (sep != '\u0000') out.writeAsByte(sep) else out).writeAsBytes('t', 'r', 'u', 'e')
-      else (if (sep != '\u0000') out.writeAsBytes(sep, 'f') else out.writeAsByte('f')).writeAsBytes('a', 'l', 's', 'e')
-    }
+    if (isNotMapKey) {
+      out = count {
+        if (value) (if (sepRequired) out.writeAsByte(separator) else out).writeAsBytes('t', 'r', 'u', 'e')
+        else
+          (if (sepRequired) out.writeAsBytes(separator, 'f') else out.writeAsByte('f')).writeAsBytes('a', 'l', 's', 'e')
+      }
+    } else failCannotBeMapKey("boolean values")
 
   def onInt(value: Int): Unit =
     onLong(value.toLong)
 
   def onLong(value: Long): Unit =
-    out = count(writeLong(sep(out), value))
+    if (isNotMapKey) {
+      out = count(writeLong(sep(out), value))
+    } else failCannotBeMapKey("integer values")
 
   def onOverLong(negative: Boolean, value: Long): Unit =
-    out = count {
-      def writeOverLong(o: Output, v: Long) = {
-        val q = (v >>> 1) / 5 // value / 10
-        val r = v - (q << 3) - (q << 1) // value - 10*q
-        writeLong(o, q).writeAsByte('0' + r.toInt)
+    if (isNotMapKey) {
+      out = count {
+        def writeOverLong(o: Output, v: Long) = {
+          val q = (v >>> 1) / 5 // value / 10
+          val r = v - (q << 3) - (q << 1) // value - 10*q
+          writeLong(o, q).writeAsByte('0' + r.toInt)
+        }
+        if (negative) {
+          val v = value + 1
+          if (v == 0) out.writeStringAsAsciiBytes("-18446744073709551616")
+          else writeOverLong(if (sepRequired) out.writeAsBytes(separator, '-') else out.writeAsByte('-'), v)
+        } else writeOverLong(if (sepRequired) out.writeAsByte(separator) else out, value)
       }
-      val sep = separator
-      if (negative) {
-        val v = value + 1
-        if (v == 0) out.writeStringAsAsciiBytes("-18446744073709551616")
-        else writeOverLong(if (sep != '\u0000') out.writeAsBytes(sep, '-') else out.writeAsByte('-'), v)
-      } else writeOverLong(if (sep != '\u0000') out.writeAsByte(sep) else out, value)
-    }
+    } else failCannotBeMapKey("an Overlong")
 
   def onFloat16(value: Float): Unit =
-    unsupported(out, "Float16 values")
+    failUnsupported(out, "Float16 values")
 
   def onFloat(value: Float): Unit =
     onDouble(value.toDouble)
 
   def onDouble(value: Double): Unit =
-    if (!value.isNaN) {
-      if (!value.isInfinity) {
-        out = count(sep(out).writeStringAsAsciiBytes(Util.doubleToString(value)))
-      } else unsupported(out, "`Infinity` floating point values")
-    } else unsupported(out, "`NaN` floating point values")
+    if (isNotMapKey) {
+      if (!value.isNaN) {
+        if (!value.isInfinity) {
+          out = count(sep(out).writeStringAsAsciiBytes(Util.doubleToString(value)))
+        } else failUnsupported(out, "`Infinity` floating point values")
+      } else failUnsupported(out, "`NaN` floating point values")
+    } else failCannotBeMapKey("floating point values")
 
   def onNumberString(value: String): Unit =
-    out = count(sep(out).writeStringAsAsciiBytes(value))
+    if (isNotMapKey) {
+      out = count(sep(out).writeStringAsAsciiBytes(value))
+    } else failCannotBeMapKey("number strings")
 
   def onBytes[Bytes: ByteAccess](value: Bytes): Unit =
-    unsupported(out, "byte strings")
+    failUnsupported(out, "byte strings")
 
   def onBytesStart(): Unit =
-    unsupported(out, "byte string streams")
+    failUnsupported(out, "byte string streams")
 
   def onString(value: String): Unit = {
     @tailrec def rec(out: Output, ix: Int): Output =
       if (ix < value.length) {
-        def escaped(c: Char)  = out.writeAsBytes('\\', c)
-        def fail(msg: String) = throw new Borer.Error.ValidationFailure(out, msg)
+        def escaped(c: Char) = out.writeAsBytes('\\', c)
 
         value.charAt(ix) match {
           case '"'  ⇒ rec(escaped('"'), ix + 1)
@@ -130,8 +138,10 @@ private[borer] final class JsonRenderer(var out: Output) extends Receiver.Render
                         if (index < value.length) {
                           codePoint = Character.toCodePoint(c, value.charAt(index))
                           out.writeBytes((0xF0 | (codePoint >> 18)).toByte, (0x80 | ((codePoint >> 12) & 0x3F)).toByte)
-                        } else fail("Truncated UTF-16 surrogate pair at end of string \"" + value + '"')
-                      } else fail("Invalid UTF-16 surrogate pair at index " + codePoint + " of string \"" + value + '"')
+                        } else failValidation("Truncated UTF-16 surrogate pair at end of string \"" + value + '"')
+                      } else
+                        failValidation(
+                          "Invalid UTF-16 surrogate pair at index " + codePoint + " of string \"" + value + '"')
                     } else out.writeAsByte(0xE0 | (codePoint >> 12))) // 3-byte UTF-8 codepoint
                      .writeAsByte(0x80 | ((codePoint >> 6) & 0x3F))
                  } else out.writeAsByte(0xC0 | (codePoint >> 6))) // 2-byte UTF-8 codepoint
@@ -152,72 +162,69 @@ private[borer] final class JsonRenderer(var out: Output) extends Receiver.Render
         }
       } else out
 
-    val sep = separator
-    out = count(rec(if (sep != '\u0000') out.writeAsBytes(sep, '"') else out.writeAsByte('"'), 0).writeAsByte('"'))
+    out = count(rec(if (sepRequired) out.writeAsBytes(separator, '"') else out.writeAsByte('"'), 0).writeAsByte('"'))
   }
 
   def onChars(length: Int, buffer: Array[Char]): Unit =
     onString(new String(buffer, 0, length))
 
   def onText[Bytes](value: Bytes)(implicit ba: ByteAccess[Bytes]): Unit =
-    unsupported(out, "text byte strings")
+    failUnsupported(out, "text byte strings")
 
   def onTextStart(): Unit =
-    unsupported(out, "text byte string streams")
+    failUnsupported(out, "text byte string streams")
 
   def onArrayHeader(length: Long): Unit =
-    unsupported(out, "definite-length arrays")
+    failUnsupported(out, "definite-length arrays")
 
-  def onArrayStart(): Unit = {
-    val sep      = separator
-    val newLevel = level + 1
-    if (newLevel < 64) {
-      levelType &= ~(1 << newLevel)
-      level = newLevel
-      sepRequired = false
-      out = if (sep != '\u0000') out.writeAsBytes(sep, '[') else out.writeAsByte('[')
-    } else unsupported(out, "more than 64 JSON Array/Object nesting levels")
-  }
+  def onArrayStart(): Unit =
+    if (isNotMapKey) {
+      out = if (sepRequired) out.writeAsBytes(separator, '[') else out.writeAsByte('[')
+      level += 1
+      if (level < 64) {
+        levelType <<= 1
+        levelCount <<= 1
+        sepRequired = false
+      } else failUnsupported(out, "more than 64 JSON Array/Object nesting levels")
+    } else failCannotBeMapKey("arrays")
 
   def onMapHeader(length: Long): Unit =
-    unsupported(out, "definite-length maps")
+    failUnsupported(out, "definite-length maps")
 
-  def onMapStart(): Unit = {
-    val sep      = separator
-    val newLevel = level + 1
-    if (newLevel < 64) {
-      levelType |= 1 << newLevel
-      level = newLevel
-      sepRequired = false
-      out = if (sep != '\u0000') out.writeAsBytes(sep, '{') else out.writeAsByte('{')
-    } else unsupported(out, "more than 64 JSON Array/Object nesting levels")
-  }
+  def onMapStart(): Unit =
+    if (isNotMapKey) {
+      out = if (sepRequired) out.writeAsBytes(separator, '{') else out.writeAsByte('{')
+      level += 1
+      if (level < 64) {
+        levelType = (levelType << 1) | 1
+        levelCount <<= 1
+        sepRequired = false
+      } else failUnsupported(out, "more than 64 JSON Array/Object nesting levels")
+    } else failCannotBeMapKey("maps")
 
   def onBreak(): Unit = {
-    val c = if (isLevelMap) '}' else ']'
-    if (level > 0) level -= 1
-    else throw new Borer.Error.InvalidJsonData(out, "Received BREAK without corresponding ArrayStart or MapStart")
+    val c = if ((levelType & 1) == 0) ']' else '}'
+    if (level > 0) {
+      level -= 1
+      levelType >>>= 1
+      levelCount >>>= 1
+    } else failValidation("Received BREAK without corresponding ArrayStart or MapStart")
     out = count(out.writeAsByte(c)) // level-entering items are only counted when the level is exited, not when entered
   }
 
-  def onTag(value: Tag): Unit         = unsupported(out, "CBOR tags")
-  def onSimpleValue(value: Int): Unit = unsupported(out, "CBOR Simple Values")
+  def onTag(value: Tag): Unit         = failUnsupported(out, "CBOR tags")
+  def onSimpleValue(value: Int): Unit = failUnsupported(out, "CBOR Simple Values")
   def onEndOfInput(): Unit            = ()
 
-  @inline private def separator: Char =
-    if (sepRequired) {
-      if (isLevelMap) {
-        if (((mapCount >> level) & 1) != 0) ':' else ','
-      } else ','
-    } else '\u0000'
+  @inline private def sep(out: Output): Output =
+    if (sepRequired) out.writeAsByte(separator) else out
 
-  @inline private def sep(out: Output): Output = {
-    val s = separator
-    if (s != '\u0000') out.writeAsByte(s) else out
-  }
+  @inline private def separator: Char = if ((levelType & levelCount & 1) != 0) ':' else ','
 
-  private def count(out: Output): Output = {
-    if (isLevelMap) mapCount ^= 1 << level
+  @inline private def isNotMapKey: Boolean = (levelType & ~levelCount & 1) == 0
+
+  @inline private def count(out: Output): Output = {
+    levelCount ^= 1
     sepRequired = true
     out
   }
@@ -264,8 +271,14 @@ private[borer] final class JsonRenderer(var out: Output) extends Receiver.Render
     48 + i + (39 & ((9 - i) >> 31))
   }
 
-  private def unsupported(out: Output, what: String) =
-    throw new Borer.Error.InvalidJsonData(out, s"The JSON renderer doesn't support $what")
+  private def failUnsupported(out: Output, what: String) =
+    throw new Borer.Error.Unsupported(out, s"The JSON renderer doesn't support $what")
+
+  private def failCannotBeMapKey(what: String) =
+    throw new Borer.Error.ValidationFailure(out, s"JSON does not support $what as a map key")
+
+  private def failValidation(msg: String) =
+    throw new Borer.Error.ValidationFailure(out, msg)
 }
 
 object JsonRenderer extends (Output ⇒ JsonRenderer) {

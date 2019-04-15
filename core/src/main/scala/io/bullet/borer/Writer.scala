@@ -16,9 +16,9 @@ import scala.collection.LinearSeq
 /**
   * Stateful, mutable abstraction for writing a stream of CBOR or JSON data to the given [[Output]].
   */
-final class Writer(receiver: Receiver, val config: Writer.Config, val target: Borer.Target) {
+final class Writer(receiver: Receiver, val target: Target, config: Writer.Config) {
 
-  @inline def writingJson: Boolean = target eq Json
+  @inline def writingJson: Boolean = target eq null
   @inline def writingCbor: Boolean = target eq Cbor
 
   @inline def ~(value: Boolean): this.type = writeBool(value)
@@ -46,14 +46,14 @@ final class Writer(receiver: Receiver, val config: Writer.Config, val target: Bo
   def writeFloat16(value: Float): this.type                    = { receiver.onFloat16(value); this }
 
   def writeFloat(value: Float): this.type = {
-    if (writingJson || config.cborDontCompressFloatingPointValues || !Util.canBeRepresentedAsFloat16(value)) {
+    if (config.dontCompressFloatingPointValues || !Util.canBeRepresentedAsFloat16(value)) {
       receiver.onFloat(value)
     } else receiver.onFloat16(value)
     this
   }
 
   def writeDouble(value: Double): this.type = {
-    if (writingJson || config.cborDontCompressFloatingPointValues || !Util.canBeRepresentedAsFloat(value)) {
+    if (config.dontCompressFloatingPointValues || !Util.canBeRepresentedAsFloat(value)) {
       receiver.onDouble(value)
     } else writeFloat(value.toFloat)
     this
@@ -159,21 +159,8 @@ final class Writer(receiver: Receiver, val config: Writer.Config, val target: Bo
 
 object Writer {
 
-  /**
-    * Serialization config settings
-    *
-    * @param validation the validation settings to use or `None` if no validation should be performed
-    * @param cborDontCompressFloatingPointValues set to true in order to always write floats as 32-bit values and doubles
-    *                                        as 64-bit values, even if they could safely be represented with fewer bits
-    */
-  final case class Config(
-      validation: Option[Validation.Config] = Some(Validation.Config()),
-      cborDontCompressFloatingPointValues: Boolean = false
-  )
-
-  object Config {
-    val default                  = Config()
-    val defaultWithoutValidation = Config(validation = None)
+  trait Config {
+    def dontCompressFloatingPointValues: Boolean
   }
 
   /**

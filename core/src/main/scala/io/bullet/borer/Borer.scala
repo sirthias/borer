@@ -11,74 +11,137 @@ package io.bullet.borer
 import java.lang.{StringBuilder ⇒ JStringBuilder}
 
 import io.bullet.borer.cbor._
+import io.bullet.borer.internal.{CborValidation, Util}
 import io.bullet.borer.json._
 
-case object Cbor extends Borer.Target {
+/**
+  * Super-type of the [[Cbor]] and [[Json]] objects.
+  *
+  * Used, for example, as the type of the `target` member of [[Reader]] and [[Writer]] instances,
+  * which allows custom logic to pick different (de)serialization approaches
+  * depending on whether the target is CBOR or JSON.
+  */
+sealed abstract class Target
+
+case object Cbor extends Target {
 
   /**
     * Entry point into the CBOR encoding mini-DSL.
     */
-  def encode[T: Encoder](value: T): EncodingSetup.Api[T] =
-    new EncodingSetup.Impl[T](value, this, CborRenderer)
+  def encode[T: Encoder](value: T): EncodingSetup.Api[T, EncodingConfig] =
+    new EncodingSetup.Impl(value, this, EncodingConfig.default, CborValidation.wrapper, CborRenderer)
 
   /**
     * Entry point into the CBOR decoding mini-DSL.
     */
-  def decode[Input: InputAccess](input: Input): DecodingSetup.Api[Input] =
-    new DecodingSetup.Impl(this, new CborParser(input))
+  def decode[Input: InputAccess](input: Input): DecodingSetup.Api[Input, DecodingConfig] =
+    new DecodingSetup.Impl(input, DecodingConfig.default, CborValidation.wrapper, CborParser.creator, this)
 
   /**
     * Constructs a new [[Writer]] that writes CBOR to the given [[Output]].
     */
   def writer(output: Output,
-             config: Writer.Config = Writer.Config.default,
-             validationApplier: Receiver.Applier = Receiver.defaultApplier): Writer = {
-    val receiver = validationApplier(Validation.creator(this, config.validation), CborRenderer(output))
-    new Writer(receiver, config, this)
-  }
+             config: EncodingConfig = EncodingConfig.default,
+             receiverWrapper: Receiver.Wrapper[EncodingConfig] = CborValidation.wrapper): Writer =
+    new Writer(receiverWrapper(CborRenderer(output), config), this, config)
 
   /**
     * Constructs a new [[Reader]] that reads CBOR from the given [[Input]].
     */
   def reader[Input: InputAccess](input: Input,
                                  startIndex: Long = 0,
-                                 config: Reader.Config = Reader.Config.default,
-                                 validationApplier: Receiver.Applier = Receiver.defaultApplier): Reader =
-    new InputReader(startIndex, new CborParser(input), validationApplier, config, this)
+                                 config: DecodingConfig = DecodingConfig.default,
+                                 receiverWrapper: Receiver.Wrapper[DecodingConfig] = CborValidation.wrapper): Reader =
+    new InputReader(startIndex, new CborParser(input, config), receiverWrapper, config, this)
+
+  /**
+    * @param dontCompressFloatingPointValues set to true in order to always write floats as 32-bit values and doubles
+    *                                        as 64-bit values, even if they could safely be represented with fewer bits
+    */
+  final case class EncodingConfig(
+      dontCompressFloatingPointValues: Boolean = false,
+      maxArrayLength: Long = Int.MaxValue,
+      maxMapLength: Long = Int.MaxValue,
+      maxNestingLevels: Int = 1000
+  ) extends Borer.EncodingConfig with CborValidation.Config
+
+  object EncodingConfig {
+    val default = EncodingConfig()
+  }
+
+  final case class DecodingConfig(maxTextStringLength: Int = 1024 * 1024,
+                                  maxByteStringLength: Int = 10 * 1024 * 1024,
+                                  maxArrayLength: Long = Int.MaxValue,
+                                  maxMapLength: Long = Int.MaxValue,
+                                  maxNestingLevels: Int = 1000)
+      extends Borer.DecodingConfig with CborValidation.Config with CborParser.Config {
+
+    Util.requireNonNegative(maxTextStringLength, "maxTextStringLength")
+    Util.requireNonNegative(maxByteStringLength, "maxByteStringLength")
+    Util.requireNonNegative(maxArrayLength, "maxArrayLength")
+    Util.requireNonNegative(maxMapLength, "maxMapLength")
+    Util.requireNonNegative(maxNestingLevels, "maxNestingLevels")
+
+    if (maxMapLength > Long.MaxValue / 2)
+      throw new IllegalArgumentException(s"maxMapLength must be <= ${Long.MaxValue / 2}, but was $maxMapLength")
+  }
+
+  object DecodingConfig {
+    val default = DecodingConfig()
+  }
 }
 
-case object Json extends Borer.Target {
+case object Json extends Target {
 
   /**
     * Entry point into the JSON encoding mini-DSL.
     */
-  def encode[T: Encoder](value: T): EncodingSetup.JsonApi[T] =
-    new EncodingSetup.Impl[T](value, this, JsonRenderer)
+  def encode[T: Encoder](value: T): EncodingSetup.JsonApi[T, EncodingConfig] =
+    new EncodingSetup.Impl(value, null, EncodingConfig.default, Receiver.nopWrapper, JsonRenderer)
 
   /**
     * Entry point into the JSON decoding mini-DSL.
     */
-  def decode[Input: InputAccess](input: Input): DecodingSetup.Api[Input] =
-    new DecodingSetup.Impl(this, new JsonParser(input))
+  def decode[Input: InputAccess](input: Input): DecodingSetup.Api[Input, DecodingConfig] =
+    new DecodingSetup.Impl[Input, DecodingConfig](
+      input,
+      DecodingConfig.default,
+      Receiver.nopWrapper,
+      JsonParser.creator,
+      null)
 
   /**
     * Constructs a new [[Writer]] that writes JSON to the given [[Output]].
     */
   def writer(output: Output,
-             config: Writer.Config = Writer.Config.default,
-             validationApplier: Receiver.Applier = Receiver.defaultApplier): Writer = {
-    val receiver = validationApplier(Validation.creator(this, config.validation), JsonRenderer(output))
-    new Writer(receiver, config, this)
-  }
+             config: EncodingConfig = EncodingConfig.default,
+             receiverWrapper: Receiver.Wrapper[EncodingConfig] = Receiver.nopWrapper): Writer =
+    new Writer(receiverWrapper(JsonRenderer(output), config), null, config)
 
   /**
     * Constructs a new [[Reader]] that reads JSON from the given [[Input]].
     */
   def reader[Input: InputAccess](input: Input,
                                  startIndex: Long = 0,
-                                 config: Reader.Config = Reader.Config.default,
-                                 validationApplier: Receiver.Applier = Receiver.defaultApplier): Reader =
-    new InputReader(startIndex, new JsonParser(input), validationApplier, config, this)
+                                 config: DecodingConfig = DecodingConfig.default,
+                                 receiverWrapper: Receiver.Wrapper[DecodingConfig] = Receiver.nopWrapper): Reader =
+    new InputReader(startIndex, new JsonParser(input, config), receiverWrapper, config, null)
+
+  final case class EncodingConfig() extends Borer.EncodingConfig {
+    def dontCompressFloatingPointValues = true
+  }
+
+  object EncodingConfig {
+    val default = EncodingConfig()
+  }
+
+  final case class DecodingConfig(
+      maxStringLength: Int = 1024 * 1024
+  ) extends Borer.DecodingConfig with JsonParser.Config
+
+  object DecodingConfig {
+    val default = DecodingConfig()
+  }
 }
 
 /**
@@ -86,49 +149,36 @@ case object Json extends Borer.Target {
   */
 object Borer {
 
-  /**
-    * Super-type of the [[Cbor]] and [[Json]] objects.
-    *
-    * Used, for example, as the type of the `target` member of [[Reader]] and [[Writer]] instances,
-    * which allows custom logic to pick different (de)serialization approaches
-    * depending on whether the target is CBOR or JSON.
-    */
-  sealed abstract class Target {
-    def encode[T: Encoder](value: T): EncodingSetup.Api[T]
-
-    def decode[Input: InputAccess](input: Input): DecodingSetup.Api[Input]
-
-    def writer(output: Output,
-               config: Writer.Config = Writer.Config.default,
-               validationApplier: Receiver.Applier = Receiver.defaultApplier): Writer
-
-    def reader[Input: InputAccess](input: Input,
-                                   startIndex: Long = 0,
-                                   config: Reader.Config = Reader.Config.default,
-                                   validationApplier: Receiver.Applier = Receiver.defaultApplier): Reader
+  sealed abstract class EncodingConfig extends Writer.Config {
+    def dontCompressFloatingPointValues: Boolean
   }
 
-  private[borer] abstract class AbstractSetup {
-    protected var validationApplier: Receiver.Applier = Receiver.defaultApplier
+  sealed abstract class DecodingConfig extends Reader.Config {}
 
-    def withPrintLogging(maxShownByteArrayPrefixLen: Int, maxShownStringPrefixLen: Int): this.type = {
-      withValidationApplier(
-        Logging.afterValidation(Logging.PrintLogger(maxShownByteArrayPrefixLen, maxShownStringPrefixLen)))
+  private[borer] abstract class AbstractSetup[Config](defaultConfig: Config, defaultWrapper: Receiver.Wrapper[Config]) {
+    protected var config: Config                            = defaultConfig
+    protected var receiverWrapper: Receiver.Wrapper[Config] = defaultWrapper
+
+    final def withConfig(config: Config): this.type = {
+      this.config = config
       this
     }
 
-    def withStringLogging(stringBuilder: JStringBuilder,
-                          maxShownByteArrayPrefixLen: Int,
-                          maxShownStringPrefixLen: Int,
-                          lineSeparator: String): this.type = {
-      withValidationApplier(
-        Logging.afterValidation(
-          Logging.ToStringLogger(stringBuilder, maxShownByteArrayPrefixLen, maxShownStringPrefixLen, lineSeparator)))
-      this
-    }
+    final def withPrintLogging(maxShownByteArrayPrefixLen: Int, maxShownStringPrefixLen: Int): this.type =
+      withWrapper(Logging(Logging.PrintLogger(maxShownByteArrayPrefixLen, maxShownStringPrefixLen)))
 
-    def withValidationApplier(validationApplier: Receiver.Applier): this.type = {
-      this.validationApplier = validationApplier
+    final def withStringLogging(stringBuilder: JStringBuilder,
+                                maxShownByteArrayPrefixLen: Int,
+                                maxShownStringPrefixLen: Int,
+                                lineSeparator: String): this.type =
+      withWrapper {
+        Logging {
+          Logging.ToStringLogger(stringBuilder, maxShownByteArrayPrefixLen, maxShownStringPrefixLen, lineSeparator)
+        }
+      }
+
+    final def withWrapper(receiverWrapper: Receiver.Wrapper[Config]): this.type = {
+      this.receiverWrapper = receiverWrapper
       this
     }
   }
@@ -136,27 +186,32 @@ object Borer {
   sealed abstract class Error[IO <: AnyRef](private var _io: IO, msg: String, cause: Throwable = null)
       extends RuntimeException(msg, cause) {
 
+    final override def getMessage = s"$msg [${_io}]"
+
     final def io: IO = _io
 
-    private[borer] def withPosOf[Input](reader: InputReader[Input]): Error[Position[Input]] = {
+    private[borer] def withPosOf[Input](reader: InputReader[Input, _]): Error[Position[Input]] = {
       val thiz = this.asInstanceOf[Error[Position[Input]]]
       if (thiz._io eq null) thiz._io = reader.position
+      thiz
+    }
+
+    private[borer] def withOut(out: Output): Error[Output] = {
+      val thiz = this.asInstanceOf[Error[Output]]
+      if (thiz._io eq null) thiz._io = out
       thiz
     }
   }
 
   object Error {
-    final class InvalidCborData[IO <: AnyRef](io: IO, msg: String) extends Error[IO](io, msg)
+    final class UnexpectedEndOfInput[IO <: AnyRef](io: IO, expected: String)
+        extends Error[IO](io, s"Expected $expected but got end of input")
 
-    final class InvalidJsonData[IO <: AnyRef](io: IO, msg: String) extends Error[IO](io, msg)
+    final class InvalidInputData[IO <: AnyRef](io: IO, msg: String) extends Error[IO](io, msg) {
+      def this(io: IO, expected: String, actual: String) = this(io, s"Expected $expected but got $actual")
+    }
 
     final class ValidationFailure[IO <: AnyRef](io: IO, msg: String) extends Error[IO](io, msg)
-
-    final class UnexpectedEndOfInput[IO <: AnyRef](io: IO, cause: Throwable = null)
-        extends Error[IO](io, "Unexpected End of Input", cause)
-
-    final class UnexpectedDataItem[IO <: AnyRef](io: IO, val expected: String, val actual: String)
-        extends Error[IO](io, s"Unexpected data item: Expected [$expected] but got [$actual]")
 
     final class Unsupported[IO <: AnyRef](io: IO, msg: String) extends Error[IO](io, msg)
 

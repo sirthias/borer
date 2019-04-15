@@ -147,6 +147,8 @@ object Output {
         buffer = util.Arrays.copyOf(buffer, math.max(buffer.length << 1, minSize))
       }
 
+    override def toString = s"Output.ToByteArray index $cursor"
+
     private def overflow() = throw new Borer.Error.Overflow(this, "Cannot output to byte array with > 2^31 bytes")
   }
 }

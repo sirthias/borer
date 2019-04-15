@@ -15,7 +15,7 @@ import scala.util.{Failure, Success, Try}
 
 object DecodingSetup {
 
-  sealed trait Api[Input] {
+  sealed trait Api[Input, Config <: Reader.Config] {
 
     /**
       * Indicates that this decoding run is not expected to consume the complete [[Input]].
@@ -28,9 +28,9 @@ object DecodingSetup {
     def withPrefixOnly: this.type
 
     /**
-      * Configures the [[Reader.Config]] for this decoding run.
+      * Configures the [[Config]] for this decoding run.
       */
-    def withConfig(config: Reader.Config): this.type
+    def withConfig(config: Config): this.type
 
     /**
       * Enables logging of this decoding run to the console.
@@ -49,10 +49,10 @@ object DecodingSetup {
                           lineSeparator: String = System.lineSeparator()): this.type
 
     /**
-      * Allows for customizing the injection points around input validation.
-      * Used, for example, for on-the-side [[Logging]] of the decoding process.
+      * Allows for injecting custom logic into the decoding process.
+      * Used, for example, for on-the-side [[Logging]].
       */
-    def withValidationApplier(validationApplier: Receiver.Applier): this.type
+    def withWrapper(receiverWrapper: Receiver.Wrapper[Config]): this.type
 
     /**
       * Decodes an instance of [[T]] from the configured [[Input]] using the configured options.
@@ -75,12 +75,16 @@ object DecodingSetup {
     def valueAndIndexEither: Either[Borer.Error[Position[Input]], (T, Long)]
   }
 
-  private[borer] final class Impl[Input: InputAccess](target: Borer.Target, parser: Receiver.Parser[Input])
-      extends Borer.AbstractSetup with Api[Input] with Sealed[Input, AnyRef] {
+  private[borer] final class Impl[Input, Config <: Reader.Config](input: Input,
+                                                                  defaultConfig: Config,
+                                                                  defaultWrapper: Receiver.Wrapper[Config],
+                                                                  parserCreator: Receiver.ParserCreator[Input, Config],
+                                                                  target: Target)(implicit ia: InputAccess[Input])
+      extends Borer.AbstractSetup[Config](defaultConfig, defaultWrapper) with Api[Input, Config]
+      with Sealed[Input, AnyRef] {
 
     private[this] var startIndex: Long         = _
     private[this] var prefixOnly: Boolean      = _
-    private[this] var config: Reader.Config    = Reader.Config.default
     private[this] var decoder: Decoder[AnyRef] = _
 
     def withStartIndex(index: Long): this.type = {
@@ -90,11 +94,6 @@ object DecodingSetup {
 
     def withPrefixOnly: this.type = {
       this.prefixOnly = true
-      this
-    }
-
-    def withConfig(config: Reader.Config): this.type = {
-      this.config = config
       this
     }
 
@@ -108,9 +107,8 @@ object DecodingSetup {
       try {
         decodeFrom(reader)
       } catch {
-        case e: IndexOutOfBoundsException ⇒ throw new Borer.Error.UnexpectedEndOfInput(reader.position, e)
-        case e: Borer.Error[_]            ⇒ throw e.withPosOf(reader)
-        case NonFatal(e)                  ⇒ throw new Borer.Error.General(reader.position, e)
+        case e: Borer.Error[_] ⇒ throw e.withPosOf(reader)
+        case NonFatal(e)       ⇒ throw new Borer.Error.General(reader.position, e)
       }
     }
 
@@ -119,9 +117,8 @@ object DecodingSetup {
       try {
         Success(decodeFrom(reader))
       } catch {
-        case e: IndexOutOfBoundsException ⇒ Failure(new Borer.Error.UnexpectedEndOfInput(reader.position, e))
-        case e: Borer.Error[_]            ⇒ Failure(e.withPosOf(reader))
-        case NonFatal(e)                  ⇒ Failure(new Borer.Error.General(reader.position, e))
+        case e: Borer.Error[_] ⇒ Failure(e.withPosOf(reader))
+        case NonFatal(e)       ⇒ Failure(new Borer.Error.General(reader.position, e))
       }
     }
 
@@ -130,9 +127,8 @@ object DecodingSetup {
       try {
         Right(decodeFrom(reader))
       } catch {
-        case e: IndexOutOfBoundsException ⇒ Left(new Borer.Error.UnexpectedEndOfInput(reader.position, e))
-        case e: Borer.Error[_]            ⇒ Left(e.withPosOf(reader))
-        case NonFatal(e)                  ⇒ Left(new Borer.Error.General(reader.position, e))
+        case e: Borer.Error[_] ⇒ Left(e.withPosOf(reader))
+        case NonFatal(e)       ⇒ Left(new Borer.Error.General(reader.position, e))
       }
     }
 
@@ -141,9 +137,8 @@ object DecodingSetup {
       try {
         decodeFrom(reader) → reader.cursor
       } catch {
-        case e: IndexOutOfBoundsException ⇒ throw new Borer.Error.UnexpectedEndOfInput(reader.position, e)
-        case e: Borer.Error[_]            ⇒ throw e.withPosOf(reader)
-        case NonFatal(e)                  ⇒ throw new Borer.Error.General(reader.position, e)
+        case e: Borer.Error[_] ⇒ throw e.withPosOf(reader)
+        case NonFatal(e)       ⇒ throw new Borer.Error.General(reader.position, e)
       }
     }
 
@@ -152,9 +147,8 @@ object DecodingSetup {
       try {
         Success(decodeFrom(reader) → reader.cursor)
       } catch {
-        case e: IndexOutOfBoundsException ⇒ Failure(new Borer.Error.UnexpectedEndOfInput(reader.position, e))
-        case e: Borer.Error[_]            ⇒ Failure(e.withPosOf(reader))
-        case NonFatal(e)                  ⇒ Failure(new Borer.Error.General(reader.position, e))
+        case e: Borer.Error[_] ⇒ Failure(e.withPosOf(reader))
+        case NonFatal(e)       ⇒ Failure(new Borer.Error.General(reader.position, e))
       }
     }
 
@@ -163,14 +157,13 @@ object DecodingSetup {
       try {
         Right(decodeFrom(reader) → reader.cursor)
       } catch {
-        case e: IndexOutOfBoundsException ⇒ Left(new Borer.Error.UnexpectedEndOfInput(reader.position, e))
-        case e: Borer.Error[_]            ⇒ Left(e.withPosOf(reader))
-        case NonFatal(e)                  ⇒ Left(new Borer.Error.General(reader.position, e))
+        case e: Borer.Error[_] ⇒ Left(e.withPosOf(reader))
+        case NonFatal(e)       ⇒ Left(new Borer.Error.General(reader.position, e))
       }
     }
 
-    private def newReader(): InputReader[Input] =
-      new InputReader(startIndex, parser, validationApplier, config, target)
+    private def newReader(): InputReader[Input, Config] =
+      new InputReader(startIndex, parserCreator(input, config, ia), receiverWrapper, config, target)
 
     private def decodeFrom(reader: Reader): AnyRef = {
       reader.pull() // fetch first data item

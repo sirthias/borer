@@ -61,7 +61,7 @@ object JsonSpec extends BorerSpec {
     }
 
     "Floating Point Numbers" - {
-      intercept[Borer.Error.InvalidJsonData[_ <: AnyRef]](encode(Float16(0.0f)))
+      intercept[Borer.Error.Unsupported[_ <: AnyRef]](encode(Float16(0.0f)))
 
       roundTrip("0.0", 0.0f)
       roundTrip("0.0", 0.0)
@@ -100,25 +100,25 @@ object JsonSpec extends BorerSpec {
 
       roundTrip("-4.1", -4.1)
 
-      intercept[Borer.Error.InvalidJsonData[_ <: AnyRef]](encode(Double.NegativeInfinity))
-      intercept[Borer.Error.InvalidJsonData[_ <: AnyRef]](encode(Double.PositiveInfinity))
-      intercept[Borer.Error.InvalidJsonData[_ <: AnyRef]](encode(Double.NaN))
+      intercept[Borer.Error.Unsupported[_ <: AnyRef]](encode(Double.NegativeInfinity))
+      intercept[Borer.Error.Unsupported[_ <: AnyRef]](encode(Double.PositiveInfinity))
+      intercept[Borer.Error.Unsupported[_ <: AnyRef]](encode(Double.NaN))
     }
 
     "Simple Values" - {
       roundTrip("false", false)
       roundTrip("true", true)
       roundTrip("null", null)
-      intercept[Borer.Error.InvalidJsonData[_ <: AnyRef]](encode(Undefined))
-      intercept[Borer.Error.InvalidJsonData[_ <: AnyRef]](encode(SimpleValue(16)))
+      intercept[Borer.Error.Unsupported[_ <: AnyRef]](encode(Undefined))
+      intercept[Borer.Error.Unsupported[_ <: AnyRef]](encode(SimpleValue(16)))
     }
 
     "Tags, Byte Strings and Text Byte Strings" - {
-      intercept[Borer.Error.InvalidJsonData[_ <: AnyRef]](encode[Tag](Tag.MagicHeader))
-      intercept[Borer.Error.InvalidJsonData[_ <: AnyRef]](encode(Writer.Script(_.writeBytes(Array.emptyByteArray))))
-      intercept[Borer.Error.InvalidJsonData[_ <: AnyRef]](encode(Writer.Script(_.writeBytesStart())))
-      intercept[Borer.Error.InvalidJsonData[_ <: AnyRef]](encode(Writer.Script(_.writeText(Array.emptyByteArray))))
-      intercept[Borer.Error.InvalidJsonData[_ <: AnyRef]](encode(Writer.Script(_.writeTextStart())))
+      intercept[Borer.Error.Unsupported[_ <: AnyRef]](encode[Tag](Tag.MagicHeader))
+      intercept[Borer.Error.Unsupported[_ <: AnyRef]](encode(Writer.Script(_.writeBytes(Array.emptyByteArray))))
+      intercept[Borer.Error.Unsupported[_ <: AnyRef]](encode(Writer.Script(_.writeBytesStart())))
+      intercept[Borer.Error.Unsupported[_ <: AnyRef]](encode(Writer.Script(_.writeText(Array.emptyByteArray))))
+      intercept[Borer.Error.Unsupported[_ <: AnyRef]](encode(Writer.Script(_.writeTextStart())))
     }
 
     "Strings" - {
@@ -146,7 +146,7 @@ object JsonSpec extends BorerSpec {
     }
 
     "Arrays" - {
-      intercept[Borer.Error.InvalidJsonData[_ <: AnyRef]](encode(Writer.Script(_.writeArrayHeader(0))))
+      intercept[Borer.Error.Unsupported[_ <: AnyRef]](encode(Writer.Script(_.writeArrayHeader(0))))
       roundTrip("[]", List.empty[String])
       roundTrip("[1,2,3]", Array(1, 2, 3))
 
@@ -156,7 +156,7 @@ object JsonSpec extends BorerSpec {
 
     "Maps" - {
       roundTrip("{}", Map.empty[Int, String])
-      intercept[Borer.Error.UnexpectedDataItem[_ <: AnyRef]](encode(ListMap(1 → 2)))
+      intercept[Borer.Error.ValidationFailure[_ <: AnyRef]](encode(ListMap(1 → 2)))
       roundTrip("""{"":2,"foo":4}""", ListMap(""                   → 2, "foo"     → 4))
       roundTrip("""{"a":[[1],[]],"b":[[],[[2,3]]]}""", ListMap("a" → Left(1), "b" → Right(Vector(2, 3))))
       roundTrip("""[[[],["a"]],[[{"b":"c"}],[]]]""", Vector(Right("a"), Left(ListMap("b" → "c"))))

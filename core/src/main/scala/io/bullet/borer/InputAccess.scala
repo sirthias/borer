@@ -22,14 +22,8 @@ trait InputAccess[Input] {
   def length(input: Input): Long
 
   /**
-    * Returns the [[Input]] byte at the given index
-    * or throws an [[IndexOutOfBoundsException]].
-    */
-  def safeByte(input: Input, index: Long): Byte
-
-  /**
     * Returns the [[Input]] byte at the given index,
-    * potentially without any range checks.
+    * if possible without any range checks.
     */
   def unsafeByte(input: Input, index: Long): Byte
 

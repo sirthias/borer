@@ -101,8 +101,8 @@ object MiscSpec extends BorerSpec {
       val encoded = Cbor.encode(Writer.Script(_.writeArrayHeader(0))).toByteArray
       val error   = Cbor.decode(encoded).to[Foo].valueEither.left.get
       assertMatch(error) {
-        case e: Borer.Error.UnexpectedDataItem[_]
-            if e.expected == "Array Header (3)" && e.actual == "Array Header (0)" ⇒
+        case e: Borer.Error.InvalidInputData[_]
+            if e.getMessage == "Expected Array Header (3) but got Array Header (0) [input position 1]" ⇒
       }
     }
 
@@ -115,9 +115,9 @@ object MiscSpec extends BorerSpec {
         encode(Writer.Script(_.writeMapHeader(2).writeInt(1).writeInt(2).writeInt(3)))
       )
 
-      intercept[Borer.Error.UnexpectedDataItem[_]](
+      intercept[Borer.Error.InvalidInputData[_]](
         encode(Writer.Script(_.writeMapStart().writeInt(1).writeBreak()))
-      ).getMessage ==> "Unexpected data item: Expected [map entry value data item] but got [BREAK]"
+      ).getMessage ==> "Expected map entry value data item but got BREAK [Output.ToByteArray index 2]"
     }
   }
 }

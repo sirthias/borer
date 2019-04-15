@@ -9,7 +9,6 @@
 package io.bullet.borer
 
 import java.nio.charset.StandardCharsets
-
 import io.bullet.borer.internal.{Receptacle, Util}
 
 import scala.annotation.tailrec
@@ -20,23 +19,22 @@ import scala.util.control.NonFatal
 /**
   * Stateful, mutable abstraction for reading a stream of CBOR or JSON data from the given `input`.
   */
-final class InputReader[Input](startCursor: Long,
-                               parser: Receiver.Parser[Input],
-                               validationApplier: Receiver.Applier,
-                               val config: Reader.Config,
-                               val target: Borer.Target)(implicit inputAccess: InputAccess[Input]) {
+final class InputReader[Input, +Config <: Reader.Config](startCursor: Long,
+                                                         parser: Receiver.Parser[Input],
+                                                         receiverWrapper: Receiver.Wrapper[Config],
+                                                         val config: Config,
+                                                         val target: Target)(implicit inputAccess: InputAccess[Input]) {
 
   import io.bullet.borer.{DataItem ⇒ DI}
 
-  private[this] var _cursor: Long = startCursor
-  private[this] var receiver: Receiver =
-    validationApplier(Validation.creator(target, config.validation), new Receptacle)
+  private[this] var _cursor: Long          = startCursor
+  private[this] var receiver: Receiver     = receiverWrapper(new Receptacle, config)
   private[this] var receptacle: Receptacle = receiver.finalTarget.asInstanceOf[Receptacle]
 
   @inline def cursor: Long  = _cursor
   @inline def dataItem: Int = receptacle.dataItem
 
-  @inline def readingJson: Boolean = target eq Json
+  @inline def readingJson: Boolean = target eq null
   @inline def readingCbor: Boolean = target eq Cbor
 
   @inline def position: Position[Input] = Position(parser.input, cursor)
@@ -187,7 +185,7 @@ final class InputReader[Input](startCursor: Long,
       result
     } else unexpectedDataItem(expected = "Unbounded Bytes")
 
-  @inline def hasString: Boolean = hasAnyOf(DI.StringLike | DI.Text | DI.TextStart)
+  @inline def hasString: Boolean = hasAnyOf(DI.String | DI.Chars | DI.Text | DI.TextStart)
   def readString(): String =
     dataItem match {
       case DI.Chars     ⇒ pullReturn(new String(receptacle.charBufValue, 0, receptacle.intValue))
@@ -370,7 +368,7 @@ final class InputReader[Input](startCursor: Long,
   }
 
   @inline def unexpectedDataItem(expected: String, actual: String): Nothing =
-    throw new Borer.Error.UnexpectedDataItem(position, expected, actual)
+    throw new Borer.Error.InvalidInputData(position, expected, actual)
 
   @inline def saveState: Reader.SavedState = new Reader.SavedStateImpl(_cursor, receiver.copy)
 
@@ -387,19 +385,7 @@ final class InputReader[Input](startCursor: Long,
 
 object Reader {
 
-  /**
-    * Deserialization config settings
-    *
-    * @param validation               the validation settings to use or `None` if no validation should be performed
-    */
-  final case class Config(
-      validation: Option[Validation.Config] = Some(Validation.Config())
-  )
-
-  object Config {
-    val default                  = Config()
-    val defaultWithoutValidation = Config(validation = None)
-  }
+  trait Config {}
 
   sealed trait SavedState {
     def cursor: Long

@@ -16,12 +16,12 @@ import scala.util.control.NonFatal
 
 object EncodingSetup {
 
-  sealed trait Api[T] {
+  sealed trait Api[T, Config <: Writer.Config] {
 
     /**
-      * Configures the [[Writer.Config]] for this encoding run.
+      * Configures the [[Config]] for this encoding run.
       */
-    def withConfig(config: Writer.Config): this.type
+    def withConfig(config: Config): this.type
 
     /**
       * Enables logging of the encoding progress to the console.
@@ -39,10 +39,10 @@ object EncodingSetup {
                           lineSeparator: String = System.lineSeparator()): this.type
 
     /**
-      * Allows for customizing the injection points around input validation.
-      * Used, for example, for on-the-side [[Logging]] of the encoding process.
+      * Allows for injecting custom logic into the encoding process.
+      * Used, for example, for on-the-side [[Logging]].
       */
-    def withValidationApplier(validationApplier: Receiver.Applier): this.type
+    def withWrapper(receiverWrapper: Receiver.Wrapper[Config]): this.type
 
     /**
       * Short-cut for encoding to a plain byte array, throwing an exception in case of any failures.
@@ -75,7 +75,7 @@ object EncodingSetup {
     def outputEither: Either[Borer.Error[Out], Out]
   }
 
-  sealed trait JsonApi[T] extends Api[T] {
+  sealed trait JsonApi[T, Config <: Writer.Config] extends Api[T, Config] {
 
     /**
       * Short-cut for encoding to a plain byte array, throwing an exception in case of any failures,
@@ -84,18 +84,15 @@ object EncodingSetup {
     @inline def toUtf8String: String
   }
 
-  private[borer] final class Impl[T: Encoder](value: T,
-                                              target: Borer.Target,
-                                              rendererCreator: Output ⇒ Receiver.Renderer)
-      extends Borer.AbstractSetup with JsonApi[T] with Sealed[Output, AnyRef] {
+  private[borer] final class Impl[T: Encoder, Config <: Writer.Config](value: T,
+                                                                       target: Target,
+                                                                       defaultConfig: Config,
+                                                                       defaultWrapper: Receiver.Wrapper[Config],
+                                                                       rendererCreator: Output ⇒ Receiver.Renderer)
+      extends Borer.AbstractSetup[Config](defaultConfig, defaultWrapper) with JsonApi[T, Config]
+      with Sealed[Output, AnyRef] {
 
-    private[this] var config: Writer.Config     = Writer.Config.default
     private[this] var byteAccess: ByteAccess[_] = _
-
-    def withConfig(config: Writer.Config): this.type = {
-      this.config = config
-      this
-    }
 
     def toUtf8String: String = new String(toByteArray, UTF_8)
 
@@ -108,14 +105,22 @@ object EncodingSetup {
       this.asInstanceOf[Sealed[ba.Out, ba.Out#Result]]
     }
 
-    def bytes: AnyRef = render(rendererCreator(byteAccess.newOutput)).out.result()
+    def bytes: AnyRef = {
+      val renderer = rendererCreator(byteAccess.newOutput)
+      try {
+        render(renderer).out.result()
+      } catch {
+        case e: Borer.Error[_] ⇒ throw e.withOut(renderer.out)
+        case NonFatal(e)       ⇒ throw new Borer.Error.General(renderer.out, e)
+      }
+    }
 
     def bytesTry: Try[AnyRef] = {
       val renderer = rendererCreator(byteAccess.newOutput)
       try {
         Success(render(renderer).out.result())
       } catch {
-        case e: Borer.Error[_] ⇒ Failure(e)
+        case e: Borer.Error[_] ⇒ Failure(e.withOut(renderer.out))
         case NonFatal(e)       ⇒ Failure(new Borer.Error.General(renderer.out, e))
       }
     }
@@ -125,7 +130,7 @@ object EncodingSetup {
       try {
         Right(render(renderer).out.result())
       } catch {
-        case e: Borer.Error[_] ⇒ Left(e.asInstanceOf[Borer.Error[Output]])
+        case e: Borer.Error[_] ⇒ Left(e.withOut(renderer.out))
         case NonFatal(e)       ⇒ Left(new Borer.Error.General(renderer.out, e))
       }
     }
@@ -137,7 +142,7 @@ object EncodingSetup {
       try {
         Success(render(renderer).out)
       } catch {
-        case e: Borer.Error[_] ⇒ Failure(e)
+        case e: Borer.Error[_] ⇒ Failure(e.withOut(renderer.out))
         case NonFatal(e)       ⇒ Failure(new Borer.Error.General(renderer.out, e))
       }
     }
@@ -147,14 +152,13 @@ object EncodingSetup {
       try {
         Right(render(renderer).out)
       } catch {
-        case e: Borer.Error[_] ⇒ Left(e.asInstanceOf[Borer.Error[Output]])
+        case e: Borer.Error[_] ⇒ Left(e.withOut(renderer.out))
         case NonFatal(e)       ⇒ Left(new Borer.Error.General(renderer.out, e))
       }
     }
 
     private def render(renderer: Receiver.Renderer): Receiver.Renderer = {
-      val receiver = validationApplier(Validation.creator(target, config.validation), renderer)
-      val writer   = new Writer(receiver, config, target)
+      val writer = new Writer(receiverWrapper(renderer, config), target, config)
       writer
         .write(value)
         .writeEndOfInput() // doesn't actually write anything but triggers certain validation checks (if configured)
