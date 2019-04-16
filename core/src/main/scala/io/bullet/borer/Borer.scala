@@ -136,8 +136,15 @@ case object Json extends Target {
   }
 
   final case class DecodingConfig(
-      maxStringLength: Int = 1024 * 1024
-  ) extends Borer.DecodingConfig with JsonParser.Config
+      maxStringLength: Int = 1024 * 1024,
+      maxNumberExponentDigits: Int = 3
+  ) extends Borer.DecodingConfig with JsonParser.Config {
+
+    Util.requirePositive(maxStringLength, "maxStringLength")
+    if (maxNumberExponentDigits < 0 || maxNumberExponentDigits > 9)
+      throw new IllegalArgumentException(
+        s"$maxNumberExponentDigits must be in the range [0..9], but was $maxNumberExponentDigits")
+  }
 
   object DecodingConfig {
     val default = DecodingConfig()
@@ -217,6 +224,6 @@ object Borer {
 
     final class Overflow[IO <: AnyRef](io: IO, msg: String) extends Error[IO](io, msg)
 
-    final class General[IO <: AnyRef](io: IO, cause: Throwable) extends Error[IO](io, s"[$cause] at $io", cause)
+    final class General[IO <: AnyRef](io: IO, cause: Throwable) extends Error[IO](io, cause.toString, cause)
   }
 }

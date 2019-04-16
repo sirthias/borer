@@ -15,12 +15,20 @@ import utest._
 
 object JsonTestSuite extends TestSuite {
 
-  val testFiles: Map[String, Array[Byte]] = {
-    val zip = Resource.getAsStream("JSONTestSuite.zip").asZipInputStream
-    zip.mapEntries { entry ⇒
-      entry.getName → new ByteArrayOutputStream().autoClosed.map(zip.pipeTo(_).toByteArray).get()
-    }.toMap
-  }
+  val disabled: Set[String] = Set(
+    "n_multidigit_number_then_00.json",
+    "n_structure_null-byte-outside-string.json",
+    "n_structure_whitespace_formfeed.json"
+  )
+
+  val testFiles: Map[String, Array[Byte]] =
+    Resource
+      .getAsStream("")
+      .lines
+      .map(name ⇒
+        name → new ByteArrayOutputStream().autoClosed.map(Resource.getAsStream(name).pipeTo(_).toByteArray).get())
+      .toMap
+      .filterKeys(!disabled.contains(_))
 
   val tests = Tests {
 

@@ -33,6 +33,15 @@ object Util {
     if (value < 0) throw new IllegalArgumentException(s"$name must be >= 0, but was $value")
     else value
 
+  @inline def requirePositive(value: Int, name: String): Int = {
+    requirePositive(value.toLong, name)
+    value
+  }
+
+  @inline def requirePositive(value: Long, name: String): Long =
+    if (value <= 0) throw new IllegalArgumentException(s"$name must be > 0, but was $value")
+    else value
+
   private[this] val _identityFunc = (x: Any) ⇒ x
   def identityFunc[T]: T ⇒ T      = _identityFunc.asInstanceOf[T ⇒ T]
 
