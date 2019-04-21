@@ -46,16 +46,16 @@ final class Writer(receiver: Receiver, val target: Target, config: Writer.Config
   def writeFloat16(value: Float): this.type                    = { receiver.onFloat16(value); this }
 
   def writeFloat(value: Float): this.type = {
-    if (config.dontCompressFloatingPointValues || !Util.canBeRepresentedAsFloat16(value)) {
-      receiver.onFloat(value)
-    } else receiver.onFloat16(value)
+    if (config.compressFloatingPointValues && Util.canBeRepresentedAsFloat16(value)) {
+      receiver.onFloat16(value)
+    } else receiver.onFloat(value)
     this
   }
 
   def writeDouble(value: Double): this.type = {
-    if (config.dontCompressFloatingPointValues || !Util.canBeRepresentedAsFloat(value)) {
-      receiver.onDouble(value)
-    } else writeFloat(value.toFloat)
+    if (config.compressFloatingPointValues && Util.canBeRepresentedAsFloat(value)) {
+      writeFloat(value.toFloat)
+    } else receiver.onDouble(value)
     this
   }
 
@@ -160,7 +160,7 @@ final class Writer(receiver: Receiver, val target: Target, config: Writer.Config
 object Writer {
 
   trait Config {
-    def dontCompressFloatingPointValues: Boolean
+    def compressFloatingPointValues: Boolean
   }
 
   /**

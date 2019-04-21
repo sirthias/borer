@@ -55,21 +55,25 @@ case object Cbor extends Target {
     new InputReader(startIndex, new CborParser(input, config), receiverWrapper, config, this)
 
   /**
-    * @param dontCompressFloatingPointValues set to true in order to always write floats as 32-bit values and doubles
+    * @param compressFloatingPointValues set to false in order to always write floats as 32-bit values and doubles
     *                                        as 64-bit values, even if they could safely be represented with fewer bits
     */
-  final case class EncodingConfig(
-      dontCompressFloatingPointValues: Boolean = false,
-      maxArrayLength: Long = Int.MaxValue,
-      maxMapLength: Long = Int.MaxValue,
-      maxNestingLevels: Int = 1000
-  ) extends Borer.EncodingConfig with CborValidation.Config
+  final case class EncodingConfig(compressFloatingPointValues: Boolean = true,
+                                  maxArrayLength: Long = Int.MaxValue,
+                                  maxMapLength: Long = Int.MaxValue,
+                                  maxNestingLevels: Int = 1000)
+      extends Borer.EncodingConfig with CborValidation.Config
 
   object EncodingConfig {
     val default = EncodingConfig()
   }
 
-  final case class DecodingConfig(maxTextStringLength: Int = 1024 * 1024,
+  /**
+    * @param autoConvertLongToFloat set to false to disable automatic conversion of integer to floating point
+    *                                        values
+    */
+  final case class DecodingConfig(autoConvertLongToFloat: Boolean = true,
+                                  maxTextStringLength: Int = 1024 * 1024,
                                   maxByteStringLength: Int = 10 * 1024 * 1024,
                                   maxArrayLength: Long = Int.MaxValue,
                                   maxMapLength: Long = Int.MaxValue,
@@ -128,17 +132,21 @@ case object Json extends Target {
     new InputReader(startIndex, new JsonParser(input, config), receiverWrapper, config, null)
 
   final case class EncodingConfig() extends Borer.EncodingConfig {
-    def dontCompressFloatingPointValues = true
+    def compressFloatingPointValues = false
   }
 
   object EncodingConfig {
     val default = EncodingConfig()
   }
 
-  final case class DecodingConfig(
-      maxStringLength: Int = 1024 * 1024,
-      maxNumberExponentDigits: Int = 3
-  ) extends Borer.DecodingConfig with JsonParser.Config {
+  /**
+    * @param autoConvertLongToFloat set to false to disable automatic conversion of integer to floating point
+    *                                        values
+    */
+  final case class DecodingConfig(autoConvertLongToFloat: Boolean = true,
+                                  maxStringLength: Int = 1024 * 1024,
+                                  maxNumberExponentDigits: Int = 3)
+      extends Borer.DecodingConfig with JsonParser.Config {
 
     Util.requirePositive(maxStringLength, "maxStringLength")
     if (maxNumberExponentDigits < 0 || maxNumberExponentDigits > 9)
@@ -156,11 +164,8 @@ case object Json extends Target {
   */
 object Borer {
 
-  sealed abstract class EncodingConfig extends Writer.Config {
-    def dontCompressFloatingPointValues: Boolean
-  }
-
-  sealed abstract class DecodingConfig extends Reader.Config {}
+  sealed abstract class EncodingConfig extends Writer.Config
+  sealed abstract class DecodingConfig extends Reader.Config
 
   private[borer] abstract class AbstractSetup[Config](defaultConfig: Config, defaultWrapper: Receiver.Wrapper[Config]) {
     protected var config: Config                            = defaultConfig

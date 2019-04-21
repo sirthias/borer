@@ -168,6 +168,8 @@ object JsonSpec extends BorerSpec {
 
       verifyDecoding("1.000000000000000", Dom.FloatElem(1.0f))
       verifyDecoding("1.0000000000000000", Dom.NumberStringElem("1.0000000000000000"))
+
+      verifyDecoding("1", 1.0f)
     }
 
     "Simple Values" - {
