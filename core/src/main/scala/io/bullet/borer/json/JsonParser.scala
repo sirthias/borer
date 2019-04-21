@@ -624,33 +624,26 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
   @inline private def toToken(c: Long): Byte = InputAccess.ForByteArray.unsafeByte(TokenTable, c)
 
   private def getSafeOctaBigEndian(ix: Long): Long = {
-    def partialOcta = {
-      val diff = inputLen - ix // [0..7]
-      var res  = -1L
-      if (diff > 0) {
-        res = getInputByteUnsafe(ix) & 0xFFL
-        if (diff > 1) {
-          res = (res << 8) | (getInputByteUnsafe(ix + 1) & 0xFFL)
-          if (diff > 2) {
-            res = (res << 8) | (getInputByteUnsafe(ix + 2) & 0xFFL)
-            if (diff > 3) {
-              res = (res << 8) | (getInputByteUnsafe(ix + 3) & 0xFFL)
-              if (diff > 4) {
-                res = (res << 8) | (getInputByteUnsafe(ix + 4) & 0xFFL)
-                if (diff > 5) {
-                  res = (res << 8) | (getInputByteUnsafe(ix + 5) & 0xFFL)
-                  if (diff > 6) {
-                    res = (res << 8) | (getInputByteUnsafe(ix + 6) & 0xFFL)
-                    res = (res << 8) | 0xFFL
-                  } else res = (res << 16) | 0xFFFFL
-                } else res = (res << 24) | 0xFFFFFFL
-              } else res = (res << 32) | 0xFFFFFFFFL
-            } else res = (res << 40) | 0xFFFFFFFFFFL
-          } else res = (res << 48) | 0xFFFFFFFFFFFFL
-        } else res = (res << 56) | 0xFFFFFFFFFFFFFFL
+    def partialOcta: Long =
+      inputLen - ix match {
+        case 0 ⇒ -1L // == EOI
+        case 1 ⇒ (ia.unsafeByte(input, ix).toLong << 56) | 0xFFFFFFFFFFFFFFL
+        case 2 ⇒ (ia.doubleByteBigEndian(input, ix).toLong << 48) | 0xFFFFFFFFFFFFL
+        case 3 ⇒
+          (ia.doubleByteBigEndian(input, ix).toLong << 48) |
+            (ia.unsafeByte(input, ix + 2).toLong << 40) | 0xFFFFFFFFFFL
+        case 4 ⇒ (ia.quadByteBigEndian(input, ix).toLong << 32) | 0xFFFFFFFFL
+        case 5 ⇒
+          (ia.quadByteBigEndian(input, ix).toLong << 32) |
+            (ia.unsafeByte(input, ix + 4).toLong << 24) | 0xFFFFFFL
+        case 6 ⇒
+          (ia.quadByteBigEndian(input, ix).toLong << 32) |
+            (ia.doubleByteBigEndian(input, ix + 4).toLong << 16) | 0xFFFFL
+        case 7 ⇒
+          (ia.quadByteBigEndian(input, ix).toLong << 32) |
+            (ia.doubleByteBigEndian(input, ix + 4).toLong << 16) |
+            (ia.unsafeByte(input, ix + 6).toLong << 8) | 0xFFL
       }
-      res
-    }
     if (ix <= inputLenMinus8) ia.octaByteBigEndian(input, ix)
     else partialOcta
   }
