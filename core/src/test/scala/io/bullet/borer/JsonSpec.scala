@@ -205,6 +205,10 @@ object JsonSpec extends BorerSpec {
       roundTrip("\"árvíztűrő ütvefúrógép\"", "árvíztűrő ütvefúrógép")
       roundTrip("\"飞机因此受到损伤\"", "飞机因此受到损伤")
 
+      intercept[Borer.Error.InvalidInputData[_ <: AnyRef]] {
+        Json.decode(hexBytes("22dd1dd83422")).to[String].value ==> "xxx"
+      }.getMessage ==> "Illegal UTF-8 character encoding [input position 1]"
+
       val strings = ('a' to 'z').mkString.inits.toList.init
       val all = for {
         escapes ← "abdgkpv".inits.toList.init
