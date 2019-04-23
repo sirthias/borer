@@ -145,9 +145,9 @@ case object Json extends Target {
     *                                        values
     */
   final case class DecodingConfig(readIntegersAlsoAsFloatingPoint: Boolean = true,
-                                  maxNumberAbsExponent: Int = 30,
+                                  maxNumberAbsExponent: Int = 64,
                                   maxStringLength: Int = 1024 * 1024,
-                                  maxNumberMantissaDigits: Int = 20,
+                                  maxNumberMantissaDigits: Int = 32,
                                   maxNumberExponentDigits: Int = 3)
       extends Borer.DecodingConfig with JsonParser.Config {
 

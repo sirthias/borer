@@ -79,46 +79,74 @@ object Decoder extends LowPrioDecoders {
   implicit def forBoxedFloat: Decoder[JFloat]     = forFloat.asInstanceOf[Decoder[JFloat]]
   implicit def forBoxedDouble: Decoder[JDouble]   = forDouble.asInstanceOf[Decoder[JDouble]]
 
-  implicit val forJBigInteger: Decoder[JBigInteger] =
+  def forJBigInteger(maxCborByteArraySize: Int = 64, maxJsonNumberStringLength: Int = 64): Decoder[JBigInteger] =
     Decoder { r ⇒
-      def fromByteArray() = new JBigInteger(1, r.readByteArray())
+      def fromByteArray() = {
+        val byteArray = r.readByteArray()
+        if (byteArray.length > maxCborByteArraySize) {
+          r.overflow(
+            "ByteArray for decoding JBigInteger is longer than the configured max of " + maxCborByteArraySize + " bytes")
+        } else new JBigInteger(1, byteArray)
+      }
       r.dataItem match {
         case DI.Int | DI.Long ⇒ JBigInteger.valueOf(r.readLong())
         case DI.OverLong ⇒
           def value = new JBigInteger(1, Util.toBigEndianBytes(r.readOverLong()))
           if (r.overLongNegative) value.not else value
-        case DI.NumberString                       ⇒ new JBigInteger(r.readNumberString())
+        case DI.NumberString ⇒
+          val numberString = r.readNumberString()
+          if (numberString.length > maxJsonNumberStringLength) {
+            r.overflow(
+              "NumberString for decoding JBigInteger is longer than the configured max of " + maxJsonNumberStringLength + " characters")
+          } else new JBigInteger(numberString)
         case _ if r.tryReadTag(Tag.PositiveBigNum) ⇒ fromByteArray()
         case _ if r.tryReadTag(Tag.NegativeBigNum) ⇒ fromByteArray().not
         case _                                     ⇒ r.unexpectedDataItem(expected = "BigInteger")
       }
     }
 
-  implicit val forBigInteger: Decoder[BigInt] = forJBigInteger.map(BigInt(_))
+  implicit val _forJBigInteger: Decoder[JBigInteger] = forJBigInteger()
 
-  implicit val forJBigDecimal: Decoder[JBigDecimal] =
+  implicit val forBigInteger: Decoder[BigInt] = _forJBigInteger.map(BigInt(_))
+
+  implicit def forJBigDecimal(maxCborBigIntMantissaByteArraySize: Int = 64,
+                              maxCborAbsExponent: Int = 999,
+                              maxJsonNumberStringLength: Int = 64): Decoder[JBigDecimal] = {
+    val bigIntMantissaDecoder = forJBigInteger(maxCborByteArraySize = maxCborBigIntMantissaByteArraySize)
     Decoder { r ⇒
-      def fromBigInteger() = new JBigDecimal(forJBigInteger.read(r))
+      def fromBigInteger() = new JBigDecimal(_forJBigInteger.read(r))
       r.dataItem match {
-        case DI.Int | DI.Long | DI.OverLong                                   ⇒ fromBigInteger()
-        case DI.Double                                                        ⇒ JBigDecimal.valueOf(r.readDouble())
-        case DI.NumberString                                                  ⇒ new JBigDecimal(r.readNumberString())
+        case DI.Int | DI.Long | DI.OverLong ⇒ fromBigInteger()
+        case DI.Double                      ⇒ JBigDecimal.valueOf(r.readDouble())
+        case DI.NumberString ⇒
+          val numberString = r.readNumberString()
+          if (numberString.length > maxJsonNumberStringLength) {
+            r.overflow(
+              "NumberString for decoding JBigDecimal is longer than the configured max of " + maxJsonNumberStringLength + " characters")
+          } else new JBigDecimal(numberString)
         case _ if r.hasTag(Tag.PositiveBigNum) | r.hasTag(Tag.NegativeBigNum) ⇒ fromBigInteger()
         case _ if r.tryReadTag(Tag.DecimalFraction) ⇒
           if (r.hasArrayHeader) {
             val len = r.readArrayHeader()
             if (len == 2) {
               if (r.hasInt) {
-                val exp      = r.readInt()
-                val mantissa = forJBigInteger.read(r)
-                new JBigDecimal(mantissa, exp)
+                val exp = r.readInt()
+                if (math.abs(exp) <= maxCborAbsExponent) {
+                  val mantissa = bigIntMantissaDecoder.read(r)
+                  new JBigDecimal(mantissa, exp)
+                } else
+                  r.overflow(
+                    s"Absolute value of JBigDecimal exponent $exp is > the configured max of " + maxCborAbsExponent)
               } else r.unexpectedDataItem(expected = "BigDecimal exponent as Int")
             } else r.unexpectedDataItem("Array of length 2 for decoding a `BigDecimal`", s"Array of length $len")
           } else r.unexpectedDataItem(expected = "BigDecimal")
       }
     }
+  }
 
-  implicit val forBigDecimal: Decoder[BigDecimal] = forJBigDecimal.map(BigDecimal(_))
+  implicit val _forJBigDecimal: Decoder[JBigDecimal] = forJBigDecimal()
+
+  implicit val forBigDecimal: Decoder[BigDecimal] = _forJBigDecimal.map(BigDecimal(_))
 
   implicit def forOption[T: Decoder]: Decoder[Option[T]] =
     Decoder { r ⇒
