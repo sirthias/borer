@@ -109,10 +109,10 @@ lazy val macroParadise =
 
 /////////////////////// DEPENDENCIES /////////////////////////
 
-val `akka-actor`    = "com.typesafe.akka"     %% "akka-actor"   % "2.5.21"
+val `akka-actor`    = "com.typesafe.akka"     %% "akka-actor"   % "2.5.22"
 val magnolia        = "com.propensive"        %% "magnolia"     % "0.10.0"
-val `scodec-bits`   = "org.scodec"            %% "scodec-bits"  % "1.1.9"
-val utest           = "com.lihaoyi"           %% "utest"        % "0.6.6" % "test"
+val `scodec-bits`   = "org.scodec"            %% "scodec-bits"  % "1.1.10"
+val utest           = "com.lihaoyi"           %% "utest"        % "0.6.7" % "test"
 val `better-files`  = "com.github.pathikrit"  %% "better-files" % "3.7.1" % "test"
 val `scala-reflect` = "org.scala-lang"        %  "scala-reflect"
 
@@ -211,7 +211,7 @@ lazy val benchmarks = project
     publishArtifact := false,
     libraryDependencies ++= Seq(
       "com.fasterxml.jackson.module"  %% "jackson-module-scala" % "2.9.8",
-      "com.lihaoyi"                   %% "upickle"              % "0.7.1",
+      "com.lihaoyi"                   %% "upickle"              % "0.7.4",
       "io.circe"                      %% "circe-core"           % "0.11.1",
       "io.circe"                      %% "circe-derivation"     % "0.11.0-M1",
       "io.circe"                      %% "circe-jawn"           % "0.11.1",
