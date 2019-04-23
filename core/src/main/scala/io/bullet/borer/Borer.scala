@@ -102,7 +102,7 @@ case object Json extends Target {
     * Entry point into the JSON encoding mini-DSL.
     */
   def encode[T: Encoder](value: T): EncodingSetup.JsonApi[T, EncodingConfig] =
-    new EncodingSetup.Impl(value, null, EncodingConfig.default, Receiver.nopWrapper, JsonRenderer)
+    new EncodingSetup.Impl(value, Json, EncodingConfig.default, Receiver.nopWrapper, JsonRenderer)
 
   /**
     * Entry point into the JSON decoding mini-DSL.
@@ -130,7 +130,7 @@ case object Json extends Target {
                                  startIndex: Long = 0,
                                  config: DecodingConfig = DecodingConfig.default,
                                  receiverWrapper: Receiver.Wrapper[DecodingConfig] = Receiver.nopWrapper): Reader =
-    new InputReader(startIndex, new JsonParser(input, config), receiverWrapper, config, null)
+    new InputReader(startIndex, new JsonParser(input, config), receiverWrapper, config, Json)
 
   final case class EncodingConfig() extends Borer.EncodingConfig {
     def compressFloatingPointValues = false

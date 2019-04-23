@@ -18,7 +18,7 @@ import scala.collection.LinearSeq
   */
 final class Writer(receiver: Receiver, val target: Target, config: Writer.Config) {
 
-  @inline def writingJson: Boolean = target eq null
+  @inline def writingJson: Boolean = target eq Json
   @inline def writingCbor: Boolean = target eq Cbor
 
   @inline def ~(value: Boolean): this.type = writeBool(value)

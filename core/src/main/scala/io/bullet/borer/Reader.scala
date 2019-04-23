@@ -34,7 +34,7 @@ final class InputReader[Input, +Config <: Reader.Config](startCursor: Long,
   @inline def cursor: Long  = _cursor
   @inline def dataItem: Int = receptacle.dataItem
 
-  @inline def readingJson: Boolean = target eq null
+  @inline def readingJson: Boolean = target eq Json
   @inline def readingCbor: Boolean = target eq Cbor
 
   @inline def position: Position[Input] = Position(parser.input, cursor)
