@@ -285,5 +285,10 @@ object JsonSpec extends BorerSpec {
 
       roundTrip("42", Qux(42))
     }
+
+    "Error Position" - {
+      intercept[Borer.Error.InvalidInputData[_ <: AnyRef]](decode[List[Int]]("[12,,42]")).getMessage ==>
+      "Expected JSON value but got ',' [input position 4]"
+    }
   }
 }
