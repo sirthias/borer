@@ -389,15 +389,14 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
           case 'r'                    ⇒ '\r'
           case 't'                    ⇒ '\t'
           case 'u' ⇒
-            if (ix < inputLen - 4) {
-              val q                       = ia.quadByteBigEndian(input, i)
-              @inline def hd(c: Int): Int = InputAccess.ForByteArray.unsafeByte(HexDigits, c.toLong).toInt
-              val x                       = (hd(q >>> 24) << 12) | (hd((q << 8) >>> 24) << 8) | (hd((q << 16) >>> 24) << 4) | hd(q & 0xFF)
-              if (x >= 0) {
-                i = ix + 5
-                x.toChar
-              } else failIllegalEscapeSeq(i)
-            } else failIllegalEscapeSeq(ix)
+            if (ix >= inputLen - 4) failIllegalEscapeSeq(ix)
+            val q                       = ia.quadByteBigEndian(input, i)
+            @inline def hd(c: Int): Int = InputAccess.ForByteArray.unsafeByte(HexDigits, c.toLong).toInt
+
+            val x = (hd(q >>> 24) << 12) | (hd((q << 8) >>> 24) << 8) | (hd((q << 16) >>> 24) << 4) | hd(q & 0xFF)
+            if (x < 0) failIllegalEscapeSeq(i)
+            i = ix + 5
+            x.toChar
           case _ ⇒ failIllegalEscapeSeq(ix)
         }
       auxInt = appendChar(charCursor, c)

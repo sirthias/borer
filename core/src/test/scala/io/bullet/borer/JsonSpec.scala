@@ -71,8 +71,6 @@ object JsonSpec extends BorerSpec {
       roundTrip("0.0", 0.0f)
       roundTrip("0.0", 0.0)
 
-      roundTrip("1.1999999", 1.1999999f)
-
       roundTrip("1.5", 1.5f)
       roundTrip("1.5", 1.5)
 
@@ -83,6 +81,8 @@ object JsonSpec extends BorerSpec {
       roundTrip("100000.0", 100000.0)
 
       if (Util.isJVM) {
+        roundTrip("1.1999999", 1.1999999f)
+
         roundTrip("3.4028234663852886E38", 3.4028234663852886e+38)
 
         roundTrip("1.0E300", 1.0e+300)
