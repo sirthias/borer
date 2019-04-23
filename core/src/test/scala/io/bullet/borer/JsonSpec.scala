@@ -21,7 +21,12 @@ object JsonSpec extends BorerSpec {
 
   override def encode[T: Encoder](value: T): String = Json.encode(value).toUtf8String
 
-  override def decode[T: Decoder](encoded: String): T = Json.decode(encoded getBytes UTF_8).to[T].value
+  override def decode[T: Decoder](encoded: String): T =
+    Json
+      .decode(encoded getBytes UTF_8)
+      .withConfig(Json.DecodingConfig.default.copy(maxNumberAbsExponent = 300))
+      .to[T]
+      .value
 
   val tests = Tests {
 
@@ -94,6 +99,11 @@ object JsonSpec extends BorerSpec {
       intercept[Borer.Error.Unsupported[_ <: AnyRef]](encode(Double.NegativeInfinity))
       intercept[Borer.Error.Unsupported[_ <: AnyRef]](encode(Double.PositiveInfinity))
       intercept[Borer.Error.Unsupported[_ <: AnyRef]](encode(Double.NaN))
+
+      intercept[Borer.Error.Overflow[_ <: AnyRef]](decode[Long]("1234567890123456789012345678901234567890"))
+      intercept[Borer.Error.Overflow[_ <: AnyRef]](decode[Long]("12345.67890123456789012345678901234567890"))
+      intercept[Borer.Error.Overflow[_ <: AnyRef]](decode[Long]("1E400"))
+      intercept[Borer.Error.Overflow[_ <: AnyRef]](decode[Long]("1E400"))
     }
 
     "General Number Parsing" - {
