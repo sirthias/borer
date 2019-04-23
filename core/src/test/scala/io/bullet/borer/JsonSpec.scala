@@ -210,6 +210,10 @@ object JsonSpec extends BorerSpec {
 
       roundTrip("[1,[2,3],[4,5]]", (1, Vector(2, 3), List(4, 5)))
       roundTrip("[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]", 1 to 25: Iterable[Int])
+
+      roundTrip("[9223372036854775807,-9223372036854775808]", Array(Long.MaxValue, Long.MinValue))
+      roundTrip("[3326704554664441231]", Array(BigInt("3326704554664441231")))
+      roundTrip("[3326704554664441231]", Array(BigDecimal("3326704554664441231")))
     }
 
     "Maps" - {
