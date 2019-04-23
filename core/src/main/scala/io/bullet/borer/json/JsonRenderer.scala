@@ -96,7 +96,13 @@ private[borer] final class JsonRenderer(var out: Output) extends Receiver.Render
     failUnsupported(out, "Float16 values")
 
   def onFloat(value: Float): Unit =
-    onDouble(value.toDouble)
+    if (isNotMapKey) {
+      if (!value.isNaN) {
+        if (!value.isInfinity) {
+          out = count(sep(out).writeStringAsAsciiBytes(Util.floatToString(value)))
+        } else failUnsupported(out, "`Infinity` floating point values")
+      } else failUnsupported(out, "`NaN` floating point values")
+    } else failCannotBeMapKey("floating point values")
 
   def onDouble(value: Double): Unit =
     if (isNotMapKey) {

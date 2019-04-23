@@ -17,8 +17,12 @@ object Util {
   val isJVM = !isJS
 
   // "platform-independent" toString for Doubles, appends a ".0" suffix on JS, if required
-  def doubleToString(value: Double): String = {
-    val s = java.lang.Double.toString(value)
+  def floatToString(value: Float): String = fixFloatingPointNumbersOnJS(java.lang.Float.toString(value))
+
+  // "platform-independent" toString for Doubles, appends a ".0" suffix on JS, if required
+  def doubleToString(value: Double): String = fixFloatingPointNumbersOnJS(java.lang.Double.toString(value))
+
+  private def fixFloatingPointNumbersOnJS(s: String): String = {
     // check, whether the string consists only of digits (except for the first char, which might be a minus sign)
     @tailrec def onlyDigits(ix: Int): Boolean = ix <= 0 || { val c = s(ix); '0' <= c && c <= '9' && onlyDigits(ix - 1) }
     if (isJS && onlyDigits(s.length - 1)) s + ".0" else s
