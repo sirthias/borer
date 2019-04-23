@@ -66,15 +66,7 @@ object JsonSpec extends BorerSpec {
       roundTrip("0.0", 0.0f)
       roundTrip("0.0", 0.0)
 
-      if (Util.isJVM) {
-        roundTrip("-0.0", -0.0f)
-        roundTrip("-0.0", -0.0)
-      }
-
-      roundTrip("1.0", 1.0f)
-      roundTrip("1.0", 1.0)
-
-      roundTrip("1.1", 1.1)
+      roundTrip("1.1999999", 1.1999999f)
 
       roundTrip("1.5", 1.5f)
       roundTrip("1.5", 1.5)
@@ -86,12 +78,11 @@ object JsonSpec extends BorerSpec {
       roundTrip("100000.0", 100000.0)
 
       if (Util.isJVM) {
-        roundTrip("3.4028234663852886E38", 3.4028234663852886e+38f)
         roundTrip("3.4028234663852886E38", 3.4028234663852886e+38)
 
         roundTrip("1.0E300", 1.0e+300)
 
-        roundTrip("6.103515625E-5", 0.00006103515625f)
+        roundTrip("6.1035156E-5", 0.000061035156f)
         roundTrip("6.103515625E-5", 0.00006103515625)
       }
 
@@ -107,7 +98,7 @@ object JsonSpec extends BorerSpec {
 
     "General Number Parsing" - {
       verifyDecoding("0", Dom.IntElem(0))
-      verifyDecoding("0.0", Dom.FloatElem(0))
+      verifyDecoding("0.0", Dom.DoubleElem(0))
 
       verifyDecoding("1234567890123456789012", Dom.NumberStringElem("1234567890123456789012"))
       verifyDecoding("123456789012345678901", Dom.NumberStringElem("123456789012345678901"))
@@ -166,7 +157,7 @@ object JsonSpec extends BorerSpec {
       verifyDecoding("123456789012345E-23", Dom.NumberStringElem("123456789012345E-23"))
       verifyDecoding("123456789012345E-24", Dom.NumberStringElem("123456789012345E-24"))
 
-      verifyDecoding("1.000000000000000", Dom.FloatElem(1.0f))
+      verifyDecoding("1.000000000000000", Dom.DoubleElem(1.0f))
       verifyDecoding("1.0000000000000000", Dom.NumberStringElem("1.0000000000000000"))
 
       verifyDecoding("1", 1.0f)

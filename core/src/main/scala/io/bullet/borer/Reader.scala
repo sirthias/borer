@@ -129,27 +129,31 @@ final class InputReader[Input, +Config <: Reader.Config](startCursor: Long,
     } else unexpectedDataItem(expected = "Float16")
 
   @inline def hasFloat: Boolean =
-    hasAnyOf(DI.Float16 | DI.Float | DI.NumberString) || config.autoConvertLongToFloat && hasLong
+    hasAnyOf(DI.Float16 | DI.Float | DI.NumberString) ||
+      config.readIntegersAlsoAsFloatingPoint && hasLong ||
+      config.readDoubleAlsoAsFloat && hasDouble
   def readFloat(): Float = {
     val result =
-      if (hasFloat) {
-        if (hasNumberString) java.lang.Float.parseFloat(receptacle.stringValue)
-        else if (hasLong) readLong().toFloat
-        else receptacle.floatValue
-      } else unexpectedDataItem(expected = "Float")
+      dataItem match {
+        case DI.Float16 | DI.Float                                      ⇒ receptacle.floatValue
+        case DI.Double if config.readDoubleAlsoAsFloat                  ⇒ receptacle.doubleValue.toFloat
+        case DI.Int | DI.Long if config.readIntegersAlsoAsFloatingPoint ⇒ readLong().toFloat
+        case DI.NumberString                                            ⇒ java.lang.Float.parseFloat(receptacle.stringValue)
+        case _                                                          ⇒ unexpectedDataItem(expected = "Float")
+      }
     pull()
     result
   }
 
   @inline def hasDouble: Boolean =
-    hasAnyOf(DI.Float16 | DI.Float | DI.Double | DI.NumberString) || config.autoConvertLongToFloat && hasLong
+    hasAnyOf(DI.Float16 | DI.Float | DI.Double | DI.NumberString) || config.readIntegersAlsoAsFloatingPoint && hasLong
   def readDouble(): Double = {
     val result = dataItem match {
-      case DI.Float16 | DI.Float                    ⇒ receptacle.floatValue.toDouble
-      case DI.Double                                ⇒ receptacle.doubleValue
-      case DI.Long if config.autoConvertLongToFloat ⇒ readLong().toDouble
-      case DI.NumberString                          ⇒ java.lang.Double.parseDouble(receptacle.stringValue)
-      case _                                        ⇒ unexpectedDataItem(expected = "Double")
+      case DI.Double                                                  ⇒ receptacle.doubleValue
+      case DI.Float16 | DI.Float                                      ⇒ receptacle.floatValue.toDouble
+      case DI.Int | DI.Long if config.readIntegersAlsoAsFloatingPoint ⇒ readLong().toDouble
+      case DI.NumberString                                            ⇒ java.lang.Double.parseDouble(receptacle.stringValue)
+      case _                                                          ⇒ unexpectedDataItem(expected = "Double")
     }
     pull()
     result
@@ -390,7 +394,8 @@ final class InputReader[Input, +Config <: Reader.Config](startCursor: Long,
 object Reader {
 
   trait Config {
-    def autoConvertLongToFloat: Boolean
+    def readIntegersAlsoAsFloatingPoint: Boolean
+    def readDoubleAlsoAsFloat: Boolean
   }
 
   sealed trait SavedState {

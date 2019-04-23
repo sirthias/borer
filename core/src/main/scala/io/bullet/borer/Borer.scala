@@ -69,10 +69,11 @@ case object Cbor extends Target {
   }
 
   /**
-    * @param autoConvertLongToFloat set to false to disable automatic conversion of integer to floating point
+    * @param readIntegersAlsoAsFloatingPoint set to false to disable automatic conversion of integer to floating point
     *                                        values
     */
-  final case class DecodingConfig(autoConvertLongToFloat: Boolean = true,
+  final case class DecodingConfig(readIntegersAlsoAsFloatingPoint: Boolean = true,
+                                  readDoubleAlsoAsFloat: Boolean = false,
                                   maxTextStringLength: Int = 1024 * 1024,
                                   maxByteStringLength: Int = 10 * 1024 * 1024,
                                   maxArrayLength: Long = Int.MaxValue,
@@ -140,10 +141,10 @@ case object Json extends Target {
   }
 
   /**
-    * @param autoConvertLongToFloat set to false to disable automatic conversion of integer to floating point
+    * @param readIntegersAlsoAsFloatingPoint set to false to disable automatic conversion of integer to floating point
     *                                        values
     */
-  final case class DecodingConfig(autoConvertLongToFloat: Boolean = true,
+  final case class DecodingConfig(readIntegersAlsoAsFloatingPoint: Boolean = true,
                                   maxStringLength: Int = 1024 * 1024,
                                   maxNumberExponentDigits: Int = 3)
       extends Borer.DecodingConfig with JsonParser.Config {
@@ -152,6 +153,9 @@ case object Json extends Target {
     if (maxNumberExponentDigits < 0 || maxNumberExponentDigits > 9)
       throw new IllegalArgumentException(
         s"$maxNumberExponentDigits must be in the range [0..9], but was $maxNumberExponentDigits")
+
+    // the JsonParser never produces Float values directly (only doubles), so this is necessary
+    def readDoubleAlsoAsFloat = true
   }
 
   object DecodingConfig {

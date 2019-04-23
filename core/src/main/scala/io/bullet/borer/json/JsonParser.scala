@@ -280,14 +280,13 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
       * Parses a JSON number and dispatches it to the [[Receiver]] either as
       * - Int
       * - Long
-      * - Float
       * - Double
       * - or NumberString,
       *
       * whatever is the most efficient form that the number can be losslessly represented in.
-      * Since [[Int]] and [[Float]] are just the smaller variants of their 64-bit counterparts
-      * the core task is finding out, whether the number fits losslessly in a [[Long]] or
-      * a [[Double]]. If neither is possible the fallback is always the NumberString, which
+      * Since [[Int]] is just the smaller variant of [[Long]] the core task is finding out,
+      * whether the number fits losslessly in a [[Long]] or a [[Double]].
+      * If neither is possible the fallback is always the NumberString, which
       * transports the number in exactly the format that is present in the JSON source.
       *
       * A side-task is to determine whether the number violates the JSON spec and produce the
@@ -312,12 +311,8 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
           ix
         } else dispatchNumberString(ix)
       }
-      def dispatchFloatOrDouble(ix: Long, double: Double) = {
-        var d = double
-        if (!negative) d = -double
-        val float = d.toFloat
-        if (float.toDouble == d) receiver.onFloat(float)
-        else receiver.onDouble(d)
+      def dispatchDouble(ix: Long, double: Double) = {
+        receiver.onDouble(if (negative) double else -double)
         ix
       }
 
@@ -364,12 +359,12 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
                 // the value is an integer that fits into a 63 bit Long
                 dispatchIntOrLong(ix, negMantissa * long10pow((exp << 1) + 1))
               } else if (negMantissa > -(1L << 53) && exp < 23) {
-                // the value is an integer that can be represented losslessly by Double
-                dispatchFloatOrDouble(ix, negMantissa * double10pow(exp))
+                // the value is an integer that can be represented losslessly by a Double
+                dispatchDouble(ix, negMantissa * double10pow(exp))
               } else dispatchNumberString(ix)
             } else if (negMantissa > -(1L << 53) && exp > -23) {
-              // the value is a decimal number that can be represented losslessly by Double
-              dispatchFloatOrDouble(ix, negMantissa / double10pow(-exp))
+              // the value is a decimal number that can be represented losslessly by a Double
+              dispatchDouble(ix, negMantissa.toDouble / double10pow(-exp))
             } else dispatchNumberString(ix)
           } else dispatchIntOrLong(ix, negMantissa) // normal, unscaled integer
         } else parseNumberStringFractionPart(ix, appendAll(startIndex, ix))
@@ -686,7 +681,7 @@ private[borer] object JsonParser {
     def maxNumberExponentDigits: Int
   }
 
-  private[this] val _creator: Receiver.ParserCreator[Any, JsonParser.Config] =
+  private[this] final val _creator: Receiver.ParserCreator[Any, JsonParser.Config] =
     (input, config, inputAccess) ⇒ new JsonParser[Any](input, config)(inputAccess)
 
   def creator[Input, C <: JsonParser.Config]: Receiver.ParserCreator[Input, C] =
@@ -735,10 +730,10 @@ private[borer] object JsonParser {
   }
 
   // powers of 10 which can be represented exactly in a `Double`
-  private val double10pow = Array(1.0e0, 1.0e1, 1.0e2, 1.0e3, 1.0e4, 1.0e5, 1.0e6, 1.0e7, 1.0e8, 1.0e9, 1.0e10, 1.0e11,
-    1.0e12, 1.0e13, 1.0e14, 1.0e15, 1.0e16, 1.0e17, 1.0e18, 1.0e19, 1.0e20, 1.0e21, 1.0e22)
+  private final val double10pow: Array[Double] = Array(1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11,
+    1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19, 1e20, 1e21, 1e22)
 
-  private val long10pow = Array(
+  private final val long10pow = Array(
     Long.MinValue / 1,
     1,
     Long.MinValue / 10,
