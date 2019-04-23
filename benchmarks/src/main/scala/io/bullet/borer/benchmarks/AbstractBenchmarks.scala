@@ -69,7 +69,8 @@ abstract class DomBenchmark {
       "rick-morty.json",
       "temp-anomaly.json",
       "thai-cinemas.json",
-      "turkish.json"
+      "twitter_api_compact_response.json",
+      "twitter_api_response.json",
     )
   )
   var fileName: String = _
