@@ -459,7 +459,7 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
         } else if ((octa & byteMask) != 0) { // first special char is 8-bit
           parseUtf8String(parseMultiByteUtf8Char(nextIx, ((octa << nlz) >> 56).toInt, newCursor), auxInt)
         } else { // first special char is a ctrl char
-          failSyntaxError(ix, "JSON string character", (octa << nlz) >>> 56)
+          failSyntaxError(ix + charCount, "JSON string character", (octa << nlz) >>> 56)
         }
       } else parseUtf8String(ix + 8, newCursor) // we have written 8 normal chars, so recurse immediately
     }
