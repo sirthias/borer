@@ -113,7 +113,6 @@ val `akka-actor`    = "com.typesafe.akka"     %% "akka-actor"   % "2.5.22"
 val magnolia        = "com.propensive"        %% "magnolia"     % "0.10.0"
 val `scodec-bits`   = "org.scodec"            %% "scodec-bits"  % "1.1.10"
 val utest           = "com.lihaoyi"           %% "utest"        % "0.6.7" % "test"
-val `better-files`  = "com.github.pathikrit"  %% "better-files" % "3.7.1" % "test"
 val `scala-reflect` = "org.scala-lang"        %  "scala-reflect"
 
 /////////////////////// PROJECTS /////////////////////////
@@ -152,7 +151,6 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
     boilerplateSource in Compile := baseDirectory.value.getParentFile / "src" / "main" / "boilerplate",
     sourceManaged in Compile := baseDirectory.value.getParentFile / "target" / "scala" / "src_managed" / "main"
   )
-  .jvmSettings(libraryDependencies += `better-files`)
   .jsSettings(scalajsSettings: _*)
 
 lazy val akka = project

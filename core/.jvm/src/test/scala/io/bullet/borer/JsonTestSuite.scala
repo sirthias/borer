@@ -8,10 +8,11 @@
 
 package io.bullet.borer
 
-import java.io.ByteArrayOutputStream
+import java.io.BufferedInputStream
 
-import better.files._
 import utest._
+
+import scala.io.Source
 
 object JsonTestSuite extends TestSuite {
 
@@ -22,11 +23,14 @@ object JsonTestSuite extends TestSuite {
   )
 
   val testFiles: Map[String, Array[Byte]] =
-    Resource
-      .getAsStream("")
-      .lines
-      .map(name ⇒
-        name → new ByteArrayOutputStream().autoClosed.map(Resource.getAsStream(name).pipeTo(_).toByteArray).get())
+    Source
+      .fromResource("")
+      .getLines()
+      .map { name ⇒
+        val is = new BufferedInputStream(getClass.getResourceAsStream("/" + name))
+        try name → Iterator.continually(is.read).takeWhile(_ != -1).map(_.toByte).toArray
+        finally is.close()
+      }
       .toMap
       .filterKeys(!disabled.contains(_))
 
