@@ -11,9 +11,39 @@ lazy val commonSettings = Seq(
   scmInfo := Some(ScmInfo(url("https://github.com/sirthias/borer"), "scm:git:git@github.com:sirthias/borer.git")),
 
   scalaVersion := "2.12.8",
-  crossScalaVersions := Seq(scalaVersion.value /*, "2.13.0-M5" */),
+  crossScalaVersions := Seq(scalaVersion.value, "2.13.0-RC1"),
 
-  scalacOptions ++= commonScalacOptions,
+  scalacOptions ++= Seq(
+    "-deprecation",
+    "-encoding", "UTF-8",
+    "-feature",
+    "-language:_",
+    "-unchecked",
+    "-Xfatal-warnings",
+    "-Xlint:_,-missing-interpolator",
+    "-Xfuture",
+    "-Yno-adapted-args",
+    "-Ywarn-dead-code",
+    "-Ywarn-inaccessible",
+    "-Ywarn-infer-any",
+    "-Ywarn-nullary-override",
+    "-Ywarn-nullary-unit",
+    "-Ywarn-numeric-widen",
+    "-Ywarn-unused-import",
+    "-Ywarn-unused:imports,-patvars,-privates,-locals,-implicits,-explicits",
+    "-Ycache-macro-class-loader:last-modified",
+    "-Ybackend-parallelism", "8"
+  ),
+  scalacOptions ++= {
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, 12)) =>
+        Seq(
+          "-Xsource:2.13", // new warning: deprecate assignments in argument position
+        )
+      case _ => Nil
+    }
+  },
+
   scalacOptions in (Compile, console) ~= (_ filterNot (o ⇒ o == "-Ywarn-unused-import" || o == "-Xfatal-warnings")),
   scalacOptions in (Test, console) ~= (_ filterNot (o ⇒ o == "-Ywarn-unused-import" || o == "-Xfatal-warnings")),
   scalacOptions in (Compile, doc) += "-no-link-warnings",
@@ -28,28 +58,6 @@ lazy val commonSettings = Seq(
   testFrameworks += new TestFramework("utest.runner.Framework"),
   initialCommands in console := """import io.bullet.borer._""",
 )
-
-lazy val commonScalacOptions = Seq(
-  "-deprecation",
-  "-encoding", "UTF-8",
-  "-feature",
-  "-language:_",
-  "-unchecked",
-  "-Xfatal-warnings",
-  "-Xlint:_,-missing-interpolator",
-  "-Xfuture",
-  "-Yno-adapted-args",
-  "-Ywarn-dead-code",
-  "-Ywarn-inaccessible",
-  "-Ywarn-infer-any",
-  "-Ywarn-nullary-override",
-  "-Ywarn-nullary-unit",
-  "-Ywarn-numeric-widen",
-  "-Ywarn-unused-import",
-  "-Ywarn-unused:imports,-patvars,-privates,-locals,-implicits,-explicits",
-  "-Xsource:2.13", // new warning: deprecate assignments in argument position
-  "-Ycache-macro-class-loader:last-modified",
-  "-Ybackend-parallelism", "8")
 
 lazy val crossSettings = Seq(
   sourceDirectories in (Compile, scalafmt) := (unmanagedSourceDirectories in Compile).value,
@@ -104,9 +112,6 @@ lazy val releaseSettings = {
 def scalaJsDeps(deps: ModuleID*): Def.Setting[Seq[sbt.ModuleID]] =
   libraryDependencies ++= deps.map(_ cross platformDepsCrossVersion.value)
 
-lazy val macroParadise =
-  addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
-
 /////////////////////// DEPENDENCIES /////////////////////////
 
 val `akka-actor`    = "com.typesafe.akka"     %% "akka-actor"   % "2.5.22"
@@ -143,9 +148,13 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .settings(releaseSettings)
   .settings(
     moduleName := "borer-core",
-    macroParadise,
     scalaJsDeps(utest),
     libraryDependencies += `scala-reflect` % scalaVersion.value,
+    libraryDependencies ++= (
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, 12)) => Seq(compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.patch))
+        case _ => Nil
+      }),
 
     // point sbt-boilerplate to the common "project"
     boilerplateSource in Compile := baseDirectory.value.getParentFile / "src" / "main" / "boilerplate",
