@@ -82,54 +82,6 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
       } else failStringTooLong(skipWhiteSpace(index))
     }
 
-    def append0to8(charCursor: Int, octa: Long, count: Int): Int =
-      if (count > 0) {
-        val newCursor = charCursor + count
-        if (newCursor <= maxStringLength) {
-          ensureCharsLen(newCursor)
-          chars(charCursor) = (octa >>> 56).toChar
-          count match {
-            case 1 ⇒ // no more characters to write
-            case 2 ⇒
-              chars(charCursor + 1) = ((octa << 8) >>> 56).toChar
-            case 3 ⇒
-              chars(charCursor + 1) = ((octa << 8) >>> 56).toChar
-              chars(charCursor + 2) = ((octa << 16) >>> 56).toChar
-            case 4 ⇒
-              chars(charCursor + 1) = ((octa << 8) >>> 56).toChar
-              chars(charCursor + 2) = ((octa << 16) >>> 56).toChar
-              chars(charCursor + 3) = ((octa << 24) >>> 56).toChar
-            case 5 ⇒
-              chars(charCursor + 1) = ((octa << 8) >>> 56).toChar
-              chars(charCursor + 2) = ((octa << 16) >>> 56).toChar
-              chars(charCursor + 3) = ((octa << 24) >>> 56).toChar
-              chars(charCursor + 4) = ((octa << 32) >>> 56).toChar
-            case 6 ⇒
-              chars(charCursor + 1) = ((octa << 8) >>> 56).toChar
-              chars(charCursor + 2) = ((octa << 16) >>> 56).toChar
-              chars(charCursor + 3) = ((octa << 24) >>> 56).toChar
-              chars(charCursor + 4) = ((octa << 32) >>> 56).toChar
-              chars(charCursor + 5) = ((octa << 40) >>> 56).toChar
-            case 7 ⇒
-              chars(charCursor + 1) = ((octa << 8) >>> 56).toChar
-              chars(charCursor + 2) = ((octa << 16) >>> 56).toChar
-              chars(charCursor + 3) = ((octa << 24) >>> 56).toChar
-              chars(charCursor + 4) = ((octa << 32) >>> 56).toChar
-              chars(charCursor + 5) = ((octa << 40) >>> 56).toChar
-              chars(charCursor + 6) = ((octa << 48) >>> 56).toChar
-            case 8 ⇒
-              chars(charCursor + 1) = ((octa << 8) >>> 56).toChar
-              chars(charCursor + 2) = ((octa << 16) >>> 56).toChar
-              chars(charCursor + 3) = ((octa << 24) >>> 56).toChar
-              chars(charCursor + 4) = ((octa << 32) >>> 56).toChar
-              chars(charCursor + 5) = ((octa << 40) >>> 56).toChar
-              chars(charCursor + 6) = ((octa << 48) >>> 56).toChar
-              chars(charCursor + 7) = (octa & 0xFFL).toChar
-          }
-          newCursor
-        } else failStringTooLong(skipWhiteSpace(index))
-      } else charCursor
-
     def appendAll(start: Long, end: Long, charCursor: Int): Int = {
       val len = charCursor + (end - start).toInt
       if (len <= maxStringLength) {
@@ -381,13 +333,15 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
     def parseEscapeSeq(ix: Long, charCursor: Int): Long = {
       var i = ix + 1
       val c =
-        getInputByteOrEOI(ix).toChar match {
-          case x @ ('"' | '/' | '\\') ⇒ x
-          case 'b'                    ⇒ '\b'
-          case 'f'                    ⇒ '\f'
-          case 'n'                    ⇒ '\n'
-          case 'r'                    ⇒ '\r'
-          case 't'                    ⇒ '\t'
+        (getInputByteOrEOI(ix): @switch) match {
+          case '"'  ⇒ '"'
+          case '/'  ⇒ '/'
+          case '\\' ⇒ '\\'
+          case 'b'  ⇒ '\b'
+          case 'f'  ⇒ '\f'
+          case 'n'  ⇒ '\n'
+          case 'r'  ⇒ '\r'
+          case 't'  ⇒ '\t'
           case 'u' ⇒
             if (ix >= inputLen - 4) failIllegalEscapeSeq(ix)
             val q                       = ia.quadByteBigEndian(input, i)
@@ -446,7 +400,21 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
       val nlz       = java.lang.Long.numberOfLeadingZeros(mask)
       val charCount = nlz >> 3 // the number of "good" normal chars before a special char [0..8]
 
-      val newCursor = append0to8(charCursor, octa, charCount) // write all good chars to the char buffer
+      // in order to decrease instruction dependencies we always speculatively write all 8 chars to the char buffer,
+      // independently of how many are actually "good" chars, this keeps the pipelines maximally busy
+      ensureCharsLen(charCursor + 8)
+      chars(charCursor) = (octa >>> 56).toChar
+      chars(charCursor + 1) = ((octa << 8) >>> 56).toChar
+      chars(charCursor + 2) = ((octa << 16) >>> 56).toChar
+      chars(charCursor + 3) = ((octa << 24) >>> 56).toChar
+      chars(charCursor + 4) = ((octa << 32) >>> 56).toChar
+      chars(charCursor + 5) = ((octa << 40) >>> 56).toChar
+      chars(charCursor + 6) = ((octa << 48) >>> 56).toChar
+      chars(charCursor + 7) = (octa & 0xFFL).toChar
+
+      val newCursor = charCursor + charCount
+      if (newCursor > maxStringLength) failStringTooLong(skipWhiteSpace(index))
+
       if (nlz < 64) {
         val byteMask     = 0x8000000000000000L >>> nlz
         val byteMask7bit = byteMask & ~octa // mask that only selects the respective 7-bit variants from qMask or bMask
