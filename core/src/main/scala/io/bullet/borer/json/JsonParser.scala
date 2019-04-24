@@ -11,7 +11,7 @@ package io.bullet.borer.json
 import java.util
 
 import io.bullet.borer.{Borer, _}
-import io.bullet.borer.internal.{Utf8Decoder, Util}
+import io.bullet.borer.internal.Util
 
 import scala.annotation.{switch, tailrec}
 
@@ -357,26 +357,29 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
       i
     }
 
-    def parseMultiByteUtf8Char(ix: Long, c: Int, charCursor: Int): Long = {
-      import Utf8Decoder.decode
-      val byteCount         = Integer.numberOfLeadingZeros(~c) - 25
-      var stateAndCodepoint = decode(decode(0L, c.toByte), getInputByteOrEOI(ix))
-      var cc                = charCursor
-      val cp = byteCount match {
+    def parseMultiByteUtf8Char(ix: Long, b1: Int, charCursor: Int): Long = {
+      val byteCount = Integer.numberOfLeadingZeros(~b1) - 25
+      val b2        = getInputByteOrEOI(ix).toInt
+      var cc        = charCursor
+      val cp = (byteCount | 0x80) ^ (b2 & 0xC0) match {
         case 1 ⇒
-          Utf8Decoder.codepoint(stateAndCodepoint)
+          if ((b1 & 0x1E) == 0) failIllegalUtf8(ix - 1)
+          (b1 << 6) ^ (b2 ^ 0xF80)
         case 2 ⇒
-          stateAndCodepoint = decode(stateAndCodepoint, getInputByteOrEOI(ix + 1))
-          Utf8Decoder.codepoint(stateAndCodepoint)
+          val b3 = getInputByteOrEOI(ix + 1).toInt
+          val c  = (b1 << 12) ^ (b2 << 6) ^ (b3 ^ 0xFFFE1F80)
+          if ((b1 == 0xE0 && (b2 & 0xE0) == 0x80) || (b3 & 0xC0) != 0x80 || ((c >> 11) == 0x1b)) failIllegalUtf8(ix - 1)
+          c
         case 3 ⇒
-          stateAndCodepoint = decode(decode(stateAndCodepoint, getInputByteOrEOI(ix + 1)), getInputByteOrEOI(ix + 2))
-          val cp = Utf8Decoder.codepoint(stateAndCodepoint)
-          cc = appendChar(charCursor, (0xD7C0 + (cp >> 10)).toChar) // high surrogate
-          0xDC00 + (cp & 0x3FF) // low surrogate
+          val b3 = getInputByteOrEOI(ix + 1).toInt
+          val b4 = getInputByteOrEOI(ix + 2).toInt
+          val c  = (b1 << 18) ^ (b2 << 12) ^ (b3 << 6) ^ (b4 ^ 0x381F80)
+          if ((b3 & 0xC0) != 0x80 || (b4 & 0xC0) != 0x80 || c < 0x010000 || c > 0x10FFFF) failIllegalUtf8(ix - 1)
+          cc = appendChar(charCursor, (0xD7C0 + (c >> 10)).toChar) // high surrogate
+          0xDC00 + (c & 0x3FF) // low surrogate
         case _ ⇒ failIllegalUtf8(ix - 1)
       }
       auxInt = appendChar(cc, cp.toChar)
-      if (Utf8Decoder.state(stateAndCodepoint) != Utf8Decoder.UTF8_ACCEPT) failIllegalUtf8(ix - 1)
       ix + byteCount
     }
 
