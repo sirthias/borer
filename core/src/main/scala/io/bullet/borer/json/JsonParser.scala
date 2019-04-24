@@ -185,42 +185,48 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
       val nlz        = java.lang.Long.numberOfLeadingZeros(mask)
       val digitCount = nlz >> 3
 
-      val d0 = vMask >>> 56
-      def d1 = (vMask << 8) >>> 56
-      def d2 = (vMask << 16) >>> 56
-      def d3 = (vMask << 24) >>> 56
-      def d4 = (vMask << 32) >>> 56
-      def d5 = (vMask << 40) >>> 56
-      def d6 = (vMask << 48) >>> 56
-      def d7 = vMask & 0xFFL
+      val d0         = vMask >>> 56
+      val d1         = (vMask << 8) >>> 56
+      val d2         = (vMask << 16) >>> 56
+      @inline def d3 = (vMask << 24) >>> 56
+      @inline def d4 = (vMask << 32) >>> 56
+      @inline def d5 = (vMask << 40) >>> 56
+      @inline def d6 = (vMask << 48) >>> 56
+      @inline def d7 = vMask & 0xFFL
 
-      def v1 = value * 10 - d0
-      def v2 = value * 100 - d0 * 10 - d1
-      def v3 = value * 1000 - d0 * 100 - d1 * 10 - d2
-      def v4 = value * 10000 - d0 * 1000 - d1 * 100 - d2 * 10 - d3
-      def v5 = value * 100000 - d0 * 10000 - d1 * 1000 - d2 * 100 - d3 * 10 - d4
-      def v6 = value * 1000000 - d0 * 100000 - d1 * 10000 - d2 * 1000 - d3 * 100 - d4 * 10 - d5
-      def v7 = value * 10000000 - d0 * 1000000 - d1 * 100000 - d2 * 10000 - d3 * 1000 - d4 * 100 - d5 * 10 - d6
-      def v8 =
+      @inline def v1 =
+        value * 10 - d0
+      @inline def v2 =
+        value * 100 - d0 * 10 - d1
+      @inline def v3 =
+        value * 1000 - d0 * 100 - d1 * 10 - d2
+      @inline def v4 =
+        value * 10000 - d0 * 1000 - d1 * 100 - d2 * 10 - d3
+      @inline def v5 =
+        value * 100000 - d0 * 10000 - d1 * 1000 - d2 * 100 - d3 * 10 - d4
+      @inline def v6 =
+        value * 1000000 - d0 * 100000 - d1 * 10000 - d2 * 1000 - d3 * 100 - d4 * 10 - d5
+      @inline def v7 =
+        value * 10000000 - d0 * 1000000 - d1 * 100000 - d2 * 10000 - d3 * 1000 - d4 * 100 - d5 * 10 - d6
+      @inline def v8 =
         value * 100000000 - d0 * 10000000 - d1 * 1000000 - d2 * 100000 - d3 * 10000 - d4 * 1000 - d5 * 100 - d6 * 10 - d7
 
-      def returnWithV(ix: Long, value: Long, stopChar: Long): Long = {
-        auxInt = stopChar.toInt
+      @inline def returnWithV(ix: Long, value: Long, stopChar: Long): Long = {
+        auxInt = (stopChar >>> 56).toInt
         auxLong = value
         ix
       }
 
-      import Long.{MinValue ⇒ LMV}
       digitCount match {
-        case 0 ⇒ returnWithV(ix, value, octa >>> 56)
-        case 1 ⇒ returnWithV(ix + 1, if (0 >= value && value >= LMV / 10) v1 else 1, (octa << 8) >>> 56)
-        case 2 ⇒ returnWithV(ix + 2, if (0 >= value && value >= LMV / 100) v2 else 1, (octa << 16) >>> 56)
-        case 3 ⇒ returnWithV(ix + 3, if (0 >= value && value >= LMV / 1000) v3 else 1, (octa << 24) >>> 56)
-        case 4 ⇒ returnWithV(ix + 4, if (0 >= value && value >= LMV / 10000) v4 else 1, (octa << 32) >>> 56)
-        case 5 ⇒ returnWithV(ix + 5, if (0 >= value && value >= LMV / 100000) v5 else 1, (octa << 40) >>> 56)
-        case 6 ⇒ returnWithV(ix + 6, if (0 >= value && value >= LMV / 1000000) v6 else 1, (octa << 48) >>> 56)
-        case 7 ⇒ returnWithV(ix + 7, if (0 >= value && value >= LMV / 10000000) v7 else 1, (octa << 56) >>> 56)
-        case 8 ⇒ parseDigits(ix + 8, if (0 >= value && value >= LMV / 100000000) v8 else 1)
+        case 0 ⇒ returnWithV(ix, value, octa)
+        case 1 ⇒ returnWithV(ix + 1, if (0 >= value && value >= Long.MinValue / 10) v1 else 1, octa << 8)
+        case 2 ⇒ returnWithV(ix + 2, if (0 >= value && value >= Long.MinValue / 100) v2 else 1, octa << 16)
+        case 3 ⇒ returnWithV(ix + 3, if (0 >= value && value >= Long.MinValue / 1000) v3 else 1, octa << 24)
+        case 4 ⇒ returnWithV(ix + 4, if (0 >= value && value >= Long.MinValue / 10000) v4 else 1, octa << 32)
+        case 5 ⇒ returnWithV(ix + 5, if (0 >= value && value >= Long.MinValue / 100000) v5 else 1, octa << 40)
+        case 6 ⇒ returnWithV(ix + 6, if (0 >= value && value >= Long.MinValue / 1000000) v6 else 1, octa << 48)
+        case 7 ⇒ returnWithV(ix + 7, if (0 >= value && value >= Long.MinValue / 10000000) v7 else 1, octa << 56)
+        case 8 ⇒ parseDigits(ix + 8, if (0 >= value && value >= Long.MinValue / 100000000) v8 else 1)
       }
     }
 
@@ -456,10 +462,7 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
     def popLevel(nextIx: Long): Long = {
       level -= 1
       levelType >>>= 1
-      state = if (level > 0) {
-        if ((levelType & 1) == 0) EXPECT_COMMA_AND_ARRAY_VALUE_OR_BREAK
-        else EXPECT_COMMA_AND_MAP_KEY_OR_BREAK
-      } else EXPECT_END_OF_INPUT
+      state = if (level > 0) levelType.toInt & 1 else EXPECT_END_OF_INPUT
       receiver.onBreak()
       nextIx
     }
@@ -543,11 +546,11 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
       c = auxLong
     }
     (state: @switch) match {
-      case EXPECT_ARRAY_VALUE_OR_BREAK           ⇒ parseArrayValueOrBreak(c, nextIx)
       case EXPECT_COMMA_AND_ARRAY_VALUE_OR_BREAK ⇒ parseCommaAndArrayValueOrBreak(c, nextIx)
+      case EXPECT_COMMA_AND_MAP_KEY_OR_BREAK     ⇒ parseCommaAndMapKeyOrBreak(c, nextIx)
+      case EXPECT_ARRAY_VALUE_OR_BREAK           ⇒ parseArrayValueOrBreak(c, nextIx)
       case EXPECT_MAP_KEY_OR_BREAK               ⇒ parseMapKeyOrBreak(c, nextIx)
       case EXPECT_COLON_AND_MAP_VALUE            ⇒ parseColonAndMapValue(c, nextIx)
-      case EXPECT_COMMA_AND_MAP_KEY_OR_BREAK     ⇒ parseCommaAndMapKeyOrBreak(c, nextIx)
       case EXPECT_VALUE                          ⇒ state = EXPECT_END_OF_INPUT; parseValue(c, nextIx)
       case EXPECT_END_OF_INPUT                   ⇒ parseEndOfInput(c)
     }
@@ -599,7 +602,7 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
     else partialOcta
   }
 
-  private def ensureCharsLen(len: Int): Unit =
+  @inline private def ensureCharsLen(len: Int): Unit =
     if (len > chars.length) {
       chars = util.Arrays.copyOf(chars, math.max(chars.length << 1, len))
     }
@@ -644,11 +647,11 @@ private[borer] object JsonParser {
   def creator[Input, C <: JsonParser.Config]: Receiver.ParserCreator[Input, C] =
     _creator.asInstanceOf[Receiver.ParserCreator[Input, C]]
 
-  private final val EXPECT_ARRAY_VALUE_OR_BREAK           = 0
-  private final val EXPECT_COMMA_AND_ARRAY_VALUE_OR_BREAK = 1
-  private final val EXPECT_MAP_KEY_OR_BREAK               = 2
-  private final val EXPECT_COLON_AND_MAP_VALUE            = 3
-  private final val EXPECT_COMMA_AND_MAP_KEY_OR_BREAK     = 4
+  private final val EXPECT_COMMA_AND_ARRAY_VALUE_OR_BREAK = 0
+  private final val EXPECT_COMMA_AND_MAP_KEY_OR_BREAK     = 1
+  private final val EXPECT_ARRAY_VALUE_OR_BREAK           = 2
+  private final val EXPECT_MAP_KEY_OR_BREAK               = 3
+  private final val EXPECT_COLON_AND_MAP_VALUE            = 4
   private final val EXPECT_VALUE                          = 5
   private final val EXPECT_END_OF_INPUT                   = 6
 
