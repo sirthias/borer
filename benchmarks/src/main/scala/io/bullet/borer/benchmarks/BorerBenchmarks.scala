@@ -84,9 +84,6 @@ class BorerDecodingBenchmark extends DecodingBenchmark {
   def decodeInts: List[Int] = Json.decode(intsJson).to[List[Int]].value
 
   @Benchmark
-  def decodeIntsNV: List[Int] = Json.decode(intsJson).to[List[Int]].value
-
-  @Benchmark
   def decodeEmptyArray: List[Int] = Json.decode(emptyArrayJson).to[List[Int]].value
 }
 
