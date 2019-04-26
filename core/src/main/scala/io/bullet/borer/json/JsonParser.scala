@@ -553,21 +553,29 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
     }
   }
 
-  @tailrec private def skipWhiteSpace(ix: Long): Long = {
-    // fetch 8 bytes (chars) at the same time with the first becoming the (left-most) MSByte of the `octa` long
-    val octa = getSafeOctaBigEndian(ix)
+  private def skipWhiteSpace(ix: Long): Long = {
+    @tailrec def rec(ix: Long): Long = {
+      // fetch 8 bytes (chars) at the same time with the first becoming the (left-most) MSByte of the `octa` long
+      val octa = getSafeOctaBigEndian(ix)
 
-    // bytes containing [0..0x20] or [0x80-0xA0] get their MSBit unset (< 0x80), all others have it set (>= 0x80)
-    var mask = (octa & 0x7f7f7f7f7f7f7f7fL) + 0x5f5f5f5f5f5f5f5fL
+      // bytes containing [0..0x20] or [0x80-0xA0] get their MSBit unset (< 0x80), all others have it set (>= 0x80)
+      var mask = (octa & 0x7f7f7f7f7f7f7f7fL) + 0x5f5f5f5f5f5f5f5fL
 
-    // bytes containing [0..0x20] become zero, all others 0x80
-    mask = (octa | mask) & 0x8080808080808080L
+      // bytes containing [0..0x20] become zero, all others 0x80
+      mask = (octa | mask) & 0x8080808080808080L
 
-    val nlz = java.lang.Long.numberOfLeadingZeros(mask)
-    if (nlz < 64) {
-      auxLong = octa << nlz >>> 56 // "return" the first non-whitespace char
-      ix + (nlz >> 3) // and the index of the first non-whitespace char
-    } else skipWhiteSpace(ix + 8)
+      val nlz = java.lang.Long.numberOfLeadingZeros(mask)
+      if (nlz < 64) {
+        auxLong = octa << nlz >>> 56 // "return" the first non-whitespace char
+        ix + (nlz >> 3) // and the index of the first non-whitespace char
+      } else rec(ix + 8)
+    }
+
+    val c = getInputByteOrEOI(ix) & 0xFFL
+    if (c > ' ') {
+      auxLong = c
+      ix
+    } else rec(ix + 1) // if we have at least two white space chars in a row there are probably (lots) more coming
   }
 
   @inline private def getInputByteUnsafe(ix: Long): Byte = ia.unsafeByte(input, ix)
