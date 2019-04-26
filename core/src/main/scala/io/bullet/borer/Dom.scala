@@ -10,7 +10,10 @@ package io.bullet.borer
 
 import java.util
 
-import scala.collection.immutable
+import scala.annotation.tailrec
+import scala.collection.{immutable, mutable}
+import scala.collection.immutable.HashMap
+import scala.util.hashing.MurmurHash3
 
 /**
   * Simple Document Object Model (DOM) for CBOR.
@@ -81,29 +84,102 @@ object Dom {
     }
   }
 
-  sealed abstract class MapElem(dataItem: Int) extends Element(dataItem) {
-    def entries: immutable.Map[Element, Element]
+  sealed abstract class MapElem(val size: Int, private[Dom] val elements: Array[Element], dataItem: Int)
+      extends Element(dataItem) {
+    if (size != (elements.length >> 1)) throw new IllegalArgumentException
+
+    final def elementsInterleaved: IndexedSeq[Element] = wrapRefArray(elements)
+
+    final def isEmpty                                          = false
+    final def get: (Int, Iterator[Element], Iterator[Element]) = (size, keys, values)
+
+    final def keys: Iterator[Element]   = new MapElem.KVIterator(elements, 0)
+    final def values: Iterator[Element] = new MapElem.KVIterator(elements, 1)
+
+    def apply(key: String): Option[Element] = {
+      @tailrec def rec(ix: Int): Option[Element] =
+        if (ix < elements.length) {
+          elements(ix) match {
+            case StringElem(`key`) ⇒ Some(elements(ix + 1))
+            case _                 ⇒ rec(ix + 2)
+          }
+        } else None
+      rec(0)
+    }
+
+    def apply(key: Element): Option[Element] = {
+      @tailrec def rec(ix: Int): Option[Element] =
+        if (ix < elements.length) if (elements(ix) == key) Some(elements(ix + 1)) else rec(ix + 2) else None
+      rec(0)
+    }
+
+    final def toMap: HashMap[Element, Element] = {
+      val k = keys
+      val v = values
+      @tailrec def rec(m: HashMap[Element, Element]): HashMap[Element, Element] =
+        if (k.hasNext) rec(m.updated(k.next(), v.next())) else m
+      rec(HashMap.empty)
+    }
+
+    final override def toString = keys.zip(values).map(x ⇒ x._1 + ": " + x._2).mkString("{", ", ", "}")
+
+    final override def hashCode() = {
+      import scala.runtime.Statics.{finalizeHash, mix}
+      finalizeHash(mix(mix(mix(-889275714, size), MurmurHash3.arrayHash(elements)), dataItem), 3)
+    }
+
+    final override def equals(obj: Any) =
+      obj match {
+        case that: MapElem ⇒
+          this.size == that.size && this.dataItemShift == that.dataItemShift && util.Arrays
+            .equals(this.elements.asInstanceOf[Array[Object]], that.elements.asInstanceOf[Array[Object]])
+        case _ ⇒ false
+      }
   }
 
   object MapElem {
-    final case class Sized(entries: immutable.Map[Element, Element]) extends MapElem(DIS.MapHeader) {
-      override def toString = entries.map(x ⇒ x._1 + ": " + x._2).mkString("{", ", ", "}")
-    }
+
+    final class Sized private[Dom] (size: Int, elements: Array[Element]) extends MapElem(size, elements, DIS.MapHeader)
     object Sized {
-      val empty                              = new Sized(immutable.Map.empty)
-      def apply(entries: (String, Element)*) = new Sized(asListMap(entries))
+      private[this] val create                                             = new Sized(_, _)
+      val empty                                                            = new Sized(0, Array.empty)
+      def apply(first: (String, Element), more: (String, Element)*): Sized = construct(first +: more, create)
+      def apply(entries: (Element, Element)*): Sized                       = construct(entries, create)
+      def unapply(value: Sized): Sized                                     = value
     }
 
-    final case class Unsized(entries: immutable.Map[Element, Element]) extends MapElem(DIS.MapStart) {
-      override def toString = entries.map(x ⇒ x._1 + ": " + x._2).mkString("*{", ", ", "}")
-    }
+    final class Unsized private[Dom] (size: Int, elements: Array[Element]) extends MapElem(size, elements, DIS.MapStart)
     object Unsized {
-      val empty                              = new Unsized(immutable.Map.empty)
-      def apply(entries: (String, Element)*) = new Unsized(asListMap(entries))
+      private[this] val create                                               = new Unsized(_, _)
+      val empty                                                              = new Unsized(0, Array.empty)
+      def apply(first: (String, Element), more: (String, Element)*): Unsized = construct(first +: more, create)
+      def apply(entries: (Element, Element)*): Unsized                       = construct(entries, create)
     }
 
-    private def asListMap(entries: Seq[(String, Element)]): immutable.ListMap[Element, Element] =
-      entries.foldLeft(immutable.ListMap.empty[Element, Element])((m, x) ⇒ m.updated(StringElem(x._1), x._2))
+    private def construct[T](entries: Seq[(AnyRef, Element)], f: (Int, Array[Element]) ⇒ T): T = {
+      val elements = new mutable.ArrayBuilder.ofRef[Dom.Element]
+      elements.sizeHint(entries.size << 1)
+      entries.foreach {
+        case (key, value) ⇒
+          var keyElem = key match {
+            case x: String  ⇒ StringElem(x)
+            case x: Element ⇒ x
+          }
+          elements += keyElem += value
+      }
+      f(entries.size, elements.result())
+    }
+
+    private final class KVIterator(elements: Array[Element], startIndex: Int) extends Iterator[Element] {
+      private[this] var ix = startIndex
+      def hasNext          = ix < elements.length
+      def next() =
+        if (hasNext) {
+          val elem = elements(ix)
+          ix += 2
+          elem
+        } else Iterator.empty.next()
+    }
   }
 
   final case class TaggedElem(tag: Tag, value: Element) extends Element(DIS.Tag)
@@ -112,7 +188,6 @@ object Dom {
 
   val elementEncoder: Encoder[Element] = {
     val writeElement = (w: Writer, x: Element) ⇒ w.write(x)
-    val writeEntry   = (w: Writer, x: (Element, Element)) ⇒ w.write(x._1).write(x._2)
 
     Encoder { (w, x) ⇒
       x.dataItemShift match {
@@ -145,10 +220,18 @@ object Dom {
           x.asInstanceOf[ArrayElem.Unsized].elements.foldLeft(w.writeArrayStart())(writeElement).writeBreak()
 
         case DIS.MapHeader ⇒
-          val m = x.asInstanceOf[MapElem.Sized]
-          m.entries.foldLeft(w.writeMapHeader(m.entries.size))(writeEntry)
+          val m     = x.asInstanceOf[MapElem.Sized]
+          val array = m.elements
+          @tailrec def rec(w: Writer, ix: Int): w.type =
+            if (ix < array.length) rec(w.write(array(ix)).write(array(ix + 1)), ix + 2) else w
+          rec(w.writeMapHeader(m.size), 0)
+
         case DIS.MapStart ⇒
-          x.asInstanceOf[MapElem.Unsized].entries.foldLeft(w.writeMapStart())(writeEntry).writeBreak()
+          val m     = x.asInstanceOf[MapElem.Unsized]
+          val array = m.elements
+          @tailrec def rec(w: Writer, ix: Int): w.type =
+            if (ix < array.length) rec(w.write(array(ix)).write(array(ix + 1)), ix + 2) else w
+          rec(w.writeMapStart(), 0).writeBreak()
 
         case DIS.Tag ⇒ val n = x.asInstanceOf[TaggedElem]; w.writeTag(n.tag).write(n.value)
       }
@@ -197,19 +280,34 @@ object Dom {
 
         case DIS.SimpleValue ⇒ SimpleValueElem(SimpleValue(r.readSimpleValue()))
 
-        case DIS.ArrayHeader ⇒
-          if (r.tryReadArrayHeader(0)) ArrayElem.Sized.empty
-          else ArrayElem.Sized(r.read[Vector[Element]]())
-        case DIS.ArrayStart ⇒
-          if (r.tryReadBreak()) ArrayElem.Unsized.empty
-          else ArrayElem.Unsized(r.read[Vector[Element]]())
+        case DIS.ArrayHeader ⇒ ArrayElem.Sized(r.read[Vector[Element]]())
+        case DIS.ArrayStart  ⇒ ArrayElem.Unsized(r.read[Vector[Element]]())
 
         case DIS.MapHeader ⇒
-          if (r.tryReadMapHeader(0)) MapElem.Sized.empty
-          else MapElem.Sized(r.read[immutable.ListMap[Element, Element]]())
+          if (!r.tryReadMapHeader(0)) {
+            val elements = new mutable.ArrayBuilder.ofRef[Dom.Element]
+            val size     = r.readMapHeader()
+            val count    = size.toInt
+            if (size > Int.MaxValue) r.overflow("Dom.MapElem does not support more than 2^30 elements")
+            elements.sizeHint(count)
+            @tailrec def rec(remaining: Int): MapElem.Sized =
+              if (remaining > 0) {
+                elements += r.read[Element] += r.read[Element]
+                rec(remaining - 1)
+              } else new MapElem.Sized(count, elements.result())
+            rec(count)
+          } else MapElem.Sized.empty
+
         case DIS.MapStart ⇒
-          if (r.tryReadBreak()) MapElem.Unsized.empty
-          else MapElem.Unsized(r.read[immutable.ListMap[Element, Element]]())
+          r.pull()
+          if (!r.tryReadBreak) {
+            @tailrec def rec(elements: mutable.ArrayBuilder.ofRef[Dom.Element]): MapElem.Unsized =
+              if (r.tryReadBreak()) {
+                val array = elements.result()
+                new MapElem.Unsized(array.length >> 1, array)
+              } else rec(elements += r.read[Element]() += r.read[Element]())
+            rec(new mutable.ArrayBuilder.ofRef[Dom.Element])
+          } else MapElem.Unsized.empty
 
         case DIS.Tag ⇒ TaggedElem(r.readTag(), r.read[Element]())
       }

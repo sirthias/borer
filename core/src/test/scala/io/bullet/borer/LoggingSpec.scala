@@ -10,8 +10,6 @@ package io.bullet.borer
 
 import utest._
 
-import scala.collection.immutable.ListMap
-
 object LoggingSpec extends TestSuite {
   import Dom._
 
@@ -120,13 +118,11 @@ object LoggingSpec extends TestSuite {
     }
 
     "maps" - roundTripLogEquals {
-      val tuples = "abc".map { c ⇒
-        val x = StringElem(c.toString); x → x
-      }
+      val tuples = "abc".map(c ⇒ c.toString → StringElem(c.toString))
       MapElem.Sized(
         "foo"   → IntElem(42),
         "empty" → MapElem.Sized(),
-        "bar"   → MapElem.Unsized(ListMap[Element, Element](tuples: _*)))
+        "bar"   → MapElem.Unsized(tuples.head, tuples.tail: _*))
     } {
       """1: {
         |    1/3: "foo"
