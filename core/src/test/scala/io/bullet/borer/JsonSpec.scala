@@ -193,6 +193,7 @@ object JsonSpec extends BorerSpec {
       roundTrip("\"\"", "")
       roundTrip("\"foo\"", "foo")
       roundTrip(""""\"\\\b\f\n\r\t"""", "\"\\\b\f\n\r\t")
+      roundTrip(""""foo\r\nbar\r\n"""", "foo\r\nbar\r\n")
       roundTrip("\"\\u0000\"", "\u0000")                   // control char
       roundTrip("\"\\u0001\"", "\u0001")                   // control char
       roundTrip("\"\\u0010\"", "\u0010")                   // control char
@@ -202,8 +203,13 @@ object JsonSpec extends BorerSpec {
       roundTrip("\"\u6c34\"", "\u6c34")                    // 3-byte UTF-8
       roundTrip("\"\ud800\udd51\"", "\ud800\udd51")        // 4-byte UTF-8
       verifyDecoding("\"\\uDBFF\\uDFFF\"", "\uDBFF\uDFFF") // 4-byte UTF-8
+      roundTrip("\"Hällo stränger!\"", "Hällo stränger!")
       roundTrip("\"árvíztűrő ütvefúrógép\"", "árvíztűrő ütvefúrógép")
+      roundTrip("\"เอส เอฟ ซีเนม่า เอ็มบีเค เซ็นเตอร์\"", "เอส เอฟ ซีเนม่า เอ็มบีเค เซ็นเตอร์")
       roundTrip("\"飞机因此受到损伤\"", "飞机因此受到损伤")
+      roundTrip(
+        /**/ "\"เอสds飞机hu เอฟ到a ซ'ีเ$นม่า เอ็#ม损บีเ00因0ค เซ็นเbตอร์\"",
+        /*  */ "เอสds飞机hu เอฟ到a ซ'ีเ$นม่า เอ็#ม损บีเ00因0ค เซ็นเbตอร์")
 
       intercept[Borer.Error.InvalidInputData[_ <: AnyRef]] {
         Json.decode(hexBytes("22dd1dd83422")).to[String].value ==> "xxx"

@@ -73,7 +73,7 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
     */
   def pull(index: Long, receiver: Receiver): Long = {
 
-    def appendChar(charCursor: Int, c: Char): Int = {
+    @inline def appendChar(charCursor: Int, c: Char): Int = {
       val newCursor = charCursor + 1
       if (newCursor <= maxStringLength) {
         ensureCharsLen(newCursor)
@@ -96,8 +96,8 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
           if (cc < len4) {
             val quad = ia.quadByteBigEndian(input, ix)
             chars(cc) = (quad >>> 24).toChar
-            chars(cc + 1) = ((quad << 8) >>> 24).toChar
-            chars(cc + 2) = ((quad << 16) >>> 24).toChar
+            chars(cc + 1) = (quad << 8 >>> 24).toChar
+            chars(cc + 2) = (quad << 16 >>> 24).toChar
             chars(cc + 3) = (quad & 0xFF).toChar
             fastRec(ix + 4, cc + 4)
           } else slowRec(ix, cc)
@@ -125,45 +125,18 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
 
     def parseNumberStringExponentPart(idx: Long, charCursor: Int): Long = {
       var ix = idx
-      var c  = getInputByteOrEOI(ix) & 0xFF
-      if (c == '+' || c == '-') {
-        ix += 1
-        c = getInputByteOrEOI(ix) & 0xFF
-      }
+      val c  = getInputByteOrEOI(ix).toInt
+      if (c == '+' || c == '-') ix += 1
       val ix0 = ix
-      ix = parseDigits(ix0, ('0' - c).toLong)
+      ix = parseDigits(ix0, 0L)
       if (ix > ix0) {
         val exp = -auxLong.toInt
         if (0 <= exp && exp <= config.maxNumberAbsExponent) {
           receiver.onNumberString(getString(appendAll(idx, ix, charCursor)))
           ix
         } else failNumberExponentTooLarge(ix0)
-      } else failSyntaxError(ix0, "DIGIT", c.toLong)
+      } else failSyntaxError(ix0, "DIGIT", getInputByteOrEOI(ix).toLong)
     }
-
-    @tailrec def parseNumberStringFractionPart(ix: Long, maxIx: Long, charCursor: Int): Long =
-      if (ix < maxIx) {
-        val c = getInputByteOrEOI(ix) & 0xFF
-        if ((c ^ 0x30) > 9) {
-          if ((c | 0x20) != 'e') {
-            receiver.onNumberString(getString(charCursor))
-            ix
-          } else parseNumberStringExponentPart(ix + 1, appendChar(charCursor, 'e'))
-        } else parseNumberStringFractionPart(ix + 1, maxIx, appendChar(charCursor, c.toChar))
-      } else failNumberMantissaTooLong(ix)
-
-    @tailrec def parseNumberStringIntegralPart(ix: Long, maxIx: Long, charCursor: Int): Long =
-      if (ix < maxIx) {
-        val c = getInputByteOrEOI(ix) & 0xFF
-        if ((c ^ 0x30) > 9) {
-          if (c != '.') {
-            if ((c | 0x20) != 'e') {
-              receiver.onNumberString(getString(charCursor))
-              ix
-            } else parseNumberStringExponentPart(ix + 1, appendChar(charCursor, 'e'))
-          } else parseNumberStringFractionPart(ix + 1, maxIx + 1, appendChar(charCursor, '.'))
-        } else parseNumberStringIntegralPart(ix + 1, maxIx, appendChar(charCursor, c.toChar))
-      } else failNumberMantissaTooLong(ix)
 
     /**
       * Produces the index of the first non-digit character as a return value, in `auxInt` the first non-digit character
@@ -186,12 +159,12 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
       val digitCount = nlz >> 3
 
       val d0         = vMask >>> 56
-      val d1         = (vMask << 8) >>> 56
-      val d2         = (vMask << 16) >>> 56
-      @inline def d3 = (vMask << 24) >>> 56
-      @inline def d4 = (vMask << 32) >>> 56
-      @inline def d5 = (vMask << 40) >>> 56
-      @inline def d6 = (vMask << 48) >>> 56
+      val d1         = vMask << 8 >>> 56
+      val d2         = vMask << 16 >>> 56
+      @inline def d3 = vMask << 24 >>> 56
+      @inline def d4 = vMask << 32 >>> 56
+      @inline def d5 = vMask << 40 >>> 56
+      @inline def d6 = vMask << 48 >>> 56
       @inline def d7 = vMask & 0xFFL
 
       @inline def v1 =
@@ -237,8 +210,8 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
       * - Double
       * - or NumberString,
       *
-      * whatever is the most efficient form that the number can be losslessly represented in.
-      * Since [[Int]] is just the smaller variant of [[Long]] the core task is finding out,
+      * whatever is the most efficient form that the number can be easily and losslessly represented in.
+      * Since [[Int]] is just the smaller variant of [[Long]] the core task is finding out, without much overhead,
       * whether the number fits losslessly in a [[Long]] or a [[Double]].
       * If neither is possible the fallback is always the NumberString, which
       * transports the number in exactly the format that is present in the JSON source.
@@ -253,11 +226,10 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
       * @return the index after the last number character
       */
     def parseNumber(idx: Long, startIndex: Long, negValue: Long, negative: Boolean): Long = {
-      def dispatchNumberString(ix: Long) = {
-        receiver.onNumberString(getString(appendAll(startIndex, ix, 0)))
-        ix
-      }
-      def dispatchIntOrLong(ix: Long, negValue: Long) = {
+      @inline def appendUpTo(ix: Long)                = appendAll(startIndex, ix, 0)
+      @inline def dispatchNumberString(ix: Long)      = { receiver.onNumberString(getString(appendUpTo(ix))); ix }
+      @inline def dispatchDouble(ix: Long, d: Double) = { receiver.onDouble(if (negative) d else -d); ix }
+      @inline def dispatchIntOrLong(ix: Long, negValue: Long) = {
         var long = negValue
         if (negative || negValue != Long.MinValue && { long = -negValue; true }) {
           if (Util.isInt(long)) receiver.onInt(long.toInt)
@@ -265,14 +237,13 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
           ix
         } else dispatchNumberString(ix)
       }
-      def dispatchDouble(ix: Long, double: Double) = {
-        receiver.onDouble(if (negative) double else -double)
-        ix
-      }
+      @inline def parseNumberStringExponentPartOrDispatchNumberString(ix: Long, stopChar: Int) =
+        if ((stopChar | 0x20) == 'e') parseNumberStringExponentPart(ix + 1, appendUpTo(ix + 1))
+        else dispatchNumberString(ix)
 
-      var ix                      = idx
-      var stopChar                = 0
-      var maxNumberMantissaDigits = config.maxNumberMantissaDigits
+      var ix               = idx
+      var stopChar         = 0
+      var maxMantissaEndIx = idx + config.maxNumberMantissaDigits - 1
       var negMantissa =
         if (negValue == 0) {
           stopChar = getInputByteOrEOI(ix) & 0xFF
@@ -287,14 +258,14 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
         var negFractionDigits = 0
         if (stopChar == '.') {
           val ix0 = ix + 1
-          maxNumberMantissaDigits += 1
+          maxMantissaEndIx += 1
           ix = parseDigits(ix0, negMantissa)
           negFractionDigits = (ix0 - ix).toInt
           if (negFractionDigits == 0) failSyntaxError(ix0, "DIGIT", stopChar.toLong)
           stopChar = auxInt
           negMantissa = auxLong
         }
-        if (ix - idx >= maxNumberMantissaDigits) failNumberMantissaTooLong(ix)
+        if (ix > maxMantissaEndIx) failNumberMantissaTooLong(ix)
         if (negMantissa <= 0) { // otherwise the mantissa (value with the decimal point removed) doesn't fit into 63 bit
           var expNeg    = false
           var expDigits = 0
@@ -325,8 +296,13 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
               dispatchDouble(ix, negMantissa.toDouble / double10pow(-exp))
             } else dispatchNumberString(ix)
           } else dispatchIntOrLong(ix, negMantissa) // normal, unscaled integer
-        } else parseNumberStringFractionPart(ix, idx + maxNumberMantissaDigits.toLong - 2, appendAll(startIndex, ix, 0))
-      } else parseNumberStringIntegralPart(ix, idx + maxNumberMantissaDigits.toLong - 2, appendAll(startIndex, ix, 0))
+        } else parseNumberStringExponentPartOrDispatchNumberString(ix, stopChar)
+      } else {
+        if (ix > maxMantissaEndIx) failNumberMantissaTooLong(ix)
+        if (stopChar == '.' && { ix = parseDigits(ix + 1, 1); stopChar = auxInt; ix > maxMantissaEndIx + 1 }) {
+          failNumberMantissaTooLong(ix)
+        } else parseNumberStringExponentPartOrDispatchNumberString(ix, stopChar)
+      }
     }
 
     def parseNegNumber(ix: Long): Long = {
@@ -337,7 +313,8 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
     }
 
     def parseEscapeSeq(ix: Long, charCursor: Int): Long = {
-      var i = ix + 1
+      var i  = ix + 1
+      var cc = charCursor
       val c =
         (getInputByteOrEOI(ix): @switch) match {
           case '"'  ⇒ '"'
@@ -346,47 +323,67 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
           case 'b'  ⇒ '\b'
           case 'f'  ⇒ '\f'
           case 'n'  ⇒ '\n'
-          case 'r'  ⇒ '\r'
           case 't'  ⇒ '\t'
+          case 'r' ⇒
+            if (i < inputLen - 1 && ia.doubleByteBigEndian(input, i) == 0x5c6e) {
+              cc = appendChar(cc, '\r')
+              i += 2
+              '\n'
+            } else '\r'
           case 'u' ⇒
-            if (ix >= inputLen - 4) failIllegalEscapeSeq(ix)
-            val q                       = ia.quadByteBigEndian(input, i)
             @inline def hd(c: Int): Int = InputAccess.ForByteArray.unsafeByte(HexDigits, c.toLong).toInt
 
-            val x = (hd(q >>> 24) << 12) | (hd((q << 8) >>> 24) << 8) | (hd((q << 16) >>> 24) << 4) | hd(q & 0xFF)
+            if (i >= inputLen - 3) failIllegalEscapeSeq(i)
+            val q = ia.quadByteBigEndian(input, i)
+            var x = (hd(q >>> 24) << 12) | (hd(q << 8 >>> 24) << 8) | (hd(q << 16 >>> 24) << 4) | hd(q & 0xFF)
             if (x < 0) failIllegalEscapeSeq(i)
-            i = ix + 5
+            i += 4
+
+            // we immediately check whether there is another `u` sequence following and decode that as well if so
+            if (i < inputLen - 5 && ia.doubleByteBigEndian(input, i) == 0x5c75) {
+              val q = ia.quadByteBigEndian(input, i + 2)
+              cc = appendChar(cc, x.toChar)
+              x = (hd(q >>> 24) << 12) | (hd(q << 8 >>> 24) << 8) | (hd(q << 16 >>> 24) << 4) | hd(q & 0xFF)
+              if (x < 0) failIllegalEscapeSeq(i)
+              i += 6
+            }
             x.toChar
           case _ ⇒ failIllegalEscapeSeq(ix)
         }
-      auxInt = appendChar(charCursor, c)
+      auxInt = appendChar(cc, c)
       i
     }
 
-    def parseMultiByteUtf8Char(ix: Long, b1: Int, charCursor: Int): Long = {
+    @tailrec def parseMultiByteUtf8Char(ix: Long, b1: Int, charCursor: Int): Long = {
       val byteCount = Integer.numberOfLeadingZeros(~b1) - 25
-      val b2        = getInputByteOrEOI(ix).toInt
+      val quad      = getSafeQuadBigEndian(ix)
+      val b2        = quad >> 24
       var cc        = charCursor
       val cp = (byteCount | 0x80) ^ (b2 & 0xC0) match {
         case 1 ⇒
           if ((b1 & 0x1E) == 0) failIllegalUtf8(ix - 1)
-          (b1 << 6) ^ (b2 ^ 0xF80)
+          (b1 << 6) ^ b2 ^ 0xF80
         case 2 ⇒
-          val b3 = getInputByteOrEOI(ix + 1).toInt
-          val c  = (b1 << 12) ^ (b2 << 6) ^ (b3 ^ 0xFFFE1F80)
+          val b3 = quad << 8 >> 24
+          val c  = (b1 << 12) ^ (b2 << 6) ^ b3 ^ 0xFFFE1F80
           if ((b1 == 0xE0 && (b2 & 0xE0) == 0x80) || (b3 & 0xC0) != 0x80 || ((c >> 11) == 0x1b)) failIllegalUtf8(ix - 1)
           c
         case 3 ⇒
-          val b3 = getInputByteOrEOI(ix + 1).toInt
-          val b4 = getInputByteOrEOI(ix + 2).toInt
-          val c  = (b1 << 18) ^ (b2 << 12) ^ (b3 << 6) ^ (b4 ^ 0x381F80)
+          val b3 = quad << 8 >> 24
+          val b4 = quad << 16 >> 24
+          val c  = (b1 << 18) ^ (b2 << 12) ^ (b3 << 6) ^ b4 ^ 0x381F80
           if ((b3 & 0xC0) != 0x80 || (b4 & 0xC0) != 0x80 || c < 0x010000 || c > 0x10FFFF) failIllegalUtf8(ix - 1)
           cc = appendChar(charCursor, (0xD7C0 + (c >> 10)).toChar) // high surrogate
           0xDC00 + (c & 0x3FF) // low surrogate
         case _ ⇒ failIllegalUtf8(ix - 1)
       }
       auxInt = appendChar(cc, cp.toChar)
-      ix + byteCount
+
+      // if the next byte is also an 8-bit character (which is not that unlikely) we decode that as well right away
+      val nextByte = quad << (byteCount << 3) >> 24
+      val nextIx   = ix + byteCount
+      if (nextByte < 0) parseMultiByteUtf8Char(nextIx + 1, nextByte, auxInt)
+      else nextIx
     }
 
     @tailrec def parseUtf8String(ix: Long, charCursor: Int): Long = {
@@ -410,15 +407,15 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
       val charCount = nlz >> 3 // the number of "good" normal chars before a special char [0..8]
 
       // in order to decrease instruction dependencies we always speculatively write all 8 chars to the char buffer,
-      // independently of how many are actually "good" chars, this keeps the pipelines maximally busy
+      // independently of how many are actually "good" chars, this keeps CPU pipelines maximally busy
       ensureCharsLen(charCursor + 8)
       chars(charCursor) = (octa >>> 56).toChar
-      chars(charCursor + 1) = ((octa << 8) >>> 56).toChar
-      chars(charCursor + 2) = ((octa << 16) >>> 56).toChar
-      chars(charCursor + 3) = ((octa << 24) >>> 56).toChar
-      chars(charCursor + 4) = ((octa << 32) >>> 56).toChar
-      chars(charCursor + 5) = ((octa << 40) >>> 56).toChar
-      chars(charCursor + 6) = ((octa << 48) >>> 56).toChar
+      chars(charCursor + 1) = (octa << 8 >>> 56).toChar
+      chars(charCursor + 2) = (octa << 16 >>> 56).toChar
+      chars(charCursor + 3) = (octa << 24 >>> 56).toChar
+      chars(charCursor + 4) = (octa << 32 >>> 56).toChar
+      chars(charCursor + 5) = (octa << 40 >>> 56).toChar
+      chars(charCursor + 6) = (octa << 48 >>> 56).toChar
       chars(charCursor + 7) = (octa & 0xFFL).toChar
 
       val newCursor = charCursor + charCount
@@ -434,9 +431,9 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
         } else if ((bMask & byteMask7bit) != 0) { // first special char is '\'
           parseUtf8String(parseEscapeSeq(nextIx, newCursor), auxInt)
         } else if ((octa & byteMask) != 0) { // first special char is 8-bit
-          parseUtf8String(parseMultiByteUtf8Char(nextIx, ((octa << nlz) >> 56).toInt, newCursor), auxInt)
+          parseUtf8String(parseMultiByteUtf8Char(nextIx, (octa << nlz >> 56).toInt, newCursor), auxInt)
         } else { // first special char is a ctrl char
-          failSyntaxError(ix + charCount, "JSON string character", (octa << nlz) >>> 56)
+          failSyntaxError(ix + charCount, "JSON string character", octa << nlz >>> 56)
         }
       } else parseUtf8String(ix + 8, newCursor) // we have written 8 normal chars, so recurse immediately
     }
@@ -568,7 +565,7 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
 
     val nlz = java.lang.Long.numberOfLeadingZeros(mask)
     if (nlz < 64) {
-      auxLong = (octa << nlz) >>> 56 // "return" the first non-whitespace char
+      auxLong = octa << nlz >>> 56 // "return" the first non-whitespace char
       ix + (nlz >> 3) // and the index of the first non-whitespace char
     } else skipWhiteSpace(ix + 8)
   }
@@ -576,6 +573,18 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
   @inline private def getInputByteUnsafe(ix: Long): Byte = ia.unsafeByte(input, ix)
 
   @inline private def getInputByteOrEOI(ix: Long): Byte = if (ix < inputLen) getInputByteUnsafe(ix) else -1
+
+  private def getSafeQuadBigEndian(ix: Long): Int = {
+    def partialQuad: Int =
+      inputLen - ix match {
+        case 0 ⇒ -1 // == EOI
+        case 1 ⇒ (ia.unsafeByte(input, ix).toInt << 24) | 0xFFFFFF
+        case 2 ⇒ (ia.doubleByteBigEndian(input, ix) << 16) | 0xFFFF
+        case 3 ⇒ (ia.doubleByteBigEndian(input, ix) << 16) | (ia.unsafeByte(input, ix + 2) << 8) | 0xFF
+      }
+    if (ix <= inputLen - 4) ia.quadByteBigEndian(input, ix)
+    else partialQuad
+  }
 
   private def getSafeOctaBigEndian(ix: Long): Long = {
     def partialOcta: Long =
