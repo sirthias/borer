@@ -70,7 +70,8 @@ object CborDerivationSpec extends TestSuite {
       val foo     = Foo()
       val encoded = Cbor.encode(foo).to[Array[Byte]].bytes
 
-      Cbor.decode(encoded).to[Dom.Element].value ==> {
+      val dom = Cbor.decode(encoded).to[Element].value
+      dom ==> {
         MapElem.Sized(
           "char"   → IntElem(120),
           "byte"   → IntElem(66),
@@ -88,6 +89,10 @@ object CborDerivationSpec extends TestSuite {
       }
 
       Cbor.decode(encoded).to[Foo].value ==> foo
+
+      val domReordered   = MapElem.Sized(dom.asInstanceOf[MapElem.Sized].toMap.toList: _*)
+      val bytesReordered = Cbor.encode(domReordered).to[Array[Byte]].bytes
+      Cbor.decode(bytesReordered).to[Foo].value ==> foo
     }
 
     "ADT" - {

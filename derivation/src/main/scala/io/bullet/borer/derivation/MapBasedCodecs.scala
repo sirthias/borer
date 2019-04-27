@@ -9,6 +9,7 @@
 package io.bullet.borer.derivation
 
 import io.bullet.borer._
+import io.bullet.borer.Borer.Error
 import magnolia._
 
 import scala.annotation.tailrec
@@ -44,26 +45,44 @@ object MapBasedCodecs {
     type Typeclass[T] = Decoder[T]
 
     def combine[T](ctx: CaseClass[Decoder, T]): Decoder[T] = {
-      val params              = ctx.parameters
-      val len                 = params.size
-      def typeName            = ctx.typeName.full
+      @inline def typeName = ctx.typeName.full
+      val params           = ctx.parameters
+      val len              = params.size
+      if (len > 64) sys.error(s"Cannot derive Decoder[$typeName]: More than 64 members are unsupported")
       def expected(s: String) = s"$s for decoding an instance of type [$typeName]"
 
       Decoder { r ⇒
-        def construct(): T = ctx.construct { param ⇒
-          @tailrec def rec(i: Int, end: Int): AnyRef =
+        val constructorArgs = new Array[AnyRef](len)
+
+        @tailrec def fillArgsAndConstruct(alreadyFilledCount: Int, filledMask: Long): T = {
+          @tailrec def findAndFillNextArg(i: Int, end: Int): Long =
             if (i < end) {
-              if (r.tryReadString(param.label)) param.typeclass.read(r).asInstanceOf[AnyRef]
-              else rec(i + 1, end)
-            } else if (end == len) rec(0, param.index)
-            else r.unexpectedDataItem(s"a member of type [$typeName]", s"member with name [${r.readString()}]")
-          rec(param.index, len)
+              val p = params(i)
+              if (r.tryReadString(p.label)) {
+                val mask = 1L << i
+                if ((filledMask & mask) == 0) {
+                  constructorArgs(i) = p.typeclass.read(r).asInstanceOf[AnyRef]
+                  filledMask | mask
+                } else throw new Error.InvalidInputData(r.position, s"Duplicate map key [${p.label}] encountered")
+              } else findAndFillNextArg(i + 1, end)
+            } else if (end == len) findAndFillNextArg(0, alreadyFilledCount)
+            else
+              r.unexpectedDataItem(
+                expected("a map key/member"),
+                if (r.hasString) r.read[Dom.Element].toString
+                else DataItem.stringify(r.dataItem))
+
+          if (alreadyFilledCount < len) {
+            val newFilledMask = findAndFillNextArg(alreadyFilledCount, len)
+            fillArgsAndConstruct(alreadyFilledCount + 1, newFilledMask)
+          } else ctx.rawConstruct(constructorArgs)
         }
+
         if (r.tryReadMapStart()) {
-          val result = construct()
+          val result = fillArgsAndConstruct(0, 0L)
           if (r.tryReadBreak()) result
           else r.unexpectedDataItem(expected(s"Map with $len elements"), "at least one extra element")
-        } else if (r.tryReadMapHeader(len)) construct()
+        } else if (r.tryReadMapHeader(len)) fillArgsAndConstruct(0, 0L)
         else r.unexpectedDataItem(expected(s"Map Start or Map Header ($len)"))
       }
     }
