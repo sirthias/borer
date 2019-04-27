@@ -149,11 +149,12 @@ final class InputReader[Input, +Config <: Reader.Config](startCursor: Long,
     hasAnyOf(DI.Float16 | DI.Float | DI.Double | DI.NumberString) || config.readIntegersAlsoAsFloatingPoint && hasLong
   def readDouble(): Double = {
     val result = dataItem match {
-      case DI.Double                                                  ⇒ receptacle.doubleValue
-      case DI.Float16 | DI.Float                                      ⇒ receptacle.floatValue.toDouble
-      case DI.Int | DI.Long if config.readIntegersAlsoAsFloatingPoint ⇒ readLong().toDouble
-      case DI.NumberString                                            ⇒ java.lang.Double.parseDouble(receptacle.stringValue)
-      case _                                                          ⇒ unexpectedDataItem(expected = "Double")
+      case DI.Double                                         ⇒ receptacle.doubleValue
+      case DI.Float16 | DI.Float                             ⇒ receptacle.floatValue.toDouble
+      case DI.Int if config.readIntegersAlsoAsFloatingPoint  ⇒ receptacle.intValue.toDouble
+      case DI.Long if config.readIntegersAlsoAsFloatingPoint ⇒ receptacle.longValue.toDouble
+      case DI.NumberString                                   ⇒ java.lang.Double.parseDouble(receptacle.stringValue)
+      case _                                                 ⇒ unexpectedDataItem(expected = "Double")
     }
     pull()
     result
