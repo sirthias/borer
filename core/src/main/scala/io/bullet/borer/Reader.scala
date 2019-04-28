@@ -348,7 +348,12 @@ final class InputReader[Input, +Config <: Reader.Config](startCursor: Long,
     rec(zero)
   }
 
-  @inline def pull(): Unit = {
+  def skipDataItem(): this.type = {
+    pull()
+    this
+  }
+
+  @inline private def pull(): Unit = {
     receptacle.clear()
     _cursor = parser.pull(_cursor, receiver)
   }

@@ -145,6 +145,7 @@ object Dom {
       val empty                                                            = new Sized(0, Array.empty)
       def apply(first: (String, Element), more: (String, Element)*): Sized = construct(first +: more, create)
       def apply(entries: (Element, Element)*): Sized                       = construct(entries, create)
+      def apply(entries: collection.Map[Element, Element]): Sized          = construct(entries, create)
       def unapply(value: Sized): Sized                                     = value
     }
 
@@ -154,9 +155,11 @@ object Dom {
       val empty                                                              = new Unsized(0, Array.empty)
       def apply(first: (String, Element), more: (String, Element)*): Unsized = construct(first +: more, create)
       def apply(entries: (Element, Element)*): Unsized                       = construct(entries, create)
+      def apply(entries: collection.Map[Element, Element]): Unsized          = construct(entries, create)
+      def unapply(value: Unsized): Unsized                                   = value
     }
 
-    private def construct[T](entries: Seq[(AnyRef, Element)], f: (Int, Array[Element]) ⇒ T): T = {
+    private def construct[T](entries: Iterable[(AnyRef, Element)], f: (Int, Array[Element]) ⇒ T): T = {
       val elements = new mutable.ArrayBuilder.ofRef[Dom.Element]
       elements.sizeHint(entries.size << 1)
       entries.foreach {
@@ -299,7 +302,7 @@ object Dom {
           } else MapElem.Sized.empty
 
         case DIS.MapStart ⇒
-          r.pull()
+          r.skipDataItem()
           if (!r.tryReadBreak) {
             @tailrec def rec(elements: mutable.ArrayBuilder.ofRef[Dom.Element]): MapElem.Unsized =
               if (r.tryReadBreak()) {

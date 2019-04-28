@@ -166,7 +166,7 @@ object DecodingSetup {
       new InputReader(startIndex, parserCreator(input, config, ia), receiverWrapper, config, target)
 
     private def decodeFrom(reader: Reader): AnyRef = {
-      reader.pull() // fetch first data item
+      reader.skipDataItem() // fetch first data item
       val value = decoder.read(reader)
       if (!prefixOnly) reader.readEndOfInput()
       value

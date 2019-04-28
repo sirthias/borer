@@ -14,15 +14,6 @@ import io.bullet.borer.cbor._
 import io.bullet.borer.internal.{CborValidation, Util}
 import io.bullet.borer.json._
 
-/**
-  * Super-type of the [[Cbor]] and [[Json]] objects.
-  *
-  * Used, for example, as the type of the `target` member of [[Reader]] and [[Writer]] instances,
-  * which allows custom logic to pick different (de)serialization approaches
-  * depending on whether the target is CBOR or JSON.
-  */
-sealed abstract class Target
-
 case object Cbor extends Target {
 
   /**
@@ -163,6 +154,20 @@ case object Json extends Target {
   object DecodingConfig {
     val default = DecodingConfig()
   }
+}
+
+/**
+  * Super-type of the [[Cbor]] and [[Json]] objects.
+  *
+  * Used, for example, as the type of the `target` member of [[Reader]] and [[Writer]] instances,
+  * which allows custom logic to pick different (de)serialization approaches
+  * depending on whether the target is CBOR or JSON.
+  */
+sealed abstract class Target {
+
+  def encode[T: Encoder](value: T): EncodingSetup.Api[T, _]
+
+  def decode[Input: InputAccess](input: Input): DecodingSetup.Api[Input, _]
 }
 
 /**
