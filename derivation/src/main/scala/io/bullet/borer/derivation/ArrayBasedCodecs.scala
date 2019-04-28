@@ -67,7 +67,9 @@ object ArrayBasedCodecs {
       Decoder { r ⇒
         def construct(): T = ctx.construct(_.typeclass.read(r))
         len match {
-          case 0 ⇒ ctx.construct(null)
+          case 0 ⇒
+            if (r.tryReadArrayHeader(0) || r.tryReadArrayStart() && r.tryReadBreak()) ctx.construct(null)
+            else r.unexpectedDataItem(expected(s"Empty array"))
           case 1 ⇒ construct()
           case _ ⇒
             if (r.tryReadArrayStart()) {
