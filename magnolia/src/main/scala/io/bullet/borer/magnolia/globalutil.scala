@@ -12,7 +12,7 @@
  * either express or implied. See the License for the specific language governing permissions
  * and limitations under the License.
  */
-package magnolia
+package io.bullet.borer.magnolia
 
 import scala.reflect.macros.{runtime, whitebox}
 import scala.tools.nsc.Global

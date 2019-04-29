@@ -12,14 +12,11 @@
  * either express or implied. See the License for the specific language governing permissions
  * and limitations under the License.
  */
-package magnolia
+package io.bullet.borer.magnolia
 
 import scala.annotation.compileTimeOnly
 import scala.collection.mutable
-import scala.language.existentials
-import scala.language.higherKinds
 import scala.reflect.macros._
-import mercator._
 
 /** the object which defines the Magnolia macro */
 object Magnolia {
@@ -90,7 +87,7 @@ object Magnolia {
       .find(_.tree.tpe <:< typeOf[debug])
       .flatMap(_.tree.children.tail.collectFirst { case Literal(Constant(s: String)) ⇒ s })
 
-    val magnoliaPkg = c.mirror.staticPackage("magnolia")
+    val magnoliaPkg = c.mirror.staticPackage("io.bullet.borer.magnolia")
     val scalaPkg    = c.mirror.staticPackage("scala")
 
     val repeatedParamClass = definitions.RepeatedParamClass
@@ -250,11 +247,8 @@ object Magnolia {
             new $scalaPkg.Array(0),
             $scalaPkg.Array(..$classAnnotationTrees)
           ) {
-            override def construct[Return](makeParam: _root_.magnolia.Param[$typeConstructor, $genericType] => Return): $genericType =
+            override def construct[Return](makeParam: $magnoliaPkg.Param[$typeConstructor, $genericType] => Return): $genericType =
               ${genericType.typeSymbol.asClass.module}
-
-            def constructMonadic[$f[_], Return](makeParam: _root_.magnolia.Param[$typeConstructor, $genericType] => $f[Return])(implicit monadic: _root_.mercator.Monadic[$f]): $f[$genericType] =
-              monadic.point(${genericType.typeSymbol.asClass.module})
 
             def rawConstruct(fieldValues: _root_.scala.Seq[_root_.scala.Any]): $genericType =
               ${genericType.typeSymbol.asClass.module}
@@ -345,8 +339,8 @@ object Magnolia {
             ${param.name.decodedName.toString},
             ${if (!isValueClass) q"$idx" else q"(g: $genericType) => g.${param.name}: $paramType"},
             $repeated,
-            _root_.magnolia.CallByNeed($ref),
-            _root_.magnolia.CallByNeed($defaultVal),
+            $magnoliaPkg.CallByNeed($ref),
+            $magnoliaPkg.CallByNeed($defaultVal),
             $scalaPkg.Array(..$annList)
           )"""
         }
@@ -365,20 +359,6 @@ object Magnolia {
 
         val f = TypeName(c.freshName("F"))
 
-        val forParams = caseParams.zipWithIndex.map {
-          case (typeclass, idx) ⇒
-            val part = TermName(s"p$idx")
-            (
-              if (typeclass.repeated) q"$part: _*" else q"$part",
-              fq"$part <- new _root_.mercator.Ops(makeParam($paramsVal($idx)).asInstanceOf[$f[${typeclass.paramType}]])")
-        }
-
-        val constructMonadicImpl = if (forParams.isEmpty) q"monadic.point(new $genericType())" else q"""
-          for(
-            ..${forParams.map(_._2)}
-          ) yield new $genericType(..${forParams.map(_._1)})
-        """
-
         Some(q"""{
             ..$preAssignments
             val $paramsVal: $scalaPkg.Array[$magnoliaPkg.Param[$typeConstructor, $genericType]] =
@@ -394,14 +374,10 @@ object Magnolia {
               $paramsVal,
               $scalaPkg.Array(..$classAnnotationTrees)
             ) {
-              override def construct[Return](makeParam: _root_.magnolia.Param[$typeConstructor, $genericType] => Return): $genericType =
+              override def construct[Return](makeParam: $magnoliaPkg.Param[$typeConstructor, $genericType] => Return): $genericType =
                 new $genericType(..$genericParams)
 
-              def constructMonadic[$f[_], Return](makeParam: _root_.magnolia.Param[$typeConstructor, $genericType] => $f[Return])(implicit monadic: _root_.mercator.Monadic[$f]):$f[$genericType] = {
-                $constructMonadicImpl
-              }
-
-              def rawConstruct(fieldValues: _root_.scala.Seq[_root_.scala.Any]): $genericType = {
+              def rawConstruct(fieldValues: $scalaPkg.Seq[$scalaPkg.Any]): $genericType = {
                 $magnoliaPkg.Magnolia.checkParamLengths(fieldValues, $paramsVal.length, $typeName.full)
                 new $genericType(..$rawGenericParams)
               }
@@ -442,7 +418,7 @@ object Magnolia {
             ${typeNameRec(typ)},
             $idx,
             $scalaPkg.Array(..${typ.typeSymbol.annotations.map(_.tree)}),
-            _root_.magnolia.CallByNeed($typeclass),
+            $magnoliaPkg.CallByNeed($typeclass),
             (t: $genericType) => t.isInstanceOf[$typ],
             (t: $genericType) => t.asInstanceOf[$typ]
           )"""
@@ -618,7 +594,7 @@ private[magnolia] object CompileTimeState {
     override def toString: String =
       frames.mkString("magnolia stack:\n", "\n", "\n")
 
-    final case class Frame(path: TypePath, searchType: C#Type, term: C#TermName)
+    case class Frame(path: TypePath, searchType: C#Type, term: C#TermName)
   }
 
   object Stack {

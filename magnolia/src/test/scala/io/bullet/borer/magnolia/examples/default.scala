@@ -28,11 +28,16 @@ object HasDefault {
   /** constructs a default for each parameter, using the constructor default (if provided),
     *  otherwise using a typeclass-provided default */
   def combine[T](ctx: CaseClass[HasDefault, T]): HasDefault[T] = new HasDefault[T] {
-    def defaultValue = ctx.constructMonadic { param ⇒
-      param.default match {
-        case Some(arg) ⇒ Right(arg)
-        case None      ⇒ param.typeclass.defaultValue
+    def defaultValue = {
+      val args = ctx.parameters.foldLeft(Right(Nil): Either[String, List[Any]]) {
+        case (Left(x), _) ⇒ Left(x)
+        case (Right(acc), param) ⇒
+          param.default match {
+            case Some(arg) ⇒ Right(arg :: acc)
+            case None      ⇒ param.typeclass.defaultValue.right.map(_ :: acc)
+          }
       }
+      args.right.map(x ⇒ ctx.rawConstruct(x.reverse))
     }
   }
 

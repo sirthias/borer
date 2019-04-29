@@ -12,12 +12,9 @@
  * either express or implied. See the License for the specific language governing permissions
  * and limitations under the License.
  */
-package magnolia
+package io.bullet.borer.magnolia
 
-import language.higherKinds
-import language.experimental.macros
 import scala.annotation.tailrec
-import mercator._
 
 /** represents a subtype of a sealed trait
   *
@@ -164,9 +161,6 @@ abstract class CaseClass[Typeclass[_], Type](
     *                    this parameter in the construction of a new instance of the case class
     *  @return  a new instance of the case class */
   def construct[Return](makeParam: Param[Typeclass, Type] ⇒ Return): Type
-
-  def constructMonadic[Monad[_], PType](makeParam: Param[Typeclass, Type] ⇒ Monad[PType])(
-      implicit monadic: Monadic[Monad]): Monad[Type]
 
   /** constructs a new instance of the case class type
     *
