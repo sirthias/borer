@@ -140,15 +140,16 @@ trait Param[Typeclass[_], Type] extends Serializable {
   *  @param annotationsArray  an array of instantiated annotations applied to this case class
   *  @tparam Typeclass  type constructor for the typeclass being derived
   *  @tparam Type       generic type of this parameter */
-abstract class CaseClass[Typeclass[_], Type] (
-  val typeName: TypeName,
-  val isObject: Boolean,
-  val isValueClass: Boolean,
-  parametersArray: Array[Param[Typeclass, Type]],
-  annotationsArray: Array[Any]
+abstract class CaseClass[Typeclass[_], Type](
+    val typeName: TypeName,
+    val isObject: Boolean,
+    val isValueClass: Boolean,
+    parametersArray: Array[Param[Typeclass, Type]],
+    annotationsArray: Array[Any]
 ) extends Serializable {
 
   override def toString: String = s"CaseClass(${typeName.full}, ${parameters.mkString(",")})"
+
   /** constructs a new instance of the case class type
     *
     *  This method will be implemented by the Magnolia macro to make it possible to construct
@@ -162,9 +163,10 @@ abstract class CaseClass[Typeclass[_], Type] (
     *  @param makeParam  lambda for converting a generic [[Param]] into the value to be used for
     *                    this parameter in the construction of a new instance of the case class
     *  @return  a new instance of the case class */
-  def construct[Return](makeParam: Param[Typeclass, Type] => Return): Type
+  def construct[Return](makeParam: Param[Typeclass, Type] ⇒ Return): Type
 
-  def constructMonadic[Monad[_], PType](makeParam: Param[Typeclass, Type] => Monad[PType])(implicit monadic: Monadic[Monad]): Monad[Type]
+  def constructMonadic[Monad[_], PType](makeParam: Param[Typeclass, Type] ⇒ Monad[PType])(
+      implicit monadic: Monadic[Monad]): Monad[Type]
 
   /** constructs a new instance of the case class type
     *
@@ -204,9 +206,9 @@ abstract class CaseClass[Typeclass[_], Type] (
   *  @tparam Typeclass  type constructor for the typeclass being derived
   *  @tparam Type             generic type of this parameter */
 final class SealedTrait[Typeclass[_], Type](
-  val typeName: TypeName,
-  subtypesArray: Array[Subtype[Typeclass, Type]],
-  annotationsArray: Array[Any]
+    val typeName: TypeName,
+    subtypesArray: Array[Subtype[Typeclass, Type]],
+    annotationsArray: Array[Any]
 ) extends Serializable {
 
   override def toString: String = s"SealedTrait($typeName, Array[${subtypes.mkString(",")}])"
@@ -224,7 +226,7 @@ final class SealedTrait[Typeclass[_], Type](
     *                 matches
     *  @return  the result of applying the `handle` lambda to subtype of the sealed trait which
     *           matches the parameter `value` */
-  def dispatch[Return](value: Type)(handle: Subtype[Typeclass, Type] => Return): Return = {
+  def dispatch[Return](value: Type)(handle: Subtype[Typeclass, Type] ⇒ Return): Return = {
     @tailrec def rec(ix: Int): Return =
       if (ix < subtypesArray.length) {
         val sub = subtypesArray(ix)
