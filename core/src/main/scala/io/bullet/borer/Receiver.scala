@@ -75,6 +75,16 @@ object Receiver {
     def input: Input
 
     /**
+      * The index of the last value that was parsed.
+      */
+    def lastValueStartIndex: Long
+
+    /**
+      * The input [[Position]] of the last value that was parsed.
+      */
+    final def lastPosition: Position[Input] = pos(lastValueStartIndex)
+
+    /**
       * The input [[Position]] for the given index.
       */
     final def pos(index: Long): Position[Input] = Position(input, index)

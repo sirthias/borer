@@ -65,6 +65,11 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
   // the current level is always the LSB (bit 0)
   private[this] var levelType: Long = _
 
+  // the index of the first character of the last value parsed
+  private[this] var lastValueStart: Long = _
+
+  def lastValueStartIndex: Long = lastValueStart
+
   /**
     * Reads the next data item from the input and sends it to the given [[Receiver]].
     * The [[Receiver]] receives exactly one call to one of its methods.
@@ -464,18 +469,20 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
       nextIx
     }
 
-    def parseValue(c: Long, nextIx: Long): Long =
+    def parseValue(c: Long, nextIx: Long): Long = {
+      lastValueStart = nextIx - 1
       (InputAccess.ForByteArray.unsafeByte(TokenTable, c): @switch) match {
         case DQUOTE      ⇒ parseUtf8String(nextIx, 0)
         case MAP_START   ⇒ pushMap(nextIx)
         case ARRAY_START ⇒ pushArray(nextIx)
-        case LOWER_N     ⇒ parseNull(nextIx - 1)
+        case LOWER_N     ⇒ parseNull(lastValueStart)
         case LOWER_F     ⇒ parseFalse(nextIx)
-        case LOWER_T     ⇒ parseTrue(nextIx - 1)
+        case LOWER_T     ⇒ parseTrue(lastValueStart)
         case MINUS       ⇒ parseNegNumber(nextIx)
-        case DIGIT       ⇒ parseNumber(nextIx, nextIx - 1, '0' - c, negative = false)
-        case _           ⇒ failSyntaxError(nextIx - 1, "JSON value", c)
+        case DIGIT       ⇒ parseNumber(nextIx, lastValueStart, '0' - c, negative = false)
+        case _           ⇒ failSyntaxError(lastValueStart, "JSON value", c)
       }
+    }
 
     def parseArrayValueOrBreak(c: Long, nextIx: Long): Long =
       if (c != ']') {

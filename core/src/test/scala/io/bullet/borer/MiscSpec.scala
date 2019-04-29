@@ -102,7 +102,7 @@ object MiscSpec extends BorerSpec {
       val error   = Cbor.decode(encoded).to[Foo].valueEither.left.get
       assertMatch(error) {
         case e: Borer.Error.InvalidInputData[_]
-            if e.getMessage == "Expected Array Header (3) but got Array Header (0) [input position 1]" ⇒
+            if e.getMessage == "Expected Array Header (3) but got Array Header (0) [input position 0]" ⇒
       }
     }
 

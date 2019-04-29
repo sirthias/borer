@@ -40,7 +40,7 @@ final class Writer(receiver: Receiver, val target: Target, config: Writer.Config
   @inline def writeChar(value: Char): this.type                = writeInt(value.toInt)
   @inline def writeByte(value: Byte): this.type                = writeInt(value.toInt)
   @inline def writeShort(value: Short): this.type              = writeInt(value.toInt)
-  @inline def writeInt(value: Int): this.type                  = { receiver.onInt(value.toInt); this }
+  @inline def writeInt(value: Int): this.type                  = { receiver.onInt(value); this }
   @inline def writeLong(value: Long): this.type                = { receiver.onLong(value); this }
   def writeOverLong(negative: Boolean, value: Long): this.type = { receiver.onOverLong(negative, value); this }
   def writeFloat16(value: Float): this.type                    = { receiver.onFloat16(value); this }

@@ -108,7 +108,7 @@ object DecodingSetup {
         decodeFrom(reader)
       } catch {
         case e: Borer.Error[_] ⇒ throw e.withPosOf(reader)
-        case NonFatal(e)       ⇒ throw new Borer.Error.General(reader.position, e)
+        case NonFatal(e)       ⇒ throw new Borer.Error.General(reader.lastPosition, e)
       }
     }
 
@@ -118,7 +118,7 @@ object DecodingSetup {
         Success(decodeFrom(reader))
       } catch {
         case e: Borer.Error[_] ⇒ Failure(e.withPosOf(reader))
-        case NonFatal(e)       ⇒ Failure(new Borer.Error.General(reader.position, e))
+        case NonFatal(e)       ⇒ Failure(new Borer.Error.General(reader.lastPosition, e))
       }
     }
 
@@ -128,7 +128,7 @@ object DecodingSetup {
         Right(decodeFrom(reader))
       } catch {
         case e: Borer.Error[_] ⇒ Left(e.withPosOf(reader))
-        case NonFatal(e)       ⇒ Left(new Borer.Error.General(reader.position, e))
+        case NonFatal(e)       ⇒ Left(new Borer.Error.General(reader.lastPosition, e))
       }
     }
 
@@ -138,7 +138,7 @@ object DecodingSetup {
         decodeFrom(reader) → reader.cursor
       } catch {
         case e: Borer.Error[_] ⇒ throw e.withPosOf(reader)
-        case NonFatal(e)       ⇒ throw new Borer.Error.General(reader.position, e)
+        case NonFatal(e)       ⇒ throw new Borer.Error.General(reader.lastPosition, e)
       }
     }
 
@@ -148,7 +148,7 @@ object DecodingSetup {
         Success(decodeFrom(reader) → reader.cursor)
       } catch {
         case e: Borer.Error[_] ⇒ Failure(e.withPosOf(reader))
-        case NonFatal(e)       ⇒ Failure(new Borer.Error.General(reader.position, e))
+        case NonFatal(e)       ⇒ Failure(new Borer.Error.General(reader.lastPosition, e))
       }
     }
 
@@ -158,7 +158,7 @@ object DecodingSetup {
         Right(decodeFrom(reader) → reader.cursor)
       } catch {
         case e: Borer.Error[_] ⇒ Left(e.withPosOf(reader))
-        case NonFatal(e)       ⇒ Left(new Borer.Error.General(reader.position, e))
+        case NonFatal(e)       ⇒ Left(new Borer.Error.General(reader.lastPosition, e))
       }
     }
 

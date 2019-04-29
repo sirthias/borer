@@ -24,7 +24,10 @@ private[borer] final class CborParser[Input](val input: Input, config: CborParse
     extends Receiver.Parser[Input] {
   import Borer.Error
 
-  private[this] val inputLen = ia.length(input)
+  private[this] val inputLen             = ia.length(input)
+  private[this] var lastValueStart: Long = _
+
+  def lastValueStartIndex: Long = lastValueStart
 
   /**
     * Reads the next data item from the input and sends it to the given [[Receiver]].
@@ -124,6 +127,7 @@ private[borer] final class CborParser[Input](val input: Input, config: CborParse
       ix
     }
 
+    lastValueStart = index
     if (index < inputLen) {
       val byte      = ia.unsafeByte(input, index) & 0xFF
       var ix        = index + 1
