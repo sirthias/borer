@@ -12,7 +12,7 @@ import io.bullet.borer.{Codec, Decoder, Encoder, Writer}
 
 import scala.annotation.tailrec
 import scala.collection.mutable
-import magnolia._
+import io.bullet.borer.magnolia._
 
 object ArrayBasedCodecs {
 

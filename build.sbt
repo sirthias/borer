@@ -210,7 +210,8 @@ lazy val derivation = crossProject(JSPlatform, JVMPlatform)
   .settings(releaseSettings)
   .settings(
     moduleName := "borer-derivation",
-    scalaJsDeps(utest)
+    scalaJsDeps(utest),
+    libraryDependencies += `scala-reflect` % scalaVersion.value % "provided"
   )
   .jsSettings(scalajsSettings: _*)
 

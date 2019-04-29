@@ -174,7 +174,7 @@ abstract class CaseClass[Typeclass[_], Type](
     *                    in order and with the correct types.
     *  @return  a new instance of the case class
     *  @throws  IllegalArgumentException if the size of `paramValues` differs from the size of [[parameters]] */
-  def rawConstruct(fieldValues: Seq[Any]): Type
+  def rawConstruct(fieldValues: Array[Any]): Type
 
   /** a sequence of [[Param]] objects representing all of the parameters in the case class
     *

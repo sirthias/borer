@@ -237,7 +237,6 @@ object Magnolia {
       val typeNameDef = q"val $typeName = ${typeNameRec(genericType)}"
 
       val result = if (isCaseObject) {
-        val f    = TypeName(c.freshName("F"))
         val impl = q"""
           $typeNameDef
           ${c.prefix}.combine(new $magnoliaPkg.CaseClass[$typeConstructor, $genericType](
@@ -250,7 +249,7 @@ object Magnolia {
             override def construct[Return](makeParam: $magnoliaPkg.Param[$typeConstructor, $genericType] => Return): $genericType =
               ${genericType.typeSymbol.asClass.module}
 
-            def rawConstruct(fieldValues: _root_.scala.Seq[_root_.scala.Any]): $genericType =
+            def rawConstruct(fieldValues: $scalaPkg.Array[$scalaPkg.Any]): $genericType =
               ${genericType.typeSymbol.asClass.module}
           })
         """
@@ -304,8 +303,7 @@ object Magnolia {
 
         val caseParams = caseParamsReversed.reverse
 
-        val paramsVal: TermName   = TermName(c.freshName("parameters"))
-        val fieldValues: TermName = TermName(c.freshName("fieldValues"))
+        val paramsVal: TermName = TermName(c.freshName("parameters"))
 
         val preAssignments = caseParams.map(_.typeclass)
 
@@ -357,8 +355,6 @@ object Magnolia {
             if (typeclass.repeated) q"$arg: _*" else arg
         }
 
-        val f = TypeName(c.freshName("F"))
-
         Some(q"""{
             ..$preAssignments
             val $paramsVal: $scalaPkg.Array[$magnoliaPkg.Param[$typeConstructor, $genericType]] =
@@ -377,10 +373,8 @@ object Magnolia {
               override def construct[Return](makeParam: $magnoliaPkg.Param[$typeConstructor, $genericType] => Return): $genericType =
                 new $genericType(..$genericParams)
 
-              def rawConstruct(fieldValues: $scalaPkg.Seq[$scalaPkg.Any]): $genericType = {
-                $magnoliaPkg.Magnolia.checkParamLengths(fieldValues, $paramsVal.length, $typeName.full)
+              def rawConstruct(fieldValues: $scalaPkg.Array[$scalaPkg.Any]): $genericType =
                 new $genericType(..$rawGenericParams)
-              }
             })
           }""")
       } else if (isSealedTrait) {
@@ -536,12 +530,6 @@ object Magnolia {
     def dereference(t: T): PType     = deref(t)
     def annotationsArray: Array[Any] = annotationsArrayParam
   }
-
-  final def checkParamLengths(fieldValues: Seq[Any], paramsLength: Int, typeName: String) =
-    if (fieldValues.lengthCompare(paramsLength) != 0) {
-      val msg = "`" + typeName + "` has " + paramsLength + " fields, not " + fieldValues.size
-      throw new java.lang.IllegalArgumentException(msg)
-    }
 }
 
 private[magnolia] final case class DirectlyReentrantException() extends Exception("attempt to recurse directly")

@@ -10,7 +10,7 @@ package io.bullet.borer.derivation
 
 import io.bullet.borer._
 import io.bullet.borer.Borer.Error
-import magnolia._
+import io.bullet.borer.magnolia._
 
 import scala.annotation.tailrec
 
@@ -52,7 +52,7 @@ object MapBasedCodecs {
       def expected(s: String) = s"$s decoding an instance of type [$typeName]"
 
       Decoder { r ⇒
-        val constructorArgs = new Array[AnyRef](len)
+        val constructorArgs = new Array[Any](len)
 
         def failSizeOverflow() = r.overflow("Maps with size >= 2^63 are not supported")
         def failDuplicate(p: Param[Decoder, T]) =
@@ -67,7 +67,7 @@ object MapBasedCodecs {
               if (r.tryReadString(p.label)) {
                 val mask = 1L << i
                 if ((filledMask & mask) != 0) failDuplicate(p)
-                constructorArgs(i) = p.typeclass.read(r).asInstanceOf[AnyRef]
+                constructorArgs(i) = p.typeclass.read(r)
                 filledMask | mask
               } else findAndFillNextArg(i + 1, end)
             } else if (end == len) findAndFillNextArg(0, alreadyFilledCount)
@@ -84,7 +84,7 @@ object MapBasedCodecs {
               val iMask = ~java.lang.Long.lowestOneBit(missingMask)
               p.default match {
                 case Some(value) ⇒
-                  constructorArgs(i) = value.asInstanceOf[AnyRef]
+                  constructorArgs(i) = value
                   tryConstructWithMissingMembers(missingMask & iMask)
                 case None ⇒ throw new Error.InvalidInputData(r.position, expected(s"Missing map key [${p.label}] for"))
               }

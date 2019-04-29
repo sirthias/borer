@@ -37,7 +37,7 @@ object HasDefault {
             case None      ⇒ param.typeclass.defaultValue.right.map(_ :: acc)
           }
       }
-      args.right.map(x ⇒ ctx.rawConstruct(x.reverse))
+      args.right.map(x ⇒ ctx.rawConstruct(x.reverse.toArray))
     }
   }
 

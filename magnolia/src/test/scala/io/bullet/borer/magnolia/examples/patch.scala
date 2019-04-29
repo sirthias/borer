@@ -50,7 +50,7 @@ object Patcher extends LowerPriorityPatcher {
         val effectiveFields = ctx.parameters.zip(fieldValues).map {
           case (param, x) ⇒ if (x.asInstanceOf[AnyRef] ne null) x else param dereference value
         }
-        ctx.rawConstruct(effectiveFields)
+        ctx.rawConstruct(effectiveFields.toArray)
       }
     }
 
