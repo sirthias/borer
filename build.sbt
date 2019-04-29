@@ -112,13 +112,21 @@ lazy val releaseSettings = {
 def scalaJsDeps(deps: ModuleID*): Def.Setting[Seq[sbt.ModuleID]] =
   libraryDependencies ++= deps.map(_ cross platformDepsCrossVersion.value)
 
+lazy val macroParadise =
+  libraryDependencies ++= {
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, 12)) => Seq(compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.patch))
+      case _ => Nil
+    }
+  }
+
 /////////////////////// DEPENDENCIES /////////////////////////
 
-val `akka-actor`    = "com.typesafe.akka"     %% "akka-actor"   % "2.5.22"
-val magnolia        = "com.propensive"        %% "magnolia"     % "0.10.0"
-val `scodec-bits`   = "org.scodec"            %% "scodec-bits"  % "1.1.10"
-val utest           = "com.lihaoyi"           %% "utest"        % "0.6.7" % "test"
-val `scala-reflect` = "org.scala-lang"        %  "scala-reflect"
+val `akka-actor`     = "com.typesafe.akka"     %% "akka-actor"     % "2.5.22"
+val `scodec-bits`    = "org.scodec"            %% "scodec-bits"    % "1.1.10"
+val utest            = "com.lihaoyi"           %% "utest"          % "0.6.7" % "test"
+val `scala-compiler` = "org.scala-lang"        %  "scala-compiler"
+val `scala-reflect`  = "org.scala-lang"        %  "scala-reflect"
 
 /////////////////////// PROJECTS /////////////////////////
 
@@ -149,12 +157,8 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .settings(
     moduleName := "borer-core",
     scalaJsDeps(utest),
-    libraryDependencies += `scala-reflect` % scalaVersion.value,
-    libraryDependencies ++= (
-      CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, 12)) => Seq(compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.patch))
-        case _ => Nil
-      }),
+    macroParadise,
+    libraryDependencies += `scala-reflect` % scalaVersion.value % "provided",
 
     // point sbt-boilerplate to the common "project"
     boilerplateSource in Compile := baseDirectory.value.getParentFile / "src" / "main" / "boilerplate",
@@ -194,8 +198,8 @@ lazy val scodec = crossProject(JSPlatform, JVMPlatform)
   )
   .jsSettings(scalajsSettings: _*)
 
-lazy val derivationJVM = derivation.jvm.dependsOn(coreJVM % "compile->compile;test->test")
-lazy val derivationJS  = derivation.js.dependsOn(coreJS   % "compile->compile;test->test")
+lazy val derivationJVM = derivation.jvm.dependsOn(magnoliaJVM, coreJVM % "compile->compile;test->test")
+lazy val derivationJS  = derivation.js.dependsOn(magnoliaJS, coreJS % "compile->compile;test->test")
 lazy val derivation = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
@@ -206,7 +210,27 @@ lazy val derivation = crossProject(JSPlatform, JVMPlatform)
   .settings(releaseSettings)
   .settings(
     moduleName := "borer-derivation",
-    scalaJsDeps(magnolia, utest)
+    scalaJsDeps(utest)
+  )
+  .jsSettings(scalajsSettings: _*)
+
+lazy val magnoliaJVM = magnolia.jvm
+lazy val magnoliaJS  = magnolia.js
+lazy val magnolia = crossProject(JSPlatform, JVMPlatform)
+  .withoutSuffixFor(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .settings(crossSettings)
+  .settings(commonSettings)
+  .settings(publishingSettings)
+  .settings(releaseSettings)
+  .settings(
+    moduleName := "borer-magnolia",
+    scalaJsDeps(utest),
+    macroParadise,
+    libraryDependencies ++= Seq(
+      `scala-compiler` % scalaVersion.value % "provided",
+      `scala-reflect` % scalaVersion.value % "provided"
+    )
   )
   .jsSettings(scalajsSettings: _*)
 
