@@ -148,8 +148,10 @@ object Decoder extends LowPrioDecoders {
 
   implicit val forBigDecimal: Decoder[BigDecimal] = _forJBigDecimal.map(BigDecimal(_))
 
-  implicit def forOption[T: Decoder]: Decoder[Option[T]] =
-    Decoder { r ⇒
+  implicit def forOption[T: Decoder]: Decoder[Option[T]] = new OptionDecoder[T]
+
+  final class OptionDecoder[T](implicit val innerDecoder: Decoder[T]) extends Decoder[Option[T]] {
+    def read(r: Reader) = {
       if (r.hasArrayHeader) {
         r.readArrayHeader() match {
           case 0 ⇒ None
@@ -168,6 +170,9 @@ object Decoder extends LowPrioDecoders {
         }
       } else r.unexpectedDataItem("Array with length 0 or 1 for decoding an `Option`")
     }
+
+    lazy val someDecoder: Decoder[Option[T]] = Decoder(r ⇒ Some(r.read[T]()))
+  }
 
   implicit def forIterable[T: Decoder, M[X] <: Iterable[X]](implicit cbf: CanBuildFrom[M[T], T, M[T]]): Decoder[M[T]] =
     Decoder { r ⇒

@@ -32,7 +32,7 @@ object CborDerivationSpec extends DerivationSpec(Cbor) {
 
   def arrayBasedMissingElemErrorMsg =
     "Expected Array Start or Array Header(10) for decoding an instance of type " +
-      "[io.bullet.borer.derivation.DerivationSpec.Foo] but got Array Header (9) [input position 1]"
+      "[io.bullet.borer.derivation.DerivationSpec.Foo] but got Array Header (9) [input position 0]"
 
   def mapBasedFooDom =
     MapElem.Sized(

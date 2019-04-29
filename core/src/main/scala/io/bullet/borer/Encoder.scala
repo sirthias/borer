@@ -28,7 +28,7 @@ object Encoder extends LowPrioEncoders {
   /**
     * Creates an [[Encoder]] from the given function.
     */
-  def apply[T, U](encoder: Encoder[T]): Encoder[T] = encoder
+  def apply[T](encoder: Encoder[T]): Encoder[T] = encoder
 
   /**
     * Allows for concise [[Encoder]] definition for case classes, without any macro magic.
@@ -129,13 +129,15 @@ object Encoder extends LowPrioEncoders {
       w.writeBreak()
     }
 
-  implicit def forOption[T: Encoder]: Encoder[Option[T]] =
-    Encoder { (w, option) ⇒
-      option match {
+  implicit def forOption[T: Encoder]: Encoder[Option[T]] = new OptionEncoder[T]
+
+  final class OptionEncoder[T](implicit val innerEncoder: Encoder[T]) extends Encoder[Option[T]] {
+    def write(w: Writer, value: Option[T]) =
+      value match {
         case Some(x) ⇒ w.writeToArray(x)
         case None    ⇒ w.writeEmptyArray()
       }
-    }
+  }
 
   implicit def forIndexedSeq[T: Encoder, M[X] <: IndexedSeq[X]]: Encoder[M[T]]        = Encoder(_ writeIndexedSeq _)
   implicit def forLinearSeq[T: Encoder, M[X] <: LinearSeq[X]]: Encoder[M[T]]          = Encoder(_ writeLinearSeq _)

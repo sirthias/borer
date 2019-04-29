@@ -137,6 +137,27 @@ abstract class DerivationSpec(target: Target) extends TestSuite {
         target.decode(encoded).to[Element].value ==> dom
         target.decode(encoded).to[Foo].value ==> foo
       }
+
+      "special option support" - {
+        case class Qux0(int: Int)
+        case class Qux(int: Int, optDouble: Option[Double] = None)
+
+        implicit val qux0Codec = Codec(deriveEncoder[Qux0], deriveDecoder[Qux0])
+        implicit val quxCodec  = Codec(deriveEncoder[Qux], deriveDecoder[Qux])
+
+        val qux0        = Qux0(42)
+        val quxWithNone = Qux(42)
+        val quxWithSome = Qux(42, Some(3.45))
+
+        val quxWithSomeEncoded = target.encode(quxWithSome).to[Array[Byte]].bytes
+        target.decode(quxWithSomeEncoded).to[Qux].value ==> quxWithSome
+
+        val qux0Encoded        = target.encode(qux0).to[Array[Byte]].bytes
+        val quxWithNoneEncoded = target.encode(quxWithNone).to[Array[Byte]].bytes
+
+        toHexString(qux0Encoded) ==> toHexString(quxWithNoneEncoded)
+        target.decode(quxWithNoneEncoded).to[Qux].value ==> quxWithNone
+      }
     }
 
     "ADT" - {
@@ -188,4 +209,6 @@ abstract class DerivationSpec(target: Target) extends TestSuite {
       case MapElem.Sized(_, keys, values)   ⇒ MapElem.Sized(f((keys zip values).toList): _*)
       case MapElem.Unsized(_, keys, values) ⇒ MapElem.Unsized(f((keys zip values).toList): _*)
     }
+
+  final def toHexString(bytes: Array[Byte]): String = bytes.map(x ⇒ f"${x & 0xFF}%02x").mkString
 }

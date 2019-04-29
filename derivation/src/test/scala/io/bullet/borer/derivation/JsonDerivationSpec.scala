@@ -30,7 +30,7 @@ object JsonDerivationSpec extends DerivationSpec(Json) {
         ArrayElem.Unsized(IntElem(0), IntElem(0), IntElem(255), IntElem(255))
       ))
 
-  def arrayBasedMissingElemErrorMsg = "Cannot convert int value -10000 to Byte [input position 18]"
+  def arrayBasedMissingElemErrorMsg = "Cannot convert int value -10000 to Byte [input position 11]"
 
   def mapBasedFooDom =
     MapElem.Unsized(
