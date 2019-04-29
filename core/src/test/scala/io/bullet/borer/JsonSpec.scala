@@ -17,16 +17,18 @@ import utest._
 import scala.collection.immutable.ListMap
 import scala.util.Random
 
-object JsonSpec extends BorerSpec {
+abstract class AbstractJsonSpec extends BorerSpec {
+  final override def encode[T: Encoder](value: T): String = Json.encode(value).toUtf8String
 
-  override def encode[T: Encoder](value: T): String = Json.encode(value).toUtf8String
-
-  override def decode[T: Decoder](encoded: String): T =
+  final override def decode[T: Decoder](encoded: String): T =
     Json
       .decode(encoded getBytes UTF_8)
       .withConfig(Json.DecodingConfig.default.copy(maxNumberAbsExponent = 300))
       .to[T]
       .value
+}
+
+object JsonSpec extends AbstractJsonSpec {
 
   val tests = Tests {
 

@@ -4,7 +4,7 @@ import ReleaseTransformations._
 lazy val commonSettings = Seq(
   organization := "io.bullet",
   homepage := Some(new URL("https://github.com/sirthias/borer")),
-  description := "CBOR (de)serialization in Scala",
+  description := "CBOR and JSON (de)serialization in Scala",
   startYear := Some(2019),
   licenses := Seq("MPLv2" → new URL("https://www.mozilla.org/en-US/MPL/2.0/")),
   unmanagedResources in Compile += baseDirectory.value.getParentFile.getParentFile / "LICENSE",
