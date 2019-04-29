@@ -483,15 +483,12 @@ object Magnolia {
                                 tc: CallByNeed[Tc[S]],
                                 isType: T ⇒ Boolean,
                                 asType: T ⇒ S): Subtype[Tc, T] =
-    new Subtype[Tc, T] with PartialFunction[T, S] {
+    new Subtype[Tc, T](name, idx, anns) with PartialFunction[T, S] {
       type SType = S
-      def typeName: TypeName              = name
-      def index: Int                      = idx
       def typeclass: Tc[SType]            = tc.value
       def cast: PartialFunction[T, SType] = this
       def isDefinedAt(t: T)               = isType(t)
       def apply(t: T): SType              = asType(t)
-      def annotationsArray: Array[Any]    = anns
       override def toString: String       = s"Subtype(${typeName.full})"
     }
 
@@ -504,32 +501,22 @@ object Magnolia {
                          isRepeated: Boolean,
                          typeclassParam: CallByNeed[Tc[P]],
                          defaultVal: CallByNeed[Option[P]],
-                         annotationsArrayParam: Array[Any]): Param[Tc, T] = new Param[Tc, T] {
-    type PType = P
-    def label: String                = name
-    def index: Int                   = idx
-    def repeated: Boolean            = isRepeated
-    def default: Option[PType]       = defaultVal.value
-    def typeclass: Tc[PType]         = typeclassParam.value
-    def dereference(t: T): PType     = t.asInstanceOf[Product].productElement(idx).asInstanceOf[PType]
-    def annotationsArray: Array[Any] = annotationsArrayParam
-  }
+                         annotationsArray: Array[Any]): Param[Tc, T] =
+    new Param[Tc, T](name, idx, isRepeated, annotationsArray, defaultVal, typeclassParam) {
+      type PType = P
+      def dereference(t: T): PType = t.asInstanceOf[Product].productElement(idx).asInstanceOf[PType]
+    }
 
   def valueParam[Tc[_], T, P](name: String,
                               deref: T ⇒ P,
                               isRepeated: Boolean,
                               typeclassParam: CallByNeed[Tc[P]],
                               defaultVal: CallByNeed[Option[P]],
-                              annotationsArrayParam: Array[Any]): Param[Tc, T] = new Param[Tc, T] {
-    type PType = P
-    def label: String                = name
-    def index: Int                   = 0
-    def repeated: Boolean            = isRepeated
-    def default: Option[PType]       = defaultVal.value
-    def typeclass: Tc[PType]         = typeclassParam.value
-    def dereference(t: T): PType     = deref(t)
-    def annotationsArray: Array[Any] = annotationsArrayParam
-  }
+                              annotationsArray: Array[Any]): Param[Tc, T] =
+    new Param[Tc, T](name, 0, isRepeated, annotationsArray, defaultVal, typeclassParam) {
+      type PType = P
+      def dereference(t: T): PType = deref(t)
+    }
 }
 
 private[magnolia] final case class DirectlyReentrantException() extends Exception("attempt to recurse directly")

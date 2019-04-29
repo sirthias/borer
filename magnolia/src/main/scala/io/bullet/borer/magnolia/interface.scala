@@ -20,17 +20,11 @@ import scala.annotation.tailrec
   *
   *  @tparam Typeclass  type constructor for the typeclass being derived
   *  @tparam Type       generic type of this parameter */
-trait Subtype[Typeclass[_], Type] extends Serializable {
+abstract class Subtype[Typeclass[_], Type](val typeName: TypeName, val index: Int, val annotationsArray: Array[Any])
+    extends Serializable {
 
   /** the type of subtype */
   type SType <: Type
-
-  /** the [[TypeName]] of the subtype
-    *
-    *  This is the full name information for the type of subclass. */
-  def typeName: TypeName
-
-  def index: Int
 
   /** the typeclass instance associated with this subtype
     *
@@ -43,16 +37,19 @@ trait Subtype[Typeclass[_], Type] extends Serializable {
 
   /** all of the annotations on the sub type */
   final def annotations: Seq[Any] = annotationsArray
-  def annotationsArray: Array[Any]
-
-  override def toString: String = s"Subtype(${typeName.full})"
 }
 
 /** represents a parameter of a case class
   *
   *  @tparam Typeclass  type constructor for the typeclass being derived
   *  @tparam Type       generic type of this parameter */
-trait Param[Typeclass[_], Type] extends Serializable {
+abstract class Param[Typeclass[_], Type](final val label: String,
+                                         final val index: Int,
+                                         final val repeated: Boolean,
+                                         final val annotationsArray: Array[Any],
+                                         defaultVal: CallByNeed[Option[_]],
+                                         typeclassParam: CallByNeed[Typeclass[_]])
+    extends Serializable { self ⇒
 
   /** the type of the parameter being represented
     *
@@ -65,22 +62,6 @@ trait Param[Typeclass[_], Type] extends Serializable {
     */
   type PType
 
-  /** the name of the parameter */
-  def label: String
-
-  def index: Int
-
-  /** flag indicating a repeated (aka. vararg) parameter
-    *
-    * For example, for a case class,
-    * <pre>
-    * case class Account(id: String, emails: String*)
-    * </pre>
-    * the [[Param]] instance corresponding to the `emails` parameter would be `repeated` and have a
-    * [[PType]] equal to the type `Seq[String]`. Note that only the last parameter of a case class
-    * can be repeated. */
-  def repeated: Boolean
-
   /** the typeclass instance associated with this parameter
     *
     *  This is the instance of the type `Typeclass[PType]` which will have been discovered by
@@ -89,10 +70,19 @@ trait Param[Typeclass[_], Type] extends Serializable {
     *  Its type is existentially quantified on this [[Param]] instance, and depending on the
     *  nature of the particular typeclass, it may either accept or produce types which are also
     *  existentially quantified on this same [[Param]] instance. */
-  def typeclass: Typeclass[PType]
+  final def typeclass: Typeclass[PType] = typeclassParam.value.asInstanceOf[Typeclass[PType]]
 
   /** provides the default value for this parameter, as defined in the case class constructor */
-  def default: Option[PType]
+  final def default: Option[PType] = defaultVal.value.asInstanceOf[Option[PType]]
+
+  /**
+    * Returns a copy of this [[Param]] with the typeclass replaced by the given one.
+    */
+  final def withTypeclass(tc: Typeclass[PType]): Param[Typeclass, Type] =
+    new Param[Typeclass, Type](label, index, repeated, annotationsArray, defaultVal, CallByNeed(tc)) {
+      type PType = self.PType
+      def dereference(param: Type) = self.dereference(param)
+    }
 
   /** dereferences a value of the case class type, `Type`, to access the value of the parameter
     *  being represented
@@ -113,15 +103,13 @@ trait Param[Typeclass[_], Type] extends Serializable {
     *  @return  the parameter value */
   def dereference(param: Type): PType
 
-  def annotationsArray: Array[Any]
-
   /** a sequence of objects representing all of the annotations on the case class
     *
     *  For efficiency, this sequence is implemented by an `Array`, but upcast to a
     *  [[scala.collection.Seq]] to hide the mutable collection API. */
   final def annotations: Seq[Any] = annotationsArray
 
-  override def toString: String = s"Param($label)"
+  final override def toString: String = s"Param($label)"
 }
 
 /** represents a case class or case object and the context required to construct a new typeclass
@@ -141,8 +129,8 @@ abstract class CaseClass[Typeclass[_], Type](
     val typeName: TypeName,
     val isObject: Boolean,
     val isValueClass: Boolean,
-    parametersArray: Array[Param[Typeclass, Type]],
-    annotationsArray: Array[Any]
+    val parametersArray: Array[Param[Typeclass, Type]],
+    val annotationsArray: Array[Any]
 ) extends Serializable {
 
   override def toString: String = s"CaseClass(${typeName.full}, ${parameters.mkString(",")})"
@@ -201,8 +189,8 @@ abstract class CaseClass[Typeclass[_], Type](
   *  @tparam Type             generic type of this parameter */
 final class SealedTrait[Typeclass[_], Type](
     val typeName: TypeName,
-    subtypesArray: Array[Subtype[Typeclass, Type]],
-    annotationsArray: Array[Any]
+    val subtypesArray: Array[Subtype[Typeclass, Type]],
+    val annotationsArray: Array[Any]
 ) extends Serializable {
 
   override def toString: String = s"SealedTrait($typeName, Array[${subtypes.mkString(",")}])"
@@ -236,7 +224,7 @@ final class SealedTrait[Typeclass[_], Type](
     *
     *  For efficiency, this sequence is implemented by an `Array`, but upcast to a
     *  [[scala.collection.Seq]] to hide the mutable collection API. */
-  final def annotations: Seq[Any] = annotationsArray
+  def annotations: Seq[Any] = annotationsArray
 }
 
 /**
