@@ -28,7 +28,7 @@ object Eq {
 
   /** defines equality for this case class in terms of equality for all its parameters */
   def combine[T](ctx: CaseClass[Eq, T]): Eq[T] = new Eq[T] {
-    def equal(value1: T, value2: T) = ctx.parameters.forall { param =>
+    def equal(value1: T, value2: T) = ctx.parameters.forall { param ⇒
       param.typeclass.equal(param.dereference(value1), param.dereference(value2))
     }
   }
@@ -39,7 +39,7 @@ object Eq {
     *  method, we check that the second parameter is the same type. */
   def dispatch[T](ctx: SealedTrait[Eq, T]): Eq[T] = new Eq[T] {
     def equal(value1: T, value2: T): Boolean = ctx.dispatch(value1) {
-      case sub =>
+      case sub ⇒
         sub.cast.isDefinedAt(value2) && sub.typeclass.equal(sub.cast(value1), sub.cast(value2))
     }
   }

@@ -20,17 +20,17 @@ import scala.annotation.StaticAnnotation
 import scala.util.control.NonFatal
 
 sealed trait Tree[+T]
-case class Leaf[+L](value: L) extends Tree[L]
+case class Leaf[+L](value: L)                        extends Tree[L]
 case class Branch[+B](left: Tree[B], right: Tree[B]) extends Tree[B]
 
 sealed trait Path[+A]
-case class Destination[+A](value: A) extends Path[A]
+case class Destination[+A](value: A)                    extends Path[A]
 case class Crossroad[+A](left: Path[A], right: Path[A]) extends Path[A]
-case class OffRoad[+A](path: Option[Path[A]]) extends Path[A]
+case class OffRoad[+A](path: Option[Path[A]])           extends Path[A]
 
 sealed trait Entity
 
-case class Company(name: String) extends Entity
+case class Company(name: String)          extends Entity
 case class Person(name: String, age: Int) extends Entity
 case class Address(line1: String, occupant: Person)
 
@@ -40,22 +40,22 @@ case class FruitBasket(fruits: Fruit*)
 case class Lunchbox(fruit: Fruit, drink: String)
 case class Fruit(name: String)
 object Fruit {
-  implicit val showFruit: Show[String, Fruit] = (f: Fruit) => f.name
+  implicit val showFruit: Show[String, Fruit] = (f: Fruit) ⇒ f.name
 }
 
 case class Item(name: String, quantity: Int = 1, price: Int)
 
 sealed trait Color
-case object Red extends Color
+case object Red   extends Color
 case object Green extends Color
-case object Blue extends Color
+case object Blue  extends Color
 
 case class MyAnnotation(order: Int) extends StaticAnnotation
 
 sealed trait AttributeParent
 @MyAnnotation(0) case class Attributed(
-  @MyAnnotation(1) p1: String,
-  @MyAnnotation(2) p2: Int
+    @MyAnnotation(1) p1: String,
+    @MyAnnotation(2) p2: Int
 ) extends AttributeParent
 
 case class `%%`(`/`: Int, `#`: String)
@@ -71,11 +71,11 @@ object Test {
 }
 
 sealed trait Politician[+S]
-case class Accountable[+S](slogan: S) extends Politician[S]
+case class Accountable[+S](slogan: S)                           extends Politician[S]
 case class Corrupt[+S, +L <: Seq[Company]](slogan: S, lobby: L) extends Politician[S]
 
 sealed trait Box[+A]
-case class SimpleBox[+A](value: A) extends Box[A]
+case class SimpleBox[+A](value: A)                              extends Box[A]
 case class LabelledBox[+A, L <: String](value: A, var label: L) extends Box[A]
 
 case class Account(id: String, emails: String*)
@@ -88,7 +88,6 @@ case class Recursive(children: Seq[Recursive])
 class GenericCsv[A: Csv]
 object ParamCsv extends GenericCsv[Param]
 
-
 class NotDerivable
 
 case class NoDefault(value: Boolean)
@@ -97,12 +96,12 @@ final case class ServiceName1(value: String) extends AnyVal
 final case class ServiceName2(value: String)
 
 sealed abstract class Halfy
-final case class Lefty() extends Halfy
+final case class Lefty()  extends Halfy
 final case class Righty() extends Halfy
 
 object Tests extends TestApp {
 
-  def tests(): Unit = for (_ <- 1 to 1) {
+  def tests(): Unit = for (_ ← 1 to 1) {
     test("construct a Show product instance with alternative apply functions") {
       Show.gen[Test].show(Test("a", "b"))
     }.assert(_ == """Test(param=Param(a=a,b=b))""")
@@ -211,9 +210,9 @@ object Tests extends TestApp {
         Show.gen[Beta]
       """
     }.assert(_ == TypecheckError(txt"""magnolia: could not find Show.Typeclass for type Double
-        |    in parameter 'integer' of product type Alpha
-        |    in parameter 'alpha' of product type Beta
-        |"""))
+    |    in parameter 'integer' of product type Alpha
+    |    in parameter 'alpha' of product type Beta
+    |"""))
 
     test("not attempt to instantiate Unit when producing error stack") {
       scalac"""
@@ -221,8 +220,8 @@ object Tests extends TestApp {
         Show.gen[Gamma]
       """
     }.assert(_ == TypecheckError(txt"""magnolia: could not find Show.Typeclass for type Unit
-        |    in parameter 'unit' of product type Gamma
-        |"""))
+    |    in parameter 'unit' of product type Gamma
+    |"""))
 
     test("not assume full auto derivation of external value classes") {
       scalac"""
@@ -231,9 +230,10 @@ object Tests extends TestApp {
           implicit val semi: SemiDefault[LoggingConfig] = SemiDefault.gen
         }
         """
-    }.assert(_ == TypecheckError(txt"""magnolia: could not find SemiDefault.Typeclass for type magnolia.tests.ServiceName1
+    }.assert(
+      _ == TypecheckError(txt"""magnolia: could not find SemiDefault.Typeclass for type magnolia.tests.ServiceName1
     in parameter 'n' of product type LoggingConfig
-""") )
+"""))
 
     test("not assume full auto derivation of external products") {
       scalac"""
@@ -242,9 +242,10 @@ object Tests extends TestApp {
           implicit val semi: SemiDefault[LoggingConfig] = SemiDefault.gen
         }
         """
-    }.assert(_ == TypecheckError(txt"""magnolia: could not find SemiDefault.Typeclass for type magnolia.tests.ServiceName2
+    }.assert(
+      _ == TypecheckError(txt"""magnolia: could not find SemiDefault.Typeclass for type magnolia.tests.ServiceName2
     in parameter 'n' of product type LoggingConfig
-""") )
+"""))
 
     test("not assume full auto derivation of external coproducts") {
       scalac"""
@@ -255,7 +256,7 @@ object Tests extends TestApp {
         """
     }.assert(_ == TypecheckError(txt"""magnolia: could not find SemiDefault.Typeclass for type Option[String]
     in parameter 'o' of product type LoggingConfig
-""") )
+"""))
 
     test("half auto derivation of sealed families") {
       SemiDefault.gen[Halfy].default
@@ -286,14 +287,14 @@ object Tests extends TestApp {
     test("can't show a Box with invariant label") {
       scalac"Show.gen[Box[Int]]"
     }.assert { _ == TypecheckError(txt"""magnolia: could not find Show.Typeclass for type L
-        |    in parameter 'label' of product type magnolia.tests.LabelledBox[Int, _ <: String]
-        |    in coproduct type magnolia.tests.Box[Int]
-        |""") }
+    |    in parameter 'label' of product type magnolia.tests.LabelledBox[Int, _ <: String]
+    |    in coproduct type magnolia.tests.Box[Int]
+    |""") }
 
     test("patch a Person via a Patcher[Entity]") {
       // these two implicits can be removed once https://github.com/propensive/magnolia/issues/58 is closed
       implicit val stringPatcher = Patcher.forSingleValue[String]
-      implicit val intPatcher = Patcher.forSingleValue[Int]
+      implicit val intPatcher    = Patcher.forSingleValue[Int]
 
       val person = Person("Bob", 42)
       implicitly[Patcher[Entity]].patch(person, Seq(null, 21))
@@ -302,30 +303,29 @@ object Tests extends TestApp {
     test("throw on an illegal patch attempt with field count mismatch") {
       // these two implicits can be removed once https://github.com/propensive/magnolia/issues/58 is closed
       implicit val stringPatcher = Patcher.forSingleValue[String]
-      implicit val intPatcher = Patcher.forSingleValue[Int]
+      implicit val intPatcher    = Patcher.forSingleValue[Int]
 
       try {
         val person = Person("Bob", 42)
         implicitly[Patcher[Entity]].patch(person, Seq(null, 21, 'killer))
       } catch {
-        case NonFatal(e) => e.getMessage
+        case NonFatal(e) ⇒ e.getMessage
       }
     }.assert(_ == "Cannot patch value `Person(Bob,42)`, expected 2 fields but got 3")
-
 
     test("throw on an illegal patch attempt with field type mismatch") {
       // these two implicits can be removed once https://github.com/propensive/magnolia/issues/58 is closed
       implicit val stringPatcher = Patcher.forSingleValue[String]
-      implicit val intPatcher = Patcher.forSingleValue[Int]
+      implicit val intPatcher    = Patcher.forSingleValue[Int]
 
       try {
         val person = Person("Bob", 42)
         implicitly[Patcher[Entity]].patch(person, Seq(null, 'killer))
         "it worked"
       } catch {
-        case NonFatal(e) => e.getMessage
+        case NonFatal(e) ⇒ e.getMessage
       }
-    }.assert{x =>
+    }.assert { x ⇒
       //tiny hack because Java 9 inserts the "java.base/" module name in the error message
       x.startsWith("scala.Symbol cannot be cast to") && x.endsWith("java.lang.Integer")
     }
@@ -402,10 +402,10 @@ object Tests extends TestApp {
         Show.gen[(Int, Seq[(Long, String)])]
       """
     } assert { _ == TypecheckError(txt"""magnolia: could not find Show.Typeclass for type Long
-        |    in parameter '_1' of product type (Long, String)
-        |    in chained implicit Show.Typeclass for type Seq[(Long, String)]
-        |    in parameter '_2' of product type (Int, Seq[(Long, String)])
-        |""") }
+    |    in parameter '_1' of product type (Long, String)
+    |    in chained implicit Show.Typeclass for type Seq[(Long, String)]
+    |    in parameter '_2' of product type (Int, Seq[(Long, String)])
+    |""") }
 
     test("show a recursive case class") {
       Show.gen[Recursive].show(Recursive(Seq(Recursive(Nil))))
@@ -423,12 +423,13 @@ object Tests extends TestApp {
 
     test("dependencies between derived type classes") {
       implicit def showDefaultOption[A](
-        implicit showA: Show[String, A],
-        defaultA: HasDefault[A]
-      ): Show[String, Option[A]] = (optA: Option[A]) => showA.show(optA.getOrElse(defaultA.defaultValue.right.get))
+          implicit showA: Show[String, A],
+          defaultA: HasDefault[A]
+      ): Show[String, Option[A]] = (optA: Option[A]) ⇒ showA.show(optA.getOrElse(defaultA.defaultValue.right.get))
 
       Show.gen[Path[String]].show(OffRoad(Some(Crossroad(Destination("A"), Destination("B")))))
-    }.assert(_ == "OffRoad[String](path=Crossroad[String](left=Destination[String](value=A),right=Destination[String](value=B)))")
+    }.assert(
+      _ == "OffRoad[String](path=Crossroad[String](left=Destination[String](value=A),right=Destination[String](value=B)))")
 
     test("capture attributes against params") {
       Show.gen[Attributed].show(Attributed("xyz", 100))
@@ -452,6 +453,7 @@ object Tests extends TestApp {
       scalac"""
         WeakHash.gen[Entity]
       """
-    }.assert(_ == TypecheckError("magnolia: the method `dispatch` must be defined on the derivation object WeakHash to derive typeclasses for sealed traits"))
+    }.assert(_ == TypecheckError(
+      "magnolia: the method `dispatch` must be defined on the derivation object WeakHash to derive typeclasses for sealed traits"))
   }
 }
