@@ -34,7 +34,7 @@ object MapBasedCodecs {
       @tailrec def withOptionEncodersPatched(ix: Int, result: Array[Param[Encoder, T]]): Array[Param[Encoder, T]] =
         if (ix < len) {
           val p = result(ix).asInstanceOf[Param[Encoder, T] { type PType = AnyRef }]
-          // if the param is an Option[T] with the pre-defined OptionEncoder and a default value we switch to an
+          // if the param is an Option[T] with the pre-defined OptionEncoder and `None` as default value we switch to an
           // alternative Option encoding, which simply encodes the default value as "not-present" and Some as "present"
           val typeclass = p.typeclass
           val default   = p.default
@@ -96,19 +96,20 @@ object MapBasedCodecs {
       @inline def expected(s: String) = s"$s decoding an instance of type [$typeName]"
 
       val len = ctx.parametersArray.length
-      if (len > 64) sys.error(s"Cannot derive Decoder[$typeName]: More than 64 members are unsupported")
+      if (len > 128) sys.error(s"Cannot derive Decoder[$typeName]: More than 128 members are unsupported")
 
       @tailrec def withOptionDecodersPatched(ix: Int, result: Array[Param[Decoder, T]]): Array[Param[Decoder, T]] =
         if (ix < len) {
-          val p = result(ix)
-          // if the param is an Option[T] with the pre-defined OptionDecoder and a default value we switch to an
+          val p = result(ix).asInstanceOf[Param[Decoder, T] { type PType = AnyRef }]
+          // if the param is an Option[T] with the pre-defined OptionDecoder and `None` as default value we switch to an
           // alternative Option decoding, which simply decodes "not-present" as the default value and "present" as Some
           val typeclass = p.typeclass
+          val default   = p.default
           val newResult =
-            if (typeclass.isInstanceOf[Decoder.OptionDecoder[_]] && p.default.isDefined) {
-              val someDecoder = typeclass.asInstanceOf[Decoder.OptionDecoder[_]].someDecoder
+            if (typeclass.isInstanceOf[Decoder.OptionDecoder[_]] && default.isDefined && (default.get eq None)) {
+              val someDecoder = typeclass.asInstanceOf[Decoder.OptionDecoder[AnyRef]].someDecoder
               val res         = if (result eq ctx.parametersArray) ctx.parametersArray.clone() else result
-              res(ix) = p.withTypeclass(someDecoder.asInstanceOf[Decoder[p.PType]])
+              res(ix) = p.withTypeclass(someDecoder.asInstanceOf[Decoder[AnyRef]])
               res
             } else result
           withOptionDecodersPatched(ix + 1, newResult)
@@ -125,40 +126,34 @@ object MapBasedCodecs {
             r.lastPosition,
             expected(s"Duplicate map key [${p.label}] encountered during"))
 
-        @tailrec def fillArgsAndConstruct(remaining: Int, filledMask: Long): T = {
-          val alreadyFilledCount = java.lang.Long.bitCount(filledMask)
+        @tailrec def fillArgsAndConstruct(filledCount: Int, remaining: Int, filledMask0: Long, filledMask1: Long): T = {
 
-          @tailrec def findAndFillNextArg(i: Int, end: Int): Long =
+          @tailrec def findIndexOfNextArg(i: Int, end: Int): Int =
             if (i < end) {
-              val p = params(i)
-              if (r.tryReadString(p.label)) {
-                val mask = 1L << i
-                if ((filledMask & mask) != 0) failDuplicate(p)
-                constructorArgs(i) = p.typeclass.read(r)
-                filledMask | mask
-              } else findAndFillNextArg(i + 1, end)
-            } else if (end == len) findAndFillNextArg(0, alreadyFilledCount)
-            else {
-              // none of the params matches this key/value pair, so skip it
-              r.skipDataItem().skipDataItem()
-              filledMask
-            }
+              if (r.tryReadString(params(i).label)) i
+              else findIndexOfNextArg(i + 1, end)
+            } else if (end == len) findIndexOfNextArg(0, filledCount)
+            else -1
 
-          @tailrec def tryConstructWithMissingMembers(missingMask: Long): T =
-            if (missingMask != 0L) {
-              val i     = java.lang.Long.numberOfTrailingZeros(missingMask)
-              val p     = params(i)
-              val iMask = ~java.lang.Long.lowestOneBit(missingMask)
+          @tailrec def tryConstructWithMissingMembers(missingMask0: Long, missingMask1: Long): T = {
+            import java.lang.Long.{numberOfTrailingZeros ⇒ ntz, lowestOneBit ⇒ lob}
+            var i     = 0
+            var mask0 = missingMask0
+            var mask1 = missingMask1
+            if (mask0 != 0L && { i = ntz(mask0); mask0 &= ~lob(mask0); true } ||
+                mask1 != 0L && { i = 64 + ntz(mask1); mask1 &= ~lob(mask1); true }) {
+              val p = params(i)
               p.default match {
                 case Some(value) ⇒
                   constructorArgs(i) = value
-                  tryConstructWithMissingMembers(missingMask & iMask)
+                  tryConstructWithMissingMembers(mask0, mask1)
                 case None ⇒
                   throw new Error.InvalidInputData(r.lastPosition, expected(s"Missing map key [${p.label}] for"))
               }
             } else ctx.rawConstruct(constructorArgs) // yay, we were able to fill all missing members w/ default values
+          }
 
-          @tailrec def skipSurplusMembers(rem: Int): T =
+          @tailrec def skipExtraMembers(rem: Int): T =
             if ((rem >= 0 || !r.tryReadBreak()) && rem != 0) {
               @tailrec def verifyNoDuplicate(i: Int): Unit =
                 if (i < len) {
@@ -167,25 +162,49 @@ object MapBasedCodecs {
                   verifyNoDuplicate(i + 1)
                 } else r.skipDataItem().skipDataItem() // ok, no duplicate, so skip this key/value pair
               verifyNoDuplicate(0)
-              skipSurplusMembers(rem - 1)
-            } else ctx.rawConstruct(constructorArgs) // ok, we've skipped all surplus members and didn't find duplicates
+              skipExtraMembers(rem - 1)
+            } else ctx.rawConstruct(constructorArgs) // ok, we've skipped all extra members and didn't find duplicates
 
+          var mask0       = filledMask0
+          var mask1       = filledMask1
           val doneReading = remaining < 0 && r.tryReadBreak() || remaining == 0
-          if (alreadyFilledCount < len) {
-            if (!doneReading) { // we're still missing members and there is more to read, so recurse
-              val newFilledMask = findAndFillNextArg(alreadyFilledCount, len)
+          if (filledCount < len) {
+            if (!doneReading) {
+              // we're still missing members and there is more to read, so recurse
+              val nextArgIx       = findIndexOfNextArg(filledCount, len)
+              var nextFilledCount = filledCount
+              if (nextArgIx >= 0) {
+                val mask      = 1L << nextArgIx
+                val p         = params(nextArgIx)
+                var checkMask = 0L
+                if (nextArgIx < 64) { checkMask = mask0; mask0 |= mask } else { checkMask = mask1; mask1 |= mask }
+                if ((checkMask & mask) != 0) failDuplicate(p)
+                constructorArgs(nextArgIx) = p.typeclass.read(r)
+                nextFilledCount += 1
+              } else r.skipDataItem().skipDataItem() // none of the params matches this key/value pair, so skip it
               if (remaining == Long.MinValue) failSizeOverflow()
-              fillArgsAndConstruct(remaining - 1, newFilledMask)
-            } else tryConstructWithMissingMembers(filledMask ^ (1L << len) - 1)
+              fillArgsAndConstruct(nextFilledCount, remaining - 1, mask0, mask1)
+            } else {
+              // we're still missing members but there is nothing more to read
+              val xorMask = (1L << len) - 1
+              if (len < 64) {
+                mask0 = filledMask0 ^ xorMask
+                mask1 = 0
+              } else {
+                mask0 = ~filledMask0
+                mask1 = filledMask1 ^ xorMask
+              }
+              tryConstructWithMissingMembers(mask0, mask1)
+            }
           } else if (doneReading) ctx.rawConstruct(constructorArgs)
-          else skipSurplusMembers(remaining)
+          else skipExtraMembers(remaining)
         }
 
-        if (r.tryReadMapStart()) fillArgsAndConstruct(-1, 0L)
+        if (r.tryReadMapStart()) fillArgsAndConstruct(0, -1, 0L, 0L)
         else if (r.hasMapHeader) {
           val mapLength = r.readMapHeader()
           if (mapLength > Int.MaxValue) failSizeOverflow()
-          fillArgsAndConstruct(mapLength.toInt, 0L)
+          fillArgsAndConstruct(0, mapLength.toInt, 0L, 0L)
         } else r.unexpectedDataItem(expected(s"Map Start or Map Header announcing <= $len elements for"))
       }
     }
