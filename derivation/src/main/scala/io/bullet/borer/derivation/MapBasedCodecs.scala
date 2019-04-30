@@ -23,56 +23,50 @@ object MapBasedCodecs {
       val params = ctx.parametersArray
       val len    = params.length
 
-      final class UnwrappedOptionEncoder(innerEncoder: Encoder[AnyRef]) extends Encoder[AnyRef] {
-        def write(w: Writer, value: AnyRef) =
-          value match {
-            case None            ⇒ w
-            case Some(x: AnyRef) ⇒ w.write(x)(innerEncoder)
-          }
-      }
-
-      @tailrec def withOptionEncodersPatched(ix: Int, result: Array[Param[Encoder, T]]): Array[Param[Encoder, T]] =
+      @tailrec def withEncodersPatched(ix: Int, result: Array[Param[Encoder, T]]): Array[Param[Encoder, T]] =
         if (ix < len) {
-          val p = result(ix).asInstanceOf[Param[Encoder, T] { type PType = AnyRef }]
-          // if the param is an Option[T] with the pre-defined OptionEncoder and `None` as default value we switch to an
-          // alternative Option encoding, which simply encodes the default value as "not-present" and Some as "present"
+          val p         = result(ix).asInstanceOf[Param[Encoder, T] { type PType = AnyRef }]
           val typeclass = p.typeclass
           val default   = p.default
-          val newResult =
-            if (typeclass.isInstanceOf[Encoder.OptionEncoder[_]] && default.isDefined && (default.get eq None)) {
-              val innerEncoder   = typeclass.asInstanceOf[Encoder.OptionEncoder[AnyRef]].innerEncoder
-              val patchedEncoder = new UnwrappedOptionEncoder(innerEncoder).asInstanceOf[Encoder[AnyRef]]
-              val res            = if (result eq params) params.clone() else result
-              res(ix) = p.withTypeclass(patchedEncoder)
-              res
-            } else result
-          withOptionEncodersPatched(ix + 1, newResult)
+          var newResult = result
+          if (typeclass.isInstanceOf[Encoder.DefaultValueAware[_]] && default.isDefined) {
+            val dva = typeclass.asInstanceOf[Encoder.DefaultValueAware[AnyRef]]
+            val wdv = dva withDefaultValue default.get
+            if (wdv ne dva) {
+              if (result eq params) newResult = params.clone()
+              newResult(ix) = p withTypeclass wdv
+            }
+          }
+          withEncodersPatched(ix + 1, newResult)
         } else result
 
-      val potentiallyPatchedParams = withOptionEncodersPatched(0, ctx.parametersArray)
+      val potentiallyPatchedParams = withEncodersPatched(0, ctx.parametersArray)
 
       Encoder { (w, value) ⇒
         @tailrec def rec(effectiveParams: Array[Param[Encoder, T]], w: Writer, ix: Int): Writer =
           if (ix < len) {
-            val p         = effectiveParams(ix).asInstanceOf[Param[Encoder, T] { type PType = AnyRef }]
-            val pValue    = p.dereference(value)
-            val typeclass = p.typeclass
-            if ((pValue ne None) || !typeclass.isInstanceOf[UnwrappedOptionEncoder]) {
-              typeclass.write(w.writeString(p.label), pValue)
-            } // else the parameter is an undefined Option with `None` as the default value, so we can skip writing it
+            val p      = effectiveParams(ix).asInstanceOf[Param[Encoder, T] { type PType = AnyRef }]
+            val pValue = p.dereference(value)
+            p.typeclass match {
+              case x: Encoder.PossiblyWithoutOutput[AnyRef] if !x.producesOutput(pValue) ⇒ // skip
+              case x ⇒
+                x.write(w.writeString(p.label), pValue)
+            }
             rec(effectiveParams, w, ix + 1)
           } else w
 
         if (w.writingCbor) {
           val effectiveLen =
             if (potentiallyPatchedParams ne params) {
-              // we might have undefined Option values with `None` as the default value,
-              // so we first count the number of members we actually have to write
+              // we might have Encoder.PossiblyWithoutOutput instances that are not actually writing anything,
+              // so we need to count the number of elements that actually going to be written beforehand
               @tailrec def count(ix: Int, result: Int): Int =
                 if (ix < len) {
                   val p = potentiallyPatchedParams(ix).asInstanceOf[Param[Encoder, T] { type PType = AnyRef }]
-                  val d =
-                    if ((p.dereference(value) eq None) && p.typeclass.isInstanceOf[UnwrappedOptionEncoder]) 0 else 1
+                  val d = p.typeclass match {
+                    case x: Encoder.PossiblyWithoutOutput[AnyRef] if !x.producesOutput(p dereference value) ⇒ 0
+                    case _                                                                                  ⇒ 1
+                  }
                   count(ix + 1, result + d)
                 } else result
               count(0, 0)
@@ -98,24 +92,24 @@ object MapBasedCodecs {
       val len = ctx.parametersArray.length
       if (len > 128) sys.error(s"Cannot derive Decoder[$typeName]: More than 128 members are unsupported")
 
-      @tailrec def withOptionDecodersPatched(ix: Int, result: Array[Param[Decoder, T]]): Array[Param[Decoder, T]] =
+      @tailrec def withDecodersPatched(ix: Int, result: Array[Param[Decoder, T]]): Array[Param[Decoder, T]] =
         if (ix < len) {
-          val p = result(ix).asInstanceOf[Param[Decoder, T] { type PType = AnyRef }]
-          // if the param is an Option[T] with the pre-defined OptionDecoder and `None` as default value we switch to an
-          // alternative Option decoding, which simply decodes "not-present" as the default value and "present" as Some
+          val p         = result(ix).asInstanceOf[Param[Decoder, T] { type PType = AnyRef }]
           val typeclass = p.typeclass
           val default   = p.default
-          val newResult =
-            if (typeclass.isInstanceOf[Decoder.OptionDecoder[_]] && default.isDefined && (default.get eq None)) {
-              val someDecoder = typeclass.asInstanceOf[Decoder.OptionDecoder[AnyRef]].someDecoder
-              val res         = if (result eq ctx.parametersArray) ctx.parametersArray.clone() else result
-              res(ix) = p.withTypeclass(someDecoder.asInstanceOf[Decoder[AnyRef]])
-              res
-            } else result
-          withOptionDecodersPatched(ix + 1, newResult)
+          var newResult = result
+          if (typeclass.isInstanceOf[Decoder.DefaultValueAware[_]] && default.isDefined) {
+            val dva = typeclass.asInstanceOf[Decoder.DefaultValueAware[AnyRef]]
+            val wdv = dva withDefaultValue default.get
+            if (wdv ne dva) {
+              if (result eq ctx.parametersArray) newResult = ctx.parametersArray.clone()
+              newResult(ix) = p.withTypeclass(wdv)
+            }
+          }
+          withDecodersPatched(ix + 1, newResult)
         } else result
 
-      val params = withOptionDecodersPatched(0, ctx.parametersArray)
+      val params = withDecodersPatched(0, ctx.parametersArray)
 
       Decoder { r ⇒
         val constructorArgs = new Array[Any](len)

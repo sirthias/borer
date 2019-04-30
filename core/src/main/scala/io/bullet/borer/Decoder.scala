@@ -29,6 +29,10 @@ trait Decoder[T] {
 object Decoder extends LowPrioDecoders {
   import io.bullet.borer.{DataItem ⇒ DI}
 
+  trait DefaultValueAware[T] extends Decoder[T] {
+    def withDefaultValue(defaultValue: T): Decoder[T]
+  }
+
   /**
     * Creates a [[Decoder]] from the given function.
     */
@@ -148,31 +152,32 @@ object Decoder extends LowPrioDecoders {
 
   implicit val forBigDecimal: Decoder[BigDecimal] = _forJBigDecimal.map(BigDecimal(_))
 
-  implicit def forOption[T: Decoder]: Decoder[Option[T]] = new OptionDecoder[T]
+  implicit def forOption[T: Decoder]: Decoder.DefaultValueAware[Option[T]] =
+    new Decoder.DefaultValueAware[Option[T]] {
+      def read(r: Reader) = {
+        if (r.hasArrayHeader) {
+          r.readArrayHeader() match {
+            case 0 ⇒ None
+            case 1 ⇒ Some(r.read[T]())
+            case x ⇒ r.unexpectedDataItem("Array with length 0 or 1 for decoding an `Option`", s"Array with length $x")
+          }
+        } else if (r.tryReadArrayStart()) {
+          if (r.tryReadBreak()) None
+          else {
+            val x = r.read[T]()
+            if (r.tryReadBreak()) Some(x)
+            else
+              r.unexpectedDataItem(
+                "Array with length 0 or 1 for decoding an `Option`",
+                "Array with more than one element")
+          }
+        } else r.unexpectedDataItem("Array with length 0 or 1 for decoding an `Option`")
+      }
 
-  final class OptionDecoder[T](implicit val innerDecoder: Decoder[T]) extends Decoder[Option[T]] {
-    def read(r: Reader) = {
-      if (r.hasArrayHeader) {
-        r.readArrayHeader() match {
-          case 0 ⇒ None
-          case 1 ⇒ Some(r.read[T]())
-          case x ⇒ r.unexpectedDataItem("Array with length 0 or 1 for decoding an `Option`", s"Array with length $x")
-        }
-      } else if (r.tryReadArrayStart()) {
-        if (r.tryReadBreak()) None
-        else {
-          val x = r.read[T]()
-          if (r.tryReadBreak()) Some(x)
-          else
-            r.unexpectedDataItem(
-              "Array with length 0 or 1 for decoding an `Option`",
-              "Array with more than one element")
-        }
-      } else r.unexpectedDataItem("Array with length 0 or 1 for decoding an `Option`")
+      def withDefaultValue(defaultValue: Option[T]): Decoder[Option[T]] =
+        if (defaultValue ne None) this
+        else Decoder[Option[T]](r ⇒ Some(r.read[T]()))
     }
-
-    lazy val someDecoder: Decoder[Option[T]] = Decoder(r ⇒ Some(r.read[T]()))
-  }
 
   implicit def forIterable[T: Decoder, M[X] <: Iterable[X]](implicit cbf: CanBuildFrom[M[T], T, M[T]]): Decoder[M[T]] =
     Decoder { r ⇒

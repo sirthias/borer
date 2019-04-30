@@ -26,6 +26,21 @@ trait Encoder[T] {
 object Encoder extends LowPrioEncoders {
 
   /**
+    * An [[Encoder]] that might change its encoding strategy if [[T]] has a default value.
+    */
+  trait DefaultValueAware[T] extends Encoder[T] {
+    def withDefaultValue(defaultValue: T): Encoder[T]
+  }
+
+  /**
+    * An [[Encoder]] that might not actually produce any output for certain values of [[T]]
+    * (e.g. because "not-present" already carries sufficient information).
+    */
+  trait PossiblyWithoutOutput[T] extends Encoder[T] {
+    def producesOutput(value: T): Boolean
+  }
+
+  /**
     * Creates an [[Encoder]] from the given function.
     */
   def apply[T](encoder: Encoder[T]): Encoder[T] = encoder
@@ -129,19 +144,61 @@ object Encoder extends LowPrioEncoders {
       w.writeBreak()
     }
 
-  implicit def forOption[T: Encoder]: Encoder[Option[T]] = new OptionEncoder[T]
+  implicit def forOption[T: Encoder]: DefaultValueAware[Option[T]] =
+    new DefaultValueAware[Option[T]] {
+      def write(w: Writer, value: Option[T]) =
+        value match {
+          case Some(x) ⇒ w.writeToArray(x)
+          case None    ⇒ w.writeEmptyArray()
+        }
+      def withDefaultValue(defaultValue: Option[T]): Encoder[Option[T]] =
+        if (defaultValue eq None) {
+          new PossiblyWithoutOutput[Option[T]] {
+            def producesOutput(value: Option[T]) = value ne None
+            def write(w: Writer, value: Option[T]) =
+              value match {
+                case Some(x) ⇒ w.write(x)
+                case None    ⇒ w
+              }
+          }
+        } else this
+    }
 
-  final class OptionEncoder[T](implicit val innerEncoder: Encoder[T]) extends Encoder[Option[T]] {
-    def write(w: Writer, value: Option[T]) =
-      value match {
-        case Some(x) ⇒ w.writeToArray(x)
-        case None    ⇒ w.writeEmptyArray()
-      }
-  }
+  implicit def forIndexedSeq[T: Encoder, M[X] <: IndexedSeq[X]]: DefaultValueAware[M[T]] =
+    new DefaultValueAware[M[T]] {
+      def write(w: Writer, value: M[T]) = w.writeIndexedSeq(value)
+      def withDefaultValue(defaultValue: M[T]): Encoder[M[T]] =
+        if (defaultValue.isEmpty) {
+          new PossiblyWithoutOutput[M[T]] {
+            def producesOutput(value: M[T])   = value.nonEmpty
+            def write(w: Writer, value: M[T]) = if (value.nonEmpty) w.writeIndexedSeq(value) else w
+          }
+        } else this
+    }
 
-  implicit def forIndexedSeq[T: Encoder, M[X] <: IndexedSeq[X]]: Encoder[M[T]]        = Encoder(_ writeIndexedSeq _)
-  implicit def forLinearSeq[T: Encoder, M[X] <: LinearSeq[X]]: Encoder[M[T]]          = Encoder(_ writeLinearSeq _)
-  implicit def forMap[A: Encoder, B: Encoder, M[X, Y] <: Map[X, Y]]: Encoder[M[A, B]] = Encoder(_ writeMap _)
+  implicit def forLinearSeq[T: Encoder, M[X] <: LinearSeq[X]]: DefaultValueAware[M[T]] =
+    new DefaultValueAware[M[T]] {
+      def write(w: Writer, value: M[T]) = w.writeLinearSeq(value)
+      def withDefaultValue(defaultValue: M[T]): Encoder[M[T]] =
+        if (defaultValue.isEmpty) {
+          new PossiblyWithoutOutput[M[T]] {
+            def producesOutput(value: M[T])   = value.nonEmpty
+            def write(w: Writer, value: M[T]) = if (value.nonEmpty) w.writeLinearSeq(value) else w
+          }
+        } else this
+    }
+
+  implicit def forMap[A: Encoder, B: Encoder, M[X, Y] <: Map[X, Y]]: DefaultValueAware[M[A, B]] =
+    new DefaultValueAware[M[A, B]] {
+      def write(w: Writer, value: M[A, B]) = w.writeMap(value)
+      def withDefaultValue(defaultValue: M[A, B]): Encoder[M[A, B]] =
+        if (defaultValue.isEmpty) {
+          new PossiblyWithoutOutput[M[A, B]] {
+            def producesOutput(value: M[A, B])   = value.nonEmpty
+            def write(w: Writer, value: M[A, B]) = if (value.nonEmpty) w.writeMap(value) else w
+          }
+        } else this
+    }
 
   implicit def forArray[T: Encoder]: Encoder[Array[T]] =
     Encoder { (w, x) ⇒
