@@ -13,17 +13,22 @@ import utest._
 object NullableSpec extends AbstractJsonSpec {
 
   case class Foo(int: Nullable[Int], string: Nullable[String])
+  case class Bar(foo: Nullable[Option[Foo]])
 
   // we cannot use `Codec.deriveForCaseClass` since we are in the same compilation module
   implicit val fooCodec = Codec(Encoder.from(Foo.unapply _), Decoder.from(Foo.apply _))
+  implicit val barCodec = Codec(Encoder.from(Bar.unapply _), Decoder.from(Bar.apply _))
 
   val tests = Tests {
 
-    "test" - {
+    "predefined default values" - {
       roundTrip("""[12,"foo"]""", Foo(12, "foo"))
-
       verifyDecoding("""[null,null]""", Foo(0, ""))
     }
 
+    "options" - {
+      roundTrip("""null""", Bar(None))
+      roundTrip("""[12,"foo"]""", Bar(Some(Foo(12, "foo"))))
+    }
   }
 }

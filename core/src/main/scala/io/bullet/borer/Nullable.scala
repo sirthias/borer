@@ -33,15 +33,30 @@ final class Nullable[+T](val value: T) extends AnyVal {
   // for efficient unapply
   def isEmpty = false
   def get: T  = value
+
+  override def toString = s"Nullable($value)"
 }
 
-object Nullable {
+object Nullable extends LowPrioNullable {
 
   implicit def apply[T](value: T): Nullable[T]    = new Nullable(value)
   def unapply[T](value: Nullable[T]): Nullable[T] = value
 
   @inline def getOrDefault[T: Default](nullable: Nullable[T]): T = Default.orValue(nullable.value)
 
+  implicit def optionEncoder[T: Encoder]: Encoder[Nullable[Option[T]]] =
+    Encoder { (w, nullable) ⇒
+      nullable.value match {
+        case Some(x) ⇒ w.write(x)
+        case None    ⇒ w.writeNull()
+      }
+    }
+
+  implicit def optionDecoder[T: Decoder]: Decoder[Nullable[Option[T]]] =
+    Decoder(r ⇒ new Nullable(if (r.tryReadNull()) None else Some(r.read[T]())))
+}
+
+sealed abstract class LowPrioNullable {
   implicit def encoder[T: Encoder]: Encoder[Nullable[T]] =
     Encoder((w, x) ⇒ w.write(x.value))
 
