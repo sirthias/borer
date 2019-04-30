@@ -15,7 +15,7 @@
       "name": "SocialChamps/WordPress-Engineer",
       "url": "https://api.github.com/repos/SocialChamps/WordPress-Engineer"
     },
-    "payload": {
+    "PushEvent": {
       "push_id": 3464972886,
       "size": 1,
       "distinct_size": 1,
@@ -61,7 +61,7 @@
       "name": "zhattty/project2",
       "url": "https://api.github.com/repos/zhattty/project2"
     },
-    "payload": {
+    "PushEvent": {
       "push_id": 3464972884,
       "size": 1,
       "distinct_size": 1,
@@ -100,7 +100,7 @@
       "name": "nachog4/NPS_Browser",
       "url": "https://api.github.com/repos/nachog4/NPS_Browser"
     },
-    "payload": {
+    "ForkEvent": {
       "forkee": {
         "id": 179087500,
         "node_id": "MDEwOlJlcG9zaXRvcnkxNzkwODc1MDA=",
@@ -215,7 +215,7 @@
       "name": "andrijaitis/GotProject",
       "url": "https://api.github.com/repos/andrijaitis/GotProject"
     },
-    "payload": {
+    "PushEvent": {
       "push_id": 3464972881,
       "size": 1,
       "distinct_size": 1,
@@ -254,7 +254,7 @@
       "name": "HelloPancake/Groove",
       "url": "https://api.github.com/repos/HelloPancake/Groove"
     },
-    "payload": {
+    "PushEvent": {
       "push_id": 3464972879,
       "size": 1,
       "distinct_size": 1,
@@ -293,7 +293,7 @@
       "name": "jezemery/samgray-tj.github.io",
       "url": "https://api.github.com/repos/jezemery/samgray-tj.github.io"
     },
-    "payload": {
+    "PushEvent": {
       "push_id": 3464972880,
       "size": 1,
       "distinct_size": 1,
@@ -332,7 +332,7 @@
       "name": "coopiteasy/addons",
       "url": "https://api.github.com/repos/coopiteasy/addons"
     },
-    "payload": {
+    "CreateEvent": {
       "ref": "foodhub-delivery-slip",
       "ref_type": "branch",
       "master_branch": "9.0",
@@ -365,7 +365,7 @@
       "name": "coreyruss15/aboutme",
       "url": "https://api.github.com/repos/coreyruss15/aboutme"
     },
-    "payload": {
+    "CreateEvent": {
       "ref": null,
       "ref_type": "repository",
       "master_branch": "master",
@@ -391,7 +391,7 @@
       "name": "openshift/cluster-logging-operator",
       "url": "https://api.github.com/repos/openshift/cluster-logging-operator"
     },
-    "payload": {
+    "IssueCommentEvent": {
       "action": "created",
       "issue": {
         "url": "https://api.github.com/repos/openshift/cluster-logging-operator/issues/139",
@@ -528,7 +528,7 @@
       "name": "memmixer/memmixer.github.io",
       "url": "https://api.github.com/repos/memmixer/memmixer.github.io"
     },
-    "payload": {
+    "PushEvent": {
       "push_id": 3464972871,
       "size": 1,
       "distinct_size": 1,
@@ -567,7 +567,7 @@
       "name": "eleven-labs/blog.eleven-labs.com",
       "url": "https://api.github.com/repos/eleven-labs/blog.eleven-labs.com"
     },
-    "payload": {
+    "PullRequestEvent": {
       "action": "opened",
       "number": 621,
       "pull_request": {
@@ -949,7 +949,7 @@
       "name": "Persper/code-analytics",
       "url": "https://api.github.com/repos/Persper/code-analytics"
     },
-    "payload": {
+    "CreateEvent": {
       "ref": "dm-svg-diff-viewer",
       "ref_type": "branch",
       "master_branch": "master",
@@ -982,7 +982,7 @@
       "name": "anycodes/SentimentAnalysis",
       "url": "https://api.github.com/repos/anycodes/SentimentAnalysis"
     },
-    "payload": {
+    "WatchEvent": {
       "action": "started"
     },
     "public": true,
@@ -1004,7 +1004,7 @@
       "name": "status-im/specs",
       "url": "https://api.github.com/repos/status-im/specs"
     },
-    "payload": {
+    "PushEvent": {
       "push_id": 3464972863,
       "size": 1,
       "distinct_size": 1,
@@ -1050,7 +1050,7 @@
       "name": "fanbinqi/SSD-Tensorflow",
       "url": "https://api.github.com/repos/fanbinqi/SSD-Tensorflow"
     },
-    "payload": {
+    "PushEvent": {
       "push_id": 3464972866,
       "size": 1,
       "distinct_size": 1,
@@ -1089,7 +1089,7 @@
       "name": "rundeck/rundeck",
       "url": "https://api.github.com/repos/rundeck/rundeck"
     },
-    "payload": {
+    "WatchEvent": {
       "action": "started"
     },
     "public": true,
@@ -1118,7 +1118,7 @@
       "name": "duckduckgo/zeroclickinfo-goodies",
       "url": "https://api.github.com/repos/duckduckgo/zeroclickinfo-goodies"
     },
-    "payload": {
+    "IssuesEvent": {
       "action": "opened",
       "issue": {
         "url": "https://api.github.com/repos/duckduckgo/zeroclickinfo-goodies/issues/4703",
@@ -1195,7 +1195,7 @@
       "name": "hmrc/pertax-frontend",
       "url": "https://api.github.com/repos/hmrc/pertax-frontend"
     },
-    "payload": {
+    "PushEvent": {
       "push_id": 3464972845,
       "size": 3,
       "distinct_size": 2,
@@ -1261,7 +1261,7 @@
       "name": "Mehdiherzi/JavaStructure",
       "url": "https://api.github.com/repos/Mehdiherzi/JavaStructure"
     },
-    "payload": {
+    "PushEvent": {
       "push_id": 3464972846,
       "size": 1,
       "distinct_size": 1,
@@ -1300,7 +1300,7 @@
       "name": "button-tech/utils-node-tool",
       "url": "https://api.github.com/repos/button-tech/utils-node-tool"
     },
-    "payload": {
+    "CreateEvent": {
       "ref": "feature/add_db",
       "ref_type": "branch",
       "master_branch": "master",
@@ -1333,7 +1333,7 @@
       "name": "mirumee/saleor",
       "url": "https://api.github.com/repos/mirumee/saleor"
     },
-    "payload": {
+    "PullRequestReviewCommentEvent": {
       "action": "created",
       "comment": {
         "url": "https://api.github.com/repos/mirumee/saleor/pulls/comments/271312684",
@@ -1783,7 +1783,7 @@
       "name": "maks-p/dsc-1-08-14-combinations-lab-nyc-ds-career-031119",
       "url": "https://api.github.com/repos/maks-p/dsc-1-08-14-combinations-lab-nyc-ds-career-031119"
     },
-    "payload": {
+    "PushEvent": {
       "push_id": 3464972838,
       "size": 1,
       "distinct_size": 1,
@@ -1822,7 +1822,7 @@
       "name": "SeungMinChoi/JaraffeEngine3",
       "url": "https://api.github.com/repos/SeungMinChoi/JaraffeEngine3"
     },
-    "payload": {
+    "PushEvent": {
       "push_id": 3464972834,
       "size": 1,
       "distinct_size": 1,
@@ -1861,7 +1861,7 @@
       "name": "Persper/drepo-gitlab",
       "url": "https://api.github.com/repos/Persper/drepo-gitlab"
     },
-    "payload": {
+    "CreateEvent": {
       "ref": "shinya-test-branch-2",
       "ref_type": "branch",
       "master_branch": "master",
@@ -1894,7 +1894,7 @@
       "name": "roughike/inKino",
       "url": "https://api.github.com/repos/roughike/inKino"
     },
-    "payload": {
+    "WatchEvent": {
       "action": "started"
     },
     "public": true,
@@ -1916,7 +1916,7 @@
       "name": "vixuto22/pp2019add",
       "url": "https://api.github.com/repos/vixuto22/pp2019add"
     },
-    "payload": {
+    "ForkEvent": {
       "forkee": {
         "id": 179087495,
         "node_id": "MDEwOlJlcG9zaXRvcnkxNzkwODc0OTU=",
@@ -2031,7 +2031,7 @@
       "name": "LIbabes/TRABALHOOOO",
       "url": "https://api.github.com/repos/LIbabes/TRABALHOOOO"
     },
-    "payload": {
+    "PushEvent": {
       "push_id": 3464972820,
       "size": 1,
       "distinct_size": 1,
@@ -2070,7 +2070,7 @@
       "name": "akamai/cli-sandbox",
       "url": "https://api.github.com/repos/akamai/cli-sandbox"
     },
-    "payload": {
+    "PullRequestEvent": {
       "action": "opened",
       "number": 32,
       "pull_request": {
@@ -2445,7 +2445,7 @@
       "name": "TheBerg974/Project-SIMS",
       "url": "https://api.github.com/repos/TheBerg974/Project-SIMS"
     },
-    "payload": {
+    "PushEvent": {
       "push_id": 3464972809,
       "size": 1,
       "distinct_size": 1,
@@ -2484,7 +2484,7 @@
       "name": "mcrnogor/mcrnogor.github.io",
       "url": "https://api.github.com/repos/mcrnogor/mcrnogor.github.io"
     },
-    "payload": {
+    "PushEvent": {
       "push_id": 3464972807,
       "size": 1,
       "distinct_size": 1,
