@@ -160,7 +160,7 @@ object MapBasedCodecs {
                   val p = params(i)
                   if (r.tryReadString(p.label)) failDuplicate(p)
                   verifyNoDuplicate(i + 1)
-                } else r.skipDataItem().skipDataItem() // ok, no duplicate, so skip this key/value pair
+                } else r.skipElement().skipElement() // ok, no duplicate, so skip this key/value pair
               verifyNoDuplicate(0)
               skipExtraMembers(rem - 1)
             } else ctx.rawConstruct(constructorArgs) // ok, we've skipped all extra members and didn't find duplicates
@@ -181,7 +181,7 @@ object MapBasedCodecs {
                 if ((checkMask & mask) != 0) failDuplicate(p)
                 constructorArgs(nextArgIx) = p.typeclass.read(r)
                 nextFilledCount += 1
-              } else r.skipDataItem().skipDataItem() // none of the params matches this key/value pair, so skip it
+              } else r.skipElement().skipElement() // none of the params matches this key/value pair, so skip it
               if (remaining == Long.MinValue) failSizeOverflow()
               fillArgsAndConstruct(nextFilledCount, remaining - 1, mask0, mask1)
             } else {

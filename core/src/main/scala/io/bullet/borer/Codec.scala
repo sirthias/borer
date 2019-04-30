@@ -31,4 +31,9 @@ object Codec {
     * Simple macro shortening `Coder(Encoder.forCaseClass[Foo], Decoder.forCaseClass[Foo])` to `Codec.forCaseClass[Foo]`
     */
   def forCaseClass[T]: Codec[T] = macro Macros.codecForCaseClass[T]
+
+  /**
+    * Wraps implicitly available [[Encoder]] and [[Decoder]] instances for [[T]] in a [[Codec]].
+    */
+  def implicitly[T: Encoder: Decoder]: Codec[T] = Codec(Predef.implicitly[Encoder[T]], Predef.implicitly[Decoder[T]])
 }

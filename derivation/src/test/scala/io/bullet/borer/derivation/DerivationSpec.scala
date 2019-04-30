@@ -237,7 +237,23 @@ abstract class DerivationSpec(target: Target) extends TestSuite {
       }
 
       def extraMemberAfterFillCompletion[T: Encoder: Decoder](value: T, dom: MapElem): Unit = {
-        val extraMember = StringElem("yeah") → StringElem("xxx")
+        val extraMember = StringElem("extra") → StringElem("xxx")
+        val fatDom      = transform(dom)(_ :+ extraMember)
+        val encoded     = target.encode(fatDom).to[Array[Byte]].bytes
+        target.decode(encoded).to[Element].value ==> fatDom
+        target.decode(encoded).to[T].value ==> value
+      }
+
+      def complexExtraMemberBeforeFC[T: Encoder: Decoder](value: T, dom: MapElem, ix: Int): Unit = {
+        val extraMember = StringElem("extra") → dom
+        val fatDom      = transform(dom)(x ⇒ (x.take(ix) :+ extraMember) ++ x.drop(ix))
+        val encoded     = target.encode(fatDom).to[Array[Byte]].bytes
+        target.decode(encoded).to[Element].value ==> fatDom
+        target.decode(encoded).to[T].value ==> value
+      }
+
+      def complexExtraMemberAfterFC[T: Encoder: Decoder](value: T, dom: MapElem): Unit = {
+        val extraMember = StringElem("extra") → dom
         val fatDom      = transform(dom)(_ :+ extraMember)
         val encoded     = target.encode(fatDom).to[Array[Byte]].bytes
         target.decode(encoded).to[Element].value ==> fatDom
@@ -253,6 +269,8 @@ abstract class DerivationSpec(target: Target) extends TestSuite {
         "duplicate member after fill completion" - dupMemberAfterFillCompletion[Foo](mapBasedFooDom, 5, "float")
         "extra member before fill completion" - extraMemberBeforeFillCompletion(foo, mapBasedFooDom, 3)
         "extra member after fill completion" - extraMemberAfterFillCompletion(foo, mapBasedFooDom)
+        "complex extra member before fill completion" - complexExtraMemberBeforeFC(foo, mapBasedFooDom, 3)
+        "complex extra member after fill completion" - complexExtraMemberAfterFC(foo, mapBasedFooDom)
       }
 
       "Hundred" - {
@@ -266,6 +284,9 @@ abstract class DerivationSpec(target: Target) extends TestSuite {
         "extra lo member before fill completion" - extraMemberBeforeFillCompletion(hundred, mapBased100Dom, 13)
         "extra hi member before fill completion" - extraMemberBeforeFillCompletion(hundred, mapBased100Dom, 97)
         "extra member after fill completion" - extraMemberAfterFillCompletion(hundred, mapBased100Dom)
+        "complex extra lo member before fill completion" - complexExtraMemberBeforeFC(hundred, mapBased100Dom, 61)
+        "complex extra hi member before fill completion" - complexExtraMemberBeforeFC(hundred, mapBased100Dom, 65)
+        "complex extra member after fill completion" - complexExtraMemberAfterFC(hundred, mapBased100Dom)
       }
 
       "special option support" - {

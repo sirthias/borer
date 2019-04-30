@@ -10,7 +10,7 @@ package io.bullet.borer
 
 import java.util
 
-import scala.annotation.tailrec
+import scala.annotation.{switch, tailrec}
 import scala.collection.{immutable, mutable}
 import scala.collection.immutable.HashMap
 import scala.util.hashing.MurmurHash3
@@ -193,7 +193,7 @@ object Dom {
     val writeElement = (w: Writer, x: Element) ⇒ w.write(x)
 
     Encoder { (w, x) ⇒
-      x.dataItemShift match {
+      (x.dataItemShift: @switch) match {
         case DIS.Null      ⇒ w.writeNull()
         case DIS.Undefined ⇒ w.writeUndefined()
         case DIS.Bool      ⇒ w.writeBool(x.asInstanceOf[BoolElem].value)
@@ -262,7 +262,7 @@ object Dom {
     }
 
     Decoder { r ⇒
-      31 - Integer.numberOfLeadingZeros(r.dataItem) match {
+      (Integer.numberOfTrailingZeros(r.dataItem): @switch) match {
         case DIS.Null      ⇒ r.readNull(); NullElem
         case DIS.Undefined ⇒ r.readUndefined(); UndefinedElem
         case DIS.Bool      ⇒ if (r.readBoolean()) BoolElem.True else BoolElem.False

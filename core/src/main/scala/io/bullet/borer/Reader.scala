@@ -9,6 +9,7 @@
 package io.bullet.borer
 
 import java.nio.charset.StandardCharsets
+
 import io.bullet.borer.internal.{Receptacle, Util}
 
 import scala.annotation.tailrec
@@ -348,10 +349,52 @@ final class InputReader[Input, +Config <: Reader.Config](startCursor: Long,
     rec(zero)
   }
 
+  /**
+    * Skips the current (atomic) data item.
+    *
+    * CAUTION: If the data item is an Array/Map - Start/Header then this call will NOT skip the whole array or map,
+    * but only the starting data item! Use `skipElement` instead if you also want to skip complex elements!
+    */
   def skipDataItem(): this.type = {
     pull()
     this
   }
+
+  /**
+    * Moves the cursor beyond the current data element,
+    * thereby also skipping complex, potentially nested array or map structures.
+    */
+  def skipElement(): this.type =
+    if (hasAnyOf(DI.Complex)) {
+      // for simplicity we go for stack-based recursion here
+      // if this ever becomes a problem we can upgrade to more costly heap-based recursion instead
+      def skipComplex(level: Int): this.type = {
+        @tailrec def skipN(remaining: Long): this.type =
+          if (remaining > 0) {
+            if (hasAnyOf(DI.Complex)) skipComplex(level + 1) else pull()
+            skipN(remaining - 1)
+          } else this
+
+        @tailrec def skipUntilBreak(): this.type =
+          if (!tryReadBreak()) {
+            if (hasAnyOf(DI.Complex)) skipComplex(level + 1) else pull()
+            skipUntilBreak()
+          } else this
+
+        if (level == 100) overflow("Structures more than 100 levels deep cannot be skipped") // TODO: make configurable
+        dataItem match {
+          case DI.ArrayHeader ⇒ skipN(readArrayHeader())
+          case DI.MapHeader ⇒
+            val elemsToSkip = readMapHeader() << 1
+            if (elemsToSkip >= 0) skipN(elemsToSkip)
+            else overflow("Maps with more than 2^62 elements cannot be skipped")
+          case DI.ArrayStart | DI.MapStart ⇒
+            pull()
+            skipUntilBreak()
+        }
+      }
+      skipComplex(0)
+    } else skipDataItem()
 
   @inline private def pull(): Unit = {
     receptacle.clear()
