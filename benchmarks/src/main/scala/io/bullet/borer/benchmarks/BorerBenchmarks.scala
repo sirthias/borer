@@ -103,15 +103,15 @@ class BorerModelBenchmark extends DomBenchmark {
 
   private var root: Product = _
 
-  implicit lazy val codec: Codec[Product] =
-    fileName match {
+  implicit lazy val codec: Codec[Product] = {
+    val c = fileName match {
       case "australia-abc.json" ⇒
         implicit val a = deriveCodec[Australia.Geometry]
         implicit val b = deriveCodec[Australia.Properties]
         implicit val c = deriveCodec[Australia.Properties1]
         implicit val d = deriveCodec[Australia.Features]
         implicit val e = deriveCodec[Australia.Crs]
-        deriveCodec[Australia.RootInterface].asInstanceOf[Codec[Product]]
+        deriveCodec[Australia.RootInterface]
 
       case "bitcoin.json" ⇒
         implicit val a = deriveCodec[Bitcoin.SpendingOutpoints]
@@ -119,7 +119,7 @@ class BorerModelBenchmark extends DomBenchmark {
         implicit val c = deriveCodec[Bitcoin.Inputs]
         implicit val d = deriveCodec[Bitcoin.Out]
         implicit val e = deriveCodec[Bitcoin.Txs]
-        deriveCodec[Bitcoin.RootInterface].asInstanceOf[Codec[Product]]
+        deriveCodec[Bitcoin.RootInterface]
 
       case "doj-blog.json" ⇒
         implicit val a = deriveCodec[DojBlog.ResponseInfo]
@@ -127,23 +127,23 @@ class BorerModelBenchmark extends DomBenchmark {
         implicit val c = deriveCodec[DojBlog.Metadata]
         implicit val d = deriveCodec[DojBlog.Component]
         implicit val e = deriveCodec[DojBlog.Results]
-        deriveCodec[DojBlog.RootInterface].asInstanceOf[Codec[Product]]
+        deriveCodec[DojBlog.RootInterface]
 
       case "eu-lobby-country.json" ⇒
         implicit val a = deriveCodec[EuLobbyCountry.Facets]
         implicit val b = deriveCodec[EuLobbyCountry.Results]
-        deriveCodec[EuLobbyCountry.RootInterface].asInstanceOf[Codec[Product]]
+        deriveCodec[EuLobbyCountry.RootInterface]
 
       case "eu-lobby-financial.json" ⇒
         implicit val a = deriveCodec[EuLobbyFinancial.Facets]
         implicit val b = deriveCodec[EuLobbyFinancial.CustomIncomes]
         implicit val c = deriveCodec[EuLobbyFinancial.Results]
-        deriveCodec[EuLobbyFinancial.RootInterface].asInstanceOf[Codec[Product]]
+        deriveCodec[EuLobbyFinancial.RootInterface]
 
       case "eu-lobby-repr.json" ⇒
         implicit val a = deriveCodec[EuLobbyRepr.Facets]
         implicit val b = deriveCodec[EuLobbyRepr.Results]
-        deriveCodec[EuLobbyRepr.RootInterface].asInstanceOf[Codec[Product]]
+        deriveCodec[EuLobbyRepr.RootInterface]
 
       case "github-events.json" ⇒
         implicit val a = deriveCodec[GithubEvents.Actor]
@@ -176,28 +176,28 @@ class BorerModelBenchmark extends DomBenchmark {
         implicit val B = deriveCodec[GithubEvents.PushEvent]
         implicit val C = deriveCodec[GithubEvents.WatchEvent]
         implicit val D = deriveCodec[GithubEvents.RootInterface]
-        Codec.implicitly[List[GithubEvents.RootInterface]].asInstanceOf[Codec[Product]]
+        Codec.implicitly[List[GithubEvents.RootInterface]]
 
       case "github-gists.json" ⇒
         implicit val a = deriveCodec[GithubGists.Owner]
         implicit val b = deriveCodec[GithubGists.FileData]
         implicit val c = deriveCodec[GithubGists.RootInterface]
-        Codec.implicitly[List[GithubGists.RootInterface]].asInstanceOf[Codec[Product]]
+        Codec.implicitly[List[GithubGists.RootInterface]]
 
       case "json-generator.json" ⇒
         implicit val a = deriveCodec[JsonGenerator.Friends]
         implicit val b = deriveCodec[JsonGenerator.Name]
         implicit val c = deriveCodec[JsonGenerator.RootInterface]
-        Codec.implicitly[List[JsonGenerator.RootInterface]].asInstanceOf[Codec[Product]]
+        Codec.implicitly[List[JsonGenerator.RootInterface]]
 
       case "meteorites.json" ⇒
         implicit val a = deriveCodec[Meteorites.Geolocation]
         implicit val b = deriveCodec[Meteorites.RootInterface]
-        Codec.implicitly[List[Meteorites.RootInterface]].asInstanceOf[Codec[Product]]
+        Codec.implicitly[List[Meteorites.RootInterface]]
 
       case "movies.json" ⇒
         implicit val a = deriveCodec[Movies.RootInterface]
-        Codec.implicitly[List[Movies.RootInterface]].asInstanceOf[Codec[Product]]
+        Codec.implicitly[List[Movies.RootInterface]]
 
       case "reddit-scala.json" ⇒
         implicit val a = deriveCodec[Reddit.Oembed]
@@ -207,7 +207,7 @@ class BorerModelBenchmark extends DomBenchmark {
         implicit val e = deriveCodec[Reddit.Data]
         implicit val f = deriveCodec[Reddit.Child]
         implicit val g = deriveCodec[Reddit.Data0]
-        deriveCodec[Reddit.RootInterface].asInstanceOf[Codec[Product]]
+        deriveCodec[Reddit.RootInterface]
 
       case "rick-morty.json" ⇒
         implicit val a = deriveCodec[RickMorty.Rating]
@@ -221,21 +221,21 @@ class BorerModelBenchmark extends DomBenchmark {
         implicit val i = deriveCodec[RickMorty.Links1]
         implicit val j = deriveCodec[RickMorty.Episodes]
         implicit val k = deriveCodec[RickMorty.Embedded]
-        deriveCodec[RickMorty.RootInterface].asInstanceOf[Codec[Product]]
+        deriveCodec[RickMorty.RootInterface]
 
       case "temp-anomaly.json" ⇒
         implicit val a = deriveCodec[TempAnomaly.Description]
-        deriveCodec[TempAnomaly.RootInterface].asInstanceOf[Codec[Product]]
+        deriveCodec[TempAnomaly.RootInterface]
 
       case "thai-cinemas.json" ⇒
         implicit val a = deriveCodec[ThaiCinemas.Group]
         implicit val b = deriveCodec[ThaiCinemas.Results]
-        deriveCodec[ThaiCinemas.RootInterface].asInstanceOf[Codec[Product]]
+        deriveCodec[ThaiCinemas.RootInterface]
 
       case "turkish.json" ⇒
         implicit val a = deriveCodec[Turkish.Event]
         implicit val b = deriveCodec[Turkish.Result]
-        deriveCodec[Turkish.RootInterface].asInstanceOf[Codec[Product]]
+        deriveCodec[Turkish.RootInterface]
 
       case "twitter_api_compact_response.json" | "twitter_api_response.json" ⇒
         implicit val a = deriveCodec[TwitterApiResponse.Urls]
@@ -246,8 +246,10 @@ class BorerModelBenchmark extends DomBenchmark {
         implicit val f = deriveCodec[TwitterApiResponse.User]
         implicit val g = deriveCodec[TwitterApiResponse.RetweetedStatus]
         implicit val h = deriveCodec[TwitterApiResponse.RootInterface]
-        Codec.implicitly[List[TwitterApiResponse.RootInterface]].asInstanceOf[Codec[Product]]
+        Codec.implicitly[List[TwitterApiResponse.RootInterface]]
     }
+    c.asInstanceOf[Codec[Product]]
+  }
 
   def setup(): Unit = root = Json.decode(fileBytes).to[Product].value
 

@@ -245,7 +245,7 @@ lazy val benchmarks = project
       "com.fasterxml.jackson.module"  %% "jackson-module-scala" % "2.9.8",
       "com.lihaoyi"                   %% "upickle"              % "0.7.4",
       "io.circe"                      %% "circe-core"           % "0.11.1",
-      "io.circe"                      %% "circe-derivation"     % "0.11.0-M1",
+      "io.circe"                      %% "circe-derivation"     % "0.12.0-M1",
       "io.circe"                      %% "circe-jawn"           % "0.11.1",
       "io.spray"                      %% "spray-json"           % "1.3.5",
     )

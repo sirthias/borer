@@ -245,7 +245,6 @@ object EuLobbyRepr {
       activity_consult_committees: Nullable[String],
       activity_high_level_groups: Nullable[String],
       head_office_lat: Nullable[Double],
-      be_office_lat: Nullable[Double] = 0.0,
       updated_at: String,
       entity: String,
       number_of_natural_persons: Nullable[Int],
@@ -269,7 +268,6 @@ object EuLobbyRepr {
       status: String,
       main_category_title: String,
       head_office_street: String,
-      be_office_post_code: Nullable[String] = "",
       activity_inter_groups: String,
       acronym: Nullable[String],
       activity_eu_legislative: String,
@@ -281,22 +279,16 @@ object EuLobbyRepr {
       last_update_date: String,
       members_fte: Double,
       head_office_phone: String,
-      be_office_town: String = "",
       members_25: Nullable[Int],
       web_site_url: Nullable[String],
       sub_category: Int,
       activity_other: Nullable[String],
-      be_office_postbox: Nullable[String] = "",
       name: String,
-      be_office_street: String = "",
       created_at: String,
-      be_office_country: String = "",
       uri: String,
       identification_code: String,
       legal_status: String,
       members_100: Nullable[Int],
-      be_office_phone: String = "",
-      be_office_lon: Nullable[Double] = 0.0,
       head_office_lon: Nullable[Double],
       structure_members: String,
       code_of_conduct: String,
@@ -964,7 +956,7 @@ object Reddit {
       content: String,
       width: Int,
       scrolling: Boolean,
-      media_domain_url: String,
+      media_domain_url: Option[String] = None,
       height: Int
   )
 
@@ -999,7 +991,7 @@ object Reddit {
       subreddit_type: String,
       ups: Int,
       domain: String,
-      media_embed: MediaEmbed,
+      media_embed: List[MediaEmbed],
       author_flair_template_id: Nullable[String],
       is_original_content: Boolean,
       user_reports: Seq[String],
@@ -1064,7 +1056,7 @@ object Reddit {
       url: String,
       subreddit_subscribers: Int,
       created_utc: Double,
-      media: Nullable[String],
+      media: Option[SecureMedia] = None,
       is_video: Boolean
   )
 
@@ -1078,7 +1070,7 @@ object Reddit {
       dist: Int,
       children: Seq[Child],
       after: String,
-      before: Null
+      before: Nullable[String]
   )
 
   case class RootInterface(
@@ -1249,7 +1241,7 @@ object TwitterApiResponse {
 
   case class Entities(
       user_mentions: Seq[UserMentions],
-      urls: List[Urls] = Nil
+      urls: Option[List[Urls]] = None
   )
 
   case class Entities1(
@@ -1295,7 +1287,7 @@ object TwitterApiResponse {
   )
 
   case class Url(
-      urls: List[Urls] = Nil
+      urls: Option[List[Urls]] = None
   )
 
   case class Urls(
