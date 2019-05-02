@@ -61,8 +61,6 @@ object scodec {
 
     @inline def length(input: ByteVector): Long = input.size
 
-    def safeByte(input: ByteVector, index: Long): Byte = input(index)
-
     def unsafeByte(input: ByteVector, index: Long): Byte = input(index)
 
     def doubleByteBigEndian(input: ByteVector, index: Long): Int =

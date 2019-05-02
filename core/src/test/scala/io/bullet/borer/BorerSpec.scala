@@ -34,7 +34,8 @@ abstract class BorerSpec extends TestSuite {
   final def verifyDecoding[T: Decoder](encoded: String, expectedValue: T): Unit = {
     val decoded = decode(encoded)
     if (!equals(decoded, expectedValue)) {
-      throw new java.lang.AssertionError(s"[$encoded] decodes to [$decoded] rather than [$expectedValue]")
+      val msg = s"[$encoded] decodes to [${escape(decoded)}] rather than [${escape(expectedValue)}]"
+      throw new java.lang.AssertionError(msg)
     }
   }
 
@@ -54,4 +55,15 @@ abstract class BorerSpec extends TestSuite {
     if ((hexString.length & 1) != 0) throw new IllegalArgumentException(s"[$hexString] is not a valid hex string")
     hexString.grouped(2).map(Integer.parseInt(_, 16).toByte).toArray
   }
+
+  final def escape(obj: Any): String =
+    obj.toString.flatMap {
+      case c if c >= ' ' ⇒ c.toString
+      case '\b'          ⇒ "\\b"
+      case '\f'          ⇒ "\\f"
+      case '\n'          ⇒ "\\n"
+      case '\t'          ⇒ "\\t"
+      case '\r'          ⇒ "\\r"
+      case c             ⇒ f"\\u${c.toInt}%04x"
+    }
 }

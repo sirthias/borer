@@ -35,7 +35,7 @@ object ByteAccess {
   /**
     * The default [[ByteAccess]] for plain byte arrays.
     */
-  implicit object ForByteArray extends ByteAccess[Array[Byte]] {
+  implicit final object ForByteArray extends ByteAccess[Array[Byte]] {
     type Out = Output.ToByteArray
 
     @inline def newOutput = new Output.ToByteArray

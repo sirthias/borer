@@ -62,8 +62,6 @@ object akka {
 
     @inline def length(input: ByteString): Long = input.length.toLong
 
-    def safeByte(input: ByteString, index: Long): Byte = input(index.toInt)
-
     def unsafeByte(input: ByteString, index: Long): Byte = input(index.toInt)
 
     def doubleByteBigEndian(input: ByteString, index: Long): Int = {
@@ -92,14 +90,15 @@ object akka {
       (input(i + 7) & 0xFFL)
     }
 
-    def bytes(input: ByteString, index: Long, length: Long): ByteString =
-      if ((index | length) >> 31 == 0) {
-        if (length != 0) {
-          val end = index + length
-          if ((end >> 31) == 0) input.slice(index.toInt, end.toInt)
-          else throw new Borer.Error.Overflow(Position(input, index), "ByteString input is limited to size 2GB")
-        } else ByteString.empty
+    def bytes(input: ByteString, index: Long, length: Long): ByteString = {
+      val indexInt = index.toInt
+      val lengthInt = length.toInt
+      val end = indexInt + lengthInt
+      if (indexInt == index && lengthInt == length && end >= 0) {
+        if (length > 0) input.slice(indexInt, end)
+        else ByteString.empty
       } else throw new Borer.Error.Overflow(Position(input, index), "ByteString input is limited to size 2GB")
+    }
   }
 
   /**

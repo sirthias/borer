@@ -8,6 +8,8 @@
 
 package io.bullet.borer
 
+import java.nio.charset.Charset
+
 /**
   * Type class for byte access to an `Input`
   */
@@ -53,63 +55,83 @@ trait InputAccess[Input] {
     * or throws an [[IndexOutOfBoundsException]].
     */
   def bytes(input: Input, index: Long, length: Long): Bytes
+
+  /**
+    * Decodes the respective bytes into a [[String]].
+    */
+  def string(input: Input, startIndex: Long, endIndex: Long, charset: Charset): String
+
+  /**
+    * Copies a slice of the [[Input]] into the given `byteArray` starting at the given `offset`.
+    */
+  def copyToByteArray(input: Input, startIndex: Long, endIndex: Long, byteArray: Array[Byte], offset: Int): Unit
 }
 
 object InputAccess {
 
+  class ForByteArray extends InputAccess[Array[Byte]] {
+    final type Bytes = Array[Byte]
+
+    final def byteAccess = ByteAccess.ForByteArray
+
+    final def length(input: Array[Byte]): Long = input.length.toLong
+
+    def unsafeByte(input: Array[Byte], index: Long): Byte = input(index.toInt)
+
+    def doubleByteBigEndian(input: Array[Byte], index: Long): Int = {
+      val i = index.toInt
+      (input(i) & 0xFF) << 8 |
+      (input(i + 1) & 0xFF)
+    }
+
+    def quadByteBigEndian(input: Array[Byte], index: Long): Int = {
+      val i = index.toInt
+      (input(i) & 0xFF) << 24 |
+      (input(i + 1) & 0xFF) << 16 |
+      (input(i + 2) & 0xFF) << 8 |
+      (input(i + 3) & 0xFF)
+    }
+
+    def octaByteBigEndian(input: Array[Byte], index: Long): Long = {
+      val i = index.toInt
+      (input(i) & 0xFFL) << 56 |
+      (input(i + 1) & 0xFFL) << 48 |
+      (input(i + 2) & 0xFFL) << 40 |
+      (input(i + 3) & 0xFFL) << 32 |
+      (input(i + 4) & 0xFFL) << 24 |
+      (input(i + 5) & 0xFFL) << 16 |
+      (input(i + 6) & 0xFFL) << 8 |
+      (input(i + 7) & 0xFFL)
+    }
+
+    final def bytes(input: Array[Byte], index: Long, length: Long): Array[Byte] = {
+      val len = length.toInt
+      if (length == len) {
+        if (length != 0) {
+          val result = new Array[Byte](len)
+          System.arraycopy(input, index.toInt, result, 0, len)
+          result
+        } else Array.emptyByteArray
+      } else throw new Borer.Error.Overflow(Position(input, index), "Byte-array input is limited to size 2GB")
+    }
+
+    final def string(input: Array[Byte], startIndex: Long, endIndex: Long, charset: Charset) =
+      new String(input, startIndex.toInt, (endIndex - startIndex).toInt, charset)
+
+    final def copyToByteArray(input: Array[Byte],
+                              startIndex: Long,
+                              endIndex: Long,
+                              byteArray: Array[Byte],
+                              offset: Int): Unit =
+      System.arraycopy(input, startIndex.toInt, byteArray, offset, (endIndex - startIndex).toInt)
+  }
+
   /**
     * `InputAccess` for plain byte arrays.
     */
-  implicit final val ForByteArray: InputAccess[Array[Byte]] { type Bytes = Array[Byte] } = {
-    val unsafeInputAccess = Unsafe.byteArrayInputAccess
-    if (unsafeInputAccess eq null) {
-      new InputAccess[Array[Byte]] {
-        type Bytes = Array[Byte]
-
-        def byteAccess = ByteAccess.ForByteArray
-
-        def length(input: Array[Byte]): Long = input.length.toLong
-
-        def safeByte(input: Array[Byte], index: Long): Byte = input(index.toInt)
-
-        def unsafeByte(input: Array[Byte], index: Long): Byte = input(index.toInt)
-
-        def doubleByteBigEndian(input: Array[Byte], index: Long): Int = {
-          val i = index.toInt
-          (input(i) & 0xFF) << 8 |
-          (input(i + 1) & 0xFF)
-        }
-
-        def quadByteBigEndian(input: Array[Byte], index: Long): Int = {
-          val i = index.toInt
-          (input(i) & 0xFF) << 24 |
-          (input(i + 1) & 0xFF) << 16 |
-          (input(i + 2) & 0xFF) << 8 |
-          (input(i + 3) & 0xFF)
-        }
-
-        def octaByteBigEndian(input: Array[Byte], index: Long): Long = {
-          val i = index.toInt
-          (input(i) & 0xFFL) << 56 |
-          (input(i + 1) & 0xFFL) << 48 |
-          (input(i + 2) & 0xFFL) << 40 |
-          (input(i + 3) & 0xFFL) << 32 |
-          (input(i + 4) & 0xFFL) << 24 |
-          (input(i + 5) & 0xFFL) << 16 |
-          (input(i + 6) & 0xFFL) << 8 |
-          (input(i + 7) & 0xFFL)
-        }
-
-        def bytes(input: Array[Byte], index: Long, length: Long): Array[Byte] =
-          if (length >> 31 == 0) {
-            if (length != 0) {
-              val len    = length.toInt
-              val result = new Array[Byte](len)
-              System.arraycopy(input, index.toInt, result, 0, len)
-              result
-            } else Array.emptyByteArray
-          } else throw new Borer.Error.Overflow(Position(input, index), "Byte-array input is limited to size 2GB")
-      }
-    } else unsafeInputAccess
+  implicit final val ForByteArray: ForByteArray = {
+    val unsafeInputAccess = io.bullet.borer.Unsafe.byteArrayInputAccess
+    if (unsafeInputAccess ne null) unsafeInputAccess
+    else new ForByteArray
   }
 }

@@ -8,10 +8,11 @@
 
 package io.bullet.borer
 
-import java.nio.ByteOrder
 import java.lang.{Long ⇒ JLong, Short ⇒ JShort}
+import java.nio.ByteOrder
 import java.security.PrivilegedExceptionAction
 
+import io.bullet.borer.internal.ByteArrayAccess
 import sun.misc.{Unsafe ⇒ SMUnsafe}
 
 import scala.util.control.NonFatal
@@ -49,7 +50,7 @@ object Unsafe {
   // the offset to the first element in a byte array.
   private final val BYTE_ARRAY_BASE_OFFSET = if (UNSAFE ne null) UNSAFE.arrayBaseOffset(classOf[Array[Byte]]) else 0
 
-  def byteArrayInputAccess: InputAccess[Array[Byte]] { type Bytes = Array[Byte] } =
+  def byteArrayInputAccess: InputAccess.ForByteArray =
     if (UNSAFE ne null) {
       ByteOrder.nativeOrder() match {
         case ByteOrder.LITTLE_ENDIAN ⇒ byteArrayInputAccessOnLittleEndian()
@@ -57,71 +58,55 @@ object Unsafe {
       }
     } else null
 
-  private def byteArrayInputAccessOnLittleEndian(): InputAccess[Array[Byte]] { type Bytes = Array[Byte] } =
-    new InputAccess[Array[Byte]] {
-      type Bytes = Array[Byte]
+  private def byteArrayInputAccessOnLittleEndian(): InputAccess.ForByteArray =
+    new InputAccess.ForByteArray {
 
-      def byteAccess = ByteAccess.ForByteArray
-
-      def length(input: Array[Byte]): Long = input.length.toLong
-
-      def safeByte(input: Array[Byte], index: Long): Byte =
-        input(index.toInt) // we actually need the range check
-
-      def unsafeByte(input: Array[Byte], index: Long): Byte =
+      @inline override def unsafeByte(input: Array[Byte], index: Long): Byte =
         UNSAFE.getByte(input, index + BYTE_ARRAY_BASE_OFFSET)
 
-      def doubleByteBigEndian(input: Array[Byte], index: Long): Int =
+      @inline override def doubleByteBigEndian(input: Array[Byte], index: Long): Int =
         JShort.reverseBytes(UNSAFE.getShort(input, index + BYTE_ARRAY_BASE_OFFSET)) & 0xFFFF
 
-      @inline def quadByteBigEndian(input: Array[Byte], index: Long): Int =
+      @inline override def quadByteBigEndian(input: Array[Byte], index: Long): Int =
         Integer.reverseBytes(UNSAFE.getInt(input, index + BYTE_ARRAY_BASE_OFFSET))
 
-      @inline def octaByteBigEndian(input: Array[Byte], index: Long): Long =
+      @inline override def octaByteBigEndian(input: Array[Byte], index: Long): Long =
         JLong.reverseBytes(UNSAFE.getLong(input, index + BYTE_ARRAY_BASE_OFFSET))
-
-      def bytes(input: Array[Byte], index: Long, length: Long): Array[Byte] =
-        if (length >> 31 == 0) {
-          if (length != 0) {
-            val len    = length.toInt
-            val result = new Array[Byte](len)
-            System.arraycopy(input, index.toInt, result, 0, len)
-            result
-          } else Array.emptyByteArray
-        } else throw new Borer.Error.Overflow(Position(input, index), "Byte-array input is limited to size 2GB")
     }
 
-  private def byteArrayInputAccessOnBigEndian(): InputAccess[Array[Byte]] { type Bytes = Array[Byte] } =
-    new InputAccess[Array[Byte]] {
-      type Bytes = Array[Byte]
+  private def byteArrayInputAccessOnBigEndian(): InputAccess.ForByteArray =
+    new InputAccess.ForByteArray {
 
-      def byteAccess = ByteAccess.ForByteArray
-
-      def length(input: Array[Byte]): Long = input.length.toLong
-
-      def safeByte(input: Array[Byte], index: Long): Byte =
-        input(index.toInt) // we actually need the range check
-
-      def unsafeByte(input: Array[Byte], index: Long): Byte =
+      @inline override def unsafeByte(input: Array[Byte], index: Long): Byte =
         UNSAFE.getByte(input, index + BYTE_ARRAY_BASE_OFFSET)
 
-      def doubleByteBigEndian(input: Array[Byte], index: Long): Int =
+      @inline override def doubleByteBigEndian(input: Array[Byte], index: Long): Int =
         UNSAFE.getShort(input, index + BYTE_ARRAY_BASE_OFFSET) & 0xFFFF
 
-      @inline def quadByteBigEndian(input: Array[Byte], index: Long): Int =
+      @inline override def quadByteBigEndian(input: Array[Byte], index: Long): Int =
         UNSAFE.getInt(input, index + BYTE_ARRAY_BASE_OFFSET)
 
-      @inline def octaByteBigEndian(input: Array[Byte], index: Long): Long =
+      @inline override def octaByteBigEndian(input: Array[Byte], index: Long): Long =
         UNSAFE.getLong(input, index + BYTE_ARRAY_BASE_OFFSET)
+    }
 
-      def bytes(input: Array[Byte], index: Long, length: Long): Array[Byte] =
-        if (length >> 31 == 0) {
-          if (length != 0) {
-            val len    = length.toInt
-            val result = new Array[Byte](len)
-            System.arraycopy(input, index.toInt, result, 0, len)
-            result
-          } else Array.emptyByteArray
-        } else throw new Borer.Error.Overflow(Position(input, index), "Byte-array input is limited to size 2GB")
+  def byteArrayAccess: ByteArrayAccess =
+    if (UNSAFE ne null) {
+      ByteOrder.nativeOrder() match {
+        case ByteOrder.LITTLE_ENDIAN ⇒ byteArrayAccessOnLittleEndian()
+        case ByteOrder.BIG_ENDIAN    ⇒ byteArrayAccessOnBigEndian()
+      }
+    } else null
+
+  private def byteArrayAccessOnLittleEndian(): ByteArrayAccess =
+    new ByteArrayAccess {
+      override def putLongBigEndian(buf: Array[Byte], offset: Int, long: Long): Unit =
+        UNSAFE.putLong(buf, offset.toLong + BYTE_ARRAY_BASE_OFFSET, JLong.reverseBytes(long))
+    }
+
+  private def byteArrayAccessOnBigEndian(): ByteArrayAccess =
+    new ByteArrayAccess {
+      override def putLongBigEndian(buf: Array[Byte], offset: Int, long: Long): Unit =
+        UNSAFE.putLong(buf, offset.toLong + BYTE_ARRAY_BASE_OFFSET, long)
     }
 }
