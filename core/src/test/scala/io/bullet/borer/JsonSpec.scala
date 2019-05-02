@@ -215,7 +215,7 @@ object JsonSpec extends AbstractJsonSpec {
 
       intercept[Borer.Error.InvalidInputData[_ <: AnyRef]] {
         Json.decode(hexBytes("22dd1dd83422")).to[String].value ==> "xxx"
-      }.getMessage ==> "Expected JSON string character but got '\\u001d' [input position 2]"
+      }.getMessage ==> "Illegal UTF-8 character encoding [input position 1]"
 
       val strings = ('a' to 'z').mkString.inits.toList.init
       val all = for {
@@ -239,8 +239,8 @@ object JsonSpec extends AbstractJsonSpec {
     }
 
     "Maps" - {
-//      roundTrip("{}", Map.empty[Int, String])
-//      intercept[Borer.Error.ValidationFailure[_ <: AnyRef]](encode(ListMap(1 → 2)))
+      roundTrip("{}", Map.empty[Int, String])
+      intercept[Borer.Error.ValidationFailure[_ <: AnyRef]](encode(ListMap(1 → 2)))
       roundTrip("""{"":2,"foo":4}""", ListMap(""                   → 2, "foo"     → 4))
       roundTrip("""{"a":[[1],[]],"b":[[],[[2,3]]]}""", ListMap("a" → Left(1), "b" → Right(Vector(2, 3))))
       roundTrip("""[[[],["a"]],[[{"b":"c"}],[]]]""", Vector(Right("a"), Left(ListMap("b" → "c"))))

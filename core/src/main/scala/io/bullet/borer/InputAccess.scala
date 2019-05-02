@@ -8,8 +8,6 @@
 
 package io.bullet.borer
 
-import java.nio.charset.Charset
-
 /**
   * Type class for byte access to an `Input`
   */
@@ -55,16 +53,6 @@ trait InputAccess[Input] {
     * or throws an [[IndexOutOfBoundsException]].
     */
   def bytes(input: Input, index: Long, length: Long): Bytes
-
-  /**
-    * Decodes the respective bytes into a [[String]].
-    */
-  def string(input: Input, startIndex: Long, endIndex: Long, charset: Charset): String
-
-  /**
-    * Copies a slice of the [[Input]] into the given `byteArray` starting at the given `offset`.
-    */
-  def copyToByteArray(input: Input, startIndex: Long, endIndex: Long, byteArray: Array[Byte], offset: Int): Unit
 }
 
 object InputAccess {
@@ -114,16 +102,6 @@ object InputAccess {
         } else Array.emptyByteArray
       } else throw new Borer.Error.Overflow(Position(input, index), "Byte-array input is limited to size 2GB")
     }
-
-    final def string(input: Array[Byte], startIndex: Long, endIndex: Long, charset: Charset) =
-      new String(input, startIndex.toInt, (endIndex - startIndex).toInt, charset)
-
-    final def copyToByteArray(input: Array[Byte],
-                              startIndex: Long,
-                              endIndex: Long,
-                              byteArray: Array[Byte],
-                              offset: Int): Unit =
-      System.arraycopy(input, startIndex.toInt, byteArray, offset, (endIndex - startIndex).toInt)
   }
 
   /**

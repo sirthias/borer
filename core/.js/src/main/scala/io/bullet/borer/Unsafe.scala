@@ -8,11 +8,7 @@
 
 package io.bullet.borer
 
-import io.bullet.borer.internal.ByteArrayAccess
-
 object Unsafe {
 
-  def byteArrayInputAccess: InputAccess[Array[Byte]] { type Bytes = Array[Byte] } = null
-
-  def byteArrayAccess: ByteArrayAccess = null
+  def byteArrayInputAccess: InputAccess.ForByteArray = null
 }

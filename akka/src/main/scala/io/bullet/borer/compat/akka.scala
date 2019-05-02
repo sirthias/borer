@@ -91,9 +91,9 @@ object akka {
     }
 
     def bytes(input: ByteString, index: Long, length: Long): ByteString = {
-      val indexInt = index.toInt
+      val indexInt  = index.toInt
       val lengthInt = length.toInt
-      val end = indexInt + lengthInt
+      val end       = indexInt + lengthInt
       if (indexInt == index && lengthInt == length && end >= 0) {
         if (length > 0) input.slice(indexInt, end)
         else ByteString.empty

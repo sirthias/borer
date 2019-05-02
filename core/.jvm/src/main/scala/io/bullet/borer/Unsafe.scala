@@ -12,7 +12,6 @@ import java.lang.{Long ⇒ JLong, Short ⇒ JShort}
 import java.nio.ByteOrder
 import java.security.PrivilegedExceptionAction
 
-import io.bullet.borer.internal.ByteArrayAccess
 import sun.misc.{Unsafe ⇒ SMUnsafe}
 
 import scala.util.control.NonFatal
@@ -88,25 +87,5 @@ object Unsafe {
 
       @inline override def octaByteBigEndian(input: Array[Byte], index: Long): Long =
         UNSAFE.getLong(input, index + BYTE_ARRAY_BASE_OFFSET)
-    }
-
-  def byteArrayAccess: ByteArrayAccess =
-    if (UNSAFE ne null) {
-      ByteOrder.nativeOrder() match {
-        case ByteOrder.LITTLE_ENDIAN ⇒ byteArrayAccessOnLittleEndian()
-        case ByteOrder.BIG_ENDIAN    ⇒ byteArrayAccessOnBigEndian()
-      }
-    } else null
-
-  private def byteArrayAccessOnLittleEndian(): ByteArrayAccess =
-    new ByteArrayAccess {
-      override def putLongBigEndian(buf: Array[Byte], offset: Int, long: Long): Unit =
-        UNSAFE.putLong(buf, offset.toLong + BYTE_ARRAY_BASE_OFFSET, JLong.reverseBytes(long))
-    }
-
-  private def byteArrayAccessOnBigEndian(): ByteArrayAccess =
-    new ByteArrayAccess {
-      override def putLongBigEndian(buf: Array[Byte], offset: Int, long: Long): Unit =
-        UNSAFE.putLong(buf, offset.toLong + BYTE_ARRAY_BASE_OFFSET, long)
     }
 }
