@@ -152,7 +152,6 @@ object DojBlog {
       metadata: Metadata,
       results: Seq[Results]
   )
-
 }
 
 object EuLobbyCountry {
