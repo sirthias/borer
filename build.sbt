@@ -109,9 +109,6 @@ lazy val releaseSettings = {
   )
 }
 
-def scalaJsDeps(deps: ModuleID*): Def.Setting[Seq[sbt.ModuleID]] =
-  libraryDependencies ++= deps.map(_ cross platformDepsCrossVersion.value)
-
 lazy val macroParadise =
   libraryDependencies ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
@@ -122,11 +119,11 @@ lazy val macroParadise =
 
 /////////////////////// DEPENDENCIES /////////////////////////
 
-val `akka-actor`     = "com.typesafe.akka"     %% "akka-actor"     % "2.5.22"
-val `scodec-bits`    = "org.scodec"            %% "scodec-bits"    % "1.1.10"
-val utest            = "com.lihaoyi"           %% "utest"          % "0.6.7" % "test"
-val `scala-compiler` = "org.scala-lang"        %  "scala-compiler"
-val `scala-reflect`  = "org.scala-lang"        %  "scala-reflect"
+val `akka-actor`     = Def.setting("com.typesafe.akka"     %%% "akka-actor"     % "2.5.22")
+val `scodec-bits`    = Def.setting("org.scodec"            %%% "scodec-bits"    % "1.1.10")
+val utest            = Def.setting("com.lihaoyi"           %%% "utest"          % "0.6.7"            % "test")
+val `scala-compiler` = Def.setting("org.scala-lang"        %  "scala-compiler"  % scalaVersion.value % "provided")
+val `scala-reflect`  = Def.setting("org.scala-lang"        %  "scala-reflect"   % scalaVersion.value % "provided")
 
 /////////////////////// PROJECTS /////////////////////////
 
@@ -156,9 +153,8 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .settings(releaseSettings)
   .settings(
     moduleName := "borer-core",
-    scalaJsDeps(utest),
     macroParadise,
-    libraryDependencies += `scala-reflect` % scalaVersion.value % "provided",
+    libraryDependencies ++= Seq(`scala-reflect`.value, utest.value),
 
     // point sbt-boilerplate to the common "project"
     boilerplateSource in Compile := baseDirectory.value.getParentFile / "src" / "main" / "boilerplate",
@@ -175,7 +171,7 @@ lazy val akka = project
   .settings(releaseSettings)
   .settings(
     moduleName := "borer-compat-akka",
-    libraryDependencies ++= Seq(`akka-actor`, utest)
+    libraryDependencies ++= Seq(`akka-actor`.value, utest.value)
   )
 
 lazy val scodecJVM = scodec.jvm
@@ -194,7 +190,7 @@ lazy val scodec = crossProject(JSPlatform, JVMPlatform)
   .settings(releaseSettings)
   .settings(
     moduleName := "borer-compat-scodec",
-    scalaJsDeps(`scodec-bits`, utest)
+    libraryDependencies ++= Seq(`scodec-bits`.value, utest.value)
   )
   .jsSettings(scalajsSettings: _*)
 
@@ -210,8 +206,7 @@ lazy val derivation = crossProject(JSPlatform, JVMPlatform)
   .settings(releaseSettings)
   .settings(
     moduleName := "borer-derivation",
-    scalaJsDeps(utest),
-    libraryDependencies += `scala-reflect` % scalaVersion.value % "provided"
+    libraryDependencies ++= Seq(`scala-reflect`.value, utest.value),
   )
   .jsSettings(scalajsSettings: _*)
 
@@ -226,12 +221,8 @@ lazy val magnolia = crossProject(JSPlatform, JVMPlatform)
   .settings(releaseSettings)
   .settings(
     moduleName := "borer-magnolia",
-    scalaJsDeps(utest),
     macroParadise,
-    libraryDependencies ++= Seq(
-      `scala-compiler` % scalaVersion.value % "provided",
-      `scala-reflect` % scalaVersion.value % "provided"
-    )
+    libraryDependencies ++= Seq(`scala-compiler`.value, `scala-reflect`.value, utest.value),
   )
   .jsSettings(scalajsSettings: _*)
 

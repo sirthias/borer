@@ -129,26 +129,41 @@ object MapBasedCodecs {
             } else if (end == len) findIndexOfNextArg(0, filledCount)
             else -1
 
-          @tailrec def tryConstructWithMissingMembers(missingMask0: Long, missingMask1: Long): T = {
+          @tailrec def fillMissingMembers(missingMask0: Long, missingMask1: Long): Boolean = {
             import java.lang.Long.{numberOfTrailingZeros ⇒ ntz, lowestOneBit ⇒ lob}
             var i     = 0
             var mask0 = missingMask0
             var mask1 = missingMask1
-            if (mask0 != 0L && { i = ntz(mask0); mask0 &= ~lob(mask0); true } ||
-                mask1 != 0L && { i = 64 + ntz(mask1); mask1 &= ~lob(mask1); true }) {
-              val p = params(i)
-              p.default match {
+            (mask0 != 0L && { i = ntz(mask0); mask0 &= ~lob(mask0); true } ||
+            mask1 != 0L && { i = 64 + ntz(mask1); mask1 &= ~lob(mask1); true }) && {
+              params(i).default match {
                 case Some(value) ⇒
                   constructorArgs(i) = value
-                  tryConstructWithMissingMembers(mask0, mask1)
+                  fillMissingMembers(mask0, mask1)
                 case None ⇒
-                  throw new Error.InvalidInputData(r.lastPosition, expected(s"Missing map key [${p.label}] for"))
+                  throw new Error.InvalidInputData(
+                    r.lastPosition,
+                    expected(s"Missing map key [${params(i).label}] for"))
               }
-            } else ctx.rawConstruct(constructorArgs) // yay, we were able to fill all missing members w/ default values
+            } // else we were able to fill all missing members w/ default values
           }
 
-          @tailrec def skipExtraMembers(rem: Int): T =
-            if ((rem >= 0 || !r.tryReadBreak()) && rem != 0) {
+          def membersMissing(): Boolean = {
+            val xorMask = (1L << len) - 1
+            var mask0   = filledMask0
+            var mask1   = filledMask1
+            if (len < 64) {
+              mask0 ^= xorMask
+              mask1 = 0
+            } else {
+              mask0 = ~mask0
+              mask1 ^= xorMask
+            }
+            fillMissingMembers(mask0, mask1)
+          }
+
+          @tailrec def skipExtraMembers(rem: Int): Boolean =
+            (rem >= 0 || !r.tryReadBreak()) && rem != 0 && {
               @tailrec def verifyNoDuplicate(i: Int): Unit =
                 if (i < len) {
                   val p = params(i)
@@ -157,41 +172,27 @@ object MapBasedCodecs {
                 } else r.skipElement().skipElement() // ok, no duplicate, so skip this key/value pair
               verifyNoDuplicate(0)
               skipExtraMembers(rem - 1)
-            } else ctx.rawConstruct(constructorArgs) // ok, we've skipped all extra members and didn't find duplicates
+            } // else we've skipped all extra members and didn't find duplicates
 
-          var mask0       = filledMask0
-          var mask1       = filledMask1
-          val doneReading = remaining < 0 && r.tryReadBreak() || remaining == 0
-          if (filledCount < len) {
-            if (!doneReading) {
-              // we're still missing members and there is more to read, so recurse
-              val nextArgIx       = findIndexOfNextArg(filledCount, len)
-              var nextFilledCount = filledCount
-              if (nextArgIx >= 0) {
-                val mask      = 1L << nextArgIx
-                val p         = params(nextArgIx)
-                var checkMask = 0L
-                if (nextArgIx < 64) { checkMask = mask0; mask0 |= mask } else { checkMask = mask1; mask1 |= mask }
-                if ((checkMask & mask) != 0) failDuplicate(p)
-                constructorArgs(nextArgIx) = p.typeclass.read(r)
-                nextFilledCount += 1
-              } else r.skipElement().skipElement() // none of the params matches this key/value pair, so skip it
-              if (remaining == Long.MinValue) failSizeOverflow()
-              fillArgsAndConstruct(nextFilledCount, remaining - 1, mask0, mask1)
-            } else {
-              // we're still missing members but there is nothing more to read
-              val xorMask = (1L << len) - 1
-              if (len < 64) {
-                mask0 = filledMask0 ^ xorMask
-                mask1 = 0
-              } else {
-                mask0 = ~filledMask0
-                mask1 = filledMask1 ^ xorMask
-              }
-              tryConstructWithMissingMembers(mask0, mask1)
-            }
-          } else if (doneReading) ctx.rawConstruct(constructorArgs)
-          else skipExtraMembers(remaining)
+          val moreToRead = (remaining >= 0 || !r.tryReadBreak()) && remaining != 0
+          if ((filledCount < len || moreToRead && skipExtraMembers(remaining)) && (moreToRead || membersMissing())) {
+            // we're still missing members and there is more to read, so recurse
+            var mask0           = filledMask0
+            var mask1           = filledMask1
+            val nextArgIx       = findIndexOfNextArg(filledCount, len)
+            var nextFilledCount = filledCount
+            if (nextArgIx >= 0) {
+              val mask      = 1L << nextArgIx
+              val p         = params(nextArgIx)
+              var checkMask = 0L
+              if (nextArgIx < 64) { checkMask = mask0; mask0 |= mask } else { checkMask = mask1; mask1 |= mask }
+              if ((checkMask & mask) != 0) failDuplicate(p)
+              constructorArgs(nextArgIx) = p.typeclass.read(r)
+              nextFilledCount += 1
+            } else r.skipElement().skipElement() // none of the params matches this key/value pair, so skip it
+            if (remaining == Long.MinValue) failSizeOverflow()
+            fillArgsAndConstruct(nextFilledCount, remaining - 1, mask0, mask1)
+          } else ctx.rawConstruct(constructorArgs)
         }
 
         if (r.tryReadMapStart()) fillArgsAndConstruct(0, -1, 0L, 0L)

@@ -54,7 +54,7 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
   private[this] val inputLen           = ia.length(input)
   private[this] val inputLenMinus8     = inputLen - 8
   private[this] val maxStringLength    = config.maxStringLength
-  private[this] var chars: Array[Char] = new Array[Char](32)
+  private[this] var chars: Array[Char] = new Array[Char](256)
   private[this] var state: Int         = EXPECT_VALUE
   private[this] var auxInt: Int        = _
   private[this] var auxLong: Long      = _
@@ -80,24 +80,25 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
 
     @inline def appendChar(charCursor: Int, c: Char): Int = {
       val newCursor = charCursor + 1
-      if (newCursor <= maxStringLength) {
-        ensureCharsLen(newCursor)
-        chars(charCursor) = c
-        newCursor
-      } else failStringTooLong(skipWhiteSpace(index))
+      ensureCharsLen(newCursor)
+      chars(charCursor) = c
+      newCursor
     }
 
-    def appendAll(start: Long, end: Long, charCursor: Int): Int = {
-      val len = charCursor + (end - start).toInt
-      if (len <= maxStringLength) {
+    def getString(start: Long, end: Long): String = {
+      val len = (end - start).toInt
+      if (len > maxStringLength) failStringTooLong(skipWhiteSpace(index))
+      if (len > 0) {
         ensureCharsLen(len)
-        @tailrec def slowRec(ix: Long, cc: Int): Int =
+
+        @tailrec def slowRec(ix: Long, cc: Int): String =
           if (cc < len) {
             chars(cc) = getInputByteUnsafe(ix).toChar
             slowRec(ix + 1, cc + 1)
-          } else cc
+          } else new String(chars, 0, cc)
+
         val len4 = len - 4
-        @tailrec def fastRec(ix: Long, cc: Int): Int =
+        @tailrec def fastRec(ix: Long, cc: Int): String =
           if (cc < len4) {
             val quad = ia.quadByteBigEndian(input, ix)
             chars(cc) = (quad >>> 24).toChar
@@ -106,8 +107,8 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
             chars(cc + 3) = (quad & 0xFF).toChar
             fastRec(ix + 4, cc + 4)
           } else slowRec(ix, cc)
-        fastRec(start, charCursor)
-      } else failStringTooLong(skipWhiteSpace(index))
+        fastRec(start, 0)
+      } else ""
     }
 
     @inline def parseNull(ix: Long): Long =
@@ -128,7 +129,7 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
         ix + 4
       } else failSyntaxError(ix, "`true`")
 
-    def parseNumberStringExponentPart(idx: Long, charCursor: Int): Long = {
+    def parseNumberStringExponentPart(idx: Long, startIndex: Long): Long = {
       var ix = idx
       val c  = getInputByteOrEOI(ix).toInt
       if (c == '+' || c == '-') ix += 1
@@ -137,7 +138,7 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
       if (ix > ix0) {
         val exp = -auxLong.toInt
         if (0 <= exp && exp <= config.maxNumberAbsExponent) {
-          receiver.onNumberString(getString(appendAll(idx, ix, charCursor)))
+          receiver.onNumberString(getString(startIndex, ix))
           ix
         } else failNumberExponentTooLarge(ix0)
       } else failSyntaxError(ix0, "DIGIT", getInputByteOrEOI(ix).toLong)
@@ -231,8 +232,7 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
       * @return the index after the last number character
       */
     def parseNumber(idx: Long, startIndex: Long, negValue: Long, negative: Boolean): Long = {
-      @inline def appendUpTo(ix: Long)                = appendAll(startIndex, ix, 0)
-      @inline def dispatchNumberString(ix: Long)      = { receiver.onNumberString(getString(appendUpTo(ix))); ix }
+      @inline def dispatchNumberString(ix: Long)      = { receiver.onNumberString(getString(startIndex, ix)); ix }
       @inline def dispatchDouble(ix: Long, d: Double) = { receiver.onDouble(if (negative) d else -d); ix }
       @inline def dispatchIntOrLong(ix: Long, negValue: Long) = {
         var long = negValue
@@ -243,7 +243,7 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
         } else dispatchNumberString(ix)
       }
       @inline def parseNumberStringExponentPartOrDispatchNumberString(ix: Long, stopChar: Int) =
-        if ((stopChar | 0x20) == 'e') parseNumberStringExponentPart(ix + 1, appendUpTo(ix + 1))
+        if ((stopChar | 0x20) == 'e') parseNumberStringExponentPart(ix + 1, startIndex)
         else dispatchNumberString(ix)
 
       var ix               = idx
@@ -629,10 +629,8 @@ private[borer] final class JsonParser[Input](val input: Input, val config: JsonP
   @inline private def ensureCharsLen(len: Int): Unit =
     if (len > chars.length) {
       chars = util.Arrays.copyOf(chars, math.max(chars.length << 1, len))
+      println(chars.length)
     }
-
-  @inline private def getString(len: Int): String =
-    if (len > 0) new String(chars, 0, len) else ""
 
   private def failStringTooLong(ix: Long) =
     failOverflow(ix, s"JSON String longer than configured maximum of $maxStringLength characters")
