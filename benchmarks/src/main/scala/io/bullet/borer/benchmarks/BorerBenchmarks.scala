@@ -103,6 +103,7 @@ class BorerModelBenchmark extends DomBenchmark {
 
   private var root: Product = _
 
+  // format: OFF
   implicit lazy val codec: Codec[Product] = {
     val c = fileName match {
       case "australia-abc.json" ⇒
@@ -250,6 +251,7 @@ class BorerModelBenchmark extends DomBenchmark {
     }
     c.asInstanceOf[Codec[Product]]
   }
+  // format: ON
 
   def setup(): Unit = root = Json.decode(fileBytes).to[Product].value
 

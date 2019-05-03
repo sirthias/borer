@@ -75,6 +75,7 @@ class CirceModelBenchmark extends DomBenchmark {
 
     implicit def nullableEncoder[T](implicit enc: Encoder[T]): Encoder[Nullable[T]] = enc.contramap(_.value)
 
+    // format: OFF
     val c = fileName match {
       case "australia-abc.json" ⇒
         implicit val a = deriveEncoder[Australia.Geometry]
@@ -220,6 +221,7 @@ class CirceModelBenchmark extends DomBenchmark {
         implicitly[Encoder[List[TwitterApiResponse.RootInterface]]]
     }
     c.asInstanceOf[Encoder[Product]]
+    // format: ON
   }
 
   implicit lazy val decoder: Decoder[Product] = {
@@ -230,6 +232,7 @@ class CirceModelBenchmark extends DomBenchmark {
         else cursor.as[T].right.map(new Nullable(_))
       }
 
+    // format: OFF
     val c = fileName match {
       case "australia-abc.json" ⇒
         implicit val a = deriveDecoder[Australia.Geometry]
@@ -375,6 +378,7 @@ class CirceModelBenchmark extends DomBenchmark {
         implicitly[Decoder[List[TwitterApiResponse.RootInterface]]]
     }
     c.asInstanceOf[Decoder[Product]]
+    // format: ON
   }
 
   def setup(): Unit = root = decode[Product](new String(fileBytes, UTF_8)) match {

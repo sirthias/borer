@@ -15,7 +15,7 @@ object Default {
   implicit val byte    = Default(0: Byte)
   implicit val short   = Default(0: Short)
   implicit val int     = Default(0)
-  implicit val long    = Default(0L)
+  implicit val long    = Default(0l)
   implicit val string  = Default("")
   implicit val float   = Default(0.0f)
   implicit val double  = Default(0.0)

@@ -69,10 +69,11 @@ class SprayModelBenchmark extends DomBenchmark {
 
     implicit def nullableJsonFormat[T: JsonFormat: Default]: JsonFormat[Nullable[T]] =
       new JsonFormat[Nullable[T]] {
-        def write(value: Nullable[T])      = value.value.toJson
-        def read(value: JsValue) = if (value == JsNull) Default.get[T] else value.convertTo[T]
+        def write(value: Nullable[T]) = value.value.toJson
+        def read(value: JsValue)      = if (value == JsNull) Default.get[T] else value.convertTo[T]
       }
 
+    // format: OFF
     val c = fileName match {
       case "australia-abc.json" ⇒
         implicit val a = jsonFormat2(Australia.Geometry)
@@ -773,6 +774,7 @@ class SprayModelBenchmark extends DomBenchmark {
         implicitly[RootJsonFormat[List[TwitterApiResponse.RootInterface]]]
     }
     c.asInstanceOf[RootJsonFormat[Product]]
+    // format: ON
   }
 
   def setup(): Unit = root = JsonParser(new String(fileBytes, UTF_8)).convertTo[Product]
