@@ -17,7 +17,8 @@ object Macros {
     val tpe       = weakTypeOf[T]
     val companion = tpe.typeSymbol.companion
     if (companion == NoSymbol) c.abort(c.enclosingPosition, s"`$tpe` is not a case class")
-    q"""_root_.io.bullet.borer.Encoder.from($companion.unapply _)"""
+    val params = tpe.dealias.typeArgs
+    q"""_root_.io.bullet.borer.Encoder.from($companion.unapply[..$params] _)"""
   }
 
   def decoderForCaseClass[T: c.WeakTypeTag](c: blackbox.Context): c.universe.Tree = {
@@ -25,7 +26,8 @@ object Macros {
     val tpe       = weakTypeOf[T]
     val companion = tpe.typeSymbol.companion
     if (companion == NoSymbol) c.abort(c.enclosingPosition, s"`$tpe` is not a case class")
-    q"""_root_.io.bullet.borer.Decoder.from($companion.apply _)"""
+    val params = tpe.dealias.typeArgs
+    q"""_root_.io.bullet.borer.Decoder.from($companion.apply[..$params] _)"""
   }
 
   def codecForCaseClass[T: c.WeakTypeTag](c: blackbox.Context): c.universe.Tree = {
