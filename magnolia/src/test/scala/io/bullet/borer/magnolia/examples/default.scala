@@ -28,6 +28,7 @@ object HasDefault {
   /** constructs a default for each parameter, using the constructor default (if provided),
     *  otherwise using a typeclass-provided default */
   def combine[T](ctx: CaseClass[HasDefault, T]): HasDefault[T] = new HasDefault[T] {
+
     def defaultValue = {
       val args = ctx.parameters.foldLeft(Right(Nil): Either[String, List[Any]]) {
         case (Left(x), _) ⇒ Left(x)
@@ -43,6 +44,7 @@ object HasDefault {
 
   /** chooses which subtype to delegate to */
   def dispatch[T](ctx: SealedTrait[HasDefault, T])(): HasDefault[T] = new HasDefault[T] {
+
     def defaultValue = ctx.subtypes.headOption match {
       case Some(sub) ⇒ sub.typeclass.defaultValue
       case None      ⇒ Left("no subtypes")

@@ -41,6 +41,7 @@ object Patcher extends LowerPriorityPatcher {
 
   def combine[T](ctx: CaseClass[Patcher, T]): Patcher[T] =
     new Patcher[T] {
+
       def patch(value: T, fieldValues: Seq[Any]): T = {
         if (fieldValues.lengthCompare(ctx.parameters.size) != 0) {
           throw new IllegalArgumentException(
@@ -56,6 +57,7 @@ object Patcher extends LowerPriorityPatcher {
 
   def dispatch[T](ctx: SealedTrait[Patcher, T]): Patcher[T] =
     new Patcher[T] {
+
       def patch(value: T, fieldValues: Seq[Any]): T =
         ctx.dispatch(value)(sub ⇒ sub.typeclass.patch(sub cast value, fieldValues))
     }
@@ -67,6 +69,7 @@ sealed abstract class LowerPriorityPatcher {
 
   private[this] val _forSingleValue =
     new Patcher[Any] {
+
       def patch(value: Any, fieldValues: Seq[Any]): Any = {
         if (fieldValues.lengthCompare(1) != 0)
           throw new IllegalArgumentException(

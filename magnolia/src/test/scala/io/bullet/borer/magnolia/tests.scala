@@ -39,6 +39,7 @@ class Length(val value: Int) extends AnyVal
 case class FruitBasket(fruits: Fruit*)
 case class Lunchbox(fruit: Fruit, drink: String)
 case class Fruit(name: String)
+
 object Fruit {
   implicit val showFruit: Show[String, Fruit] = (f: Fruit) ⇒ f.name
 }
@@ -53,6 +54,7 @@ case object Blue  extends Color
 case class MyAnnotation(order: Int) extends StaticAnnotation
 
 sealed trait AttributeParent
+
 @MyAnnotation(0) case class Attributed(
     @MyAnnotation(1) p1: String,
     @MyAnnotation(2) p2: Int
@@ -62,6 +64,7 @@ case class `%%`(`/`: Int, `#`: String)
 
 case class Parameter(a: String, b: String)
 case class Test(param: Parameter)
+
 object Test {
   def apply(): Test = Test(Parameter("", ""))
 
@@ -98,6 +101,9 @@ final case class ServiceName2(value: String)
 sealed abstract class Halfy
 final case class Lefty()  extends Halfy
 final case class Righty() extends Halfy
+
+@javax.annotation.Resource
+case class JavaAnnotated()
 
 object Tests extends TestSuite {
 
@@ -324,8 +330,7 @@ object Tests extends TestSuite {
 
       val person = Person("Bob", 42)
       val msg    = intercept[RuntimeException](implicitly[Patcher[Entity]].patch(person, Seq(null, 'killer))).getMessage
-      //tiny hack because Java 9 inserts the "java.base/" module name in the error message
-      assert((msg eq null) || msg.startsWith("scala.Symbol cannot be cast to") && msg.endsWith("java.lang.Integer"))
+      assert((msg eq null) || msg.contains("scala.Symbol cannot be cast to") && msg.contains("java.lang.Integer"))
     }
 
     "Inner Classes" - {
@@ -431,6 +436,10 @@ object Tests extends TestSuite {
 
       Show.gen[Path[String]].show(OffRoad(Some(Crossroad(Destination("A"), Destination("B"))))) ==>
       "OffRoad[String](path=Crossroad[String](left=Destination[String](value=A),right=Destination[String](value=B)))"
+    }
+
+    "construct a Show product instance for a Java-annotated class" - {
+      Show.gen[JavaAnnotated].show(JavaAnnotated()) ==> "JavaAnnotated()"
     }
 
     "capture attributes against params" - {

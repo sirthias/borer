@@ -43,12 +43,13 @@ abstract class Subtype[Typeclass[_], Type](val typeName: TypeName, val index: In
   *
   *  @tparam Typeclass  type constructor for the typeclass being derived
   *  @tparam Type       generic type of this parameter */
-abstract class Param[Typeclass[_], Type](final val label: String,
-                                         final val index: Int,
-                                         final val repeated: Boolean,
-                                         final val annotationsArray: Array[Any],
-                                         defaultVal: CallByNeed[Option[_]],
-                                         typeclassParam: CallByNeed[Typeclass[_]])
+abstract class Param[Typeclass[_], Type](
+    final val label: String,
+    final val index: Int,
+    final val repeated: Boolean,
+    final val annotationsArray: Array[Any],
+    defaultVal: CallByNeed[Option[_]],
+    typeclassParam: CallByNeed[Typeclass[_]])
     extends Serializable { self ⇒
 
   /** the type of the parameter being represented
@@ -244,4 +245,4 @@ final case class TypeName(owner: String, short: String, typeArguments: Seq[TypeN
   */
 final class debug(typeNamePart: String = "") extends scala.annotation.StaticAnnotation
 
-private[magnolia] final case class EarlyExit[E](e: E) extends Exception with util.control.NoStackTrace
+final private[magnolia] case class EarlyExit[E](e: E) extends Exception with util.control.NoStackTrace

@@ -68,7 +68,7 @@ trait GenericShow[Out] {
         val anns          = sub.annotations.filterNot(_.isInstanceOf[scala.SerialVersionUID])
         val annotationStr = if (anns.isEmpty) "" else anns.mkString("{", ",", "}")
         prefix(annotationStr, sub.typeclass.show(sub.cast(value)))
-    }
+      }
 
   /** bind the Magnolia macro to this derivation object */
   implicit def gen[T]: Show[Out, T] = macro Magnolia.gen[T]
