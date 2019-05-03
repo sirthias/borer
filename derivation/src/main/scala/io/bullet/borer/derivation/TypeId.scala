@@ -52,6 +52,7 @@ object TypeId {
   sealed trait Value {
     def value: Any
   }
+
   object Value {
     final case class Str(value: String) extends Value
     final case class Num(value: Long)   extends Value

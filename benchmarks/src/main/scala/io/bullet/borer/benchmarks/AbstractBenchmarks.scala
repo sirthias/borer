@@ -71,9 +71,7 @@ abstract class DomBenchmark {
       "thai-cinemas.json",
       "turkish.json",
       "twitter_api_compact_response.json",
-      "twitter_api_response.json",
-    )
-  )
+      "twitter_api_response.json"))
   var fileName: String = _
 
   var fileBytes: Array[Byte] = _
@@ -99,7 +97,7 @@ sealed abstract class EncodingDecodingExampleData {
 
   lazy val foos: Map[String, Foo] = List
     .tabulate(100) { i ⇒
-      ("x" * i) → Foo("y" * i, (i + 2.0) / (i + 1.0), i, i * 1000L, (0 to i).map(_ % 2 == 0).toList)
+      ("x" * i) → Foo("y" * i, (i + 2.0) / (i + 1.0), i, i * 1000l, (0 to i).map(_ % 2 == 0).toList)
     }
     .toMap
 

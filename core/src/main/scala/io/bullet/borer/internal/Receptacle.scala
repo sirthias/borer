@@ -14,7 +14,7 @@ import io.bullet.borer._
   * A [[Receiver]] which simply buffers all incoming data in fields of the appropriate type,
   * for easy querying from the outside.
   */
-private[borer] final class Receptacle extends Receiver with java.lang.Cloneable {
+final private[borer] class Receptacle extends Receiver with java.lang.Cloneable {
 
   private[this] var _dataItem: Int = _
 

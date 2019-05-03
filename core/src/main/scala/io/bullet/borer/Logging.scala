@@ -43,6 +43,7 @@ object Logging {
   }
 
   sealed trait LevelType
+
   object LevelType {
     final case object Array               extends LevelType
     final case object UnboundedByteString extends LevelType
@@ -163,20 +164,22 @@ object Logging {
     def showLine(line: String): Unit = println(line)
   }
 
-  def ToStringLogger(stringBuilder: JStringBuilder,
-                     maxShownByteArrayPrefixLen: Int = 20,
-                     maxShownStringPrefixLen: Int = 50,
-                     lineSeparator: String = System.lineSeparator()): LevelInfo ⇒ ToStringLogger =
+  def ToStringLogger(
+      stringBuilder: JStringBuilder,
+      maxShownByteArrayPrefixLen: Int = 20,
+      maxShownStringPrefixLen: Int = 50,
+      lineSeparator: String = System.lineSeparator()): LevelInfo ⇒ ToStringLogger =
     new ToStringLogger(stringBuilder, maxShownByteArrayPrefixLen, maxShownStringPrefixLen, lineSeparator, _)
 
   /**
     * A [[LineFormatLogger]] that appends all lines to a given [[JStringBuilder]].
     */
-  final class ToStringLogger(val stringBuilder: JStringBuilder,
-                             val maxShownByteArrayPrefixLen: Int,
-                             val maxShownStringPrefixLen: Int,
-                             val lineSeparator: String,
-                             val info: LevelInfo)
+  final class ToStringLogger(
+      val stringBuilder: JStringBuilder,
+      val maxShownByteArrayPrefixLen: Int,
+      val maxShownStringPrefixLen: Int,
+      val lineSeparator: String,
+      val info: LevelInfo)
       extends LineFormatLogger {
     def showLine(line: String): Unit = stringBuilder.append(line).append(lineSeparator)
   }
@@ -210,10 +213,10 @@ object Logging {
       val size  = _levelSize(_level)
       val rawCount = if (count >= 0) {
         if (size >= 0) count // bounded array
-        else count >> 1 // bounded map
+        else count >> 1      // bounded map
       } else {
         if (size == 1) ~count >> 1 // unbounded map
-        else ~count // unbounded array, bytes or text
+        else ~count                // unbounded array, bytes or text
       }
       rawCount + 1
     }
@@ -223,8 +226,8 @@ object Logging {
       if (count >= 0) {
         val size = _levelSize(_level)
         if (size >= 0) size // bounded array
-        else ~size >> 1 // bounded map
-      } else -1 // unbounded something
+        else ~size >> 1     // bounded map
+      } else -1             // unbounded something
     }
 
     def levelType = {

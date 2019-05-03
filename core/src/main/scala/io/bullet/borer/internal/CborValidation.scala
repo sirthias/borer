@@ -52,9 +52,9 @@ object CborValidation {
     import io.bullet.borer.{DataItem ⇒ DI}
 
     // compile-time constants
-    private final val DEFAULT_MASK = DI.AllButBreak
-    private final val MAP          = 1 << 30
-    private final val UNBOUNDED    = 1 << 31
+    final private val DEFAULT_MASK = DI.AllButBreak
+    final private val MAP          = 1 << 30
+    final private val UNBOUNDED    = 1 << 31
 
     private var levelRemaining = new Array[Long](4)
     private var levelMasks     = new Array[Int](4)
@@ -215,23 +215,23 @@ object CborValidation {
       value match {
         case Tag.EpochDateTime ⇒
           checkAllowed(DI.Tag)
-          enterLevel(1L, DI.Int | DI.Long | DI.Float16 | DI.Float | DI.Double | DI.NumberString)
+          enterLevel(1l, DI.Int | DI.Long | DI.Float16 | DI.Float | DI.Double | DI.NumberString)
 
         case Tag.PositiveBigNum | Tag.NegativeBigNum ⇒
           checkAllowed(DI.Tag)
-          enterLevel(1L, DI.Bytes | DI.BytesStart)
+          enterLevel(1l, DI.Bytes | DI.BytesStart)
 
         case Tag.EmbeddedCBOR ⇒
           checkAllowed(DI.Tag)
-          enterLevel(1L, DI.Bytes | DI.BytesStart)
+          enterLevel(1l, DI.Bytes | DI.BytesStart)
 
         case Tag.DateTimeString | Tag.TextUri | Tag.TextBase64Url | Tag.TextBase64 | Tag.TextRegex | Tag.TextMime ⇒
           checkAllowed(DI.Tag)
-          enterLevel(1L, DI.String | DI.Chars | DI.Text)
+          enterLevel(1l, DI.String | DI.Chars | DI.Text)
 
         case Tag.DecimalFraction | Tag.BigFloat ⇒
           checkAllowed(DI.Tag)
-          enterLevel(1L, DI.ArrayHeader) // we don't fully verify compliance of the subsequent array content
+          enterLevel(1l, DI.ArrayHeader) // we don't fully verify compliance of the subsequent array content
 
         case Tag.HintBase64url | Tag.HintBase64 | Tag.HintBase16 | Tag.MagicHeader | Tag.Other(_) ⇒
           checkAllowed(DI.Tag)

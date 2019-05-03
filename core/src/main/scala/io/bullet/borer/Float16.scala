@@ -38,13 +38,13 @@ object Float16 {
     if (exp == 0x7c00) { // NaN/Inf
       exp = 0x3fc00
     } else if (exp != 0) { // normalized value
-      exp += 0x1c000 // exp - 15 + 127
+      exp += 0x1c000       // exp - 15 + 127
     } else {
       if (mant != 0) { // && exp==0 -> subnormal
-        exp = 0x1c400 // make it normal
+        exp = 0x1c400  // make it normal
         do {
-          mant <<= 1   // mantissa * 2
-          exp -= 0x400 // decrease exp by 1
+          mant <<= 1                  // mantissa * 2
+          exp -= 0x400                // decrease exp by 1
         } while ((mant & 0x400) == 0) // while not normal
         mant &= 0x3ff                 // discard subnormal bit
       }
@@ -66,18 +66,18 @@ object Float16 {
         // was value but too large
         sign2 // make it +/-Inf
       } else {
-        sign2 | // remains +/-Inf or NaN
+        sign2 |                     // remains +/-Inf or NaN
         (fbits & 0x007fffff) >>> 13 // keep NaN (and Inf) bits
       }
-    } else if (rounded >= 0x38800000) { // remains normalized value
+    } else if (rounded >= 0x38800000) {  // remains normalized value
       sign | rounded - 0x38000000 >>> 13 // exp - 127 + 15
-    } else if (rounded < 0x33000000) { // too small for subnormal
-      sign // becomes +/-0
+    } else if (rounded < 0x33000000) {   // too small for subnormal
+      sign                               // becomes +/-0
     } else {
       val rounded2 = lfbits >>> 23; // tmp exp for subnormal calc
       sign | ((fbits & 0x7fffff | 0x800000) + // add subnormal bit
       (0x800000 >>> rounded2 - 102) >>>       // round depending on cut off
-      126 - rounded2) // div by 2^(1-(exp-127+15)) and >> 13 | exp=0
+      126 - rounded2)                         // div by 2^(1-(exp-127+15)) and >> 13 | exp=0
     }
   }
 }

@@ -33,10 +33,11 @@ object EncodingSetup {
       * Enables logging of the encoding progress to the given [[JStringBuilder]].
       * Each data item that is written by the application is formatted and appended as its own line.
       */
-    def withStringLogging(stringBuilder: JStringBuilder,
-                          maxShownByteArrayPrefixLen: Int = 20,
-                          maxShownStringPrefixLen: Int = 50,
-                          lineSeparator: String = System.lineSeparator()): this.type
+    def withStringLogging(
+        stringBuilder: JStringBuilder,
+        maxShownByteArrayPrefixLen: Int = 20,
+        maxShownStringPrefixLen: Int = 50,
+        lineSeparator: String = System.lineSeparator()): this.type
 
     /**
       * Allows for injecting custom logic into the encoding process.
@@ -84,11 +85,12 @@ object EncodingSetup {
     @inline def toUtf8String: String
   }
 
-  private[borer] final class Impl[T: Encoder, Config <: Writer.Config](value: T,
-                                                                       target: Target,
-                                                                       defaultConfig: Config,
-                                                                       defaultWrapper: Receiver.Wrapper[Config],
-                                                                       rendererCreator: Output ⇒ Receiver.Renderer)
+  final private[borer] class Impl[T: Encoder, Config <: Writer.Config](
+      value: T,
+      target: Target,
+      defaultConfig: Config,
+      defaultWrapper: Receiver.Wrapper[Config],
+      rendererCreator: Output ⇒ Receiver.Renderer)
       extends Borer.AbstractSetup[Config](defaultConfig, defaultWrapper) with JsonApi[T, Config]
       with Sealed[Output, AnyRef] {
 

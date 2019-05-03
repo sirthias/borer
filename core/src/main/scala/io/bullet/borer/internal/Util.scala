@@ -98,7 +98,9 @@ object Util {
   @inline def canBeRepresentedAsFloat(value: Double): Boolean = value.isNaN || value.toFloat.toDouble == value
 
   def inPlaceNegate(bytes: Array[Byte]): Unit = {
-    @tailrec def rec(ix: Int): Unit = if (ix < bytes.length) { bytes(ix) = (~bytes(ix).toInt).toByte; rec(ix + 1) }
+    @tailrec def rec(ix: Int): Unit = if (ix < bytes.length) {
+      bytes(ix) = (~bytes(ix).toInt).toByte; rec(ix + 1)
+    }
     rec(0)
   }
 }

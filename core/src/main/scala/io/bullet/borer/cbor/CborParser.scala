@@ -19,7 +19,7 @@ import scala.annotation.switch
   * Encapsulates the basic CBOR decoding logic.
   * Stateless.
   */
-private[borer] final class CborParser[Input](val input: Input, config: CborParser.Config)(
+final private[borer] class CborParser[Input](val input: Input, config: CborParser.Config)(
     implicit ia: InputAccess[Input])
     extends Receiver.Parser[Input] {
   import Borer.Error
@@ -141,21 +141,21 @@ private[borer] final class CborParser[Input](val input: Input, config: CborParse
           case 24 ⇒
             ix += 1
             if (ix > inputLen) throw new Borer.Error.UnexpectedEndOfInput(pos(index + 1), "8-bit integer")
-            ia.unsafeByte(input, index + 1) & 0xFFL
+            ia.unsafeByte(input, index + 1) & 0xffl
           case 25 ⇒
             ix += 2
             if (ix > inputLen) throw new Borer.Error.UnexpectedEndOfInput(pos(index + 1), "16-bit integer")
-            ia.doubleByteBigEndian(input, index + 1) & 0xFFFFL
+            ia.doubleByteBigEndian(input, index + 1) & 0xffffl
           case 26 ⇒
             ix += 4
             if (ix > inputLen) throw new Borer.Error.UnexpectedEndOfInput(pos(index + 1), "32-bit integer")
-            ia.quadByteBigEndian(input, index + 1) & 0xFFFFFFFFL
+            ia.quadByteBigEndian(input, index + 1) & 0xffffffffl
           case 27 ⇒
             ix += 8
             if (ix > inputLen) throw new Borer.Error.UnexpectedEndOfInput(pos(index + 1), "64-bit integer")
             ia.octaByteBigEndian(input, index + 1)
           case 31 if 2 <= majorType && majorType <= 5 || majorType == 7 ⇒
-            0L // handled specially
+            0l // handled specially
           case 28 | 29 | 30 ⇒
             throw new Error.InvalidInputData(
               pos(index),

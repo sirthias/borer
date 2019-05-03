@@ -54,8 +54,8 @@ object MiscSpec extends BorerSpec {
       roundTrip("3903e7", BigInt(-1000))
       roundTrip("1a7fffffff", BigInt(Int.MaxValue))
       roundTrip("3a7fffffff", BigInt(Int.MinValue))
-      roundTrip("1a80000000", BigInt(1L + Int.MaxValue))
-      roundTrip("1a7fffffff", BigInt(-1L - Int.MinValue))
+      roundTrip("1a80000000", BigInt(1l + Int.MaxValue))
+      roundTrip("1a7fffffff", BigInt(-1l - Int.MinValue))
       roundTrip("1b7fffffffffffffff", BigInt(Long.MaxValue))
       roundTrip("3b7fffffffffffffff", BigInt(Long.MinValue))
       roundTrip("1b8000000000000000", BigInt("9223372036854775808"))  // Long.MaxValue + 1

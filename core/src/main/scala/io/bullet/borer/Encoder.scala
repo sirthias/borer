@@ -107,7 +107,9 @@ object Encoder extends LowPrioEncoders {
         case 64                 ⇒ w.writeOverLong(negative = true, ~x.longValue)
         case _ if w.writingCbor ⇒
           val bytes = x.toByteArray
-          w.writeTag(if (x.signum < 0) { Util.inPlaceNegate(bytes); Tag.NegativeBigNum } else Tag.PositiveBigNum)
+          w.writeTag(if (x.signum < 0) {
+            Util.inPlaceNegate(bytes); Tag.NegativeBigNum
+          } else Tag.PositiveBigNum)
           w.writeBytes(bytes)
         case _ ⇒ w.writeNumberString(x.toString(10))
       }
@@ -146,11 +148,13 @@ object Encoder extends LowPrioEncoders {
 
   implicit def forOption[T: Encoder]: DefaultValueAware[Option[T]] =
     new DefaultValueAware[Option[T]] {
+
       def write(w: Writer, value: Option[T]) =
         value match {
           case Some(x) ⇒ w.writeToArray(x)
           case None    ⇒ w.writeEmptyArray()
         }
+
       def withDefaultValue(defaultValue: Option[T]): Encoder[Option[T]] =
         if (defaultValue eq None) {
           new PossiblyWithoutOutput[Option[T]] {
@@ -167,6 +171,7 @@ object Encoder extends LowPrioEncoders {
   implicit def forIndexedSeq[T: Encoder, M[X] <: IndexedSeq[X]]: DefaultValueAware[M[T]] =
     new DefaultValueAware[M[T]] {
       def write(w: Writer, value: M[T]) = w.writeIndexedSeq(value)
+
       def withDefaultValue(defaultValue: M[T]): Encoder[M[T]] =
         if (defaultValue.isEmpty) {
           new PossiblyWithoutOutput[M[T]] {
@@ -179,6 +184,7 @@ object Encoder extends LowPrioEncoders {
   implicit def forLinearSeq[T: Encoder, M[X] <: LinearSeq[X]]: DefaultValueAware[M[T]] =
     new DefaultValueAware[M[T]] {
       def write(w: Writer, value: M[T]) = w.writeLinearSeq(value)
+
       def withDefaultValue(defaultValue: M[T]): Encoder[M[T]] =
         if (defaultValue.isEmpty) {
           new PossiblyWithoutOutput[M[T]] {
@@ -191,6 +197,7 @@ object Encoder extends LowPrioEncoders {
   implicit def forMap[A: Encoder, B: Encoder, M[X, Y] <: Map[X, Y]]: DefaultValueAware[M[A, B]] =
     new DefaultValueAware[M[A, B]] {
       def write(w: Writer, value: M[A, B]) = w.writeMap(value)
+
       def withDefaultValue(defaultValue: M[A, B]): Encoder[M[A, B]] =
         if (defaultValue.isEmpty) {
           new PossiblyWithoutOutput[M[A, B]] {

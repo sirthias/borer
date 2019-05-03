@@ -17,7 +17,7 @@ import io.bullet.borer.internal.Util
   * Encapsulates basic CBOR encoding logic.
   * Has no internal state and can therefore be a singleton object.
   */
-private[borer] final class CborRenderer(var out: Output) extends Receiver.Renderer {
+final private[borer] class CborRenderer(var out: Output) extends Receiver.Renderer {
 
   def onNull(): Unit =
     out = out.writeAsByte(0xF6)
@@ -107,7 +107,9 @@ private[borer] final class CborRenderer(var out: Output) extends Receiver.Render
           } else out.writeAsByte(0x19 + majorType))
            .writeByte((v >> 8).toByte)
        } else out.writeAsByte(0x18 + majorType)
-     } else { v += majorType; out })
+     } else {
+       v += majorType; out
+     })
       .writeByte(v.toByte)
   }
 }

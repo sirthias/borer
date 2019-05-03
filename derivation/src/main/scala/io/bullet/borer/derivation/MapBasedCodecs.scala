@@ -134,8 +134,8 @@ object MapBasedCodecs {
             var i     = 0
             var mask0 = missingMask0
             var mask1 = missingMask1
-            (mask0 != 0L && { i = ntz(mask0); mask0 &= ~lob(mask0); true } ||
-            mask1 != 0L && { i = 64 + ntz(mask1); mask1 &= ~lob(mask1); true }) && {
+            (mask0 != 0l && { i = ntz(mask0); mask0 &= ~lob(mask0); true } ||
+            mask1 != 0l && { i = 64 + ntz(mask1); mask1 &= ~lob(mask1); true }) && {
               params(i).default match {
                 case Some(value) ⇒
                   constructorArgs(i) = value
@@ -149,7 +149,7 @@ object MapBasedCodecs {
           }
 
           def membersMissing(): Boolean = {
-            val xorMask = (1L << len) - 1
+            val xorMask = (1l << len) - 1
             var mask0   = filledMask0
             var mask1   = filledMask1
             if (len < 64) {
@@ -182,10 +182,14 @@ object MapBasedCodecs {
             val nextArgIx       = findIndexOfNextArg(filledCount, len)
             var nextFilledCount = filledCount
             if (nextArgIx >= 0) {
-              val mask      = 1L << nextArgIx
+              val mask      = 1l << nextArgIx
               val p         = params(nextArgIx)
-              var checkMask = 0L
-              if (nextArgIx < 64) { checkMask = mask0; mask0 |= mask } else { checkMask = mask1; mask1 |= mask }
+              var checkMask = 0l
+              if (nextArgIx < 64) {
+                checkMask = mask0; mask0 |= mask
+              } else {
+                checkMask = mask1; mask1 |= mask
+              }
               if ((checkMask & mask) != 0) failDuplicate(p)
               constructorArgs(nextArgIx) = p.typeclass.read(r)
               nextFilledCount += 1
@@ -195,11 +199,11 @@ object MapBasedCodecs {
           } else ctx.rawConstruct(constructorArgs)
         }
 
-        if (r.tryReadMapStart()) fillArgsAndConstruct(0, -1, 0L, 0L)
+        if (r.tryReadMapStart()) fillArgsAndConstruct(0, -1, 0l, 0l)
         else if (r.hasMapHeader) {
           val mapLength = r.readMapHeader()
           if (mapLength > Int.MaxValue) failSizeOverflow()
-          fillArgsAndConstruct(0, mapLength.toInt, 0L, 0L)
+          fillArgsAndConstruct(0, mapLength.toInt, 0l, 0l)
         } else r.unexpectedDataItem(expected(s"Map Start or Map Header announcing <= $len elements for"))
       }
     }

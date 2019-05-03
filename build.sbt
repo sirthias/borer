@@ -136,10 +136,7 @@ lazy val borer = project.in(file("."))
   .settings(commonSettings)
   .settings(publishingSettings)
   .settings(releaseSettings)
-  .settings(
-    publishArtifact := false,
-    sources in (Sbt, scalafmt) := Nil // don't auto-format this file
-  )
+  .settings(publishArtifact := false)
 
 lazy val coreJVM = core.jvm
 lazy val coreJS  = core.js

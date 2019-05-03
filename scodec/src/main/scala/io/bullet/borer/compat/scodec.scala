@@ -74,14 +74,14 @@ object scodec {
         (input(index + 3) & 0xFF)
 
     def octaByteBigEndian(input: ByteVector, index: Long): Long = {
-      (input(index) & 0xFFL) << 56 |
-      (input(index + 1) & 0xFFL) << 48 |
-      (input(index + 2) & 0xFFL) << 40 |
-      (input(index + 3) & 0xFFL) << 32 |
-      (input(index + 4) & 0xFFL) << 24 |
-      (input(index + 5) & 0xFFL) << 16 |
-      (input(index + 6) & 0xFFL) << 8 |
-      (input(index + 7) & 0xFFL)
+      (input(index) & 0xffl) << 56 |
+      (input(index + 1) & 0xffl) << 48 |
+      (input(index + 2) & 0xffl) << 40 |
+      (input(index + 3) & 0xffl) << 32 |
+      (input(index + 4) & 0xffl) << 24 |
+      (input(index + 5) & 0xffl) << 16 |
+      (input(index + 6) & 0xffl) << 8 |
+      (input(index + 7) & 0xffl)
     }
 
     def bytes(input: ByteVector, index: Long, length: Long): ByteVector =

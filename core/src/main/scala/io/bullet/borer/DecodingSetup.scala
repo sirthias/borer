@@ -43,10 +43,11 @@ object DecodingSetup {
       * Enables logging of this decoding run to the given [[JStringBuilder]].
       * Each data item that is consumed from the underlying CBOR stream is formatted and appended as its own line.
       */
-    def withStringLogging(stringBuilder: JStringBuilder,
-                          maxShownByteArrayPrefixLen: Int = 20,
-                          maxShownStringPrefixLen: Int = 50,
-                          lineSeparator: String = System.lineSeparator()): this.type
+    def withStringLogging(
+        stringBuilder: JStringBuilder,
+        maxShownByteArrayPrefixLen: Int = 20,
+        maxShownStringPrefixLen: Int = 50,
+        lineSeparator: String = System.lineSeparator()): this.type
 
     /**
       * Allows for injecting custom logic into the decoding process.
@@ -75,11 +76,12 @@ object DecodingSetup {
     def valueAndIndexEither: Either[Borer.Error[Position[Input]], (T, Long)]
   }
 
-  private[borer] final class Impl[Input, Config <: Reader.Config](input: Input,
-                                                                  defaultConfig: Config,
-                                                                  defaultWrapper: Receiver.Wrapper[Config],
-                                                                  parserCreator: Receiver.ParserCreator[Input, Config],
-                                                                  target: Target)(implicit ia: InputAccess[Input])
+  final private[borer] class Impl[Input, Config <: Reader.Config](
+      input: Input,
+      defaultConfig: Config,
+      defaultWrapper: Receiver.Wrapper[Config],
+      parserCreator: Receiver.ParserCreator[Input, Config],
+      target: Target)(implicit ia: InputAccess[Input])
       extends Borer.AbstractSetup[Config](defaultConfig, defaultWrapper) with Api[Input, Config]
       with Sealed[Input, AnyRef] {
 

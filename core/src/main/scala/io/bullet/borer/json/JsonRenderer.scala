@@ -44,7 +44,7 @@ import scala.annotation.tailrec
   *
   * @see https://tools.ietf.org/html/rfc8259
   */
-private[borer] final class JsonRenderer(var out: Output) extends Receiver.Renderer {
+final private[borer] class JsonRenderer(var out: Output) extends Receiver.Renderer {
 
   private[this] var level: Int           = _ // valid range: 0 - 63
   private[this] var levelType: Long      = _ // keeps the type of each level as a bit map: 0 -> Array, 1 -> Map
@@ -80,7 +80,7 @@ private[borer] final class JsonRenderer(var out: Output) extends Receiver.Render
     if (isNotMapKey) {
       out = count {
         def writeOverLong(o: Output, v: Long) = {
-          val q = (v >>> 1) / 5 // value / 10
+          val q = (v >>> 1) / 5           // value / 10
           val r = v - (q << 3) - (q << 1) // value - 10*q
           writeLong(o, q).writeAsByte('0' + r.toInt)
         }
@@ -260,7 +260,7 @@ private[borer] final class JsonRenderer(var out: Output) extends Receiver.Render
 
         // for large numbers we bite the bullet of performing one division every two digits
         def phase1(l: Long): Output =
-          if (l > 65535L) {
+          if (l > 65535l) {
             val q  = l / 100
             val r  = (l - mul100(q)).toInt
             val rq = div10(r)

@@ -31,28 +31,31 @@ case object Cbor extends Target {
   /**
     * Constructs a new [[Writer]] that writes CBOR to the given [[Output]].
     */
-  def writer(output: Output,
-             config: EncodingConfig = EncodingConfig.default,
-             receiverWrapper: Receiver.Wrapper[EncodingConfig] = CborValidation.wrapper): Writer =
+  def writer(
+      output: Output,
+      config: EncodingConfig = EncodingConfig.default,
+      receiverWrapper: Receiver.Wrapper[EncodingConfig] = CborValidation.wrapper): Writer =
     new Writer(receiverWrapper(CborRenderer(output), config), this, config)
 
   /**
     * Constructs a new [[Reader]] that reads CBOR from the given [[Input]].
     */
-  def reader[Input: InputAccess](input: Input,
-                                 startIndex: Long = 0,
-                                 config: DecodingConfig = DecodingConfig.default,
-                                 receiverWrapper: Receiver.Wrapper[DecodingConfig] = CborValidation.wrapper): Reader =
+  def reader[Input: InputAccess](
+      input: Input,
+      startIndex: Long = 0,
+      config: DecodingConfig = DecodingConfig.default,
+      receiverWrapper: Receiver.Wrapper[DecodingConfig] = CborValidation.wrapper): Reader =
     new InputReader(startIndex, new CborParser(input, config), receiverWrapper, config, this)
 
   /**
     * @param compressFloatingPointValues set to false in order to always write floats as 32-bit values and doubles
     *                                        as 64-bit values, even if they could safely be represented with fewer bits
     */
-  final case class EncodingConfig(compressFloatingPointValues: Boolean = true,
-                                  maxArrayLength: Long = Int.MaxValue,
-                                  maxMapLength: Long = Int.MaxValue,
-                                  maxNestingLevels: Int = 1000)
+  final case class EncodingConfig(
+      compressFloatingPointValues: Boolean = true,
+      maxArrayLength: Long = Int.MaxValue,
+      maxMapLength: Long = Int.MaxValue,
+      maxNestingLevels: Int = 1000)
       extends Borer.EncodingConfig with CborValidation.Config
 
   object EncodingConfig {
@@ -63,13 +66,14 @@ case object Cbor extends Target {
     * @param readIntegersAlsoAsFloatingPoint set to false to disable automatic conversion of integer to floating point
     *                                        values
     */
-  final case class DecodingConfig(readIntegersAlsoAsFloatingPoint: Boolean = true,
-                                  readDoubleAlsoAsFloat: Boolean = false,
-                                  maxTextStringLength: Int = 1024 * 1024,
-                                  maxByteStringLength: Int = 10 * 1024 * 1024,
-                                  maxArrayLength: Long = Int.MaxValue,
-                                  maxMapLength: Long = Int.MaxValue,
-                                  maxNestingLevels: Int = 1000)
+  final case class DecodingConfig(
+      readIntegersAlsoAsFloatingPoint: Boolean = true,
+      readDoubleAlsoAsFloat: Boolean = false,
+      maxTextStringLength: Int = 1024 * 1024,
+      maxByteStringLength: Int = 10 * 1024 * 1024,
+      maxArrayLength: Long = Int.MaxValue,
+      maxMapLength: Long = Int.MaxValue,
+      maxNestingLevels: Int = 1000)
       extends Borer.DecodingConfig with CborValidation.Config with CborParser.Config {
 
     Util.requireNonNegative(maxTextStringLength, "maxTextStringLength")
@@ -109,18 +113,20 @@ case object Json extends Target {
   /**
     * Constructs a new [[Writer]] that writes JSON to the given [[Output]].
     */
-  def writer(output: Output,
-             config: EncodingConfig = EncodingConfig.default,
-             receiverWrapper: Receiver.Wrapper[EncodingConfig] = Receiver.nopWrapper): Writer =
+  def writer(
+      output: Output,
+      config: EncodingConfig = EncodingConfig.default,
+      receiverWrapper: Receiver.Wrapper[EncodingConfig] = Receiver.nopWrapper): Writer =
     new Writer(receiverWrapper(JsonRenderer(output), config), null, config)
 
   /**
     * Constructs a new [[Reader]] that reads JSON from the given [[Input]].
     */
-  def reader[Input: InputAccess](input: Input,
-                                 startIndex: Long = 0,
-                                 config: DecodingConfig = DecodingConfig.default,
-                                 receiverWrapper: Receiver.Wrapper[DecodingConfig] = Receiver.nopWrapper): Reader =
+  def reader[Input: InputAccess](
+      input: Input,
+      startIndex: Long = 0,
+      config: DecodingConfig = DecodingConfig.default,
+      receiverWrapper: Receiver.Wrapper[DecodingConfig] = Receiver.nopWrapper): Reader =
     new InputReader(startIndex, new JsonParser(input, config), receiverWrapper, config, Json)
 
   final case class EncodingConfig() extends Borer.EncodingConfig {
@@ -135,11 +141,12 @@ case object Json extends Target {
     * @param readIntegersAlsoAsFloatingPoint set to false to disable automatic conversion of integer to floating point
     *                                        values
     */
-  final case class DecodingConfig(readIntegersAlsoAsFloatingPoint: Boolean = true,
-                                  maxNumberAbsExponent: Int = 64,
-                                  maxStringLength: Int = 1024 * 1024,
-                                  maxNumberMantissaDigits: Int = 32,
-                                  maxNumberExponentDigits: Int = 3)
+  final case class DecodingConfig(
+      readIntegersAlsoAsFloatingPoint: Boolean = true,
+      maxNumberAbsExponent: Int = 64,
+      maxStringLength: Int = 1024 * 1024,
+      maxNumberMantissaDigits: Int = 32,
+      maxNumberExponentDigits: Int = 3)
       extends Borer.DecodingConfig with JsonParser.Config {
 
     Util.requirePositive(maxStringLength, "maxStringLength")
@@ -178,7 +185,7 @@ object Borer {
   sealed abstract class EncodingConfig extends Writer.Config
   sealed abstract class DecodingConfig extends Reader.Config
 
-  private[borer] abstract class AbstractSetup[Config](defaultConfig: Config, defaultWrapper: Receiver.Wrapper[Config]) {
+  abstract private[borer] class AbstractSetup[Config](defaultConfig: Config, defaultWrapper: Receiver.Wrapper[Config]) {
     protected var config: Config                            = defaultConfig
     protected var receiverWrapper: Receiver.Wrapper[Config] = defaultWrapper
 
@@ -190,10 +197,11 @@ object Borer {
     final def withPrintLogging(maxShownByteArrayPrefixLen: Int, maxShownStringPrefixLen: Int): this.type =
       withWrapper(Logging(Logging.PrintLogger(maxShownByteArrayPrefixLen, maxShownStringPrefixLen)))
 
-    final def withStringLogging(stringBuilder: JStringBuilder,
-                                maxShownByteArrayPrefixLen: Int,
-                                maxShownStringPrefixLen: Int,
-                                lineSeparator: String): this.type =
+    final def withStringLogging(
+        stringBuilder: JStringBuilder,
+        maxShownByteArrayPrefixLen: Int,
+        maxShownStringPrefixLen: Int,
+        lineSeparator: String): this.type =
       withWrapper {
         Logging {
           Logging.ToStringLogger(stringBuilder, maxShownByteArrayPrefixLen, maxShownStringPrefixLen, lineSeparator)

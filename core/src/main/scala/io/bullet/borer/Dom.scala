@@ -70,6 +70,7 @@ object Dom {
     final case class Sized(elements: Vector[Element]) extends ArrayElem(DIS.ArrayHeader) {
       override def toString = elements.mkString("[", ", ", "]")
     }
+
     object Sized {
       val empty                     = new Sized(Vector.empty)
       def apply(elements: Element*) = new Sized(elements.toVector)
@@ -78,6 +79,7 @@ object Dom {
     final case class Unsized(elements: Vector[Element]) extends ArrayElem(DIS.ArrayStart) {
       override def toString = elements.mkString("*[", ", ", "]")
     }
+
     object Unsized {
       val empty                     = new Unsized(Vector.empty)
       def apply(elements: Element*) = new Unsized(elements.toVector)
@@ -140,6 +142,7 @@ object Dom {
   object MapElem {
 
     final class Sized private[Dom] (size: Int, elements: Array[Element]) extends MapElem(size, elements, DIS.MapHeader)
+
     object Sized {
       private[this] val create                                             = new Sized(_, _)
       val empty                                                            = new Sized(0, Array.empty)
@@ -150,6 +153,7 @@ object Dom {
     }
 
     final class Unsized private[Dom] (size: Int, elements: Array[Element]) extends MapElem(size, elements, DIS.MapStart)
+
     object Unsized {
       private[this] val create                                               = new Unsized(_, _)
       val empty                                                              = new Unsized(0, Array.empty)
@@ -173,9 +177,10 @@ object Dom {
       f(entries.size, elements.result())
     }
 
-    private final class KVIterator(elements: Array[Element], startIndex: Int) extends Iterator[Element] {
+    final private class KVIterator(elements: Array[Element], startIndex: Int) extends Iterator[Element] {
       private[this] var ix = startIndex
       def hasNext          = ix < elements.length
+
       def next() =
         if (hasNext) {
           val elem = elements(ix)

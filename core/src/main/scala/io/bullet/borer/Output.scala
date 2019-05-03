@@ -35,6 +35,7 @@ object Output {
 
   implicit final class OutputOps(val underlying: Output) extends AnyVal {
     @inline def writeShort(value: Short): Output = underlying.writeBytes((value >> 8).toByte, value.toByte)
+
     @inline def writeInt(value: Int): Output =
       underlying.writeBytes((value >> 24).toByte, (value >> 16).toByte, (value >> 8).toByte, value.toByte)
     @inline def writeLong(value: Long): Output = writeInt((value >> 32).toInt).writeInt(value.toInt)
@@ -44,6 +45,7 @@ object Output {
     @inline def writeAsByte(c: Char): Output                    = underlying.writeByte(c.toByte)
     @inline def writeAsBytes(a: Char, b: Char): Output          = underlying.writeBytes(a.toByte, b.toByte)
     @inline def writeAsBytes(a: Char, b: Char, c: Char): Output = underlying.writeBytes(a.toByte, b.toByte, c.toByte)
+
     @inline def writeAsBytes(a: Char, b: Char, c: Char, d: Char): Output =
       underlying.writeBytes(a.toByte, b.toByte, c.toByte, d.toByte)
 

@@ -23,7 +23,7 @@ object LoggingSpec extends TestSuite {
         UndefinedElem,
         BoolElem(true),
         IntElem(42),
-        LongElem(Int.MaxValue + 1L),
+        LongElem(Int.MaxValue + 1l),
         OverLongElem(negative = false, -1),
         OverLongElem(negative = true, -1),
         Float16Elem(1.0f),

@@ -18,7 +18,7 @@ import scala.util.control.NonFatal
 
 object Unsafe {
 
-  private final val UNSAFE: SMUnsafe = {
+  final private val UNSAFE: SMUnsafe = {
     try {
       SMUnsafe.getUnsafe
     } catch {
@@ -47,7 +47,7 @@ object Unsafe {
   }
 
   // the offset to the first element in a byte array.
-  private final val BYTE_ARRAY_BASE_OFFSET = if (UNSAFE ne null) UNSAFE.arrayBaseOffset(classOf[Array[Byte]]) else 0
+  final private val BYTE_ARRAY_BASE_OFFSET = if (UNSAFE ne null) UNSAFE.arrayBaseOffset(classOf[Array[Byte]]) else 0
 
   def byteArrayInputAccess: InputAccess.ForByteArray =
     if (UNSAFE ne null) {

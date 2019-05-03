@@ -113,9 +113,10 @@ object Decoder extends LowPrioDecoders {
 
   implicit val forBigInteger: Decoder[BigInt] = _forJBigInteger.map(BigInt(_))
 
-  implicit def forJBigDecimal(maxCborBigIntMantissaByteArraySize: Int = 64,
-                              maxCborAbsExponent: Int = 999,
-                              maxJsonNumberStringLength: Int = 64): Decoder[JBigDecimal] = {
+  implicit def forJBigDecimal(
+      maxCborBigIntMantissaByteArraySize: Int = 64,
+      maxCborAbsExponent: Int = 999,
+      maxJsonNumberStringLength: Int = 64): Decoder[JBigDecimal] = {
     val bigIntMantissaDecoder = forJBigInteger(maxCborByteArraySize = maxCborBigIntMantissaByteArraySize)
     Decoder { r ⇒
       def fromBigInteger() = new JBigDecimal(_forJBigInteger.read(r))
@@ -154,6 +155,7 @@ object Decoder extends LowPrioDecoders {
 
   implicit def forOption[T: Decoder]: Decoder.DefaultValueAware[Option[T]] =
     new Decoder.DefaultValueAware[Option[T]] {
+
       def read(r: Reader) = {
         if (r.hasArrayHeader) {
           r.readArrayHeader() match {

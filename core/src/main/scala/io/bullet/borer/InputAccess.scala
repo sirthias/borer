@@ -82,14 +82,14 @@ object InputAccess {
 
     def octaByteBigEndian(input: Array[Byte], index: Long): Long = {
       val i = index.toInt
-      (input(i) & 0xFFL) << 56 |
-      (input(i + 1) & 0xFFL) << 48 |
-      (input(i + 2) & 0xFFL) << 40 |
-      (input(i + 3) & 0xFFL) << 32 |
-      (input(i + 4) & 0xFFL) << 24 |
-      (input(i + 5) & 0xFFL) << 16 |
-      (input(i + 6) & 0xFFL) << 8 |
-      (input(i + 7) & 0xFFL)
+      (input(i) & 0xffl) << 56 |
+      (input(i + 1) & 0xffl) << 48 |
+      (input(i + 2) & 0xffl) << 40 |
+      (input(i + 3) & 0xffl) << 32 |
+      (input(i + 4) & 0xffl) << 24 |
+      (input(i + 5) & 0xffl) << 16 |
+      (input(i + 6) & 0xffl) << 8 |
+      (input(i + 7) & 0xffl)
     }
 
     final def bytes(input: Array[Byte], index: Long, length: Long): Array[Byte] = {
