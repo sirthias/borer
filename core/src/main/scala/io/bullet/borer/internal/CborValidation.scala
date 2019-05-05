@@ -260,14 +260,6 @@ object CborValidation {
         throw new Borer.Error.UnexpectedEndOfInput(null, msg)
       } else _target.onEndOfInput()
 
-    override def copy = {
-      val clone = super.clone().asInstanceOf[Receiver]
-      clone._target = _target.copy
-      clone.levelRemaining = levelRemaining.clone()
-      clone.levelMasks = levelMasks.clone()
-      clone
-    }
-
     private def checkAllowed(dataItem: Int): Unit =
       if (!isMasked(dataItem)) {
         throw new Error.InvalidInputData(null, DataItem stringify mask, DataItem stringify dataItem)

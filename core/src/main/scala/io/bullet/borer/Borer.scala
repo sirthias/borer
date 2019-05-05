@@ -25,8 +25,8 @@ case object Cbor extends Target {
   /**
     * Entry point into the CBOR decoding mini-DSL.
     */
-  def decode[Input: InputAccess](input: Input): DecodingSetup.Api[Input, DecodingConfig] =
-    new DecodingSetup.Impl(input, DecodingConfig.default, CborValidation.wrapper, CborParser.creator, this)
+  def decode[T](input: T)(implicit w: Input.Wrapper[T]): DecodingSetup.Api[w.In, DecodingConfig] =
+    new DecodingSetup.Impl(w(input), DecodingConfig.default, CborValidation.wrapper, CborParser.creator, this)
 
   /**
     * Constructs a new [[Writer]] that writes CBOR to the given [[Output]].
@@ -40,12 +40,11 @@ case object Cbor extends Target {
   /**
     * Constructs a new [[Reader]] that reads CBOR from the given [[Input]].
     */
-  def reader[Input: InputAccess](
-      input: Input,
-      startIndex: Long = 0,
+  def reader[In <: Input](
+      input: In,
       config: DecodingConfig = DecodingConfig.default,
       receiverWrapper: Receiver.Wrapper[DecodingConfig] = CborValidation.wrapper): Reader =
-    new InputReader(startIndex, new CborParser(input, config), receiverWrapper, config, this)
+    new InputReader(new CborParser(input, config), receiverWrapper, config, this)
 
   /**
     * @param compressFloatingPointValues set to false in order to always write floats as 32-bit values and doubles
@@ -102,9 +101,9 @@ case object Json extends Target {
   /**
     * Entry point into the JSON decoding mini-DSL.
     */
-  def decode[Input: InputAccess](input: Input): DecodingSetup.Api[Input, DecodingConfig] =
-    new DecodingSetup.Impl[Input, DecodingConfig](
-      input,
+  def decode[T](input: T)(implicit w: Input.Wrapper[T]): DecodingSetup.Api[w.In, DecodingConfig] =
+    new DecodingSetup.Impl[w.In, DecodingConfig](
+      w(input),
       DecodingConfig.default,
       Receiver.nopWrapper,
       JsonParser.creator,
@@ -122,12 +121,11 @@ case object Json extends Target {
   /**
     * Constructs a new [[Reader]] that reads JSON from the given [[Input]].
     */
-  def reader[Input: InputAccess](
-      input: Input,
-      startIndex: Long = 0,
+  def reader[In <: Input](
+      input: In,
       config: DecodingConfig = DecodingConfig.default,
       receiverWrapper: Receiver.Wrapper[DecodingConfig] = Receiver.nopWrapper): Reader =
-    new InputReader(startIndex, new JsonParser(input, config), receiverWrapper, config, Json)
+    new InputReader(new JsonParser(input, config), receiverWrapper, config, Json)
 
   final case class EncodingConfig() extends Borer.EncodingConfig {
     def compressFloatingPointValues = false
@@ -174,7 +172,7 @@ sealed abstract class Target {
 
   def encode[T: Encoder](value: T): EncodingSetup.Api[T, _]
 
-  def decode[Input: InputAccess](input: Input): DecodingSetup.Api[Input, _]
+  def decode[T](input: T)(implicit w: Input.Wrapper[T]): DecodingSetup.Api[w.In, _]
 }
 
 /**
@@ -214,16 +212,16 @@ object Borer {
     }
   }
 
-  sealed abstract class Error[IO <: AnyRef](private var _io: IO, msg: String, cause: Throwable = null)
+  sealed abstract class Error[IO](private var _io: IO, msg: String, cause: Throwable = null)
       extends RuntimeException(msg, cause) {
 
     final override def getMessage = s"$msg [${_io}]"
 
     final def io: IO = _io
 
-    private[borer] def withPosOf[Input](reader: InputReader[Input, _]): Error[Position[Input]] = {
-      val thiz = this.asInstanceOf[Error[Position[Input]]]
-      if (thiz._io eq null) thiz._io = reader.lastPosition
+    private[borer] def withPosOf[In <: Input](reader: InputReader[In, _]): Error[In#Position] = {
+      val thiz = this.asInstanceOf[Error[In#Position]]
+      if (thiz._io.asInstanceOf[AnyRef] eq null) thiz._io = reader.lastPosition
       thiz
     }
 
@@ -235,19 +233,19 @@ object Borer {
   }
 
   object Error {
-    final class UnexpectedEndOfInput[IO <: AnyRef](io: IO, expected: String)
+    final class UnexpectedEndOfInput[IO](io: IO, expected: String)
         extends Error[IO](io, s"Expected $expected but got end of input")
 
-    final class InvalidInputData[IO <: AnyRef](io: IO, msg: String) extends Error[IO](io, msg) {
+    final class InvalidInputData[IO](io: IO, msg: String) extends Error[IO](io, msg) {
       def this(io: IO, expected: String, actual: String) = this(io, s"Expected $expected but got $actual")
     }
 
-    final class ValidationFailure[IO <: AnyRef](io: IO, msg: String) extends Error[IO](io, msg)
+    final class ValidationFailure[IO](io: IO, msg: String) extends Error[IO](io, msg)
 
-    final class Unsupported[IO <: AnyRef](io: IO, msg: String) extends Error[IO](io, msg)
+    final class Unsupported[IO](io: IO, msg: String) extends Error[IO](io, msg)
 
-    final class Overflow[IO <: AnyRef](io: IO, msg: String) extends Error[IO](io, msg)
+    final class Overflow[IO](io: IO, msg: String) extends Error[IO](io, msg)
 
-    final class General[IO <: AnyRef](io: IO, cause: Throwable) extends Error[IO](io, cause.toString, cause)
+    final class General[IO](io: IO, cause: Throwable) extends Error[IO](io, cause.toString, cause)
   }
 }

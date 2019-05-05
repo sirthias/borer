@@ -8,11 +8,12 @@
 
 package io.bullet.borer
 
-import java.lang.{Long ⇒ JLong, Short ⇒ JShort}
+import java.lang.{Long ⇒ JLong}
 import java.nio.ByteOrder
 import java.security.PrivilegedExceptionAction
 
-import sun.misc.{Unsafe ⇒ SMUnsafe}
+import io.bullet.borer.internal.ByteArrayAccess
+import sun.misc.{Unsafe => SMUnsafe}
 
 import scala.util.control.NonFatal
 
@@ -49,43 +50,37 @@ object Unsafe {
   // the offset to the first element in a byte array.
   final private val BYTE_ARRAY_BASE_OFFSET = if (UNSAFE ne null) UNSAFE.arrayBaseOffset(classOf[Array[Byte]]) else 0
 
-  def byteArrayInputAccess: InputAccess.ForByteArray =
+  def byteArrayAccess: ByteArrayAccess =
     if (UNSAFE ne null) {
       ByteOrder.nativeOrder() match {
-        case ByteOrder.LITTLE_ENDIAN ⇒ byteArrayInputAccessOnLittleEndian()
-        case ByteOrder.BIG_ENDIAN    ⇒ byteArrayInputAccessOnBigEndian()
+        case ByteOrder.LITTLE_ENDIAN ⇒ byteArrayAccessOnLittleEndian()
+        case ByteOrder.BIG_ENDIAN    ⇒ byteArrayAccessOnBigEndian()
       }
     } else null
 
-  private def byteArrayInputAccessOnLittleEndian(): InputAccess.ForByteArray =
-    new InputAccess.ForByteArray {
+  private def byteArrayAccessOnLittleEndian(): ByteArrayAccess =
+    new ByteArrayAccess {
 
-      @inline override def unsafeByte(input: Array[Byte], index: Long): Byte =
-        UNSAFE.getByte(input, index + BYTE_ARRAY_BASE_OFFSET)
+      def doubleByteBigEndian(byteArray: Array[Byte], ix: Int): Char =
+        Character.reverseBytes(UNSAFE.getChar(byteArray, (ix + BYTE_ARRAY_BASE_OFFSET).toLong))
 
-      @inline override def doubleByteBigEndian(input: Array[Byte], index: Long): Int =
-        JShort.reverseBytes(UNSAFE.getShort(input, index + BYTE_ARRAY_BASE_OFFSET)) & 0xFFFF
+      def quadByteBigEndian(byteArray: Array[Byte], ix: Int): Int =
+        Integer.reverseBytes(UNSAFE.getInt(byteArray, (ix + BYTE_ARRAY_BASE_OFFSET).toLong))
 
-      @inline override def quadByteBigEndian(input: Array[Byte], index: Long): Int =
-        Integer.reverseBytes(UNSAFE.getInt(input, index + BYTE_ARRAY_BASE_OFFSET))
-
-      @inline override def octaByteBigEndian(input: Array[Byte], index: Long): Long =
-        JLong.reverseBytes(UNSAFE.getLong(input, index + BYTE_ARRAY_BASE_OFFSET))
+      def octaByteBigEndian(byteArray: Array[Byte], ix: Int): Long =
+        JLong.reverseBytes(UNSAFE.getLong(byteArray, (ix + BYTE_ARRAY_BASE_OFFSET).toLong))
     }
 
-  private def byteArrayInputAccessOnBigEndian(): InputAccess.ForByteArray =
-    new InputAccess.ForByteArray {
+  private def byteArrayAccessOnBigEndian(): ByteArrayAccess =
+    new ByteArrayAccess {
 
-      @inline override def unsafeByte(input: Array[Byte], index: Long): Byte =
-        UNSAFE.getByte(input, index + BYTE_ARRAY_BASE_OFFSET)
+      def doubleByteBigEndian(byteArray: Array[Byte], ix: Int): Char =
+        UNSAFE.getChar(byteArray, (ix + BYTE_ARRAY_BASE_OFFSET).toLong)
 
-      @inline override def doubleByteBigEndian(input: Array[Byte], index: Long): Int =
-        UNSAFE.getShort(input, index + BYTE_ARRAY_BASE_OFFSET) & 0xFFFF
+      def quadByteBigEndian(byteArray: Array[Byte], ix: Int): Int =
+        UNSAFE.getInt(byteArray, (ix + BYTE_ARRAY_BASE_OFFSET).toLong)
 
-      @inline override def quadByteBigEndian(input: Array[Byte], index: Long): Int =
-        UNSAFE.getInt(input, index + BYTE_ARRAY_BASE_OFFSET)
-
-      @inline override def octaByteBigEndian(input: Array[Byte], index: Long): Long =
-        UNSAFE.getLong(input, index + BYTE_ARRAY_BASE_OFFSET)
+      def octaByteBigEndian(byteArray: Array[Byte], ix: Int): Long =
+        UNSAFE.getLong(byteArray, (ix + BYTE_ARRAY_BASE_OFFSET).toLong)
     }
 }

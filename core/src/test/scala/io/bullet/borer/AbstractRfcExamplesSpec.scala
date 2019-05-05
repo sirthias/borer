@@ -19,7 +19,8 @@ import scala.collection.immutable.{ListMap, TreeMap}
   */
 abstract class AbstractRfcExamplesSpec(testTypeName: String) extends BorerSpec {
 
-  // for these test we need an alternative `Either` codec
+  // for these test we use an alternative, special and somewhat hacky `Either` codec
+  // to make it easier to decode the RFC examples
   implicit def eitherEnc[A: Encoder, B: Encoder]: Encoder[Either[A, B]] =
     Encoder {
       case (w, Left(x))  ⇒ w.write(x)
@@ -28,10 +29,10 @@ abstract class AbstractRfcExamplesSpec(testTypeName: String) extends BorerSpec {
 
   implicit def eitherDec[A: Decoder, B: Decoder]: Decoder[Either[A, B]] =
     Decoder { r ⇒
-      r.tryRead[A]() match {
-        case Some(x) ⇒ Left(x)
-        case None    ⇒ Right(r[B])
-      }
+      if (r.hasAnyOf(
+            DataItem.ArrayHeader | DataItem.ArrayStart | DataItem.MapHeader | DataItem.MapStart | DataItem.Bool))
+        Right(r[B])
+      else Left(r[A])
     }
 
   val tests = Tests {
@@ -175,7 +176,7 @@ abstract class AbstractRfcExamplesSpec(testTypeName: String) extends BorerSpec {
       roundTrip("a0", TreeMap.empty[Int, String])
       roundTrip("a201020304", TreeMap(1           → 2, 3         → 4))
       roundTrip("a26161016162820203", TreeMap("a" → Left(1), "b" → Right(Vector(2, 3))))
-      roundTrip("826161a161626163", Vector(Right("a"), Left(TreeMap("b" → "c"))))
+      roundTrip("826161a161626163", Vector(Left("a"), Right(TreeMap("b" → "c"))))
       roundTrip(
         "a56161614161626142616361436164614461656145",
         TreeMap("a" → "A", "b" → "B", "c" → "C", "d" → "D", "e" → "E"))
@@ -218,7 +219,7 @@ abstract class AbstractRfcExamplesSpec(testTypeName: String) extends BorerSpec {
 
       roundTrip(
         "bf6346756ef563416d7421ff",
-        ListMap("Fun" → Left(true), "Amt" → Right(-2)),
+        ListMap("Fun" → Right(true), "Amt" → Left(-2)),
         Writer.Script(_ ~ MapStart ~ "Fun" ~ true ~ "Amt" ~ -2 ~ Break))
     }
   }

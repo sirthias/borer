@@ -54,12 +54,6 @@ abstract class Receiver {
     * If it doesn't wrap another [[Receiver]] the method returns this instance.
     */
   def target: Receiver = this
-
-  /**
-    * Returns a deep copy of this [[Receiver]].
-    * If this [[Receiver]] wraps another one then the copy must wrap a fresh copy of the wrapped target [[Receiver]].
-    */
-  def copy: Receiver = this
 }
 
 object Receiver {
@@ -67,38 +61,27 @@ object Receiver {
   /**
     * Common parent type of [[io.bullet.borer.cbor.CborParser]] and [[io.bullet.borer.json.JsonParser]]
     */
-  abstract class Parser[Input] {
+  abstract class Parser[In <: Input] {
 
     /**
       * The [[Input]] the parser is parsing from.
       */
-    def input: Input
+    def input: In
 
     /**
-      * The index of the last value that was parsed.
+      * The index of the first byte of the value that was produced by the last call to `pull`.
       */
-    def lastValueStartIndex: Long
-
-    /**
-      * The input [[Position]] of the last value that was parsed.
-      */
-    final def lastPosition: Position[Input] = pos(lastValueStartIndex)
-
-    /**
-      * The input [[Position]] for the given index.
-      */
-    final def pos(index: Long): Position[Input] = Position(input, index)
+    def lastCursor: Long
 
     /**
       * Reads the next data item from the input and sends it to the given [[Receiver]].
       * The given [[Receiver]] receives exactly one call to one of its methods.
-      * The returned `Long` is the index of the next byte to consume from the input
-      * (and can be used for the subsequent call to this method).
+      * The returned `Int` is the [[DataItem]] code for the value the [[Receiver]] received.
       */
-    def pull(index: Long, receiver: Receiver): Long
+    def pull(receiver: Receiver): Int
   }
 
-  type ParserCreator[Input, Config] = (Input, Config, InputAccess[Input]) ⇒ Parser[Input]
+  type ParserCreator[In <: Input, Config] = (In, Config) ⇒ Parser[In]
 
   type Wrapper[Config] = (Receiver, Config) ⇒ Receiver
   private[this] val _nopWrapper: Wrapper[Any] = (receiver, _) ⇒ receiver

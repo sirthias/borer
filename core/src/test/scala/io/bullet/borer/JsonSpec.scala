@@ -194,7 +194,7 @@ object JsonSpec extends AbstractJsonSpec {
     "Strings" - {
       roundTrip("\"\"", "")
       roundTrip("\"foo\"", "foo")
-      roundTrip(""""\"\\\b\f\n\r\t"""", "\"\\\b\f\n\r\t")
+      roundTrip(""""\"\\\b\r\f\r\n\n\t"""", "\"\\\b\r\f\r\n\n\t")
       roundTrip(""""foo\r\nbar\r\n"""", "foo\r\nbar\r\n")
       roundTrip("\"\\u0000\"", "\u0000")                   // control char
       roundTrip("\"\\u0001\"", "\u0001")                   // control char

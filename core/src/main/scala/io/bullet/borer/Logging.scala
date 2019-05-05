@@ -390,15 +390,6 @@ object Logging {
       target.onEndOfInput()
     }
 
-    override def copy = {
-      val clone = super.clone().asInstanceOf[Receiver]
-      clone._target = _target.copy
-      clone._levelCount = _levelCount.clone()
-      clone._levelSize = _levelSize.clone()
-      clone.logger = createLogger(clone)
-      clone
-    }
-
     @tailrec private def count(): Unit = {
       val cnt = _levelCount(_level)
       if (cnt >= 0) {

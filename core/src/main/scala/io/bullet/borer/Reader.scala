@@ -15,45 +15,48 @@ import io.bullet.borer.internal.{Receptacle, Util}
 import scala.annotation.tailrec
 import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable
-import scala.util.control.NonFatal
 
 /**
   * Stateful, mutable abstraction for reading a stream of CBOR or JSON data from the given `input`.
   */
-final class InputReader[Input, +Config <: Reader.Config](
-    startCursor: Long,
-    parser: Receiver.Parser[Input],
+final class InputReader[+In <: Input, +Config <: Reader.Config](
+    parser: Receiver.Parser[In],
     receiverWrapper: Receiver.Wrapper[Config],
     val config: Config,
-    val target: Target)(implicit inputAccess: InputAccess[Input]) {
+    val target: Target) {
 
-  import io.bullet.borer.{DataItem ⇒ DI}
+  import io.bullet.borer.{DataItem => DI}
 
-  private[this] var _cursor: Long          = startCursor
-  private[this] var receiver: Receiver     = receiverWrapper(new Receptacle, config)
-  private[this] var receptacle: Receptacle = receiver.finalTarget.asInstanceOf[Receptacle]
+  private[this] val receiver: Receiver     = receiverWrapper(new Receptacle, config)
+  private[this] val receptacle: Receptacle = receiver.finalTarget.asInstanceOf[Receptacle]
+  private[this] var _lastCursor: Long      = _
+  private[this] var _cursor: Long          = _
+  private[this] var _dataItem: Int         = _
 
-  @inline def cursor: Long  = _cursor
-  @inline def dataItem: Int = receptacle.dataItem
+  @inline def dataItem: Int = _dataItem
 
   @inline def readingJson: Boolean = target eq Json
   @inline def readingCbor: Boolean = target eq Cbor
 
-  @inline def lastPosition: Position[Input] = parser.lastPosition
+  @inline def input: In                 = parser.input
+  @inline def lastCursor: Long          = _lastCursor
+  @inline def cursor: Long              = _cursor
+  @inline def lastPosition: In#Position = input.position(_lastCursor)
+  @inline def position: In#Position     = input.position(_cursor)
 
   /**
     * Checks whether this [[Reader]] currently has a data item of the given type.
     *
     * Example: reader.has(DataItem.Int)
     */
-  @inline def has(item: Int): Boolean = dataItem == item
+  @inline def has(item: Int): Boolean = _dataItem == item
 
   /**
     * Checks whether this [[Reader]] currently has any of the data items masked in the given bit mask.
     *
     * Example: reader.hasAnyOf(DataItem.Int | DataItem.Float)
     */
-  @inline def hasAnyOf(mask: Int): Boolean = (dataItem & mask) != 0
+  @inline def hasAnyOf(mask: Int): Boolean = (_dataItem & mask) != 0
 
   @inline def apply[T: Decoder]: T = read[T]()
 
@@ -114,7 +117,7 @@ final class InputReader[Input, +Config <: Reader.Config](
 
   def readLong(): Long =
     if (hasLong) {
-      val result = if (dataItem == DI.Int) receptacle.intValue.toLong else receptacle.longValue
+      val result = if (_dataItem == DI.Int) receptacle.intValue.toLong else receptacle.longValue
       pull()
       result
     } else unexpectedDataItem(expected = "Long")
@@ -145,7 +148,7 @@ final class InputReader[Input, +Config <: Reader.Config](
 
   def readFloat(): Float = {
     val result =
-      dataItem match {
+      _dataItem match {
         case DI.Float16 | DI.Float                                      ⇒ receptacle.floatValue
         case DI.Double if config.readDoubleAlsoAsFloat                  ⇒ receptacle.doubleValue.toFloat
         case DI.Int | DI.Long if config.readIntegersAlsoAsFloatingPoint ⇒ readLong().toFloat
@@ -160,7 +163,7 @@ final class InputReader[Input, +Config <: Reader.Config](
     hasAnyOf(DI.Float16 | DI.Float | DI.Double | DI.NumberString) || config.readIntegersAlsoAsFloatingPoint && hasLong
 
   def readDouble(): Double = {
-    val result = dataItem match {
+    val result = _dataItem match {
       case DI.Double                                         ⇒ receptacle.doubleValue
       case DI.Float16 | DI.Float                             ⇒ receptacle.floatValue.toDouble
       case DI.Int if config.readIntegersAlsoAsFloatingPoint  ⇒ receptacle.intValue.toDouble
@@ -184,7 +187,7 @@ final class InputReader[Input, +Config <: Reader.Config](
   @inline def hasBytes: Boolean = hasAnyOf(DI.Bytes | DI.BytesStart)
 
   def readBytes[Bytes: ByteAccess](): Bytes =
-    dataItem match {
+    _dataItem match {
       case DI.Bytes      ⇒ readSizedBytes()
       case DI.BytesStart ⇒ readUnsizedBytes()
       case _             ⇒ unexpectedDataItem(expected = "Bytes")
@@ -214,7 +217,7 @@ final class InputReader[Input, +Config <: Reader.Config](
   @inline def hasString: Boolean = hasAnyOf(DI.String | DI.Chars | DI.Text | DI.TextStart)
 
   def readString(): String =
-    dataItem match {
+    _dataItem match {
       case DI.Chars     ⇒ pullReturn(new String(receptacle.charBufValue, 0, receptacle.intValue))
       case DI.String    ⇒ pullReturn(receptacle.stringValue)
       case DI.Text      ⇒ stringOf(readSizedTextBytes[Array[Byte]]())
@@ -225,23 +228,20 @@ final class InputReader[Input, +Config <: Reader.Config](
   def readString(s: String): this.type = if (tryReadString(s)) this else unexpectedDataItem(expected = '"' + s + '"')
 
   def tryReadString(s: String): Boolean =
-    dataItem match {
+    _dataItem match {
       case DI.Chars ⇒
         val len                                              = receptacle.intValue
         @tailrec def rec(buf: Array[Char], ix: Int): Boolean = ix == len || buf(ix) == s.charAt(ix) && rec(buf, ix + 1)
         pullIfTrue(len == s.length && rec(receptacle.charBufValue, 0))
       case DI.String ⇒ pullIfTrue(receptacle.stringValue == s)
       case DI.Text   ⇒ pullIfTrue(stringOf(receptacle.getBytes[Array[Byte]]) == s)
-      case DI.TextStart ⇒
-        val saved = saveState
-        stringOf(readUnsizedTextBytes[Array[Byte]]()) == s || { restoreState(saved); false }
-      case _ ⇒ false
+      case _         ⇒ false
     }
 
   @inline def hasTextBytes: Boolean = hasAnyOf(DI.Text | DI.TextStart)
 
   def readTextBytes[Bytes: ByteAccess](): Bytes =
-    dataItem match {
+    _dataItem match {
       case DI.Text      ⇒ readSizedTextBytes()
       case DI.TextStart ⇒ readUnsizedTextBytes()
       case _            ⇒ unexpectedDataItem(expected = "Text Bytes")
@@ -347,26 +347,6 @@ final class InputReader[Input, +Config <: Reader.Config](
 
   @inline def read[T]()(implicit decoder: Decoder[T]): T = decoder.read(this)
 
-  /**
-    * Attempts to read an instance of [[T]].
-    * If this fails due to any kind of error this [[Reader]] is "reset" to the state it was before this attempted
-    * read, which enables discrimination between several possible input consumption alternatives, when simple
-    * one-element look-ahead doesn't suffice.
-    *
-    * NOTE: Saving and restoring the [[Reader]] state (as well as throwing an catching exceptions) does come with
-    * some additional object allocation cost. So, if the one-element look-ahead provided by the [[Reader]] API is
-    * sufficient for discriminating between cases then thas should be preferred over the use of `tryRead`.
-    */
-  def tryRead[T]()(implicit decoder: Decoder[T]): Option[T] = {
-    val saved = saveState
-    try Some(decoder.read(this))
-    catch {
-      case NonFatal(_) ⇒
-        restoreState(saved)
-        None
-    }
-  }
-
   def readUntilBreak[M[_], T: Decoder]()(implicit cbf: CanBuildFrom[M[T], T, M[T]]): M[T] = {
     @tailrec def rec(b: mutable.Builder[T, M[T]]): M[T] =
       if (tryReadBreak()) b.result() else rec(b += read[T]())
@@ -411,7 +391,7 @@ final class InputReader[Input, +Config <: Reader.Config](
           } else this
 
         if (level == 100) overflow("Structures more than 100 levels deep cannot be skipped") // TODO: make configurable
-        dataItem match {
+        _dataItem match {
           case DI.ArrayHeader ⇒ skipN(readArrayHeader())
           case DI.MapHeader ⇒
             val elemsToSkip = readMapHeader() << 1
@@ -426,8 +406,9 @@ final class InputReader[Input, +Config <: Reader.Config](
     } else skipDataItem()
 
   @inline private def pull(): Unit = {
-    receptacle.clear()
-    _cursor = parser.pull(_cursor, receiver)
+    _lastCursor = _cursor
+    _dataItem = parser.pull(receiver)
+    _cursor = parser.lastCursor
   }
 
   @inline private def pullReturn[T](value: T): T = {
@@ -444,26 +425,17 @@ final class InputReader[Input, +Config <: Reader.Config](
     throw new Borer.Error.Overflow(lastPosition, msg)
 
   def unexpectedDataItem(expected: String): Nothing = {
-    val actual = dataItem match {
+    val actual = _dataItem match {
       case DI.ArrayHeader ⇒ s"Array Header (${receptacle.longValue})"
       case DI.MapHeader   ⇒ s"Map Header (${receptacle.longValue})"
       case DI.Tag         ⇒ "Tag: " + receptacle.tagValue
-      case _              ⇒ DataItem.stringify(dataItem)
+      case _              ⇒ DataItem.stringify(_dataItem)
     }
     unexpectedDataItem(expected, actual)
   }
 
   @inline def unexpectedDataItem(expected: String, actual: String): Nothing =
     throw new Borer.Error.InvalidInputData(lastPosition, expected, actual)
-
-  @inline def saveState: Reader.SavedState = new Reader.SavedStateImpl(_cursor, receiver.copy)
-
-  def restoreState(mark: Reader.SavedState): Unit = {
-    val savedState = mark.asInstanceOf[Reader.SavedStateImpl]
-    _cursor = savedState.cursor
-    receiver = savedState.receiver
-    receptacle = receiver.finalTarget.asInstanceOf[Receptacle]
-  }
 
   @inline private def stringOf(bytes: Array[Byte]): String =
     if (bytes.length > 0) new String(bytes, StandardCharsets.UTF_8) else ""
@@ -475,10 +447,4 @@ object Reader {
     def readIntegersAlsoAsFloatingPoint: Boolean
     def readDoubleAlsoAsFloat: Boolean
   }
-
-  sealed trait SavedState {
-    def cursor: Long
-  }
-
-  final private[borer] class SavedStateImpl(val cursor: Long, val receiver: Receiver) extends SavedState
 }

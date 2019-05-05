@@ -16,8 +16,6 @@ import io.bullet.borer._
   */
 final private[borer] class Receptacle extends Receiver with java.lang.Cloneable {
 
-  private[this] var _dataItem: Int = _
-
   private[this] var _bool: Boolean  = _
   private[this] var _int: Int       = _
   private[this] var _long: Long     = _
@@ -26,8 +24,6 @@ final private[borer] class Receptacle extends Receiver with java.lang.Cloneable 
   private[this] var _obj: Any       = _
 
   private[this] var _bytesAccess: ByteAccess[Any] = _
-
-  @inline def dataItem: Int = _dataItem
 
   @inline def boolValue: Boolean        = _bool
   @inline def intValue: Int             = _int
@@ -41,107 +37,63 @@ final private[borer] class Receptacle extends Receiver with java.lang.Cloneable 
   @inline def getBytes[Bytes](implicit byteAccess: ByteAccess[Bytes]): Bytes =
     byteAccess.convert(_obj)(_bytesAccess)
 
-  @inline def clear(): Unit = _dataItem = DataItem.None
+  def onNull(): Unit = ()
 
-  def onNull(): Unit = _dataItem = DataItem.Null
+  def onUndefined(): Unit = ()
 
-  def onUndefined(): Unit = _dataItem = DataItem.Undefined
+  def onBool(value: Boolean): Unit = _bool = value
 
-  def onBool(value: Boolean): Unit = {
-    _bool = value
-    _dataItem = DataItem.Bool
-  }
+  def onInt(value: Int): Unit = _int = value
 
-  def onInt(value: Int): Unit = {
-    _int = value
-    _dataItem = DataItem.Int
-  }
-
-  def onLong(value: Long): Unit = {
-    _long = value
-    _dataItem = DataItem.Long
-  }
+  def onLong(value: Long): Unit = _long = value
 
   def onOverLong(negative: Boolean, value: Long): Unit = {
     _bool = negative
     _long = value
-    _dataItem = DataItem.OverLong
   }
 
-  def onFloat16(value: Float): Unit = {
-    _float = value
-    _dataItem = DataItem.Float16
-  }
+  def onFloat16(value: Float): Unit = _float = value
 
-  def onFloat(value: Float): Unit = {
-    _float = value
-    _dataItem = DataItem.Float
-  }
+  def onFloat(value: Float): Unit = _float = value
 
-  def onDouble(value: Double): Unit = {
-    _double = value
-    _dataItem = DataItem.Double
-  }
+  def onDouble(value: Double): Unit = _double = value
 
-  def onNumberString(value: String): Unit = {
-    _obj = value
-    _dataItem = DataItem.NumberString
-  }
+  def onNumberString(value: String): Unit = _obj = value
 
   def onBytes[Bytes](value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Unit = {
     _obj = value
     _bytesAccess = byteAccess.asInstanceOf[ByteAccess[Any]]
-    _dataItem = DataItem.Bytes
   }
 
-  def onBytesStart(): Unit = _dataItem = DataItem.BytesStart
+  def onBytesStart(): Unit = ()
 
-  def onString(value: String): Unit = {
-    _obj = value
-    _dataItem = DataItem.String
-  }
+  def onString(value: String): Unit = _obj = value
 
   def onChars(length: Int, buffer: Array[Char]): Unit = {
     _obj = buffer
     _int = length
-    _dataItem = DataItem.Chars
   }
 
   def onText[Bytes](value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Unit = {
     _obj = value
     _bytesAccess = byteAccess.asInstanceOf[ByteAccess[Any]]
-    _dataItem = DataItem.Text
   }
 
-  def onTextStart(): Unit = _dataItem = DataItem.TextStart
+  def onTextStart(): Unit = ()
 
-  def onArrayHeader(length: Long): Unit = {
-    _long = length
-    _dataItem = DataItem.ArrayHeader
-  }
+  def onArrayHeader(length: Long): Unit = _long = length
 
-  def onArrayStart(): Unit = _dataItem = DataItem.ArrayStart
+  def onArrayStart(): Unit = ()
 
-  def onMapHeader(length: Long): Unit = {
-    _long = length
-    _dataItem = DataItem.MapHeader
-  }
+  def onMapHeader(length: Long): Unit = _long = length
 
-  def onMapStart(): Unit = _dataItem = DataItem.MapStart
+  def onMapStart(): Unit = ()
 
-  def onBreak(): Unit = _dataItem = DataItem.Break
+  def onBreak(): Unit = ()
 
-  def onTag(value: Tag): Unit = {
-    _obj = value
-    _dataItem = DataItem.Tag
-  }
+  def onTag(value: Tag): Unit = _obj = value
 
-  def onSimpleValue(value: Int): Unit = {
-    _int = value
-    _dataItem = DataItem.SimpleValue
-  }
+  def onSimpleValue(value: Int): Unit = _int = value
 
-  def onEndOfInput(): Unit = _dataItem = DataItem.EndOfInput
-
-  override def copy = super.clone().asInstanceOf[Receptacle]
+  def onEndOfInput(): Unit = ()
 }

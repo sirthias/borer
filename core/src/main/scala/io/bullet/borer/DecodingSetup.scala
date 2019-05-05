@@ -15,12 +15,7 @@ import scala.util.{Failure, Success, Try}
 
 object DecodingSetup {
 
-  sealed trait Api[Input, Config <: Reader.Config] {
-
-    /**
-      * Indicates that this decoding run is not expected to consume the complete [[Input]].
-      */
-    def withStartIndex(index: Long): this.type
+  sealed trait Api[In <: Input, Config <: Reader.Config] {
 
     /**
       * Indicates that this decoding run is not expected to consume the complete [[Input]].
@@ -58,50 +53,43 @@ object DecodingSetup {
     /**
       * Decodes an instance of [[T]] from the configured [[Input]] using the configured options.
       */
-    def to[T: Decoder]: Sealed[Input, T]
+    def to[T: Decoder]: Sealed[In, T]
   }
 
-  sealed trait Sealed[Input, T] {
+  sealed trait Sealed[In <: Input, T] {
 
     def value: T
 
     def valueTry: Try[T]
 
-    def valueEither: Either[Borer.Error[Position[Input]], T]
+    def valueEither: Either[Borer.Error[In#Position], T]
 
-    def valueAndIndex: (T, Long)
+    def valueAndInput: (T, In)
 
-    def valueAndIndexTry: Try[(T, Long)]
+    def valueAndInputTry: Try[(T, In)]
 
-    def valueAndIndexEither: Either[Borer.Error[Position[Input]], (T, Long)]
+    def valueAndInputEither: Either[Borer.Error[In#Position], (T, In)]
   }
 
-  final private[borer] class Impl[Input, Config <: Reader.Config](
-      input: Input,
+  final private[borer] class Impl[In <: Input, Config <: Reader.Config](
+      input: In,
       defaultConfig: Config,
       defaultWrapper: Receiver.Wrapper[Config],
-      parserCreator: Receiver.ParserCreator[Input, Config],
-      target: Target)(implicit ia: InputAccess[Input])
-      extends Borer.AbstractSetup[Config](defaultConfig, defaultWrapper) with Api[Input, Config]
-      with Sealed[Input, AnyRef] {
+      parserCreator: Receiver.ParserCreator[In, Config],
+      target: Target)
+      extends Borer.AbstractSetup[Config](defaultConfig, defaultWrapper) with Api[In, Config] with Sealed[In, AnyRef] {
 
-    private[this] var startIndex: Long         = _
     private[this] var prefixOnly: Boolean      = _
     private[this] var decoder: Decoder[AnyRef] = _
-
-    def withStartIndex(index: Long): this.type = {
-      this.startIndex = index
-      this
-    }
 
     def withPrefixOnly: this.type = {
       this.prefixOnly = true
       this
     }
 
-    def to[T](implicit decoder: Decoder[T]): Sealed[Input, T] = {
+    def to[T](implicit decoder: Decoder[T]): Sealed[In, T] = {
       this.decoder = decoder.asInstanceOf[Decoder[AnyRef]]
-      this.asInstanceOf[Sealed[Input, T]]
+      this.asInstanceOf[Sealed[In, T]]
     }
 
     def value: AnyRef = {
@@ -109,7 +97,7 @@ object DecodingSetup {
       try {
         decodeFrom(reader)
       } catch {
-        case e: Borer.Error[_] ⇒ throw e.withPosOf(reader)
+        case e: Borer.Error[_] ⇒ throw e.withPosOf[In](reader)
         case NonFatal(e)       ⇒ throw new Borer.Error.General(reader.lastPosition, e)
       }
     }
@@ -119,53 +107,53 @@ object DecodingSetup {
       try {
         Success(decodeFrom(reader))
       } catch {
-        case e: Borer.Error[_] ⇒ Failure(e.withPosOf(reader))
+        case e: Borer.Error[_] ⇒ Failure(e.withPosOf[In](reader))
         case NonFatal(e)       ⇒ Failure(new Borer.Error.General(reader.lastPosition, e))
       }
     }
 
-    def valueEither: Either[Borer.Error[Position[Input]], AnyRef] = {
+    def valueEither: Either[Borer.Error[In#Position], AnyRef] = {
       val reader = newReader()
       try {
         Right(decodeFrom(reader))
       } catch {
-        case e: Borer.Error[_] ⇒ Left(e.withPosOf(reader))
+        case e: Borer.Error[_] ⇒ Left(e.withPosOf[In](reader))
         case NonFatal(e)       ⇒ Left(new Borer.Error.General(reader.lastPosition, e))
       }
     }
 
-    def valueAndIndex: (AnyRef, Long) = {
+    def valueAndInput: (AnyRef, In) = {
       val reader = newReader()
       try {
-        decodeFrom(reader) → reader.cursor
+        decodeFrom(reader) → input
       } catch {
-        case e: Borer.Error[_] ⇒ throw e.withPosOf(reader)
+        case e: Borer.Error[_] ⇒ throw e.withPosOf[In](reader)
         case NonFatal(e)       ⇒ throw new Borer.Error.General(reader.lastPosition, e)
       }
     }
 
-    def valueAndIndexTry: Try[(AnyRef, Long)] = {
+    def valueAndInputTry: Try[(AnyRef, In)] = {
       val reader = newReader()
       try {
-        Success(decodeFrom(reader) → reader.cursor)
+        Success(decodeFrom(reader) → input)
       } catch {
-        case e: Borer.Error[_] ⇒ Failure(e.withPosOf(reader))
+        case e: Borer.Error[_] ⇒ Failure(e.withPosOf[In](reader))
         case NonFatal(e)       ⇒ Failure(new Borer.Error.General(reader.lastPosition, e))
       }
     }
 
-    def valueAndIndexEither: Either[Borer.Error[Position[Input]], (AnyRef, Long)] = {
+    def valueAndInputEither: Either[Borer.Error[In#Position], (AnyRef, In)] = {
       val reader = newReader()
       try {
-        Right(decodeFrom(reader) → reader.cursor)
+        Right(decodeFrom(reader) → input)
       } catch {
-        case e: Borer.Error[_] ⇒ Left(e.withPosOf(reader))
+        case e: Borer.Error[_] ⇒ Left(e.withPosOf[In](reader))
         case NonFatal(e)       ⇒ Left(new Borer.Error.General(reader.lastPosition, e))
       }
     }
 
-    private def newReader(): InputReader[Input, Config] =
-      new InputReader(startIndex, parserCreator(input, config, ia), receiverWrapper, config, target)
+    private def newReader(): InputReader[In, Config] =
+      new InputReader(parserCreator(input, config), receiverWrapper, config, target)
 
     private def decodeFrom(reader: Reader): AnyRef = {
       reader.skipDataItem() // fetch first data item
