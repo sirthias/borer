@@ -15,6 +15,7 @@ import cats.kernel.Eq
 import org.openjdk.jmh.annotations._
 
 import scala.io.Source
+import scala.util.Random
 
 /**
   * Compares the performance of encoding operations.
@@ -93,7 +94,10 @@ object Foo {
 
 sealed abstract class EncodingDecodingExampleData {
 
-  lazy val ints: List[Int] = (0 to 1000).toList
+  lazy val ints: List[Int] = {
+    val random = new Random()
+    Iterator.continually(random.nextInt(10000000)).take(10000).toList
+  }
 
   lazy val foos: Map[String, Foo] = List
     .tabulate(100) { i ⇒

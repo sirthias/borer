@@ -8,6 +8,7 @@
 
 package io.bullet.borer.benchmarks
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import io.bullet.borer.Nullable
 
 // model for the test JSON files, generated with https://transform.now.sh/json-to-scala-case-class/
@@ -240,6 +241,8 @@ object EuLobbyFinancial {
 
 object EuLobbyRepr {
   case class Facets()
+
+  @JsonIgnoreProperties(ignoreUnknown = true)
   case class Results(
       activity_consult_committees: Nullable[String],
       activity_high_level_groups: Nullable[String],
@@ -965,6 +968,7 @@ object Reddit {
       gid_3: Int
   )
 
+  @JsonIgnoreProperties(ignoreUnknown = true)
   case class Data(
       approved_at_utc: Nullable[String],
       subreddit: String,
@@ -1238,16 +1242,23 @@ object Turkish {
 
 object TwitterApiResponse {
 
+  @JsonIgnoreProperties(ignoreUnknown = true)
   case class Entities(
+      hashtags: Seq[String] = Nil,
+      symbols: Seq[String] = Nil,
       user_mentions: Seq[UserMentions],
       urls: Option[List[Urls]] = None
   )
 
+  @JsonIgnoreProperties(ignoreUnknown = true)
   case class Entities1(
+      hashtags: Seq[String] = Nil,
+      symbols: Seq[String] = Nil,
       url: Url,
       description: Url
   )
 
+  @JsonIgnoreProperties(ignoreUnknown = true)
   case class RetweetedStatus(
       created_at: String,
       id: Long,
@@ -1266,6 +1277,7 @@ object TwitterApiResponse {
       lang: String
   )
 
+  @JsonIgnoreProperties(ignoreUnknown = true)
   case class RootInterface(
       created_at: String,
       id: Long,
@@ -1285,6 +1297,7 @@ object TwitterApiResponse {
       lang: String
   )
 
+  @JsonIgnoreProperties(ignoreUnknown = true)
   case class Url(
       urls: Option[List[Urls]] = None
   )

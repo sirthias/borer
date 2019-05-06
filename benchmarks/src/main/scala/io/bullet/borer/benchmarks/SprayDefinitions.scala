@@ -14,6 +14,8 @@ import java.nio.charset.StandardCharsets.UTF_8
 
 import io.bullet.borer.{Default, Nullable}
 
+import scala.collection.immutable.TreeMap
+
 object SprayCodecs {
   import spray.json.DefaultJsonProtocol._
 
@@ -108,7 +110,43 @@ class SprayModelBenchmark extends DomBenchmark {
         implicit val a = jsonFormat0(EuLobbyFinancial.Facets)
         implicit val b = jsonFormat8(EuLobbyFinancial.CustomIncomes)
         implicit val c = new JsonFormat[EuLobbyFinancial.Results] {
-          def write(obj: EuLobbyFinancial.Results) = ???
+          def write(obj: EuLobbyFinancial.Results) =
+            JsObject(
+              TreeMap(
+                "other_sources_donation" -> obj.other_sources_donation.toJson,
+                "status" -> obj.status.toJson,
+                "turnover_min" -> obj.turnover_min.toJson,
+                "eur_sources_procurement" -> obj.eur_sources_procurement.toJson,
+                "end_date" -> obj.end_date.toJson,
+                "eur_sources_procurement_src" -> obj.eur_sources_procurement_src.toJson,
+                "new_organisation" -> obj.new_organisation.toJson,
+                "turnover_max" -> obj.turnover_max.toJson,
+                "updated_at" -> obj.updated_at.toJson,
+                "cost_min" -> obj.cost_min.toJson,
+                "direct_rep_costs_max" -> obj.direct_rep_costs_max.toJson,
+                "representative" -> obj.representative.toJson,
+                "cost_absolute" -> obj.cost_absolute.toJson,
+                "eur_sources_grants_src" -> obj.eur_sources_grants_src.toJson,
+                "id" -> obj.id.toJson,
+                "customIncomes" -> obj.customIncomes.toJson,
+                "total_budget" -> obj.total_budget.toJson,
+                "turnover_absolute" -> obj.turnover_absolute.toJson,
+                "eur_sources_grants" -> obj.eur_sources_grants.toJson,
+                "other_sources_contributions" -> obj.other_sources_contributions.toJson,
+                "cost_max" -> obj.cost_max.toJson,
+                "created_at" -> obj.created_at.toJson,
+                "uri" -> obj.uri.toJson,
+                "public_financing_infranational" -> obj.public_financing_infranational.toJson,
+                "direct_rep_costs_min" -> obj.direct_rep_costs_min.toJson,
+                "public_financing_total" -> obj.public_financing_total.toJson,
+                "other_sources_total" -> obj.other_sources_total.toJson,
+                "other_financial_information" -> obj.other_financial_information.toJson,
+                "public_financing_national" -> obj.public_financing_national.toJson,
+                "no_clients" -> obj.no_clients.toJson,
+                "type" -> obj.`type`.toJson,
+                "start_date" -> obj.start_date.toJson,
+              )
+            )
           def read(json: JsValue) = {
             val x = json.asJsObject
             EuLobbyFinancial.Results(
@@ -152,7 +190,61 @@ class SprayModelBenchmark extends DomBenchmark {
       case "eu-lobby-repr.json" ⇒
         implicit val a = jsonFormat0(EuLobbyRepr.Facets)
         implicit val b = new JsonFormat[EuLobbyRepr.Results] {
-          def write(obj: EuLobbyRepr.Results) = ???
+          def write(obj: EuLobbyRepr.Results) =
+            JsObject(
+              TreeMap(
+                "activity_consult_committees" -> obj.activity_consult_committees.toJson,
+                "activity_high_level_groups" -> obj.activity_high_level_groups.toJson,
+                "head_office_lat" -> obj.head_office_lat.toJson,
+                "updated_at" -> obj.updated_at.toJson,
+                "entity" -> obj.entity.toJson,
+                "number_of_natural_persons" -> obj.number_of_natural_persons.toJson,
+                "legal" -> obj.legal.toJson,
+                "native_name" -> obj.native_name.toJson,
+                "head_office_country" -> obj.head_office_country.toJson,
+                "id" -> obj.id.toJson,
+                "activity_industry_forums" -> obj.activity_industry_forums.toJson,
+                "contact_country" -> obj.contact_country.toJson,
+                "head_office_postbox" -> obj.head_office_postbox.toJson,
+                "networking" -> obj.networking.toJson,
+                "members_75" -> obj.members_75.toJson,
+                "main_category" -> obj.main_category.toJson,
+                "members_50" -> obj.members_50.toJson,
+                "activity_expert_groups" -> obj.activity_expert_groups.toJson,
+                "sub_category_title" -> obj.sub_category_title.toJson,
+                "other_code_of_conduct" -> obj.other_code_of_conduct.toJson,
+                "head_office_town" -> obj.head_office_town.toJson,
+                "info_members" -> obj.info_members.toJson,
+                "head" -> obj.head.toJson,
+                "status" -> obj.status.toJson,
+                "main_category_title" -> obj.main_category_title.toJson,
+                "head_office_street" -> obj.head_office_street.toJson,
+                "activity_inter_groups" -> obj.activity_inter_groups.toJson,
+                "acronym" -> obj.acronym.toJson,
+                "activity_eu_legislative" -> obj.activity_eu_legislative.toJson,
+                "registration_date" -> obj.registration_date.toJson,
+                "activity_relevant_comm" -> obj.activity_relevant_comm.toJson,
+                "head_office_post_code" -> obj.head_office_post_code.toJson,
+                "goals" -> obj.goals.toJson,
+                "members" -> obj.members.toJson,
+                "last_update_date" -> obj.last_update_date.toJson,
+                "members_fte" -> obj.members_fte.toJson,
+                "head_office_phone" -> obj.head_office_phone.toJson,
+                "members_25" -> obj.members_25.toJson,
+                "web_site_url" -> obj.web_site_url.toJson,
+                "sub_category" -> obj.sub_category.toJson,
+                "activity_other" -> obj.activity_other.toJson,
+                "name" -> obj.name.toJson,
+                "created_at" -> obj.created_at.toJson,
+                "uri" -> obj.uri.toJson,
+                "identification_code" -> obj.identification_code.toJson,
+                "legal_status" -> obj.legal_status.toJson,
+                "members_100" -> obj.members_100.toJson,
+                "head_office_lon" -> obj.head_office_lon.toJson,
+                "structure_members" -> obj.structure_members.toJson,
+                "code_of_conduct" -> obj.code_of_conduct.toJson,
+              )
+            )
           def read(json: JsValue) = {
             val x = json.asJsObject
             EuLobbyRepr.Results(
@@ -223,7 +315,83 @@ class SprayModelBenchmark extends DomBenchmark {
         implicit val i = jsonFormat5(GithubEvents.License)
         implicit val j = jsonFormat3(GithubEvents.Repo)
         implicit val k = new JsonFormat[GithubEvents.Repo1] {
-          def write(obj: GithubEvents.Repo1) = ???
+          def write(obj: GithubEvents.Repo1) =
+            JsObject(
+              TreeMap(
+                "id" -> obj.id.toJson,
+                "node_id" -> obj.node_id.toJson,
+                "name" -> obj.name.toJson,
+                "full_name" -> obj.full_name.toJson,
+                "private" -> obj.`private`.toJson,
+                "owner" -> obj.owner.toJson,
+                "html_url" -> obj.html_url.toJson,
+                "description" -> obj.description.toJson,
+                "fork" -> obj.fork.toJson,
+                "url" -> obj.url.toJson,
+                "forks_url" -> obj.forks_url.toJson,
+                "keys_url" -> obj.keys_url.toJson,
+                "collaborators_url" -> obj.collaborators_url.toJson,
+                "teams_url" -> obj.teams_url.toJson,
+                "hooks_url" -> obj.hooks_url.toJson,
+                "issue_events_url" -> obj.issue_events_url.toJson,
+                "events_url" -> obj.events_url.toJson,
+                "assignees_url" -> obj.assignees_url.toJson,
+                "branches_url" -> obj.branches_url.toJson,
+                "tags_url" -> obj.tags_url.toJson,
+                "blobs_url" -> obj.blobs_url.toJson,
+                "git_tags_url" -> obj.git_tags_url.toJson,
+                "git_refs_url" -> obj.git_refs_url.toJson,
+                "trees_url" -> obj.trees_url.toJson,
+                "statuses_url" -> obj.statuses_url.toJson,
+                "languages_url" -> obj.languages_url.toJson,
+                "stargazers_url" -> obj.stargazers_url.toJson,
+                "contributors_url" -> obj.contributors_url.toJson,
+                "subscribers_url" -> obj.subscribers_url.toJson,
+                "subscription_url" -> obj.subscription_url.toJson,
+                "commits_url" -> obj.commits_url.toJson,
+                "git_commits_url" -> obj.git_commits_url.toJson,
+                "comments_url" -> obj.comments_url.toJson,
+                "issue_comment_url" -> obj.issue_comment_url.toJson,
+                "contents_url" -> obj.contents_url.toJson,
+                "compare_url" -> obj.compare_url.toJson,
+                "merges_url" -> obj.merges_url.toJson,
+                "archive_url" -> obj.archive_url.toJson,
+                "downloads_url" -> obj.downloads_url.toJson,
+                "issues_url" -> obj.issues_url.toJson,
+                "pulls_url" -> obj.pulls_url.toJson,
+                "milestones_url" -> obj.milestones_url.toJson,
+                "notifications_url" -> obj.notifications_url.toJson,
+                "labels_url" -> obj.labels_url.toJson,
+                "releases_url" -> obj.releases_url.toJson,
+                "deployments_url" -> obj.deployments_url.toJson,
+                "created_at" -> obj.created_at.toJson,
+                "updated_at" -> obj.updated_at.toJson,
+                "pushed_at" -> obj.pushed_at.toJson,
+                "git_url" -> obj.git_url.toJson,
+                "ssh_url" -> obj.ssh_url.toJson,
+                "clone_url" -> obj.clone_url.toJson,
+                "svn_url" -> obj.svn_url.toJson,
+                "homepage" -> obj.homepage.toJson,
+                "size" -> obj.size.toJson,
+                "stargazers_count" -> obj.stargazers_count.toJson,
+                "watchers_count" -> obj.watchers_count.toJson,
+                "language" -> obj.language.toJson,
+                "has_issues" -> obj.has_issues.toJson,
+                "has_projects" -> obj.has_projects.toJson,
+                "has_downloads" -> obj.has_downloads.toJson,
+                "has_wiki" -> obj.has_wiki.toJson,
+                "has_pages" -> obj.has_pages.toJson,
+                "forks_count" -> obj.forks_count.toJson,
+                "mirror_url" -> obj.mirror_url.toJson,
+                "archived" -> obj.archived.toJson,
+                "open_issues_count" -> obj.open_issues_count.toJson,
+                "license" -> obj.license.toJson,
+                "forks" -> obj.forks.toJson,
+                "open_issues" -> obj.open_issues.toJson,
+                "watchers" -> obj.watchers.toJson,
+                "default_branch" -> obj.default_branch.toJson,
+              )
+            )
           def read(json: JsValue) = {
             val x = json.asJsObject
             GithubEvents.Repo1(
@@ -307,7 +475,84 @@ class SprayModelBenchmark extends DomBenchmark {
         implicit val n = jsonFormat5(GithubEvents.Commits)
         implicit val o = jsonFormat5(GithubEvents.CreateEvent)
         implicit val p = new JsonFormat[GithubEvents.Forkee] {
-          def write(obj: GithubEvents.Forkee) = ???
+          def write(obj: GithubEvents.Forkee) =
+            JsObject(
+              TreeMap(
+                "id" -> obj.id.toJson,
+                "node_id" -> obj.node_id.toJson,
+                "name" -> obj.name.toJson,
+                "full_name" -> obj.full_name.toJson,
+                "private" -> obj.`private`.toJson,
+                "owner" -> obj.owner.toJson,
+                "html_url" -> obj.html_url.toJson,
+                "description" -> obj.description.toJson,
+                "fork" -> obj.fork.toJson,
+                "url" -> obj.url.toJson,
+                "forks_url" -> obj.forks_url.toJson,
+                "keys_url" -> obj.keys_url.toJson,
+                "collaborators_url" -> obj.collaborators_url.toJson,
+                "teams_url" -> obj.teams_url.toJson,
+                "hooks_url" -> obj.hooks_url.toJson,
+                "issue_events_url" -> obj.issue_events_url.toJson,
+                "events_url" -> obj.events_url.toJson,
+                "assignees_url" -> obj.assignees_url.toJson,
+                "branches_url" -> obj.branches_url.toJson,
+                "tags_url" -> obj.tags_url.toJson,
+                "blobs_url" -> obj.blobs_url.toJson,
+                "git_tags_url" -> obj.git_tags_url.toJson,
+                "git_refs_url" -> obj.git_refs_url.toJson,
+                "trees_url" -> obj.trees_url.toJson,
+                "statuses_url" -> obj.statuses_url.toJson,
+                "languages_url" -> obj.languages_url.toJson,
+                "stargazers_url" -> obj.stargazers_url.toJson,
+                "contributors_url" -> obj.contributors_url.toJson,
+                "subscribers_url" -> obj.subscribers_url.toJson,
+                "subscription_url" -> obj.subscription_url.toJson,
+                "commits_url" -> obj.commits_url.toJson,
+                "git_commits_url" -> obj.git_commits_url.toJson,
+                "comments_url" -> obj.comments_url.toJson,
+                "issue_comment_url" -> obj.issue_comment_url.toJson,
+                "contents_url" -> obj.contents_url.toJson,
+                "compare_url" -> obj.compare_url.toJson,
+                "merges_url" -> obj.merges_url.toJson,
+                "archive_url" -> obj.archive_url.toJson,
+                "downloads_url" -> obj.downloads_url.toJson,
+                "issues_url" -> obj.issues_url.toJson,
+                "pulls_url" -> obj.pulls_url.toJson,
+                "milestones_url" -> obj.milestones_url.toJson,
+                "notifications_url" -> obj.notifications_url.toJson,
+                "labels_url" -> obj.labels_url.toJson,
+                "releases_url" -> obj.releases_url.toJson,
+                "deployments_url" -> obj.deployments_url.toJson,
+                "created_at" -> obj.created_at.toJson,
+                "updated_at" -> obj.updated_at.toJson,
+                "pushed_at" -> obj.pushed_at.toJson,
+                "git_url" -> obj.git_url.toJson,
+                "ssh_url" -> obj.ssh_url.toJson,
+                "clone_url" -> obj.clone_url.toJson,
+                "svn_url" -> obj.svn_url.toJson,
+                "homepage" -> obj.homepage.toJson,
+                "size" -> obj.size.toJson,
+                "stargazers_count" -> obj.stargazers_count.toJson,
+                "watchers_count" -> obj.watchers_count.toJson,
+                "language" -> obj.language.toJson,
+                "has_issues" -> obj.has_issues.toJson,
+                "has_projects" -> obj.has_projects.toJson,
+                "has_downloads" -> obj.has_downloads.toJson,
+                "has_wiki" -> obj.has_wiki.toJson,
+                "has_pages" -> obj.has_pages.toJson,
+                "forks_count" -> obj.forks_count.toJson,
+                "mirror_url" -> obj.mirror_url.toJson,
+                "archived" -> obj.archived.toJson,
+                "open_issues_count" -> obj.open_issues_count.toJson,
+                "license" -> obj.license.toJson,
+                "forks" -> obj.forks.toJson,
+                "open_issues" -> obj.open_issues.toJson,
+                "watchers" -> obj.watchers.toJson,
+                "default_branch" -> obj.default_branch.toJson,
+                "public" -> obj.public.toJson,
+              )
+            )
           def read(json: JsValue) = {
             val x = json.asJsObject
             GithubEvents.Forkee(
@@ -391,7 +636,56 @@ class SprayModelBenchmark extends DomBenchmark {
         implicit val r = jsonFormat5(GithubEvents.Head)
         implicit val s = jsonFormat4(GithubEvents.PullRequest)
         implicit val t = new JsonFormat[GithubEvents.PullRequest1] {
-          def write(obj: GithubEvents.PullRequest1) = ???
+          def write(obj: GithubEvents.PullRequest1) =
+            JsObject(
+              TreeMap(
+                "url" -> obj.url.toJson,
+                "id" -> obj.id.toJson,
+                "node_id" -> obj.node_id.toJson,
+                "html_url" -> obj.html_url.toJson,
+                "diff_url" -> obj.diff_url.toJson,
+                "patch_url" -> obj.patch_url.toJson,
+                "issue_url" -> obj.issue_url.toJson,
+                "number" -> obj.number.toJson,
+                "state" -> obj.state.toJson,
+                "locked" -> obj.locked.toJson,
+                "title" -> obj.title.toJson,
+                "user" -> obj.user.toJson,
+                "body" -> obj.body.toJson,
+                "created_at" -> obj.created_at.toJson,
+                "updated_at" -> obj.updated_at.toJson,
+                "closed_at" -> obj.closed_at.toJson,
+                "merged_at" -> obj.merged_at.toJson,
+                "merge_commit_sha" -> obj.merge_commit_sha.toJson,
+                "assignee" -> obj.assignee.toJson,
+                "assignees" -> obj.assignees.toJson,
+                "requested_reviewers" -> obj.requested_reviewers.toJson,
+                "requested_teams" -> obj.requested_teams.toJson,
+                "labels" -> obj.labels.toJson,
+                "milestone" -> obj.milestone.toJson,
+                "commits_url" -> obj.commits_url.toJson,
+                "review_comments_url" -> obj.review_comments_url.toJson,
+                "review_comment_url" -> obj.review_comment_url.toJson,
+                "comments_url" -> obj.comments_url.toJson,
+                "statuses_url" -> obj.statuses_url.toJson,
+                "head" -> obj.head.toJson,
+                "base" -> obj.base.toJson,
+                "_links" -> obj._links.toJson,
+                "author_association" -> obj.author_association.toJson,
+                "merged" -> obj.merged.toJson,
+                "mergeable" -> obj.mergeable.toJson,
+                "rebaseable" -> obj.rebaseable.toJson,
+                "mergeable_state" -> obj.mergeable_state.toJson,
+                "merged_by" -> obj.merged_by.toJson,
+                "comments" -> obj.comments.toJson,
+                "review_comments" -> obj.review_comments.toJson,
+                "maintainer_can_modify" -> obj.maintainer_can_modify.toJson,
+                "commits" -> obj.commits.toJson,
+                "additions" -> obj.additions.toJson,
+                "deletions" -> obj.deletions.toJson,
+                "changed_files" -> obj.changed_files.toJson,
+              )
+            )
           def read(json: JsValue) = {
             val x = json.asJsObject
             GithubEvents.PullRequest1(
@@ -444,7 +738,44 @@ class SprayModelBenchmark extends DomBenchmark {
           }
         }
         implicit val u = new JsonFormat[GithubEvents.PullRequest2] {
-          def write(obj: GithubEvents.PullRequest2) = ???
+          def write(obj: GithubEvents.PullRequest2) =
+            JsObject(
+              TreeMap(
+                "url" -> obj.url.toJson,
+                "id" -> obj.id.toJson,
+                "node_id" -> obj.node_id.toJson,
+                "html_url" -> obj.html_url.toJson,
+                "diff_url" -> obj.diff_url.toJson,
+                "patch_url" -> obj.patch_url.toJson,
+                "issue_url" -> obj.issue_url.toJson,
+                "number" -> obj.number.toJson,
+                "state" -> obj.state.toJson,
+                "locked" -> obj.locked.toJson,
+                "title" -> obj.title.toJson,
+                "user" -> obj.user.toJson,
+                "body" -> obj.body.toJson,
+                "created_at" -> obj.created_at.toJson,
+                "updated_at" -> obj.updated_at.toJson,
+                "closed_at" -> obj.closed_at.toJson,
+                "merged_at" -> obj.merged_at.toJson,
+                "merge_commit_sha" -> obj.merge_commit_sha.toJson,
+                "assignee" -> obj.assignee.toJson,
+                "assignees" -> obj.assignees.toJson,
+                "requested_reviewers" -> obj.requested_reviewers.toJson,
+                "requested_teams" -> obj.requested_teams.toJson,
+                "labels" -> obj.labels.toJson,
+                "milestone" -> obj.milestone.toJson,
+                "commits_url" -> obj.commits_url.toJson,
+                "review_comments_url" -> obj.review_comments_url.toJson,
+                "review_comment_url" -> obj.review_comment_url.toJson,
+                "comments_url" -> obj.comments_url.toJson,
+                "statuses_url" -> obj.statuses_url.toJson,
+                "head" -> obj.head.toJson,
+                "base" -> obj.base.toJson,
+                "_links" -> obj._links.toJson,
+                "author_association" -> obj.author_association.toJson,
+              )
+            )
           def read(json: JsValue) = {
             val x = json.asJsObject
             GithubEvents.PullRequest2(
@@ -487,7 +818,35 @@ class SprayModelBenchmark extends DomBenchmark {
         implicit val v = jsonFormat3(GithubEvents.PullRequestEvent)
         implicit val w = jsonFormat3(GithubEvents.PullRequestReviewCommentEvent)
         implicit val x = new JsonFormat[GithubEvents.Issue] {
-          def write(obj: GithubEvents.Issue) = ???
+          def write(obj: GithubEvents.Issue) =
+            JsObject(
+              TreeMap(
+                "url" -> obj.url.toJson,
+                "repository_url" -> obj.repository_url.toJson,
+                "labels_url" -> obj.labels_url.toJson,
+                "comments_url" -> obj.comments_url.toJson,
+                "events_url" -> obj.events_url.toJson,
+                "html_url" -> obj.html_url.toJson,
+                "id" -> obj.id.toJson,
+                "node_id" -> obj.node_id.toJson,
+                "number" -> obj.number.toJson,
+                "title" -> obj.title.toJson,
+                "user" -> obj.user.toJson,
+                "labels" -> obj.labels.toJson,
+                "state" -> obj.state.toJson,
+                "locked" -> obj.locked.toJson,
+                "assignee" -> obj.assignee.toJson,
+                "assignees" -> obj.assignees.toJson,
+                "milestone" -> obj.milestone.toJson,
+                "comments" -> obj.comments.toJson,
+                "created_at" -> obj.created_at.toJson,
+                "updated_at" -> obj.updated_at.toJson,
+                "closed_at" -> obj.closed_at.toJson,
+                "author_association" -> obj.author_association.toJson,
+                "pull_request" -> obj.pull_request.toJson,
+                "body" -> obj.body.toJson,
+              )
+            )
           def read(json: JsValue) = {
             val x = json.asJsObject
             GithubEvents.Issue(
@@ -518,8 +877,35 @@ class SprayModelBenchmark extends DomBenchmark {
             )
           }
         }
-        implicit val y =  new JsonFormat[GithubEvents.Issue1] {
-          def write(obj: GithubEvents.Issue1) = ???
+        implicit val y = new JsonFormat[GithubEvents.Issue1] {
+          def write(obj: GithubEvents.Issue1) =
+            JsObject(
+              TreeMap(
+                "url" -> obj.url.toJson,
+                "repository_url" -> obj.repository_url.toJson,
+                "labels_url" -> obj.labels_url.toJson,
+                "comments_url" -> obj.comments_url.toJson,
+                "events_url" -> obj.events_url.toJson,
+                "html_url" -> obj.html_url.toJson,
+                "id" -> obj.id.toJson,
+                "node_id" -> obj.node_id.toJson,
+                "number" -> obj.number.toJson,
+                "title" -> obj.title.toJson,
+                "user" -> obj.user.toJson,
+                "labels" -> obj.labels.toJson,
+                "state" -> obj.state.toJson,
+                "locked" -> obj.locked.toJson,
+                "assignee" -> obj.assignee.toJson,
+                "assignees" -> obj.assignees.toJson,
+                "milestone" -> obj.milestone.toJson,
+                "comments" -> obj.comments.toJson,
+                "created_at" -> obj.created_at.toJson,
+                "updated_at" -> obj.updated_at.toJson,
+                "closed_at" -> obj.closed_at.toJson,
+                "author_association" -> obj.author_association.toJson,
+                "body" -> obj.body.toJson,
+              )
+            )
           def read(json: JsValue) = {
             val x = json.asJsObject
             GithubEvents.Issue1(
@@ -583,7 +969,102 @@ class SprayModelBenchmark extends DomBenchmark {
         implicit val c = jsonFormat5(Reddit.MediaEmbed)
         implicit val d = jsonFormat3(Reddit.Gildings)
         implicit val e = new JsonFormat[Reddit.Data] {
-          def write(obj: Reddit.Data) = ???
+          def write(obj: Reddit.Data) =
+            JsObject(
+              TreeMap(
+                "approved_at_utc" -> obj.approved_at_utc.toJson,
+                "subreddit" -> obj.subreddit.toJson,
+                "selftext" -> obj.selftext.toJson,
+                "author_fullname" -> obj.author_fullname.toJson,
+                "saved" -> obj.saved.toJson,
+                "mod_reason_title" -> obj.mod_reason_title.toJson,
+                "gilded" -> obj.gilded.toJson,
+                "clicked" -> obj.clicked.toJson,
+                "title" -> obj.title.toJson,
+                "link_flair_richtext" -> obj.link_flair_richtext.toJson,
+                "subreddit_name_prefixed" -> obj.subreddit_name_prefixed.toJson,
+                "hidden" -> obj.hidden.toJson,
+                "pwls" -> obj.pwls.toJson,
+                "link_flair_css_class" -> obj.link_flair_css_class.toJson,
+                "downs" -> obj.downs.toJson,
+                "parent_whitelist_status" -> obj.parent_whitelist_status.toJson,
+                "hide_score" -> obj.hide_score.toJson,
+                "name" -> obj.name.toJson,
+                "quarantine" -> obj.quarantine.toJson,
+                "link_flair_text_color" -> obj.link_flair_text_color.toJson,
+                "author_flair_background_color" -> obj.author_flair_background_color.toJson,
+                "subreddit_type" -> obj.subreddit_type.toJson,
+                "ups" -> obj.ups.toJson,
+                "domain" -> obj.domain.toJson,
+                "media_embed" -> obj.media_embed.toJson,
+                "author_flair_template_id" -> obj.author_flair_template_id.toJson,
+                "is_original_content" -> obj.is_original_content.toJson,
+                "user_reports" -> obj.user_reports.toJson,
+                "secure_media" -> obj.secure_media.toJson,
+                "is_reddit_media_domain" -> obj.is_reddit_media_domain.toJson,
+                "is_meta" -> obj.is_meta.toJson,
+                "category" -> obj.category.toJson,
+                "secure_media_embed" -> obj.secure_media_embed.toJson,
+                "link_flair_text" -> obj.link_flair_text.toJson,
+                "can_mod_post" -> obj.can_mod_post.toJson,
+                "score" -> obj.score.toJson,
+                "approved_by" -> obj.approved_by.toJson,
+                "thumbnail" -> obj.thumbnail.toJson,
+                "edited" -> obj.edited.toJson,
+                "author_flair_css_class" -> obj.author_flair_css_class.toJson,
+                "author_flair_richtext" -> obj.author_flair_richtext.toJson,
+                "gildings" -> obj.gildings.toJson,
+                "content_categories" -> obj.content_categories.toJson,
+                "is_self" -> obj.is_self.toJson,
+                "mod_note" -> obj.mod_note.toJson,
+                "created" -> obj.created.toJson,
+                "link_flair_type" -> obj.link_flair_type.toJson,
+                "wls" -> obj.wls.toJson,
+                "banned_by" -> obj.banned_by.toJson,
+                "author_flair_type" -> obj.author_flair_type.toJson,
+                "contest_mode" -> obj.contest_mode.toJson,
+                "selftext_html" -> obj.selftext_html.toJson,
+                "likes" -> obj.likes.toJson,
+                "suggested_sort" -> obj.suggested_sort.toJson,
+                "banned_at_utc" -> obj.banned_at_utc.toJson,
+                "view_count" -> obj.view_count.toJson,
+                "archived" -> obj.archived.toJson,
+                "no_follow" -> obj.no_follow.toJson,
+                "is_crosspostable" -> obj.is_crosspostable.toJson,
+                "pinned" -> obj.pinned.toJson,
+                "over_18" -> obj.over_18.toJson,
+                "media_only" -> obj.media_only.toJson,
+                "can_gild" -> obj.can_gild.toJson,
+                "spoiler" -> obj.spoiler.toJson,
+                "locked" -> obj.locked.toJson,
+                "author_flair_text" -> obj.author_flair_text.toJson,
+                "visited" -> obj.visited.toJson,
+                "num_reports" -> obj.num_reports.toJson,
+                "distinguished" -> obj.distinguished.toJson,
+                "subreddit_id" -> obj.subreddit_id.toJson,
+                "mod_reason_by" -> obj.mod_reason_by.toJson,
+                "removal_reason" -> obj.removal_reason.toJson,
+                "link_flair_background_color" -> obj.link_flair_background_color.toJson,
+                "id" -> obj.id.toJson,
+                "is_robot_indexable" -> obj.is_robot_indexable.toJson,
+                "report_reasons" -> obj.report_reasons.toJson,
+                "author" -> obj.author.toJson,
+                "num_crossposts" -> obj.num_crossposts.toJson,
+                "num_comments" -> obj.num_comments.toJson,
+                "send_replies" -> obj.send_replies.toJson,
+                "mod_reports" -> obj.mod_reports.toJson,
+                "author_patreon_flair" -> obj.author_patreon_flair.toJson,
+                "author_flair_text_color" -> obj.author_flair_text_color.toJson,
+                "permalink" -> obj.permalink.toJson,
+                "whitelist_status" -> obj.whitelist_status.toJson,
+                "stickied" -> obj.stickied.toJson,
+                "url" -> obj.url.toJson,
+                "subreddit_subscribers" -> obj.subreddit_subscribers.toJson,
+                "created_utc" -> obj.created_utc.toJson,
+                "media" -> obj.media.toJson,
+                "is_video" -> obj.is_video.toJson,
+              )
+            )
           def read(json: JsValue) = {
             val x = json.asJsObject
             Reddit.Data(
@@ -717,10 +1198,56 @@ class SprayModelBenchmark extends DomBenchmark {
         implicit val a = jsonFormat4(TwitterApiResponse.Urls)
         implicit val b = jsonFormat1(TwitterApiResponse.Url)
         implicit val c = jsonFormat5(TwitterApiResponse.UserMentions)
-        implicit val d = jsonFormat2(TwitterApiResponse.Entities)
-        implicit val e = jsonFormat2(TwitterApiResponse.Entities1)
+        implicit val d = jsonFormat4(TwitterApiResponse.Entities)
+        implicit val e = jsonFormat4(TwitterApiResponse.Entities1)
         implicit val f = new JsonFormat[TwitterApiResponse.User] {
-          def write(obj: TwitterApiResponse.User) = ???
+          def write(obj: TwitterApiResponse.User) =
+            JsObject(
+              TreeMap(
+                "id" -> obj.id.toJson,
+                "id_str" -> obj.id_str.toJson,
+                "name" -> obj.name.toJson,
+                "screen_name" -> obj.screen_name.toJson,
+                "location" -> obj.location.toJson,
+                "description" -> obj.description.toJson,
+                "url" -> obj.url.toJson,
+                "entities" -> obj.entities.toJson,
+                "protected" -> obj.`protected`.toJson,
+                "followers_count" -> obj.followers_count.toJson,
+                "friends_count" -> obj.friends_count.toJson,
+                "listed_count" -> obj.listed_count.toJson,
+                "created_at" -> obj.created_at.toJson,
+                "favourites_count" -> obj.favourites_count.toJson,
+                "utc_offset" -> obj.utc_offset.toJson,
+                "time_zone" -> obj.time_zone.toJson,
+                "geo_enabled" -> obj.geo_enabled.toJson,
+                "verified" -> obj.verified.toJson,
+                "statuses_count" -> obj.statuses_count.toJson,
+                "lang" -> obj.lang.toJson,
+                "contributors_enabled" -> obj.contributors_enabled.toJson,
+                "is_translator" -> obj.is_translator.toJson,
+                "is_translation_enabled" -> obj.is_translation_enabled.toJson,
+                "profile_background_color" -> obj.profile_background_color.toJson,
+                "profile_background_image_url" -> obj.profile_background_image_url.toJson,
+                "profile_background_image_url_https" -> obj.profile_background_image_url_https.toJson,
+                "profile_background_tile" -> obj.profile_background_tile.toJson,
+                "profile_image_url" -> obj.profile_image_url.toJson,
+                "profile_image_url_https" -> obj.profile_image_url_https.toJson,
+                "profile_banner_url" -> obj.profile_banner_url.toJson,
+                "profile_link_color" -> obj.profile_link_color.toJson,
+                "profile_sidebar_border_color" -> obj.profile_sidebar_border_color.toJson,
+                "profile_sidebar_fill_color" -> obj.profile_sidebar_fill_color.toJson,
+                "profile_text_color" -> obj.profile_text_color.toJson,
+                "profile_use_background_image" -> obj.profile_use_background_image.toJson,
+                "has_extended_profile" -> obj.has_extended_profile.toJson,
+                "default_profile" -> obj.default_profile.toJson,
+                "default_profile_image" -> obj.default_profile_image.toJson,
+                "following" -> obj.following.toJson,
+                "follow_request_sent" -> obj.follow_request_sent.toJson,
+                "notifications" -> obj.notifications.toJson,
+                "translator_type" -> obj.translator_type.toJson,
+              )
+            )
           def read(json: JsValue) = {
             val x = json.asJsObject
             TwitterApiResponse.User(

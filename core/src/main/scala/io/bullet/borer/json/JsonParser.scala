@@ -130,14 +130,14 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
       val nlz        = java.lang.Long.numberOfLeadingZeros(mask)
       val digitCount = nlz >> 3
 
-      val d0         = vMask >>> 56
-      val d1         = vMask << 8 >>> 56
-      val d2         = vMask << 16 >>> 56
-      @inline def d3 = vMask << 24 >>> 56
-      @inline def d4 = vMask << 32 >>> 56
-      @inline def d5 = vMask << 40 >>> 56
-      @inline def d6 = vMask << 48 >>> 56
-      @inline def d7 = vMask & 0xffl
+      val d0 = vMask >>> 56
+      val d1 = vMask << 8 >>> 56
+      val d2 = vMask << 16 >>> 56
+      val d3 = vMask << 24 >>> 56
+      val d4 = vMask << 32 >>> 56
+      val d5 = vMask << 40 >>> 56
+      val d6 = vMask << 48 >>> 56
+      val d7 = vMask & 0xffl
 
       @inline def v1 =
         value * 10 - d0

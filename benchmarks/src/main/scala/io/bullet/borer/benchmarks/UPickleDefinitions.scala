@@ -9,6 +9,7 @@
 package io.bullet.borer.benchmarks
 
 import java.nio.charset.StandardCharsets.UTF_8
+
 import org.openjdk.jmh.annotations._
 
 object UPickleCodecs {
@@ -21,7 +22,7 @@ object UPickleCodecs {
   implicit val intsReader = implicitly[upickle.default.Reader[List[Int]]]
 }
 
-import UPickleCodecs._
+import io.bullet.borer.benchmarks.UPickleCodecs._
 
 class UPickleEncodingBenchmark extends EncodingBenchmark {
 
