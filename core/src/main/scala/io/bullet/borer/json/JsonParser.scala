@@ -556,7 +556,7 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
     if (c1 <= 0x20) { // 1st char is whitespace
       val c2 = input.readByteOrFF() & 0xFF
       if (c2 <= 0x20) { // 2nd char is also whitespace,
-        skip8()        // so there are probably (lots) more coming
+        skip8()         // so there are probably (lots) more coming
       } else c2
     } else c1
   }

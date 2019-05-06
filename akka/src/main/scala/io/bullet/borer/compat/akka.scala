@@ -8,6 +8,8 @@
 
 package io.bullet.borer.compat
 
+import java.nio.charset.StandardCharsets
+
 import io.bullet.borer.{ByteAccess, _}
 import _root_.akka.util.ByteString
 
@@ -53,52 +55,133 @@ object akka {
   implicit val ByteStringCodec = Codec[ByteString](_ writeBytes _, _.readBytes())
 
   /**
-    * [[InputAccess]] for [[ByteString]].
+    * [[Input]] around [[ByteString]].
     */
-  implicit object ByteStringInputAccess extends InputAccess[ByteString] {
-    type Bytes = ByteString
+  implicit object ByteStringWrapper extends Input.Wrapper[ByteString] {
+    type In = FromByteString
+    def apply(value: ByteString) = new FromByteString(value)
+  }
 
-    def byteAccess = ByteStringByteAccess
+  final class FromByteString(byteString: ByteString) extends Input {
+    type Bytes    = ByteString
+    type Position = Input.Position
 
-    @inline def length(input: ByteString): Long = input.length.toLong
+    protected var _cursor: Int = _
 
-    def unsafeByte(input: ByteString, index: Long): Byte = input(index.toInt)
+    @inline def cursor: Long = _cursor.toLong
+    @inline def byteAccess   = ByteStringByteAccess
 
-    def doubleByteBigEndian(input: ByteString, index: Long): Int = {
-      val i = index.toInt
-      (input(i) & 0xFF) << 8 |
-      (input(i + 1) & 0xFF)
+    def position(marker: Long): Position = Input.Position(this, marker)
+
+    @inline def prepareRead(length: Long): Boolean = _cursor + length <= byteString.length
+
+    def readByte(): Byte = {
+      val c = _cursor
+      _cursor = c + 1
+      byteString(c)
     }
 
-    def quadByteBigEndian(input: ByteString, index: Long): Int = {
-      val i = index.toInt
-      (input(i) & 0xFF) << 24 |
-      (input(i + 1) & 0xFF) << 16 |
-      (input(i + 2) & 0xFF) << 8 |
-      (input(i + 3) & 0xFF)
+    @inline def readByteOrFF(): Byte = {
+      def readPadded(): Byte = {
+        _cursor += 1
+        -1
+      }
+      if (_cursor < byteString.length) readByte() else readPadded()
     }
 
-    def octaByteBigEndian(input: ByteString, index: Long): Long = {
-      val i = index.toInt
-      (input(i) & 0xffl) << 56 |
-      (input(i + 1) & 0xffl) << 48 |
-      (input(i + 2) & 0xffl) << 40 |
-      (input(i + 3) & 0xffl) << 32 |
-      (input(i + 4) & 0xffl) << 24 |
-      (input(i + 5) & 0xffl) << 16 |
-      (input(i + 6) & 0xffl) << 8 |
-      (input(i + 7) & 0xffl)
+    def readDoubleByteBigEndian(): Char = {
+      val c = _cursor
+      _cursor = c + 2
+      ((byteString(c) << 8) | byteString(c + 1) & 0xFF).toChar
     }
 
-    def bytes(input: ByteString, index: Long, length: Long): ByteString = {
-      val indexInt  = index.toInt
-      val lengthInt = length.toInt
-      val end       = indexInt + lengthInt
-      if (indexInt == index && lengthInt == length && end >= 0) {
-        if (length > 0) input.slice(indexInt, end)
-        else ByteString.empty
-      } else throw new Borer.Error.Overflow(Position(input, index), "ByteString input is limited to size 2GB")
+    @inline def readDoubleByteBigEndianPaddedFF(): Char = {
+      def readPadded(): Char = {
+        val c = _cursor
+        _cursor = c + 2
+        byteString.length - c match {
+          case 1 ⇒ (byteString(c) << 8 | 0xFF).toChar
+          case _ ⇒ '\uffff'
+        }
+      }
+      if (_cursor < byteString.length - 1) readDoubleByteBigEndian() else readPadded()
     }
+
+    def readQuadByteBigEndian(): Int = {
+      val c = _cursor
+      _cursor = c + 4
+      byteString(c) << 24 |
+      (byteString(c + 1) & 0xFF) << 16 |
+      (byteString(c + 2) & 0xFF) << 8 |
+      byteString(c + 3) & 0xFF
+    }
+
+    @inline def readQuadByteBigEndianPaddedFF(): Int = {
+      def readPadded(): Int = {
+        val c = _cursor
+        val res = byteString.length - c match {
+          case 1 ⇒ readByte() << 24 | 0xFFFFFF
+          case 2 ⇒ readDoubleByteBigEndian() << 16 | 0xFFFF
+          case 3 ⇒ readDoubleByteBigEndian() << 16 | (readByte() & 0xFF) << 8 | 0xFF
+          case _ ⇒ -1
+        }
+        _cursor = c + 4
+        res
+      }
+      if (_cursor < byteString.length - 3) readQuadByteBigEndian() else readPadded()
+    }
+
+    def readOctaByteBigEndian(): Long = {
+      val c = _cursor
+      _cursor = c + 8
+      byteString(c).toLong << 56 |
+      (byteString(c + 1) & 0xffl) << 48 |
+      (byteString(c + 2) & 0xffl) << 40 |
+      (byteString(c + 3) & 0xffl) << 32 |
+      (byteString(c + 4) & 0xffl) << 24 |
+      (byteString(c + 5) & 0xffl) << 16 |
+      (byteString(c + 6) & 0xffl) << 8 |
+      byteString(c + 7) & 0xffl
+    }
+
+    @inline def readOctaByteBigEndianPaddedFF(): Long = {
+      def readPadded(): Long = {
+        val c = _cursor
+        val res = byteString.length - c match {
+          case 1 ⇒ readByte().toLong << 56 | 0xffffffffffffffl
+          case 2 ⇒ readDoubleByteBigEndian().toLong << 48 | 0xffffffffffffl
+          case 3 ⇒ readDoubleByteBigEndian().toLong << 48 | (readByte() & 0xffl) << 40 | 0xffffffffffl
+          case 4 ⇒ readQuadByteBigEndian().toLong << 32 | 0xffffffffl
+          case 5 ⇒ readQuadByteBigEndian().toLong << 32 | (readByte() & 0xffl) << 24 | 0xffffffl
+          case 6 ⇒ readQuadByteBigEndian().toLong << 32 | (readDoubleByteBigEndian() & 0xffffl) << 16 | 0xffffl
+          case 7 ⇒
+            readQuadByteBigEndian().toLong << 32 | (readDoubleByteBigEndian() & 0xffffl) << 16 | (readByte() & 0xffl) << 8 | 0xffl
+          case _ => -1
+        }
+        _cursor = c + 8
+        res
+      }
+      if (_cursor < byteString.length - 7) readOctaByteBigEndian() else readPadded()
+    }
+
+    @inline def readBytes(length: Long): Bytes =
+      if (length > 0) {
+        val len = length.toInt
+        val end = _cursor + len
+        if (len == length && end >= 0) {
+          val c = _cursor
+          _cursor = end
+          byteString.slice(c, end)
+        } else throw new Borer.Error.Overflow(position(cursor), "ByteString input is limited to size 2GB")
+      } else ByteString.empty
+
+    @inline def unread(count: Int): this.type = {
+      _cursor -= count
+      this
+    }
+
+    @inline def precedingBytesAsAsciiString(length: Int): String =
+      new String(byteString.toArray[Byte], StandardCharsets.ISO_8859_1)
   }
 
   /**

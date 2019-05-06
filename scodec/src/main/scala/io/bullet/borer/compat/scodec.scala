@@ -8,6 +8,7 @@
 
 package io.bullet.borer.compat
 
+import java.nio.charset.StandardCharsets
 import java.util
 
 import _root_.scodec.bits.ByteVector
@@ -52,44 +53,132 @@ object scodec {
   implicit val ByteVectorCodec = Codec[ByteVector](_ writeBytes _, _.readBytes())
 
   /**
-    * [[InputAccess]] for [[ByteVector]].
+    * [[Input]] around [[ByteVector]].
     */
-  implicit object ByteVectorInputAccess extends InputAccess[ByteVector] {
-    type Bytes = ByteVector
+  implicit object ByteVectorWrapper extends Input.Wrapper[ByteVector] {
+    type In = FromByteVector
+    def apply(value: ByteVector) = new FromByteVector(value)
+  }
 
-    def byteAccess = ByteVectorByteAccess
+  final class FromByteVector(byteVector: ByteVector) extends Input {
+    type Bytes    = ByteVector
+    type Position = Input.Position
 
-    @inline def length(input: ByteVector): Long = input.size
+    protected var _cursor: Long = _
 
-    def unsafeByte(input: ByteVector, index: Long): Byte = input(index)
+    @inline def cursor: Long = _cursor
+    @inline def byteAccess   = ByteVectorByteAccess
 
-    def doubleByteBigEndian(input: ByteVector, index: Long): Int =
-      (input(index) & 0xFF) << 8 |
-        (input(index + 1) & 0xFF)
+    def position(marker: Long): Position = Input.Position(this, marker)
 
-    def quadByteBigEndian(input: ByteVector, index: Long): Int =
-      (input(index) & 0xFF) << 24 |
-        (input(index + 1) & 0xFF) << 16 |
-        (input(index + 2) & 0xFF) << 8 |
-        (input(index + 3) & 0xFF)
+    @inline def prepareRead(length: Long): Boolean = _cursor + length <= byteVector.length
 
-    def octaByteBigEndian(input: ByteVector, index: Long): Long = {
-      (input(index) & 0xffl) << 56 |
-      (input(index + 1) & 0xffl) << 48 |
-      (input(index + 2) & 0xffl) << 40 |
-      (input(index + 3) & 0xffl) << 32 |
-      (input(index + 4) & 0xffl) << 24 |
-      (input(index + 5) & 0xffl) << 16 |
-      (input(index + 6) & 0xffl) << 8 |
-      (input(index + 7) & 0xffl)
+    def readByte(): Byte = {
+      val c = _cursor
+      _cursor = c + 1
+      byteVector(c)
     }
 
-    def bytes(input: ByteVector, index: Long, length: Long): ByteVector =
+    @inline def readByteOrFF(): Byte = {
+      def readPadded(): Byte = {
+        _cursor += 1
+        -1
+      }
+      if (_cursor < byteVector.length) readByte() else readPadded()
+    }
+
+    def readDoubleByteBigEndian(): Char = {
+      val c = _cursor
+      _cursor = c + 2
+      ((byteVector(c) << 8) | byteVector(c + 1) & 0xFF).toChar
+    }
+
+    @inline def readDoubleByteBigEndianPaddedFF(): Char = {
+      def readPadded(): Char = {
+        val c = _cursor
+        _cursor = c + 2
+        byteVector.length - c match {
+          case 1 ⇒ (byteVector(c) << 8 | 0xFF).toChar
+          case _ ⇒ '\uffff'
+        }
+      }
+      if (_cursor < byteVector.length - 1) readDoubleByteBigEndian() else readPadded()
+    }
+
+    def readQuadByteBigEndian(): Int = {
+      val c = _cursor
+      _cursor = c + 4
+      byteVector(c) << 24 |
+      (byteVector(c + 1) & 0xFF) << 16 |
+      (byteVector(c + 2) & 0xFF) << 8 |
+      byteVector(c + 3) & 0xFF
+    }
+
+    @inline def readQuadByteBigEndianPaddedFF(): Int = {
+      def readPadded(): Int = {
+        val c = _cursor
+        val res = byteVector.length - c match {
+          case 1 ⇒ readByte() << 24 | 0xFFFFFF
+          case 2 ⇒ readDoubleByteBigEndian() << 16 | 0xFFFF
+          case 3 ⇒ readDoubleByteBigEndian() << 16 | (readByte() & 0xFF) << 8 | 0xFF
+          case _ ⇒ -1
+        }
+        _cursor = c + 4
+        res
+      }
+      if (_cursor < byteVector.length - 3) readQuadByteBigEndian() else readPadded()
+    }
+
+    def readOctaByteBigEndian(): Long = {
+      val c = _cursor
+      _cursor = c + 8
+      byteVector(c).toLong << 56 |
+      (byteVector(c + 1) & 0xffl) << 48 |
+      (byteVector(c + 2) & 0xffl) << 40 |
+      (byteVector(c + 3) & 0xffl) << 32 |
+      (byteVector(c + 4) & 0xffl) << 24 |
+      (byteVector(c + 5) & 0xffl) << 16 |
+      (byteVector(c + 6) & 0xffl) << 8 |
+      byteVector(c + 7) & 0xffl
+    }
+
+    @inline def readOctaByteBigEndianPaddedFF(): Long = {
+      def readPadded(): Long = {
+        val c = _cursor
+        val res = byteVector.length - c match {
+          case 1 ⇒ readByte().toLong << 56 | 0xffffffffffffffl
+          case 2 ⇒ readDoubleByteBigEndian().toLong << 48 | 0xffffffffffffl
+          case 3 ⇒ readDoubleByteBigEndian().toLong << 48 | (readByte() & 0xffl) << 40 | 0xffffffffffl
+          case 4 ⇒ readQuadByteBigEndian().toLong << 32 | 0xffffffffl
+          case 5 ⇒ readQuadByteBigEndian().toLong << 32 | (readByte() & 0xffl) << 24 | 0xffffffl
+          case 6 ⇒ readQuadByteBigEndian().toLong << 32 | (readDoubleByteBigEndian() & 0xffffl) << 16 | 0xffffl
+          case 7 ⇒
+            readQuadByteBigEndian().toLong << 32 | (readDoubleByteBigEndian() & 0xffffl) << 16 | (readByte() & 0xffl) << 8 | 0xffl
+          case _ => -1
+        }
+        _cursor = c + 8
+        res
+      }
+      if (_cursor < byteVector.length - 7) readOctaByteBigEndian() else readPadded()
+    }
+
+    @inline def readBytes(length: Long): Bytes =
       if (length > 0) {
-        val end = index + length
-        if (end >= 0) input.slice(index, end)
-        else throw new Borer.Error.Overflow(Position(input, index), "ByteVector input is limited to 2^63 bytes")
+        val end = _cursor + length
+        if (end >= 0) {
+          val c = _cursor
+          _cursor = end
+          byteVector.slice(c, end)
+        } else throw new Borer.Error.Overflow(position(cursor), "ByteVector input is limited to size 2GB")
       } else ByteVector.empty
+
+    @inline def unread(count: Int): this.type = {
+      _cursor -= count
+      this
+    }
+
+    @inline def precedingBytesAsAsciiString(length: Int): String =
+      new String(byteVector.toArray, StandardCharsets.ISO_8859_1)
   }
 
   /**
