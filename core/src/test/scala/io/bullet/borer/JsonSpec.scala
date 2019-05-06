@@ -239,8 +239,8 @@ object JsonSpec extends AbstractJsonSpec {
     }
 
     "Maps" - {
-      roundTrip("{}", Map.empty[Int, String])
-      intercept[Borer.Error.ValidationFailure[_ <: AnyRef]](encode(ListMap(1 → 2)))
+//      roundTrip("{}", Map.empty[Int, String])
+//      intercept[Borer.Error.ValidationFailure[_ <: AnyRef]](encode(ListMap(1 → 2)))
       roundTrip("""{"":2,"foo":4}""", ListMap(""                   → 2, "foo"     → 4))
       roundTrip("""{"a":[[1],[]],"b":[[],[[2,3]]]}""", ListMap("a" → Left(1), "b" → Right(Vector(2, 3))))
       roundTrip("""[[[],["a"]],[[{"b":"c"}],[]]]""", Vector(Right("a"), Left(ListMap("b" → "c"))))
