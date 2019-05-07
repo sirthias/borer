@@ -175,6 +175,25 @@ object JsonSpec extends AbstractJsonSpec {
       verifyDecoding("1", 1.0f)
     }
 
+    "Number Exercise" - {
+      val numbers =
+        for {
+          number  <- "123456789123456789123456".tails.toList.init
+          ix      <- (-1 until number.length).toList
+          trailer <- List("", " ")
+        } yield
+          ix match {
+            case -1                     => number + trailer
+            case 0                      => "0." + number + trailer
+            case x if x < number.length => number.substring(0, x) + "." + number.substring(x)
+          }
+      val json0                                = numbers.mkString("[", ",", "]")
+      val dom0 @ Dom.ArrayElem.Unsized(elems0) = decode[Dom.Element](json0)
+      val json1                                = encode(dom0)
+      val dom1 @ Dom.ArrayElem.Unsized(elems1) = decode[Dom.Element](json1)
+      elems0.zip(elems1).zipWithIndex.find { case ((a, b), _) => a != b } ==> None
+    }
+
     "Simple Values" - {
       roundTrip("false", false)
       roundTrip("true", true)
@@ -239,8 +258,8 @@ object JsonSpec extends AbstractJsonSpec {
     }
 
     "Maps" - {
-//      roundTrip("{}", Map.empty[Int, String])
-//      intercept[Borer.Error.ValidationFailure[_ <: AnyRef]](encode(ListMap(1 → 2)))
+      roundTrip("{}", Map.empty[Int, String])
+      intercept[Borer.Error.ValidationFailure[_ <: AnyRef]](encode(ListMap(1 → 2)))
       roundTrip("""{"":2,"foo":4}""", ListMap(""                   → 2, "foo"     → 4))
       roundTrip("""{"a":[[1],[]],"b":[[],[[2,3]]]}""", ListMap("a" → Left(1), "b" → Right(Vector(2, 3))))
       roundTrip("""[[[],["a"]],[[{"b":"c"}],[]]]""", Vector(Right("a"), Left(ListMap("b" → "c"))))

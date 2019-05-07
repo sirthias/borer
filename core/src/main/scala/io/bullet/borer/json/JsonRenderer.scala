@@ -244,13 +244,11 @@ final private[borer] class JsonRenderer(var out: Output) extends Receiver.Render
           q >>>= 19
           q // 52429 * l / 524288 = l * 0.10000038146972656
         }
-        def mul10(i: Int)   = (i << 3) + (i << 1)
-        def mul100(l: Long) = (l << 6) + (l << 5) + (l << 2)
 
         // for small numbers we can use the "fast-path"
         def phase2(i: Int): Output = {
           val q = div10(i)
-          val r = i - mul10(q)
+          val r = i - q * 10
           val newOut =
             if (q != 0) phase2(q)
             else if (value < 0) out.writeAsByte('-')
@@ -262,9 +260,9 @@ final private[borer] class JsonRenderer(var out: Output) extends Receiver.Render
         def phase1(l: Long): Output =
           if (l > 65535l) {
             val q  = l / 100
-            val r  = (l - mul100(q)).toInt
+            val r  = (l - q * 100).toInt
             val rq = div10(r)
-            phase1(q).writeBytes(('0' + rq).toByte, ('0' + r - mul10(rq)).toByte)
+            phase1(q).writeBytes(('0' + rq).toByte, ('0' + r - rq * 10).toByte)
           } else phase2(l.toInt)
 
         phase1(math.abs(value))

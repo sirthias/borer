@@ -175,8 +175,8 @@ object akka {
         } else throw new Borer.Error.Overflow(position(cursor), "ByteString input is limited to size 2GB")
       } else ByteString.empty
 
-    @inline def unread(count: Int): this.type = {
-      _cursor -= count
+    @inline def moveCursor(offset: Int): this.type = {
+      _cursor += offset
       this
     }
 

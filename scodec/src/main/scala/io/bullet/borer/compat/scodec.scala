@@ -172,8 +172,8 @@ object scodec {
         } else throw new Borer.Error.Overflow(position(cursor), "ByteVector input is limited to size 2GB")
       } else ByteVector.empty
 
-    @inline def unread(count: Int): this.type = {
-      _cursor -= count
+    @inline def moveCursor(offset: Int): this.type = {
+      _cursor += offset
       this
     }
 

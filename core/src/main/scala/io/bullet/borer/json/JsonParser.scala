@@ -80,7 +80,7 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
     }
 
     @inline def parseNull(): Int =
-      if (input.unread(1).readQuadByteBigEndianPaddedFF() == 0x6e756c6c) { // "null"
+      if (input.moveCursor(-1).readQuadByteBigEndianPaddedFF() == 0x6e756c6c) { // "null"
         receiver.onNull()
         DataItem.Null
       } else failSyntaxError(-4, "`null`")
@@ -92,7 +92,7 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
       } else failSyntaxError(-5, "`false`")
 
     @inline def parseTrue(): Int =
-      if (input.unread(1).readQuadByteBigEndianPaddedFF() == 0x74727565) { // "true"
+      if (input.moveCursor(-1).readQuadByteBigEndianPaddedFF() == 0x74727565) { // "true"
         receiver.onBool(value = true)
         DataItem.Bool
       } else failSyntaxError(-4, "`true`")
@@ -100,13 +100,18 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
     def parseNumberStringExponentPart(len: Int): Int = {
       val c      = input.readByteOrFF().toInt
       var newLen = len
-      if (c != '-' && c != '+') input.unread(1) else newLen += 1
+      if (c != '-' && c != '+') input.moveCursor(-1) else newLen += 1
       newLen = parseDigits(0l, newLen)
-      input.unread(1) // unread stop char
-      if (newLen == len) failSyntaxError(0, "DIGIT", input.readByteOrFF().toInt)
+      val stopChar = auxInt
+      if (newLen == len) failSyntaxError(-1, "DIGIT", stopChar)
       val exp = -auxLong.toInt
       if (exp < 0 || config.maxNumberAbsExponent < exp) failNumberExponentTooLarge(newLen)
-      receiver.onNumberString(input.precedingBytesAsAsciiString(newLen))
+      input.moveCursor(-1) // "unread" the stopChar
+      val numberString = input.precedingBytesAsAsciiString(newLen)
+      if (stopChar == ',') {
+        input.moveCursor(1); state += 1
+      }
+      receiver.onNumberString(numberString)
       DataItem.NumberString
     }
 
@@ -157,7 +162,7 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
         value * 100000000 - d0 * 10000000 - d1 * 1000000 - d2 * 100000 - d3 * 10000 - d4 * 1000 - d5 * 100 - d6 * 10 - d7
 
       @inline def returnWithV(value: Long, stopChar: Long): Int = {
-        input.unread(7 - digitCount)
+        input.moveCursor(digitCount - 7)
         auxInt = (stopChar >>> 56).toInt
         auxLong = value
         len + digitCount
@@ -199,7 +204,9 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
       */
     def parseNumber(negValue: Long, strLen: Int, negative: Boolean): Int = {
       @inline def dispatchNumberString(len: Int) = {
+        input.moveCursor(-1) // "unread" stopchar
         receiver.onNumberString(input.precedingBytesAsAsciiString(len))
+        input.moveCursor(1) // re-consume stopchar
         DataItem.NumberString
       }
       @inline def dispatchDouble(d: Double) = { receiver.onDouble(if (negative) d else -d); DataItem.Double }
@@ -217,8 +224,9 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
       }
       @inline def parseNumberStringExponentPartOrDispatchNumberString(len: Int, stopChar: Int) =
         if ((stopChar | 0x20) != 'e') {
-          if (stopChar == ',') state += 1 else input.unread(1)
-          dispatchNumberString(len)
+          val result = dispatchNumberString(len)
+          if (stopChar == ',') state += 1 else input.moveCursor(-1)
+          result
         } else parseNumberStringExponentPart(len + 1)
 
       var len               = strLen
@@ -254,32 +262,35 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
               val c = input.readByteOrFF() & 0xFF
               expNeg = c == '-'
               val len0 = if (!expNeg && c != '+') {
-                input.unread(1)
+                input.moveCursor(-1)
                 len + 1
               } else len + 2
               len = parseDigits(0l, len0)
+              stopChar = auxInt
               expDigits = len - len0
-              if (expDigits == 0) failSyntaxError(0, "DIGIT", auxInt)
+              if (expDigits == 0) failSyntaxError(-1, "DIGIT", stopChar)
               val e = -auxLong.toInt
               if (e < 0 || config.maxNumberAbsExponent < e) failNumberExponentTooLarge(-expDigits)
               e
             } else 0
-          if (stopChar == ',') state += 1 else input.unread(1)
           val exp = if (expNeg) negFractionDigits - posExp else negFractionDigits + posExp
-          if (exp != 0) {
-            if (exp > 0) {
-              if (exp < 19 && negMantissa > long10pow(exp << 1)) {
-                // the value is an integer that fits into a 63 bit Long
-                dispatchIntOrLong(len, negMantissa * long10pow((exp << 1) + 1))
-              } else if (negMantissa > -(1l << 53) && exp < 23) {
-                // the value is an integer that can be represented losslessly by a Double
-                dispatchDouble(negMantissa * double10pow(exp))
+          val result =
+            if (exp != 0) {
+              if (exp > 0) {
+                if (exp < 19 && negMantissa > long10pow(exp << 1)) {
+                  // the value is an integer that fits into a 63 bit Long
+                  dispatchIntOrLong(len, negMantissa * long10pow((exp << 1) + 1))
+                } else if (negMantissa > -(1l << 53) && exp < 23) {
+                  // the value is an integer that can be represented losslessly by a Double
+                  dispatchDouble(negMantissa * double10pow(exp))
+                } else dispatchNumberString(len)
+              } else if (negMantissa > -(1l << 53) && exp > -23) {
+                // the value is a decimal number that can be represented losslessly by a Double
+                dispatchDouble(negMantissa.toDouble / double10pow(-exp))
               } else dispatchNumberString(len)
-            } else if (negMantissa > -(1l << 53) && exp > -23) {
-              // the value is a decimal number that can be represented losslessly by a Double
-              dispatchDouble(negMantissa.toDouble / double10pow(-exp))
-            } else dispatchNumberString(len)
-          } else dispatchIntOrLong(len, negMantissa) // normal, unscaled integer
+            } else dispatchIntOrLong(len, negMantissa) // normal, unscaled integer
+          if (stopChar == ',') state += 1 else input.moveCursor(-1)
+          result
         } else parseNumberStringExponentPartOrDispatchNumberString(len, stopChar)
       } else {
         if (len > maxMantissaEndLen) failNumberMantissaTooLong(-len)
@@ -308,11 +319,11 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
           case 'n'  ⇒ '\n'
           case 't'  ⇒ '\t'
           case 'r' ⇒
-            if (input.readDoubleByteBigEndianPaddedFF() == 0x5c6e) {
+            if (input.readDoubleByteBigEndianPaddedFF() == 0x5c6e) { // are we immediately followed by a \n ?
               cc = appendChar(cc, '\r')
               '\n'
-            } else {
-              input.unread(2)
+            } else {               // no, not a \r\n sequence
+              input.moveCursor(-2) // unread our failed test for /n
               '\r'
             }
           case 'u' ⇒
@@ -328,7 +339,7 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
               cc = appendChar(cc, x.toChar)
               x = (hd(q >>> 24) << 12) | (hd(q << 8 >>> 24) << 8) | (hd(q << 16 >>> 24) << 4) | hd(q & 0xFF)
               if (x < 0) failIllegalEscapeSeq(-4)
-            } else input.unread(2)
+            } else input.moveCursor(-2)
             x.toChar
           case _ ⇒ failIllegalEscapeSeq(-2)
         }
@@ -359,12 +370,12 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
         case _ ⇒ failIllegalUtf8(-5)
       }
       cc = appendChar(cc, cp.toChar)
-      input.unread(3 - byteCount)
+      input.moveCursor(byteCount - 3)
 
       // if the next byte is also an 8-bit character (which is not that unlikely) we decode that as well right away
       val nextByte = quad << (byteCount << 3) >> 24
       if (nextByte >= 0) {
-        input.unread(1)
+        input.moveCursor(-1) // "unread" the last byte
         cc
       } else parseMultiByteUtf8Char(nextByte, cc)
     }
@@ -392,37 +403,35 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
       // in order to decrease instruction dependencies we always speculatively write all 8 chars to the char buffer,
       // independently of how many are actually "good" chars, this keeps CPU pipelines maximally busy
       ensureCharsLen(charCursor + 8)
-      chars(charCursor) = (octa >>> 56).toChar
-      chars(charCursor + 1) = (octa << 8 >>> 56).toChar
-      chars(charCursor + 2) = (octa << 16 >>> 56).toChar
-      chars(charCursor + 3) = (octa << 24 >>> 56).toChar
-      chars(charCursor + 4) = (octa << 32 >>> 56).toChar
-      chars(charCursor + 5) = (octa << 40 >>> 56).toChar
-      chars(charCursor + 6) = (octa << 48 >>> 56).toChar
-      chars(charCursor + 7) = (octa & 0xffl).toChar
+      chars(charCursor) = (octa >>> 56).toChar           // here it would be nice
+      chars(charCursor + 1) = (octa << 8 >>> 56).toChar  // to have access
+      chars(charCursor + 2) = (octa << 16 >>> 56).toChar // to a JVM intrinsic for the
+      chars(charCursor + 3) = (octa << 24 >>> 56).toChar // x86 PDEP instruction
+      chars(charCursor + 4) = (octa << 32 >>> 56).toChar // which could do this "widening"
+      chars(charCursor + 5) = (octa << 40 >>> 56).toChar // of 8 x 8-bit to 16-bit values
+      chars(charCursor + 6) = (octa << 48 >>> 56).toChar // in 2 steps à 4 conversion each in parallel
+      chars(charCursor + 7) = (octa & 0xffl).toChar      // see: https://www.felixcloutier.com/x86/pdep
 
       val newCursor = charCursor + charCount
-      if (nlz < 64) {
-        val byteMask     = 0x8000000000000000l >>> nlz
-        val byteMask7bit = byteMask & ~octa // mask that only selects the respective 7-bit variants from qMask or bMask
-        val unreadCount  = 7 - charCount
-        if ((qMask & byteMask7bit) != 0) { // first special char is '"'
-          val c    = octa << nlz << 8 >> 56          // the char after the '"'
+      if (nlz < 64) { // do we have a special char anywhere?
+        val stopChar0 = octa << nlz
+        val stopChar  = (stopChar0 >>> 56).toInt // the first special char after `charCount` good chars
+        input.moveCursor(charCount - 7) // move the cursor to the char after the stopChar
+        if (stopChar == '"') {
+          val c    = stopChar0 << 8 >>> 56           // the char after the '"' (or zero, if we haven't read it yet)
           val flag = if (c == continuation) 1 else 0 // actually branchless under the hood
-          state += flag                    // if there is a ':' or ',' after the '"' we advance the state right away
-          input.unread(unreadCount - flag) // unread all chars after the stop-char and, potentially, the ':' or ','
+          state += flag // if there is a ':' or ',' after the '"' we advance the state right away
+          input.moveCursor(flag)
           receiver.onChars(newCursor, chars)
           DataItem.Chars
-        } else if ((bMask & byteMask7bit) != 0) { // first special char is '\'
-          input.unread(unreadCount)               // unread all chars after the stop-char
+        } else if (stopChar == '\\') {
           parseUtf8String(parseEscapeSeq(newCursor), continuation)
-        } else if ((octa & byteMask) != 0) { // first special char is 8-bit
-          input.unread(unreadCount)          // unread all chars after the stop-char
-          parseUtf8String(parseMultiByteUtf8Char((octa << nlz >> 56).toInt, newCursor), continuation)
-        } else { // first special char is a ctrl char
-          failSyntaxError(8 - charCount, "JSON string character", (octa << nlz >>> 56).toInt)
+        } else if (stopChar > 127) {
+          parseUtf8String(parseMultiByteUtf8Char(stopChar.toByte.toInt, newCursor), continuation)
+        } else { // stopChar char is a ctrl char
+          failSyntaxError(-1, "JSON string character", stopChar)
         }
-      } else parseUtf8String(newCursor, continuation) // we have written 8 normal chars, so recurse immediately
+      } else parseUtf8String(newCursor, continuation) // we have written 8 normal chars, so recurse
     }
 
     def pushArray(): Int =
@@ -547,7 +556,7 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
 
       val nlz = java.lang.Long.numberOfLeadingZeros(mask)
       if (nlz < 64) {
-        input.unread(7 - (nlz >> 3))
+        input.moveCursor((nlz >> 3) - 7)
         (octa << nlz >>> 56).toInt // "return" the first non-whitespace char
       } else skip8()
     }

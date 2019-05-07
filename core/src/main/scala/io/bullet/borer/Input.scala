@@ -107,13 +107,15 @@ trait Input {
   def readBytes(length: Long): Bytes
 
   /**
-    * Moves the cursor the given number of bytes back in order to be able to re-read bytes
-    * that have already been read before.
+    * Moves the cursor the given number of bytes back or forward in order to be able to re-read bytes
+    * that have already been read before or "correct/refine" a previous `moveCursor` call.
     *
-    * NOTE: Count will always be >=0 and <= 8 and will never move the cursor beyond the beginning of the input,
-    * i.e. beyond bytes that have already been read before.
+    * NOTE: Count will always be >= -8 and <= 1 and never move the cursor outside the range of the preceding
+    * `readXXX` call. In particular, this means that this method will never be used to move the cursor
+    * back beyond the beginning of the input or forward to a byte that hasn't been read before.
+    * Therefore an implementation does not have to apply any range check.
     */
-  def unread(count: Int): this.type
+  def moveCursor(offset: Int): this.type
 
   /**
     * Returns the given number of bytes _before_ the current cursor position as an ASCII string.
@@ -248,8 +250,8 @@ object Input {
       } else throw new Borer.Error.Overflow(position(cursor), "Byte-array input is limited to size 2GB")
     }
 
-    @inline def unread(count: Int): this.type = {
-      _cursor -= count
+    @inline def moveCursor(offset: Int): this.type = {
+      _cursor += offset
       this
     }
 
