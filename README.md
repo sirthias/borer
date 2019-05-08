@@ -68,7 +68,7 @@ libraryDependencies += "io.bullet" %% "borer-compat-akka" % "<version>" // for d
 libraryDependencies += "io.bullet" %% "borer-compat-scodec" % "<version>" // for direct `scodec.bits.ByteVector` support
 ```
 
-_BORER_ is available for [Scala] 2.12 as well as [scala.js] 0.6.
+_BORER_ is available for [Scala] 2.12, 2.13.0-RC1 as well as [scala.js] (0.6 for Scala 2.12 and 1.0.0-M7 for Scala 2.13).
 
 
 Basic Usage
@@ -141,7 +141,7 @@ _BORER_ comes with built-in encoding and decoding support for arbitrary combinat
 - `Array[Byte]` 
 - `java.math.BigInteger`, `java.math.BigDecimal` and their scala wrappers `BigInt` and `BigDecimal`
 - `Option[T]` 
-- `Array[T <: AnyRef]` 
+- `Array[T]` 
 - `M[T] <: Iterable[T]` 
 - `M[A, B] <: Map[A, B]`
 - `Iterator[T]`  (encoding only!)
@@ -226,7 +226,7 @@ member name, check out the `borer-derivation` module [described below](#derivati
 ### Transforming Existing Encoders / Decoders
 
 If your type is not a case class but can somehow be constructed from or deconstructed to any available Encoder or
-Decoder respectively, you can rely on the `compose` and `map` methods available on Encoders / Decoders:
+Decoder respectively, you can rely on the `contramap` and `map` methods available on Encoders / Decoders:
 
 ```scala
 import io.bullet.borer.{Encoder, Decoder}
@@ -234,7 +234,7 @@ import io.bullet.borer.{Encoder, Decoder}
 class Person(name: String)
 
 // have `Person` be encoded as a simple CBOR text data item 
-implicit val encoder = Encoder.forString.compose[Person](_.name)
+implicit val encoder = Encoder.forString.contramap[Person](_.name)
 implicit val decoder = Decoder.forString.map(Person(_))
 ```
 
@@ -598,6 +598,7 @@ Contributions are always welcome!
   [scala.js]: https://www.scala-js.org/
   [CBOR]: http://cbor.io/
   [JSON]: http://json.org/
+  [Borer Source]: https://github.com/sirthias/borer/blob/master/core/src/main/scala/io/bullet/borer/Borer.scala 
   [akka-actor]: https://doc.akka.io/docs/akka/2.5/actors.html#dependency
   [Magnolia]: https://propensive.com/opensource/magnolia
   [scodec]: http://scodec.org/
