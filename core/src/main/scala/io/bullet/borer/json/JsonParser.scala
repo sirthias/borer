@@ -209,7 +209,10 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
         input.moveCursor(1) // re-consume stopchar
         DataItem.NumberString
       }
-      @inline def dispatchDouble(d: Double) = { receiver.onDouble(if (negative) d else -d); DataItem.Double }
+      @inline def dispatchDouble(d: Double) = {
+        receiver.onDouble(if (negative || d == 0.0) d else -d)
+        DataItem.Double
+      }
       @inline def dispatchIntOrLong(len: Int, negValue: Long) = {
         var long = negValue
         if (negative || negValue != Long.MinValue && { long = -negValue; true }) {

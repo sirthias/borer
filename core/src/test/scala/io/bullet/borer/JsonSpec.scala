@@ -72,6 +72,10 @@ object JsonSpec extends AbstractJsonSpec {
 
       roundTrip("0.0", 0.0f)
       roundTrip("0.0", 0.0)
+      roundTrip("-0.0", -0.0f)
+      roundTrip("-0.0", -0.0)
+
+      decode[Double]("0.0").toString ==> "0.0"
 
       roundTrip("1.5", 1.5f)
       roundTrip("1.5", 1.5)
