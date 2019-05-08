@@ -1244,16 +1244,16 @@ object TwitterApiResponse {
 
   @JsonIgnoreProperties(ignoreUnknown = true)
   case class Entities(
-      hashtags: Seq[String] = Nil,
-      symbols: Seq[String] = Nil,
+      hashtags: Option[Seq[String]] = None,
+      symbols: Option[Seq[String]] = None,
       user_mentions: Seq[UserMentions],
       urls: Option[List[Urls]] = None
   )
 
   @JsonIgnoreProperties(ignoreUnknown = true)
   case class Entities1(
-      hashtags: Seq[String] = Nil,
-      symbols: Seq[String] = Nil,
+      hashtags: Option[Seq[String]] = None,
+      symbols: Option[Seq[String]] = None,
       url: Url,
       description: Url
   )
