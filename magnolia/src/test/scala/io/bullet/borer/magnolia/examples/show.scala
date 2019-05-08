@@ -15,7 +15,6 @@
 package io.bullet.borer.magnolia.examples
 
 import io.bullet.borer.magnolia._
-import scala.language.experimental.macros
 
 /** shows one type as another, often as a string
   *

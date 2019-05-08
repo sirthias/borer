@@ -21,9 +21,8 @@ import java.math.{BigDecimal => JBigDecimal, BigInteger => JBigInteger}
 import io.bullet.borer.internal.{Macros, Util}
 
 import scala.annotation.tailrec
-import scala.collection.generic.CanBuildFrom
+import scala.collection.{mutable, Factory}
 import scala.collection.immutable.{HashMap, ListMap, TreeMap}
-import scala.collection.mutable
 import scala.reflect.ClassTag
 
 /**
@@ -188,7 +187,7 @@ object Decoder extends LowPrioDecoders {
         else Decoder[Option[T]](r => Some(r.read[T]()))
     }
 
-  implicit def forIterable[T: Decoder, M[X] <: Iterable[X]](implicit cbf: CanBuildFrom[M[T], T, M[T]]): Decoder[M[T]] =
+  implicit def forIterable[T: Decoder, M[X] <: Iterable[X]](implicit factory: Factory[T, M[T]]): Decoder[M[T]] =
     Decoder { r =>
       if (r.hasArrayHeader) {
         @tailrec def rec(remaining: Int, b: mutable.Builder[T, M[T]]): M[T] =
@@ -196,7 +195,7 @@ object Decoder extends LowPrioDecoders {
         val size = r.readArrayHeader()
         if (size <= Int.MaxValue) {
           val intSize = size.toInt
-          val builder = cbf()
+          val builder = factory.newBuilder
           builder.sizeHint(intSize)
           rec(intSize, builder)
         } else r.overflow(s"Cannot deserialize Iterable with size $size (> Int.MaxValue)")
@@ -225,7 +224,7 @@ object Decoder extends LowPrioDecoders {
         } else Util.emptyArray[T]
       } else if (r.tryReadArrayStart()) {
         if (!r.tryReadBreak()) {
-          r.readUntilBreak(mutable.ArrayBuilder.make[T]())(_ += r.read[T]()).result()
+          r.readUntilBreak(mutable.ArrayBuilder.make[T])(_ += r.read[T]()).result()
         } else Util.emptyArray[T]
       } else r.unexpectedDataItem(expected = "Array")
     }

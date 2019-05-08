@@ -187,9 +187,9 @@ object JsonSpec extends AbstractJsonSpec {
             case x if x < number.length => number.substring(0, x) + "." + number.substring(x)
           }
       val json0                                = numbers.mkString("[", ",", "]")
-      val dom0 @ Dom.ArrayElem.Unsized(elems0) = decode[Dom.Element](json0)
+      val dom0 @ Dom.ArrayElem.Unsized(elems0) = decode[Dom.Element](json0).asInstanceOf[Dom.ArrayElem.Unsized]
       val json1                                = encode(dom0)
-      val dom1 @ Dom.ArrayElem.Unsized(elems1) = decode[Dom.Element](json1)
+      val dom1 @ Dom.ArrayElem.Unsized(elems1) = decode[Dom.Element](json1).asInstanceOf[Dom.ArrayElem.Unsized]
       elems0.zip(elems1).zipWithIndex.find { case ((a, b), _) => a != b } ==> None
     }
 

@@ -15,7 +15,6 @@
 package io.bullet.borer.magnolia.examples
 
 import io.bullet.borer.magnolia._
-import scala.language.experimental.macros
 
 /** typeclass for providing a default value for a particular type */
 trait HasDefault[T] { def defaultValue: Either[String, T] }
@@ -35,10 +34,10 @@ object HasDefault {
         case (Right(acc), param) =>
           param.default match {
             case Some(arg) => Right(arg :: acc)
-            case None      => param.typeclass.defaultValue.right.map(_ :: acc)
+            case None      => param.typeclass.defaultValue.map(_ :: acc)
           }
       }
-      args.right.map(x => ctx.rawConstruct(x.reverse.toArray))
+      args.map(x => ctx.rawConstruct(x.reverse.toArray))
     }
   }
 

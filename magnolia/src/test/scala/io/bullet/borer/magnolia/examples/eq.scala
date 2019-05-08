@@ -15,7 +15,6 @@
 package io.bullet.borer.magnolia.examples
 
 import io.bullet.borer.magnolia._
-import scala.language.experimental.macros
 
 /** typeclass for testing the equality of two values of the same type */
 trait Eq[T] { def equal(value: T, value2: T): Boolean }

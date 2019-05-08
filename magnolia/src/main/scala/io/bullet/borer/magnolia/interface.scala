@@ -15,6 +15,7 @@
 package io.bullet.borer.magnolia
 
 import scala.annotation.tailrec
+import scala.collection.immutable.ArraySeq
 
 /** represents a subtype of a sealed trait
   *
@@ -36,7 +37,7 @@ abstract class Subtype[Typeclass[_], Type](val typeName: TypeName, val index: In
   def cast: PartialFunction[Type, SType]
 
   /** all of the annotations on the sub type */
-  final def annotations: Seq[Any] = annotationsArray
+  final def annotations: Seq[Any] = ArraySeq.unsafeWrapArray(annotationsArray)
 }
 
 /** represents a parameter of a case class
@@ -108,7 +109,7 @@ abstract class Param[Typeclass[_], Type](
     *
     *  For efficiency, this sequence is implemented by an `Array`, but upcast to a
     *  [[scala.collection.Seq]] to hide the mutable collection API. */
-  final def annotations: Seq[Any] = annotationsArray
+  final def annotations: Seq[Any] = ArraySeq.unsafeWrapArray(annotationsArray)
 
   final override def toString: String = s"Param($label)"
 }
@@ -169,13 +170,13 @@ abstract class CaseClass[Typeclass[_], Type](
     *
     *  For efficiency, this sequence is implemented by an `Array`, but upcast to a
     *  [[scala.collection.Seq]] to hide the mutable collection API. */
-  final def parameters: Seq[Param[Typeclass, Type]] = parametersArray
+  final def parameters: Seq[Param[Typeclass, Type]] = ArraySeq.unsafeWrapArray(parametersArray)
 
   /** a sequence of objects representing all of the annotations on the case class
     *
     *  For efficiency, this sequence is implemented by an `Array`, but upcast to a
     *  [[scala.collection.Seq]] to hide the mutable collection API. */
-  final def annotations: Seq[Any] = annotationsArray
+  final def annotations: Seq[Any] = ArraySeq.unsafeWrapArray(annotationsArray)
 }
 
 /** represents a sealed trait and the context required to construct a new typeclass instance
@@ -197,7 +198,7 @@ final class SealedTrait[Typeclass[_], Type](
   override def toString: String = s"SealedTrait($typeName, Array[${subtypes.mkString(",")}])"
 
   /** a sequence of all the subtypes of this sealed trait */
-  def subtypes: Seq[Subtype[Typeclass, Type]] = subtypesArray
+  def subtypes: Seq[Subtype[Typeclass, Type]] = ArraySeq.unsafeWrapArray(subtypesArray)
 
   /** convenience method for delegating typeclass application to the typeclass corresponding to the
     *  subtype of the sealed trait which matches the type of the `value`
@@ -225,7 +226,7 @@ final class SealedTrait[Typeclass[_], Type](
     *
     *  For efficiency, this sequence is implemented by an `Array`, but upcast to a
     *  [[scala.collection.Seq]] to hide the mutable collection API. */
-  def annotations: Seq[Any] = annotationsArray
+  def annotations: Seq[Any] = ArraySeq.unsafeWrapArray(annotationsArray)
 }
 
 /**

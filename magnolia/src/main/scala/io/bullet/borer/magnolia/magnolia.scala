@@ -387,7 +387,7 @@ object Magnolia {
           val subType     = sub.asType.toType // FIXME: Broken for path dependent types
           val typeParams  = sub.asType.typeParams
           val typeArgs    = thisType(sub).baseType(genericType.typeSymbol).typeArgs
-          val mapping     = (typeArgs.map(_.typeSymbol), genericType.typeArgs).zipped.toMap
+          val mapping     = typeArgs.map(_.typeSymbol).zip(genericType.typeArgs).toMap
           val newTypeArgs = typeParams.map(mapping.withDefault(_.asType.toType))
           val applied     = appliedType(subType.typeConstructor, newTypeArgs)
           existentialAbstraction(typeParams, applied)
@@ -568,9 +568,13 @@ private[magnolia] object CompileTimeState {
     }
 
     def trace: List[TypePath] =
-      (frames.drop(1), frames).zipped.collect {
-        case (Frame(path, tp1, _), Frame(_, tp2, _)) if !(tp1 =:= tp2) => path
-      }.toList
+      frames
+        .drop(1)
+        .zip(frames)
+        .collect {
+          case (Frame(path, tp1, _), Frame(_, tp2, _)) if !(tp1 =:= tp2) => path
+        }
+        .toList
 
     override def toString: String =
       frames.mkString("magnolia stack:\n", "\n", "\n")

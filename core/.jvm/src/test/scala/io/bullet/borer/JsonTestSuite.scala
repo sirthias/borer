@@ -12,6 +12,7 @@ import java.io.BufferedInputStream
 
 import utest._
 
+import scala.collection.MapView
 import scala.io.Source
 
 object JsonTestSuite extends TestSuite {
@@ -22,16 +23,17 @@ object JsonTestSuite extends TestSuite {
     "n_structure_whitespace_formfeed.json"
   )
 
-  val testFiles: Map[String, Array[Byte]] =
+  val testFiles: MapView[String, Array[Byte]] =
     Source
       .fromResource("")
       .getLines()
       .map { name =>
         val is = new BufferedInputStream(getClass.getResourceAsStream("/" + name))
-        try name → Iterator.continually(is.read).takeWhile(_ != -1).map(_.toByte).toArray
+        try name -> Iterator.continually(is.read).takeWhile(_ != -1).map(_.toByte).toArray
         finally is.close()
       }
       .toMap
+      .view
       .filterKeys(!disabled.contains(_))
 
   val config = Json.DecodingConfig.default.copy(maxNumberMantissaDigits = 99, maxNumberAbsExponent = 999)

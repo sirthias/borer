@@ -14,7 +14,6 @@
  */
 package io.bullet.borer.magnolia.examples
 
-import scala.language.experimental.macros
 import io.bullet.borer.magnolia._
 
 /**

@@ -14,8 +14,6 @@
  */
 package io.bullet.borer.magnolia.examples
 
-import language.experimental.macros
-
 import io.bullet.borer.magnolia._
 
 trait TypeNameInfo[T] { def name: TypeName }

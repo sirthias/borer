@@ -15,7 +15,6 @@
 package io.bullet.borer.magnolia.examples
 
 import io.bullet.borer.magnolia._
-import scala.language.experimental.macros
 
 /** very basic decoder for converting strings to other types */
 trait Decoder[T] { def decode(str: String): T }

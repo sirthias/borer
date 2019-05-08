@@ -10,7 +10,7 @@ lazy val commonSettings = Seq(
   unmanagedResources in Compile += baseDirectory.value.getParentFile.getParentFile / "LICENSE",
   scmInfo := Some(ScmInfo(url("https://github.com/sirthias/borer"), "scm:git:git@github.com:sirthias/borer.git")),
 
-  scalaVersion := "2.12.8",
+  scalaVersion := "2.13.0-RC1",
 
   scalacOptions ++= Seq(
     "-deprecation",
@@ -40,6 +40,7 @@ lazy val commonSettings = Seq(
       case Some((2, 13)) => Seq(
         "-Ywarn-unused:imports,-patvars,-privates,-locals,-implicits,-explicits",
         "-Ycache-macro-class-loader:last-modified",
+        "-Ypatmat-exhaust-depth", "off",
         "-Ybackend-parallelism", "8",
       )
       case x => sys.error(s"unsupported scala version: $x")
@@ -69,7 +70,7 @@ lazy val crossSettings = Seq(
 lazy val scalajsSettings = Seq(
   scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule).withSourceMap(false)),
   scalaJSStage in Global := FastOptStage,
-  scalacOptions ~= { _.filterNot(_ == "-Ywarn-dead-code") :+ "-P:scalajs:sjsDefinedByDefault" }
+  scalacOptions ~= { _.filterNot(_ == "-Ywarn-dead-code") }
 )
 
 lazy val publishingSettings = Seq(
@@ -133,10 +134,10 @@ val `javax-annotation` = Def.setting("javax.annotation"      %  "javax.annotatio
 lazy val borer = project.in(file("."))
   .aggregate(coreJVM, coreJS)
   .aggregate(akka)
-  .aggregate(scodecJVM, scodecJS)
+  //.aggregate(scodecJVM, scodecJS)
+  .aggregate(scodecJVM)
   .aggregate(magnoliaJVM, magnoliaJS)
   .aggregate(derivationJVM, derivationJS)
-  .aggregate(benchmarks)
   .settings(commonSettings)
   .settings(releaseSettings)
   .settings(publishArtifact := false)
@@ -177,9 +178,10 @@ lazy val akka = project
 lazy val scodecJVM = scodec.jvm
   .dependsOn(coreJVM % "compile->compile;test->test")
   .dependsOn(derivationJVM % "test->compile")
-lazy val scodecJS  = scodec.js
-  .dependsOn(coreJS   % "compile->compile;test->test")
-  .dependsOn(derivationJS % "test->compile")
+// temporarily disabled due to missing upstream release
+//lazy val scodecJS  = scodec.js
+//  .dependsOn(coreJS   % "compile->compile;test->test")
+//  .dependsOn(derivationJS % "test->compile")
 lazy val scodec = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
@@ -230,19 +232,3 @@ lazy val magnolia = crossProject(JSPlatform, JVMPlatform)
     )
   )
   .jsSettings(scalajsSettings: _*)
-
-lazy val benchmarks = project
-  .enablePlugins(AutomateHeaderPlugin, JmhPlugin)
-  .dependsOn(coreJVM, derivationJVM)
-  .settings(commonSettings)
-  .settings(
-    publishArtifact := false,
-    libraryDependencies ++= Seq(
-      "com.fasterxml.jackson.module"  %% "jackson-module-scala" % "2.9.8",
-      "com.lihaoyi"                   %% "upickle"              % "0.7.4",
-      "io.circe"                      %% "circe-core"           % "0.11.1",
-      "io.circe"                      %% "circe-derivation"     % "0.12.0-M1",
-      "io.circe"                      %% "circe-jawn"           % "0.11.1",
-      "io.spray"                      %% "spray-json"           % "1.3.5",
-    )
-  )
