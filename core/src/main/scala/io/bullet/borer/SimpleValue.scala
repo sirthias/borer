@@ -25,7 +25,7 @@ object SimpleValue {
   def legalRange: String           = "[0..19] or [24..255]"
 
   implicit val codec = Codec[SimpleValue](
-    (w, x) ⇒ w.writeSimpleValue(x.value),
-    r ⇒ SimpleValue(r.readSimpleValue())
+    (w, x) => w.writeSimpleValue(x.value),
+    r => SimpleValue(r.readSimpleValue())
   )
 }

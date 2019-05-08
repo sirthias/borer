@@ -180,8 +180,8 @@ object Input {
         val c = _cursor
         _cursor = c + 2
         byteArray.length - c match {
-          case 1 ⇒ (byteArray(c) << 8 | 0xFF).toChar
-          case _ ⇒ '\uffff'
+          case 1 => (byteArray(c) << 8 | 0xFF).toChar
+          case _ => '\uffff'
         }
       }
       if (_cursor < byteArray.length - 1) readDoubleByteBigEndian() else readPadded()
@@ -198,10 +198,10 @@ object Input {
         val c = _cursor
         _cursor = c + 4
         byteArray.length - c match {
-          case 1 ⇒ byteArray(c) << 24 | 0xFFFFFF
-          case 2 ⇒ baa.doubleByteBigEndian(byteArray, c) << 16 | 0xFFFF
-          case 3 ⇒ baa.doubleByteBigEndian(byteArray, c) << 16 | (byteArray(c + 2) & 0xFF) << 8 | 0xFF
-          case _ ⇒ -1
+          case 1 => byteArray(c) << 24 | 0xFFFFFF
+          case 2 => baa.doubleByteBigEndian(byteArray, c) << 16 | 0xFFFF
+          case 3 => baa.doubleByteBigEndian(byteArray, c) << 16 | (byteArray(c + 2) & 0xFF) << 8 | 0xFF
+          case _ => -1
         }
       }
       if (_cursor < byteArray.length - 3) readQuadByteBigEndian() else readPadded()
@@ -218,19 +218,20 @@ object Input {
         val c = _cursor
         _cursor = c + 8
         byteArray.length - c match {
-          case 1 ⇒ byteArray(c).toLong << 56 | 0xffffffffffffffl
-          case 2 ⇒ baa.doubleByteBigEndian(byteArray, c).toLong << 48 | 0xffffffffffffl
-          case 3 ⇒ baa.doubleByteBigEndian(byteArray, c).toLong << 48 | (byteArray(c + 2) & 0xffl) << 40 | 0xffffffffffl
-          case 4 ⇒ baa.quadByteBigEndian(byteArray, c).toLong << 32 | 0xffffffffl
-          case 5 ⇒ baa.quadByteBigEndian(byteArray, c).toLong << 32 | (byteArray(c + 4) & 0xffl) << 24 | 0xffffffl
-          case 6 ⇒
+          case 1 => byteArray(c).toLong << 56 | 0XFFFFFFFFFFFFFFL
+          case 2 => baa.doubleByteBigEndian(byteArray, c).toLong << 48 | 0XFFFFFFFFFFFFL
+          case 3 =>
+            baa.doubleByteBigEndian(byteArray, c).toLong << 48 | (byteArray(c + 2) & 0XFFL) << 40 | 0XFFFFFFFFFFL
+          case 4 => baa.quadByteBigEndian(byteArray, c).toLong << 32 | 0XFFFFFFFFL
+          case 5 => baa.quadByteBigEndian(byteArray, c).toLong << 32 | (byteArray(c + 4) & 0XFFL) << 24 | 0XFFFFFFL
+          case 6 =>
             baa.quadByteBigEndian(byteArray, c).toLong << 32 |
-              (baa.doubleByteBigEndian(byteArray, c + 4) & 0xffffl) << 16 |
-              0xffffl
-          case 7 ⇒
+              (baa.doubleByteBigEndian(byteArray, c + 4) & 0XFFFFL) << 16 |
+              0XFFFFL
+          case 7 =>
             baa.quadByteBigEndian(byteArray, c).toLong << 32 |
-              (baa.doubleByteBigEndian(byteArray, c + 4) & 0xffffl) << 16 |
-              (byteArray(c + 6) & 0xffl) << 8 | 0xffl
+              (baa.doubleByteBigEndian(byteArray, c + 4) & 0XFFFFL) << 16 |
+              (byteArray(c + 6) & 0XFFL) << 8 | 0XFFL
           case _ => -1
         }
       }

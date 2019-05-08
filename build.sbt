@@ -11,7 +11,6 @@ lazy val commonSettings = Seq(
   scmInfo := Some(ScmInfo(url("https://github.com/sirthias/borer"), "scm:git:git@github.com:sirthias/borer.git")),
 
   scalaVersion := "2.12.8",
-  crossScalaVersions := Seq(scalaVersion.value, "2.13.0-RC1"),
 
   scalacOptions ++= Seq(
     "-deprecation",
@@ -19,28 +18,31 @@ lazy val commonSettings = Seq(
     "-feature",
     "-language:_",
     "-unchecked",
-    "-Xfatal-warnings",
     "-Xlint:_,-missing-interpolator",
-    "-Xfuture",
-    "-Yno-adapted-args",
     "-Ywarn-dead-code",
-    "-Ywarn-inaccessible",
-    "-Ywarn-infer-any",
-    "-Ywarn-nullary-override",
-    "-Ywarn-nullary-unit",
     "-Ywarn-numeric-widen",
-    "-Ywarn-unused-import",
-    "-Ywarn-unused:imports,-patvars,-privates,-locals,-implicits,-explicits",
-    "-Ycache-macro-class-loader:last-modified",
-    "-Ybackend-parallelism", "8"
+    "-Xfatal-warnings",
   ),
   scalacOptions ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, 12)) =>
-        Seq(
-          "-Xsource:2.13", // new warning: deprecate assignments in argument position
-        )
-      case _ => Nil
+      case Some((2, 12)) => Seq(
+        "-Yno-adapted-args",
+        "-Ywarn-inaccessible",
+        "-Ywarn-infer-any",
+        "-Ywarn-nullary-override",
+        "-Ywarn-nullary-unit",
+        "-Ywarn-unused:imports,-patvars,-privates,-locals,-implicits,-explicits",
+        "-Ycache-macro-class-loader:last-modified",
+        "-Ybackend-parallelism", "8",
+        "-Xfuture",
+        "-Xsource:2.13",
+      )
+      case Some((2, 13)) => Seq(
+        "-Ywarn-unused:imports,-patvars,-privates,-locals,-implicits,-explicits",
+        "-Ycache-macro-class-loader:last-modified",
+        "-Ybackend-parallelism", "8",
+      )
+      case x => sys.error(s"unsupported scala version: $x")
     }
   },
 

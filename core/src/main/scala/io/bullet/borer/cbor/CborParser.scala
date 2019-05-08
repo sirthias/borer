@@ -8,7 +8,7 @@
 
 package io.bullet.borer.cbor
 
-import java.lang.{Double ⇒ JDouble, Float ⇒ JFloat}
+import java.lang.{Double => JDouble, Float => JFloat}
 
 import io.bullet.borer.{Borer, _}
 import io.bullet.borer.internal.Util
@@ -101,23 +101,23 @@ final private[borer] class CborParser[In <: Input](val input: In, config: CborPa
     def decodeTag(uLong: Long): Int = {
       val tag =
         uLong match {
-          case 0     ⇒ Tag.DateTimeString
-          case 1     ⇒ Tag.EpochDateTime
-          case 2     ⇒ Tag.PositiveBigNum
-          case 3     ⇒ Tag.NegativeBigNum
-          case 4     ⇒ Tag.DecimalFraction
-          case 5     ⇒ Tag.BigFloat
-          case 21    ⇒ Tag.HintBase64url
-          case 22    ⇒ Tag.HintBase64
-          case 23    ⇒ Tag.HintBase16
-          case 24    ⇒ Tag.EmbeddedCBOR
-          case 32    ⇒ Tag.TextUri
-          case 33    ⇒ Tag.TextBase64Url
-          case 34    ⇒ Tag.TextBase64
-          case 35    ⇒ Tag.TextRegex
-          case 36    ⇒ Tag.TextMime
-          case 55799 ⇒ Tag.MagicHeader
-          case x     ⇒ Tag.Other(x)
+          case 0     => Tag.DateTimeString
+          case 1     => Tag.EpochDateTime
+          case 2     => Tag.PositiveBigNum
+          case 3     => Tag.NegativeBigNum
+          case 4     => Tag.DecimalFraction
+          case 5     => Tag.BigFloat
+          case 21    => Tag.HintBase64url
+          case 22    => Tag.HintBase64
+          case 23    => Tag.HintBase16
+          case 24    => Tag.EmbeddedCBOR
+          case 32    => Tag.TextUri
+          case 33    => Tag.TextBase64Url
+          case 34    => Tag.TextBase64
+          case 35    => Tag.TextRegex
+          case 36    => Tag.TextMime
+          case 55799 => Tag.MagicHeader
+          case x     => Tag.Other(x)
         }
       receiver.onTag(tag)
       DataItem.Tag
@@ -125,37 +125,37 @@ final private[borer] class CborParser[In <: Input](val input: In, config: CborPa
 
     @inline def decodeExtra(info: Int, uLong: Long): Int =
       (info: @switch) match {
-        case 20 ⇒
+        case 20 =>
           receiver.onBool(value = false)
           DataItem.Bool
-        case 21 ⇒
+        case 21 =>
           receiver.onBool(value = true)
           DataItem.Bool
-        case 22 ⇒
+        case 22 =>
           receiver.onNull()
           DataItem.Null
-        case 23 ⇒
+        case 23 =>
           receiver.onUndefined()
           DataItem.Undefined
-        case 24 ⇒
+        case 24 =>
           uLong.toInt match {
-            case x if SimpleValue.isLegal(x) ⇒ receiver.onSimpleValue(x)
-            case x                           ⇒ failInvalidInput(s"Simple value must be in the range ${SimpleValue.legalRange}, but was $x")
+            case x if SimpleValue.isLegal(x) => receiver.onSimpleValue(x)
+            case x                           => failInvalidInput(s"Simple value must be in the range ${SimpleValue.legalRange}, but was $x")
           }
           DataItem.SimpleValue
-        case 25 ⇒
+        case 25 =>
           receiver.onFloat16(Float16.shortToFloat(uLong.toInt))
           DataItem.Float16
-        case 26 ⇒
+        case 26 =>
           receiver.onFloat(JFloat.intBitsToFloat(uLong.toInt))
           DataItem.Float
-        case 27 ⇒
+        case 27 =>
           receiver.onDouble(JDouble.longBitsToDouble(uLong))
           DataItem.Double
-        case 31 ⇒
+        case 31 =>
           receiver.onBreak()
           DataItem.Break
-        case x ⇒
+        case x =>
           if (SimpleValue.isLegal(x)) {
             receiver.onSimpleValue(x)
             DataItem.SimpleValue
@@ -170,34 +170,34 @@ final private[borer] class CborParser[In <: Input](val input: In, config: CborPa
       val uLong =
         (info: @switch) match {
           case 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 |
-              23 ⇒
+              23 =>
             info.toLong
-          case 24 ⇒
+          case 24 =>
             if (!input.prepareRead(1)) failUnexpectedEOI("8-bit integer")
-            input.readByte() & 0xffl
-          case 25 ⇒
+            input.readByte() & 0XFFL
+          case 25 =>
             if (!input.prepareRead(2)) failUnexpectedEOI("16-bit integer")
-            input.readDoubleByteBigEndian() & 0xffffl
-          case 26 ⇒
+            input.readDoubleByteBigEndian() & 0XFFFFL
+          case 26 =>
             if (!input.prepareRead(4)) failUnexpectedEOI("32-bit integer")
-            input.readQuadByteBigEndian() & 0xffffffffl
-          case 27 ⇒
+            input.readQuadByteBigEndian() & 0XFFFFFFFFL
+          case 27 =>
             if (!input.prepareRead(8)) failUnexpectedEOI("64-bit integer")
             input.readOctaByteBigEndian()
-          case 31 if 2 <= majorType && majorType <= 5 || majorType == 7 ⇒
-            0l // handled specially
-          case 28 | 29 | 30 ⇒ failInvalidInput(s"Additional info [$info] is invalid (major type [$majorType])")
+          case 31 if 2 <= majorType && majorType <= 5 || majorType == 7 =>
+            0L // handled specially
+          case 28 | 29 | 30 => failInvalidInput(s"Additional info [$info] is invalid (major type [$majorType])")
         }
 
       (majorType: @switch) match {
-        case 0 ⇒ decodePositiveInteger(uLong)
-        case 1 ⇒ decodeNegativeInteger(uLong)
-        case 2 ⇒ decodeByteString(uLong, info == 31)
-        case 3 ⇒ decodeTextString(uLong, info == 31)
-        case 4 ⇒ decodeArray(uLong, info == 31)
-        case 5 ⇒ decodeMap(uLong, info == 31)
-        case 6 ⇒ decodeTag(uLong)
-        case 7 ⇒ decodeExtra(info, uLong)
+        case 0 => decodePositiveInteger(uLong)
+        case 1 => decodeNegativeInteger(uLong)
+        case 2 => decodeByteString(uLong, info == 31)
+        case 3 => decodeTextString(uLong, info == 31)
+        case 4 => decodeArray(uLong, info == 31)
+        case 5 => decodeMap(uLong, info == 31)
+        case 6 => decodeTag(uLong)
+        case 7 => decodeExtra(info, uLong)
       }
     } else {
       receiver.onEndOfInput()
@@ -221,7 +221,7 @@ object CborParser {
   }
 
   private[this] val _creator: Receiver.ParserCreator[Input, CborParser.Config] =
-    (input, config) ⇒ new CborParser[Input](input, config)
+    (input, config) => new CborParser[Input](input, config)
 
   def creator[In <: Input, Conf <: CborParser.Config]: Receiver.ParserCreator[In, Conf] =
     _creator.asInstanceOf[Receiver.ParserCreator[In, Conf]]

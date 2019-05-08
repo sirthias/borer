@@ -38,13 +38,13 @@ object ByteArrayAccess {
 
     def octaByteBigEndian(byteArray: Array[Byte], ix: Int): Long = {
       byteArray(ix).toLong << 56 |
-      (byteArray(ix + 1) & 0xffl) << 48 |
-      (byteArray(ix + 2) & 0xffl) << 40 |
-      (byteArray(ix + 3) & 0xffl) << 32 |
-      (byteArray(ix + 4) & 0xffl) << 24 |
-      (byteArray(ix + 5) & 0xffl) << 16 |
-      (byteArray(ix + 6) & 0xffl) << 8 |
-      byteArray(ix + 7) & 0xffl
+      (byteArray(ix + 1) & 0XFFL) << 48 |
+      (byteArray(ix + 2) & 0XFFL) << 40 |
+      (byteArray(ix + 3) & 0XFFL) << 32 |
+      (byteArray(ix + 4) & 0XFFL) << 24 |
+      (byteArray(ix + 5) & 0XFFL) << 16 |
+      (byteArray(ix + 6) & 0XFFL) << 8 |
+      byteArray(ix + 7) & 0XFFL
     }
   }
 }

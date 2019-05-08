@@ -149,11 +149,11 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
   def readFloat(): Float = {
     val result =
       _dataItem match {
-        case DI.Float16 | DI.Float                                      ⇒ receptacle.floatValue
-        case DI.Double if config.readDoubleAlsoAsFloat                  ⇒ receptacle.doubleValue.toFloat
-        case DI.Int | DI.Long if config.readIntegersAlsoAsFloatingPoint ⇒ readLong().toFloat
-        case DI.NumberString                                            ⇒ java.lang.Float.parseFloat(receptacle.stringValue)
-        case _                                                          ⇒ unexpectedDataItem(expected = "Float")
+        case DI.Float16 | DI.Float                                      => receptacle.floatValue
+        case DI.Double if config.readDoubleAlsoAsFloat                  => receptacle.doubleValue.toFloat
+        case DI.Int | DI.Long if config.readIntegersAlsoAsFloatingPoint => readLong().toFloat
+        case DI.NumberString                                            => java.lang.Float.parseFloat(receptacle.stringValue)
+        case _                                                          => unexpectedDataItem(expected = "Float")
       }
     pull()
     result
@@ -164,12 +164,12 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
 
   def readDouble(): Double = {
     val result = _dataItem match {
-      case DI.Double                                         ⇒ receptacle.doubleValue
-      case DI.Float16 | DI.Float                             ⇒ receptacle.floatValue.toDouble
-      case DI.Int if config.readIntegersAlsoAsFloatingPoint  ⇒ receptacle.intValue.toDouble
-      case DI.Long if config.readIntegersAlsoAsFloatingPoint ⇒ receptacle.longValue.toDouble
-      case DI.NumberString                                   ⇒ java.lang.Double.parseDouble(receptacle.stringValue)
-      case _                                                 ⇒ unexpectedDataItem(expected = "Double")
+      case DI.Double                                         => receptacle.doubleValue
+      case DI.Float16 | DI.Float                             => receptacle.floatValue.toDouble
+      case DI.Int if config.readIntegersAlsoAsFloatingPoint  => receptacle.intValue.toDouble
+      case DI.Long if config.readIntegersAlsoAsFloatingPoint => receptacle.longValue.toDouble
+      case DI.NumberString                                   => java.lang.Double.parseDouble(receptacle.stringValue)
+      case _                                                 => unexpectedDataItem(expected = "Double")
     }
     pull()
     result
@@ -188,9 +188,9 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
 
   def readBytes[Bytes: ByteAccess](): Bytes =
     _dataItem match {
-      case DI.Bytes      ⇒ readSizedBytes()
-      case DI.BytesStart ⇒ readUnsizedBytes()
-      case _             ⇒ unexpectedDataItem(expected = "Bytes")
+      case DI.Bytes      => readSizedBytes()
+      case DI.BytesStart => readUnsizedBytes()
+      case _             => unexpectedDataItem(expected = "Bytes")
     }
 
   @inline def hasSizedBytes: Boolean = has(DI.Bytes)
@@ -218,33 +218,33 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
 
   def readString(): String =
     _dataItem match {
-      case DI.Chars     ⇒ pullReturn(new String(receptacle.charBufValue, 0, receptacle.intValue))
-      case DI.String    ⇒ pullReturn(receptacle.stringValue)
-      case DI.Text      ⇒ stringOf(readSizedTextBytes[Array[Byte]]())
-      case DI.TextStart ⇒ stringOf(readUnsizedTextBytes[Array[Byte]]())
-      case _            ⇒ unexpectedDataItem(expected = "String or Text Bytes")
+      case DI.Chars     => pullReturn(new String(receptacle.charBufValue, 0, receptacle.intValue))
+      case DI.String    => pullReturn(receptacle.stringValue)
+      case DI.Text      => stringOf(readSizedTextBytes[Array[Byte]]())
+      case DI.TextStart => stringOf(readUnsizedTextBytes[Array[Byte]]())
+      case _            => unexpectedDataItem(expected = "String or Text Bytes")
     }
 
   def readString(s: String): this.type = if (tryReadString(s)) this else unexpectedDataItem(expected = '"' + s + '"')
 
   def tryReadString(s: String): Boolean =
     _dataItem match {
-      case DI.Chars ⇒
+      case DI.Chars =>
         val len                                              = receptacle.intValue
         @tailrec def rec(buf: Array[Char], ix: Int): Boolean = ix == len || buf(ix) == s.charAt(ix) && rec(buf, ix + 1)
         pullIfTrue(len == s.length && rec(receptacle.charBufValue, 0))
-      case DI.String ⇒ pullIfTrue(receptacle.stringValue == s)
-      case DI.Text   ⇒ pullIfTrue(stringOf(receptacle.getBytes[Array[Byte]]) == s)
-      case _         ⇒ false
+      case DI.String => pullIfTrue(receptacle.stringValue == s)
+      case DI.Text   => pullIfTrue(stringOf(receptacle.getBytes[Array[Byte]]) == s)
+      case _         => false
     }
 
   @inline def hasTextBytes: Boolean = hasAnyOf(DI.Text | DI.TextStart)
 
   def readTextBytes[Bytes: ByteAccess](): Bytes =
     _dataItem match {
-      case DI.Text      ⇒ readSizedTextBytes()
-      case DI.TextStart ⇒ readUnsizedTextBytes()
-      case _            ⇒ unexpectedDataItem(expected = "Text Bytes")
+      case DI.Text      => readSizedTextBytes()
+      case DI.TextStart => readUnsizedTextBytes()
+      case _            => unexpectedDataItem(expected = "Text Bytes")
     }
 
   @inline def hasSizedTextBytes: Boolean = has(DI.Text)
@@ -353,7 +353,7 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
     rec(cbf())
   }
 
-  def readUntilBreak[T](zero: T)(f: T ⇒ T): T = {
+  def readUntilBreak[T](zero: T)(f: T => T): T = {
     @tailrec def rec(acc: T): T = if (tryReadBreak()) acc else rec(f(acc))
     rec(zero)
   }
@@ -392,12 +392,12 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
 
         if (level == 100) overflow("Structures more than 100 levels deep cannot be skipped") // TODO: make configurable
         _dataItem match {
-          case DI.ArrayHeader ⇒ skipN(readArrayHeader())
-          case DI.MapHeader ⇒
+          case DI.ArrayHeader => skipN(readArrayHeader())
+          case DI.MapHeader =>
             val elemsToSkip = readMapHeader() << 1
             if (elemsToSkip >= 0) skipN(elemsToSkip)
             else overflow("Maps with more than 2^62 elements cannot be skipped")
-          case DI.ArrayStart | DI.MapStart ⇒
+          case DI.ArrayStart | DI.MapStart =>
             pull()
             skipUntilBreak()
         }
@@ -426,10 +426,10 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
 
   def unexpectedDataItem(expected: String): Nothing = {
     val actual = _dataItem match {
-      case DI.ArrayHeader ⇒ s"Array Header (${receptacle.longValue})"
-      case DI.MapHeader   ⇒ s"Map Header (${receptacle.longValue})"
-      case DI.Tag         ⇒ "Tag: " + receptacle.tagValue
-      case _              ⇒ DataItem.stringify(_dataItem)
+      case DI.ArrayHeader => s"Array Header (${receptacle.longValue})"
+      case DI.MapHeader   => s"Map Header (${receptacle.longValue})"
+      case DI.Tag         => "Tag: " + receptacle.tagValue
+      case _              => DataItem.stringify(_dataItem)
     }
     unexpectedDataItem(expected, actual)
   }

@@ -61,8 +61,8 @@ object ByteAccess {
 
     @inline def convert[B](value: B)(implicit byteAccess: ByteAccess[B]): Array[Byte] =
       value match {
-        case x: Array[Byte] ⇒ x
-        case x              ⇒ byteAccess.toByteArray(x)
+        case x: Array[Byte] => x
+        case x              => byteAccess.toByteArray(x)
       }
 
     @inline def empty = Array.emptyByteArray

@@ -8,7 +8,7 @@
 
 package io.bullet.borer
 
-import java.lang.{StringBuilder ⇒ JStringBuilder}
+import java.lang.{StringBuilder => JStringBuilder}
 
 import io.bullet.borer.cbor._
 import io.bullet.borer.internal.{CborValidation, Util}

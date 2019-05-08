@@ -43,14 +43,14 @@ object MapBasedCodecs {
 
       val potentiallyPatchedParams = withEncodersPatched(0, ctx.parametersArray)
 
-      Encoder { (w, value) ⇒
+      Encoder { (w, value) =>
         @tailrec def rec(effectiveParams: Array[Param[Encoder, T]], w: Writer, ix: Int): Writer =
           if (ix < len) {
             val p      = effectiveParams(ix).asInstanceOf[Param[Encoder, T] { type PType = AnyRef }]
             val pValue = p.dereference(value)
             p.typeclass match {
-              case x: Encoder.PossiblyWithoutOutput[AnyRef] if !x.producesOutput(pValue) ⇒ // skip
-              case x ⇒
+              case x: Encoder.PossiblyWithoutOutput[AnyRef] if !x.producesOutput(pValue) => // skip
+              case x =>
                 x.write(w.writeString(p.label), pValue)
             }
             rec(effectiveParams, w, ix + 1)
@@ -65,8 +65,8 @@ object MapBasedCodecs {
                 if (ix < len) {
                   val p = potentiallyPatchedParams(ix).asInstanceOf[Param[Encoder, T] { type PType = AnyRef }]
                   val d = p.typeclass match {
-                    case x: Encoder.PossiblyWithoutOutput[AnyRef] if !x.producesOutput(p dereference value) ⇒ 0
-                    case _                                                                                  ⇒ 1
+                    case x: Encoder.PossiblyWithoutOutput[AnyRef] if !x.producesOutput(p dereference value) => 0
+                    case _                                                                                  => 1
                   }
                   count(ix + 1, result + d)
                 } else result
@@ -81,7 +81,7 @@ object MapBasedCodecs {
       val subtypes = ctx.subtypes
       val len      = subtypes.size
       val typeIds  = TypeId.getTypeIds(ctx.typeName.full, subtypes)
-      Encoder { (w, value) ⇒
+      Encoder { (w, value) =>
         @tailrec def rec(ix: Int): Writer =
           if (ix < len) {
             val sub = subtypes(ix)
@@ -129,7 +129,7 @@ object MapBasedCodecs {
 
       val params = withDecodersPatched(0, ctx.parametersArray)
 
-      Decoder { r ⇒
+      Decoder { r =>
         val constructorArgs = new Array[Any](len)
 
         def failSizeOverflow() = r.overflow("Maps with size >= 2^63 are not supported")
@@ -148,17 +148,17 @@ object MapBasedCodecs {
             else -1
 
           @tailrec def fillMissingMembers(missingMask0: Long, missingMask1: Long): Boolean = {
-            import java.lang.Long.{numberOfTrailingZeros ⇒ ntz, lowestOneBit ⇒ lob}
+            import java.lang.Long.{numberOfTrailingZeros => ntz, lowestOneBit => lob}
             var i     = 0
             var mask0 = missingMask0
             var mask1 = missingMask1
-            (mask0 != 0l && { i = ntz(mask0); mask0 &= ~lob(mask0); true } ||
-            mask1 != 0l && { i = 64 + ntz(mask1); mask1 &= ~lob(mask1); true }) && {
+            (mask0 != 0L && { i = ntz(mask0); mask0 &= ~lob(mask0); true } ||
+            mask1 != 0L && { i = 64 + ntz(mask1); mask1 &= ~lob(mask1); true }) && {
               params(i).default match {
-                case Some(value) ⇒
+                case Some(value) =>
                   constructorArgs(i) = value
                   fillMissingMembers(mask0, mask1)
-                case None ⇒
+                case None =>
                   throw new Error.InvalidInputData(
                     r.lastPosition,
                     expected(s"Missing map key [${params(i).label}] for"))
@@ -167,7 +167,7 @@ object MapBasedCodecs {
           }
 
           def membersMissing(): Boolean = {
-            val xorMask = (1l << len) - 1
+            val xorMask = (1L << len) - 1
             var mask0   = filledMask0
             var mask1   = filledMask1
             if (len < 64) {
@@ -200,9 +200,9 @@ object MapBasedCodecs {
             val nextArgIx       = findIndexOfNextArg(filledCount, len)
             var nextFilledCount = filledCount
             if (nextArgIx >= 0) {
-              val mask      = 1l << nextArgIx
+              val mask      = 1L << nextArgIx
               val p         = params(nextArgIx)
-              var checkMask = 0l
+              var checkMask = 0L
               if (nextArgIx < 64) {
                 checkMask = mask0; mask0 |= mask
               } else {
@@ -217,11 +217,11 @@ object MapBasedCodecs {
           } else ctx.rawConstruct(constructorArgs)
         }
 
-        if (r.tryReadMapStart()) fillArgsAndConstruct(0, -1, 0l, 0l)
+        if (r.tryReadMapStart()) fillArgsAndConstruct(0, -1, 0L, 0L)
         else if (r.hasMapHeader) {
           val mapLength = r.readMapHeader()
           if (mapLength > Int.MaxValue) failSizeOverflow()
-          fillArgsAndConstruct(0, mapLength.toInt, 0l, 0l)
+          fillArgsAndConstruct(0, mapLength.toInt, 0L, 0L)
         } else r.unexpectedDataItem(expected(s"Map Start or Map Header announcing <= $len elements for"))
       }
     }
@@ -231,7 +231,7 @@ object MapBasedCodecs {
       val typeIds             = TypeId.getTypeIds(ctx.typeName.full, subtypes)
       def expected(s: String) = s"$s for decoding an instance of type [${ctx.typeName.full}]"
 
-      Decoder { r ⇒
+      Decoder { r =>
         @tailrec def rec(id: TypeId.Value, ix: Int): T =
           if (ix < typeIds.length) {
             if (typeIds(ix) == id) subtypes(ix).typeclass.read(r)

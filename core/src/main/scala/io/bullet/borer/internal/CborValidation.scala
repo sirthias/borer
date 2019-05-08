@@ -49,7 +49,7 @@ object CborValidation {
   final class Receiver(private var _target: borer.Receiver, config: Config)
       extends borer.Receiver with java.lang.Cloneable {
 
-    import io.bullet.borer.{DataItem ⇒ DI}
+    import io.bullet.borer.{DataItem => DI}
 
     // compile-time constants
     final private val DEFAULT_MASK = DI.AllButBreak
@@ -213,27 +213,27 @@ object CborValidation {
 
     def onTag(value: Tag): Unit = {
       value match {
-        case Tag.EpochDateTime ⇒
+        case Tag.EpochDateTime =>
           checkAllowed(DI.Tag)
-          enterLevel(1l, DI.Int | DI.Long | DI.Float16 | DI.Float | DI.Double | DI.NumberString)
+          enterLevel(1L, DI.Int | DI.Long | DI.Float16 | DI.Float | DI.Double | DI.NumberString)
 
-        case Tag.PositiveBigNum | Tag.NegativeBigNum ⇒
+        case Tag.PositiveBigNum | Tag.NegativeBigNum =>
           checkAllowed(DI.Tag)
-          enterLevel(1l, DI.Bytes | DI.BytesStart)
+          enterLevel(1L, DI.Bytes | DI.BytesStart)
 
-        case Tag.EmbeddedCBOR ⇒
+        case Tag.EmbeddedCBOR =>
           checkAllowed(DI.Tag)
-          enterLevel(1l, DI.Bytes | DI.BytesStart)
+          enterLevel(1L, DI.Bytes | DI.BytesStart)
 
-        case Tag.DateTimeString | Tag.TextUri | Tag.TextBase64Url | Tag.TextBase64 | Tag.TextRegex | Tag.TextMime ⇒
+        case Tag.DateTimeString | Tag.TextUri | Tag.TextBase64Url | Tag.TextBase64 | Tag.TextRegex | Tag.TextMime =>
           checkAllowed(DI.Tag)
-          enterLevel(1l, DI.String | DI.Chars | DI.Text)
+          enterLevel(1L, DI.String | DI.Chars | DI.Text)
 
-        case Tag.DecimalFraction | Tag.BigFloat ⇒
+        case Tag.DecimalFraction | Tag.BigFloat =>
           checkAllowed(DI.Tag)
-          enterLevel(1l, DI.ArrayHeader) // we don't fully verify compliance of the subsequent array content
+          enterLevel(1L, DI.ArrayHeader) // we don't fully verify compliance of the subsequent array content
 
-        case Tag.HintBase64url | Tag.HintBase64 | Tag.HintBase16 | Tag.MagicHeader | Tag.Other(_) ⇒
+        case Tag.HintBase64url | Tag.HintBase64 | Tag.HintBase16 | Tag.MagicHeader | Tag.Other(_) =>
           checkAllowed(DI.Tag)
       }
       _target.onTag(value)
@@ -250,12 +250,12 @@ object CborValidation {
         def remaining = levelRemaining(level)
         val msg =
           (isMasked(MAP), isMasked(UNBOUNDED), isEvenNumberedElement) match {
-            case (false, false, _)    ⇒ s"$remaining more data items of definite-length array"
-            case (false, true, _)     ⇒ "next array data item or BREAK"
-            case (true, false, false) ⇒ s"next map data value and ${remaining / 2} more entries of definite-length map"
-            case (true, false, true)  ⇒ s"$remaining more data items of definite-length map"
-            case (true, true, false)  ⇒ "next map data value"
-            case (true, true, true)   ⇒ "next map entry or BREAK"
+            case (false, false, _)    => s"$remaining more data items of definite-length array"
+            case (false, true, _)     => "next array data item or BREAK"
+            case (true, false, false) => s"next map data value and ${remaining / 2} more entries of definite-length map"
+            case (true, false, true)  => s"$remaining more data items of definite-length map"
+            case (true, true, false)  => "next map data value"
+            case (true, true, true)   => "next map entry or BREAK"
           }
         throw new Borer.Error.UnexpectedEndOfInput(null, msg)
       } else _target.onEndOfInput()

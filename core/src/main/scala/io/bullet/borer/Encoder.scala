@@ -8,8 +8,15 @@
 
 package io.bullet.borer
 
-import java.lang.{Boolean ⇒ JBoolean, Byte ⇒ JByte, Double ⇒ JDouble, Float ⇒ JFloat, Long ⇒ JLong, Short ⇒ JShort}
-import java.math.{BigDecimal ⇒ JBigDecimal, BigInteger ⇒ JBigInteger}
+import java.lang.{
+  Boolean => JBoolean,
+  Byte => JByte,
+  Double => JDouble,
+  Float => JFloat,
+  Long => JLong,
+  Short => JShort
+}
+import java.math.{BigDecimal => JBigDecimal, BigInteger => JBigInteger}
 
 import io.bullet.borer.internal.{Macros, Util}
 
@@ -55,14 +62,14 @@ object Encoder extends LowPrioEncoders {
     * val fooEncoder = Encoder.from(Foo.unapply _) // if you only need an `Encoder` for `Foo`
     * }}}
     */
-  def from[T, Unapplied](unapply: T ⇒ Option[Unapplied])(implicit tupleEnc: Encoder[Unapplied]): Encoder[T] =
-    Encoder((w, x) ⇒ tupleEnc.write(w, unapply(x).get))
+  def from[T, Unapplied](unapply: T => Option[Unapplied])(implicit tupleEnc: Encoder[Unapplied]): Encoder[T] =
+    Encoder((w, x) => tupleEnc.write(w, unapply(x).get))
 
   /**
     * Same as the other `from` overload above, but for nullary case classes (i.e. with an empty parameter list).
     */
-  def from[T](unapply: T ⇒ Boolean): Encoder[T] =
-    Encoder((w, x) ⇒ if (unapply(x)) w.writeEmptyArray() else sys.error("Unapply unexpectedly failed: " + unapply))
+  def from[T](unapply: T => Boolean): Encoder[T] =
+    Encoder((w, x) => if (unapply(x)) w.writeEmptyArray() else sys.error("Unapply unexpectedly failed: " + unapply))
 
   /**
     * Simple macro shortening `Encoder.from(Foo.unapply _)` to `Encoder.forCaseClass[Foo]`
@@ -70,14 +77,14 @@ object Encoder extends LowPrioEncoders {
   def forCaseClass[T]: Encoder[T] = macro Macros.encoderForCaseClass[T]
 
   implicit final class EncoderOps[A](val underlying: Encoder[A]) extends AnyVal {
-    def compose[B](f: B ⇒ A): Encoder[B] = Encoder((w, b) ⇒ underlying.write(w, f(b)))
+    def compose[B](f: B => A): Encoder[B] = Encoder((w, b) => underlying.write(w, f(b)))
   }
 
   implicit def fromCodec[T](implicit codec: Codec[T]): Encoder[T] = codec.encoder
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  implicit val forNull: Encoder[Null]             = Encoder((w, _) ⇒ w.writeNull())
+  implicit val forNull: Encoder[Null]             = Encoder((w, _) => w.writeNull())
   implicit val forBoolean: Encoder[Boolean]       = Encoder(_ writeBool _)
   implicit val forChar: Encoder[Char]             = Encoder(_ writeChar _)
   implicit val forByte: Encoder[Byte]             = Encoder(_ writeByte _)
@@ -99,26 +106,26 @@ object Encoder extends LowPrioEncoders {
   implicit def forBoxedDouble: Encoder[JDouble]   = forDouble.asInstanceOf[Encoder[JDouble]]
 
   implicit val forJBigInteger: Encoder[JBigInteger] =
-    Encoder { (w, x) ⇒
+    Encoder { (w, x) =>
       x.bitLength match {
-        case n if n < 32        ⇒ w.writeInt(x.intValue)
-        case n if n < 64        ⇒ w.writeLong(x.longValue)
-        case 64 if x.signum > 0 ⇒ w.writeOverLong(negative = false, x.longValue)
-        case 64                 ⇒ w.writeOverLong(negative = true, ~x.longValue)
-        case _ if w.writingCbor ⇒
+        case n if n < 32        => w.writeInt(x.intValue)
+        case n if n < 64        => w.writeLong(x.longValue)
+        case 64 if x.signum > 0 => w.writeOverLong(negative = false, x.longValue)
+        case 64                 => w.writeOverLong(negative = true, ~x.longValue)
+        case _ if w.writingCbor =>
           val bytes = x.toByteArray
           w.writeTag(if (x.signum < 0) {
             Util.inPlaceNegate(bytes); Tag.NegativeBigNum
           } else Tag.PositiveBigNum)
           w.writeBytes(bytes)
-        case _ ⇒ w.writeNumberString(x.toString(10))
+        case _ => w.writeNumberString(x.toString(10))
       }
     }
 
   implicit val forBigInt: Encoder[BigInt] = forJBigInteger.compose(_.bigInteger)
 
   implicit val forJBigDecimal: Encoder[JBigDecimal] =
-    Encoder { (w, x) ⇒
+    Encoder { (w, x) =>
       if (x.scale != 0) w.writeTag(Tag.DecimalFraction).writeArrayHeader(2).writeInt(x.scale)
       w.write(x.unscaledValue)
     }
@@ -126,21 +133,21 @@ object Encoder extends LowPrioEncoders {
   implicit val forBigDecimal: Encoder[BigDecimal] = forJBigDecimal.compose(_.bigDecimal)
 
   implicit val forByteArrayIterator: Encoder[Iterator[Array[Byte]]] =
-    Encoder { (w, x) ⇒
+    Encoder { (w, x) =>
       w.writeBytesStart()
       while (x.hasNext) w.writeBytes(x.next())
       w.writeBreak()
     }
 
   implicit def forBytesIterator[Bytes: ByteAccess]: Encoder[Iterator[Bytes]] =
-    Encoder { (w, x) ⇒
+    Encoder { (w, x) =>
       w.writeBytesStart()
       while (x.hasNext) w.writeBytes(x.next())
       w.writeBreak()
     }
 
   implicit val forStringIterator: Encoder[Iterator[String]] =
-    Encoder { (w, x) ⇒
+    Encoder { (w, x) =>
       w.writeTextStart()
       while (x.hasNext) w.writeString(x.next())
       w.writeBreak()
@@ -151,8 +158,8 @@ object Encoder extends LowPrioEncoders {
 
       def write(w: Writer, value: Option[T]) =
         value match {
-          case Some(x) ⇒ w.writeToArray(x)
-          case None    ⇒ w.writeEmptyArray()
+          case Some(x) => w.writeToArray(x)
+          case None    => w.writeEmptyArray()
         }
 
       def withDefaultValue(defaultValue: Option[T]): Encoder[Option[T]] =
@@ -161,8 +168,8 @@ object Encoder extends LowPrioEncoders {
             def producesOutput(value: Option[T]) = value ne None
             def write(w: Writer, value: Option[T]) =
               value match {
-                case Some(x) ⇒ w.write(x)
-                case None    ⇒ w
+                case Some(x) => w.write(x)
+                case None    => w
               }
           }
         } else this
@@ -208,25 +215,25 @@ object Encoder extends LowPrioEncoders {
     }
 
   implicit def forArray[T: Encoder]: Encoder[Array[T]] =
-    Encoder { (w, x) ⇒
+    Encoder { (w, x) =>
       @tailrec def rec(w: Writer, ix: Int): w.type = if (ix < x.length) rec(w.write(x(ix)), ix + 1) else w
       if (w.writingJson) rec(w.writeArrayStart(), 0).writeBreak()
       else rec(w.writeArrayHeader(x.length), 0)
     }
 
   implicit def forEither[A: Encoder, B: Encoder]: Encoder[Either[A, B]] =
-    Encoder { (w, x) ⇒
+    Encoder { (w, x) =>
       if (w.writingJson) {
         w.writeArrayStart()
         x match {
-          case Left(a)  ⇒ w.writeToArray(a).writeEmptyArray()
-          case Right(b) ⇒ w.writeEmptyArray().writeToArray(b)
+          case Left(a)  => w.writeToArray(a).writeEmptyArray()
+          case Right(b) => w.writeEmptyArray().writeToArray(b)
         }
         w.writeBreak()
       } else
         x match {
-          case Left(a)  ⇒ w.writeMapHeader(1).writeInt(0).write(a)
-          case Right(b) ⇒ w.writeMapHeader(1).writeInt(1).write(b)
+          case Left(a)  => w.writeMapHeader(1).writeInt(0).write(a)
+          case Right(b) => w.writeMapHeader(1).writeInt(1).write(b)
         }
     }
 }
@@ -235,9 +242,9 @@ sealed abstract class LowPrioEncoders extends TupleEncoders {
 
   implicit final def forIterable[T: Encoder, M[X] <: Iterable[X]]: Encoder[M[T]] =
     Encoder {
-      case (w, x: IndexedSeq[T]) ⇒ w writeIndexedSeq x
-      case (w, x: LinearSeq[T])  ⇒ w writeLinearSeq x
-      case (w, x)                ⇒ w writeIterator x.iterator
+      case (w, x: IndexedSeq[T]) => w writeIndexedSeq x
+      case (w, x: LinearSeq[T])  => w writeLinearSeq x
+      case (w, x)                => w writeIterator x.iterator
     }
 
   implicit final def forIterator[T: Encoder]: Encoder[Iterator[T]] = Encoder(_ writeIterator _)

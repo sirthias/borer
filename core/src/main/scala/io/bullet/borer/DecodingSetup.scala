@@ -8,7 +8,7 @@
 
 package io.bullet.borer
 
-import java.lang.{StringBuilder ⇒ JStringBuilder}
+import java.lang.{StringBuilder => JStringBuilder}
 
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
@@ -97,8 +97,8 @@ object DecodingSetup {
       try {
         decodeFrom(reader)
       } catch {
-        case e: Borer.Error[_] ⇒ throw e.withPosOf[In](reader)
-        case NonFatal(e)       ⇒ throw new Borer.Error.General(reader.lastPosition, e)
+        case e: Borer.Error[_] => throw e.withPosOf[In](reader)
+        case NonFatal(e)       => throw new Borer.Error.General(reader.lastPosition, e)
       }
     }
 
@@ -107,8 +107,8 @@ object DecodingSetup {
       try {
         Success(decodeFrom(reader))
       } catch {
-        case e: Borer.Error[_] ⇒ Failure(e.withPosOf[In](reader))
-        case NonFatal(e)       ⇒ Failure(new Borer.Error.General(reader.lastPosition, e))
+        case e: Borer.Error[_] => Failure(e.withPosOf[In](reader))
+        case NonFatal(e)       => Failure(new Borer.Error.General(reader.lastPosition, e))
       }
     }
 
@@ -117,38 +117,38 @@ object DecodingSetup {
       try {
         Right(decodeFrom(reader))
       } catch {
-        case e: Borer.Error[_] ⇒ Left(e.withPosOf[In](reader))
-        case NonFatal(e)       ⇒ Left(new Borer.Error.General(reader.lastPosition, e))
+        case e: Borer.Error[_] => Left(e.withPosOf[In](reader))
+        case NonFatal(e)       => Left(new Borer.Error.General(reader.lastPosition, e))
       }
     }
 
     def valueAndInput: (AnyRef, In) = {
       val reader = newReader()
       try {
-        decodeFrom(reader) → input
+        decodeFrom(reader) -> input
       } catch {
-        case e: Borer.Error[_] ⇒ throw e.withPosOf[In](reader)
-        case NonFatal(e)       ⇒ throw new Borer.Error.General(reader.lastPosition, e)
+        case e: Borer.Error[_] => throw e.withPosOf[In](reader)
+        case NonFatal(e)       => throw new Borer.Error.General(reader.lastPosition, e)
       }
     }
 
     def valueAndInputTry: Try[(AnyRef, In)] = {
       val reader = newReader()
       try {
-        Success(decodeFrom(reader) → input)
+        Success(decodeFrom(reader) -> input)
       } catch {
-        case e: Borer.Error[_] ⇒ Failure(e.withPosOf[In](reader))
-        case NonFatal(e)       ⇒ Failure(new Borer.Error.General(reader.lastPosition, e))
+        case e: Borer.Error[_] => Failure(e.withPosOf[In](reader))
+        case NonFatal(e)       => Failure(new Borer.Error.General(reader.lastPosition, e))
       }
     }
 
     def valueAndInputEither: Either[Borer.Error[In#Position], (AnyRef, In)] = {
       val reader = newReader()
       try {
-        Right(decodeFrom(reader) → input)
+        Right(decodeFrom(reader) -> input)
       } catch {
-        case e: Borer.Error[_] ⇒ Left(e.withPosOf[In](reader))
-        case NonFatal(e)       ⇒ Left(new Borer.Error.General(reader.lastPosition, e))
+        case e: Borer.Error[_] => Left(e.withPosOf[In](reader))
+        case NonFatal(e)       => Left(new Borer.Error.General(reader.lastPosition, e))
       }
     }
 

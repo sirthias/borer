@@ -182,6 +182,6 @@ final case class TaggedValue[T](tag: Tag, value: T)
 
 object TaggedValue {
 
-  implicit def encoder[T: Encoder]: Encoder[TaggedValue[T]] = Encoder((w, x) ⇒ w ~ x.tag ~ x.value)
-  implicit def decoder[T: Decoder]: Decoder[TaggedValue[T]] = Decoder(r ⇒ TaggedValue(r.readTag(), r[T]))
+  implicit def encoder[T: Encoder]: Encoder[TaggedValue[T]] = Encoder((w, x) => w ~ x.tag ~ x.value)
+  implicit def decoder[T: Decoder]: Decoder[TaggedValue[T]] = Decoder(r => TaggedValue(r.readTag(), r[T]))
 }

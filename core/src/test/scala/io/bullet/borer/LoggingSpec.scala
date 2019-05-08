@@ -23,7 +23,7 @@ object LoggingSpec extends TestSuite {
         UndefinedElem,
         BoolElem(true),
         IntElem(42),
-        LongElem(Int.MaxValue + 1l),
+        LongElem(Int.MaxValue + 1L),
         OverLongElem(negative = false, -1),
         OverLongElem(negative = true, -1),
         Float16Elem(1.0f),
@@ -52,7 +52,7 @@ object LoggingSpec extends TestSuite {
       ArrayElem.Sized(
         ByteArrayElem(alphabet.take(8).getBytes),
         ByteArrayElem(alphabet.getBytes),
-        BytesStreamElem(alphabet.grouped(4).map(s ⇒ ByteArrayElem(s.getBytes)).toVector))
+        BytesStreamElem(alphabet.grouped(4).map(s => ByteArrayElem(s.getBytes)).toVector))
     } {
       """1: [
         |    1/3: BYTES[41 42 43 44 45 46 47 48]
@@ -118,11 +118,11 @@ object LoggingSpec extends TestSuite {
     }
 
     "maps" - roundTripLogEquals {
-      val tuples = "abc".map(c ⇒ c.toString → StringElem(c.toString))
+      val tuples = "abc".map(c => c.toString -> StringElem(c.toString))
       MapElem.Sized(
-        "foo"   → IntElem(42),
-        "empty" → MapElem.Sized(),
-        "bar"   → MapElem.Unsized(tuples.head, tuples.tail: _*))
+        "foo"   -> IntElem(42),
+        "empty" -> MapElem.Sized(),
+        "bar"   -> MapElem.Unsized(tuples.head, tuples.tail: _*))
     } {
       """1: {
         |    1/3: "foo"

@@ -31,14 +31,14 @@ object HasDefault {
 
     def defaultValue = {
       val args = ctx.parameters.foldLeft(Right(Nil): Either[String, List[Any]]) {
-        case (Left(x), _) ⇒ Left(x)
-        case (Right(acc), param) ⇒
+        case (Left(x), _) => Left(x)
+        case (Right(acc), param) =>
           param.default match {
-            case Some(arg) ⇒ Right(arg :: acc)
-            case None      ⇒ param.typeclass.defaultValue.right.map(_ :: acc)
+            case Some(arg) => Right(arg :: acc)
+            case None      => param.typeclass.defaultValue.right.map(_ :: acc)
           }
       }
-      args.right.map(x ⇒ ctx.rawConstruct(x.reverse.toArray))
+      args.right.map(x => ctx.rawConstruct(x.reverse.toArray))
     }
   }
 
@@ -46,8 +46,8 @@ object HasDefault {
   def dispatch[T](ctx: SealedTrait[HasDefault, T])(): HasDefault[T] = new HasDefault[T] {
 
     def defaultValue = ctx.subtypes.headOption match {
-      case Some(sub) ⇒ sub.typeclass.defaultValue
-      case None      ⇒ Left("no subtypes")
+      case Some(sub) => sub.typeclass.defaultValue
+      case None      => Left("no subtypes")
     }
   }
 

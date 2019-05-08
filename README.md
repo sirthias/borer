@@ -5,10 +5,11 @@ A [CBOR] and [JSON] (de)serialization implementation in [Scala] sporting these f
 
 - complete (supports all [CBOR] features, incl. "over long" integers, 16-bit half-precision floats, `BigInteger` and
   `BigDecimal`, custom tags and "simple values")
-- lightweight (`core` module has zero dependencies)
-- fast (can be allocation-free in the core code paths, no DOM, pull-parser style)
-- easy integration (type class-based design)
+- lightweight (zero external dependencies)
+- fast (no DOM, pull-parser style with one-element look-ahead)
+- easy integration and customization (type class-based design)
 - efficiently supports custom "byte string" abstractions (like `akka.util.ByteString` or `scodec.bits.ByteVector`)
+- [scala.js] support
 
 Apart from [CBOR] _BORER_ also supports high-performance de- and encoding from and to [JSON] through the same API.
 One example where this is useful is providing "bilingual" REST APIs that can consume and produce both [CBOR] and [JSON].
@@ -36,15 +37,9 @@ the box) this means that you need to define yourself, how to represent type info
 
 Another design principle has been to implement _BORER_'s core module without relying on Scala macros or depending on any
 external libraries. This should make _BORER_ easily maintainable for the foreseeable future and reduces its weight as
-a dependency of your applications (which can be especially important with [scala.js]).   
-
-The benefit of this design is simplicity and performance. In fact, it is possible to write Encoder- and Decoder-
-hierachies with _BORER_, that do not allocate any ephemeral garbage over the course of the (de)serialization process,
-which means, among other things, that primitives values do not _have to_ be boxed anywhere. 
-
-While writing encoding- and decoding logic in such a way isn't always the most convenient, and most of the predefined
-Encoders and Decoders _aren't_ written with a focus on zero-allocations, _BORER_'s core infrastructure is built to
-support such high-performance use cases, if required.     
+a dependency of your applications (which can be especially important with [scala.js]).
+(Note: The `borer-derivation` module _does_ rely on macros for deriving encoder/decoder type classes, but its use is
+completely optional.)  
 
 
 Modules
@@ -56,6 +51,9 @@ _BORER_ consists of these modules:
 - `borer-derivation`, (semi-)automatic codec derivation for case classes and ADTs, depends on [Magnolia]
 - `borer-compat-akka`, support for `akka.util.ByteString`, depends on [akka-actor]
 - `borer-compat-scodec`, support for `scodec.bits.ByteVector`, depends on [scodec]
+
+Additionally, as a dependency of `borer-derivation`, _BORER_ also contains a `borer-magnolia` module, which contains an
+internalized, patched copy of [Magnolia].    
 
 
 Installation

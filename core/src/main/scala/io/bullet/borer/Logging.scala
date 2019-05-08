@@ -8,7 +8,7 @@
 
 package io.bullet.borer
 
-import java.lang.{StringBuilder ⇒ JStringBuilder}
+import java.lang.{StringBuilder => JStringBuilder}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util
 
@@ -31,8 +31,8 @@ import scala.annotation.tailrec
   */
 object Logging {
 
-  def apply[Config](createLogger: LevelInfo ⇒ Logger): borer.Receiver.Wrapper[Config] =
-    (target, _) ⇒ new Receiver(target, createLogger)
+  def apply[Config](createLogger: LevelInfo => Logger): borer.Receiver.Wrapper[Config] =
+    (target, _) => new Receiver(target, createLogger)
 
   trait LevelInfo {
     def level: Int
@@ -120,7 +120,7 @@ object Logging {
     def formatBytes[Bytes](opener: String, value: Bytes)(implicit ba: ByteAccess[Bytes]): String =
       ba.toByteArray(value)
         .take(maxShownByteArrayPrefixLen)
-        .map(x ⇒ f"${x & 0xFF}%02X")
+        .map(x => f"${x & 0xFF}%02X")
         .mkString(opener, " ", if (ba.sizeOf(value) > maxShownByteArrayPrefixLen) " ...]" else "]")
 
     def formatString[Bytes](value: Bytes)(implicit ba: ByteAccess[Bytes]): String =
@@ -133,12 +133,12 @@ object Logging {
 
     def show(item: String): Unit = {
       val sb = new java.lang.StringBuilder
-      for (_ ← 0 until info.level) sb.append("    ")
+      for (_ <- 0 until info.level) sb.append("    ")
       val levelCount = info.levelCount.toString
       val levelSize  = info.levelSize
       if (levelSize >= 0) {
         val s = levelSize.toString
-        for (_ ← 0 until (s.length - levelCount.length)) sb.append(' ')
+        for (_ <- 0 until (s.length - levelCount.length)) sb.append(' ')
         sb.append(levelCount).append('/').append(s)
       } else sb.append(levelCount)
       sb.append(": ")
@@ -153,7 +153,7 @@ object Logging {
     def showLine(line: String): Unit
   }
 
-  def PrintLogger(maxShownByteArrayPrefixLen: Int = 20, maxShownStringPrefixLen: Int = 50): LevelInfo ⇒ PrintLogger =
+  def PrintLogger(maxShownByteArrayPrefixLen: Int = 20, maxShownStringPrefixLen: Int = 50): LevelInfo => PrintLogger =
     new PrintLogger(maxShownByteArrayPrefixLen, maxShownStringPrefixLen, _)
 
   /**
@@ -168,7 +168,7 @@ object Logging {
       stringBuilder: JStringBuilder,
       maxShownByteArrayPrefixLen: Int = 20,
       maxShownStringPrefixLen: Int = 50,
-      lineSeparator: String = System.lineSeparator()): LevelInfo ⇒ ToStringLogger =
+      lineSeparator: String = System.lineSeparator()): LevelInfo => ToStringLogger =
     new ToStringLogger(stringBuilder, maxShownByteArrayPrefixLen, maxShownStringPrefixLen, lineSeparator, _)
 
   /**
@@ -188,7 +188,7 @@ object Logging {
     * A [[Receiver]] which forwards all incoming data item to another [[Receiver]] and,
     * on the side, feeds a custom [[Logger]] with logging events.
     */
-  final class Receiver(private var _target: borer.Receiver, createLogger: LevelInfo ⇒ Logger)
+  final class Receiver(private var _target: borer.Receiver, createLogger: LevelInfo => Logger)
       extends borer.Receiver with LevelInfo with java.lang.Cloneable {
 
     private var _level: Int = 0
@@ -239,10 +239,10 @@ object Logging {
         else LevelType.MapValue
       } else
         size match {
-          case 0 ⇒ LevelType.Array
-          case 1 ⇒ if ((count & 1) != 0) LevelType.MapKey else LevelType.MapValue
-          case 2 ⇒ LevelType.UnboundedByteString
-          case 3 ⇒ LevelType.UnboundedTextString
+          case 0 => LevelType.Array
+          case 1 => if ((count & 1) != 0) LevelType.MapKey else LevelType.MapValue
+          case 2 => LevelType.UnboundedByteString
+          case 3 => LevelType.UnboundedTextString
         }
     }
 

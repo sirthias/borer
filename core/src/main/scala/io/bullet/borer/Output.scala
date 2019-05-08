@@ -52,11 +52,11 @@ object Output {
     def writeStringAsAsciiBytes(s: String): Output = {
       @tailrec def rec(out: Output, ix: Int): Output =
         s.length - ix match {
-          case 0 ⇒ out
-          case 1 ⇒ writeAsByte(s.charAt(ix))
-          case 2 ⇒ writeAsBytes(s.charAt(ix), s.charAt(ix + 1))
-          case 3 ⇒ writeAsBytes(s.charAt(ix), s.charAt(ix + 1), s.charAt(ix + 2))
-          case _ ⇒ rec(writeAsBytes(s.charAt(ix), s.charAt(ix + 1), s.charAt(ix + 2), s.charAt(ix + 3)), ix + 4)
+          case 0 => out
+          case 1 => writeAsByte(s.charAt(ix))
+          case 2 => writeAsBytes(s.charAt(ix), s.charAt(ix + 1))
+          case 3 => writeAsBytes(s.charAt(ix), s.charAt(ix + 1), s.charAt(ix + 2))
+          case _ => rec(writeAsBytes(s.charAt(ix), s.charAt(ix + 1), s.charAt(ix + 2), s.charAt(ix + 3)), ix + 4)
         }
       rec(underlying, 0)
     }

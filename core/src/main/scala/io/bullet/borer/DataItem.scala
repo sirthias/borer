@@ -79,50 +79,50 @@ object DataItem {
     if (mask != AllButBreak) {
       Iterator
         .range(0, 25)
-        .map { i ⇒
+        .map { i =>
           mask & (1 << i) match {
-            case None ⇒ ""
+            case None => ""
 
-            case Null      ⇒ "Null"
-            case Undefined ⇒ "Undefined"
-            case Bool      ⇒ "Bool"
+            case Null      => "Null"
+            case Undefined => "Undefined"
+            case Bool      => "Bool"
 
-            case Int          ⇒ "Int"
-            case Long         ⇒ "Long"
-            case OverLong     ⇒ "OverLong"
-            case Float16      ⇒ "Float16"
-            case Float        ⇒ "Float"
-            case Double       ⇒ "Double"
-            case NumberString ⇒ "NumberString"
+            case Int          => "Int"
+            case Long         => "Long"
+            case OverLong     => "OverLong"
+            case Float16      => "Float16"
+            case Float        => "Float"
+            case Double       => "Double"
+            case NumberString => "NumberString"
 
-            case String    ⇒ "String"
-            case Chars     ⇒ "Chars"
-            case Text      ⇒ "Text"
-            case TextStart ⇒ "Start of unbounded Text"
+            case String    => "String"
+            case Chars     => "Chars"
+            case Text      => "Text"
+            case TextStart => "Start of unbounded Text"
 
-            case Bytes      ⇒ "Bytes"
-            case BytesStart ⇒ "Start of unbounded Bytes"
+            case Bytes      => "Bytes"
+            case BytesStart => "Start of unbounded Bytes"
 
-            case ArrayHeader ⇒ "Array"
-            case ArrayStart  ⇒ "Start of unbounded Array"
+            case ArrayHeader => "Array"
+            case ArrayStart  => "Start of unbounded Array"
 
-            case MapHeader ⇒ "Map"
-            case MapStart  ⇒ "Start of unbounded Map"
+            case MapHeader => "Map"
+            case MapStart  => "Start of unbounded Map"
 
-            case Break ⇒ "BREAK"
-            case Tag   ⇒ "Tag"
+            case Break => "BREAK"
+            case Tag   => "Tag"
 
-            case SimpleValue ⇒ "Simple Value"
+            case SimpleValue => "Simple Value"
 
-            case EndOfInput ⇒ "End of Input"
+            case EndOfInput => "End of Input"
           }
         }
         .filter(_.nonEmpty)
         .take(java.lang.Integer.bitCount(mask))
         .toList match {
-        case Nil      ⇒ "none"
-        case x :: Nil ⇒ x
-        case x        ⇒ x.init.mkString("", ", ", " or " + x.last)
+        case Nil      => "none"
+        case x :: Nil => x
+        case x        => x.init.mkString("", ", ", " or " + x.last)
       }
     } else "Any DataItem except BREAK"
 }

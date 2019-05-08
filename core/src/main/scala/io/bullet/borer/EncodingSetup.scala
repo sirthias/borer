@@ -9,7 +9,7 @@
 package io.bullet.borer
 
 import java.nio.charset.StandardCharsets.UTF_8
-import java.lang.{StringBuilder ⇒ JStringBuilder}
+import java.lang.{StringBuilder => JStringBuilder}
 
 import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
@@ -90,7 +90,7 @@ object EncodingSetup {
       target: Target,
       defaultConfig: Config,
       defaultWrapper: Receiver.Wrapper[Config],
-      rendererCreator: Output ⇒ Receiver.Renderer)
+      rendererCreator: Output => Receiver.Renderer)
       extends Borer.AbstractSetup[Config](defaultConfig, defaultWrapper) with JsonApi[T, Config]
       with Sealed[Output, AnyRef] {
 
@@ -112,8 +112,8 @@ object EncodingSetup {
       try {
         render(renderer).out.result()
       } catch {
-        case e: Borer.Error[_] ⇒ throw e.withOut(renderer.out)
-        case NonFatal(e)       ⇒ throw new Borer.Error.General(renderer.out, e)
+        case e: Borer.Error[_] => throw e.withOut(renderer.out)
+        case NonFatal(e)       => throw new Borer.Error.General(renderer.out, e)
       }
     }
 
@@ -122,8 +122,8 @@ object EncodingSetup {
       try {
         Success(render(renderer).out.result())
       } catch {
-        case e: Borer.Error[_] ⇒ Failure(e.withOut(renderer.out))
-        case NonFatal(e)       ⇒ Failure(new Borer.Error.General(renderer.out, e))
+        case e: Borer.Error[_] => Failure(e.withOut(renderer.out))
+        case NonFatal(e)       => Failure(new Borer.Error.General(renderer.out, e))
       }
     }
 
@@ -132,8 +132,8 @@ object EncodingSetup {
       try {
         Right(render(renderer).out.result())
       } catch {
-        case e: Borer.Error[_] ⇒ Left(e.withOut(renderer.out))
-        case NonFatal(e)       ⇒ Left(new Borer.Error.General(renderer.out, e))
+        case e: Borer.Error[_] => Left(e.withOut(renderer.out))
+        case NonFatal(e)       => Left(new Borer.Error.General(renderer.out, e))
       }
     }
 
@@ -144,8 +144,8 @@ object EncodingSetup {
       try {
         Success(render(renderer).out)
       } catch {
-        case e: Borer.Error[_] ⇒ Failure(e.withOut(renderer.out))
-        case NonFatal(e)       ⇒ Failure(new Borer.Error.General(renderer.out, e))
+        case e: Borer.Error[_] => Failure(e.withOut(renderer.out))
+        case NonFatal(e)       => Failure(new Borer.Error.General(renderer.out, e))
       }
     }
 
@@ -154,8 +154,8 @@ object EncodingSetup {
       try {
         Right(render(renderer).out)
       } catch {
-        case e: Borer.Error[_] ⇒ Left(e.withOut(renderer.out))
-        case NonFatal(e)       ⇒ Left(new Borer.Error.General(renderer.out, e))
+        case e: Borer.Error[_] => Left(e.withOut(renderer.out))
+        case NonFatal(e)       => Left(new Borer.Error.General(renderer.out, e))
       }
     }
 

@@ -15,7 +15,7 @@
 package io.bullet.borer.magnolia
 
 import io.bullet.borer.magnolia.examples._
-import utest.{Show ⇒ _, _}
+import utest.{Show => _, _}
 
 import scala.annotation.StaticAnnotation
 
@@ -41,7 +41,7 @@ case class Lunchbox(fruit: Fruit, drink: String)
 case class Fruit(name: String)
 
 object Fruit {
-  implicit val showFruit: Show[String, Fruit] = (f: Fruit) ⇒ f.name
+  implicit val showFruit: Show[String, Fruit] = (f: Fruit) => f.name
 }
 
 case class Item(name: String, quantity: Int = 1, price: Int)
@@ -432,7 +432,7 @@ object Tests extends TestSuite {
       implicit def showDefaultOption[A](
           implicit showA: Show[String, A],
           defaultA: HasDefault[A]
-      ): Show[String, Option[A]] = (optA: Option[A]) ⇒ showA.show(optA.getOrElse(defaultA.defaultValue.right.get))
+      ): Show[String, Option[A]] = (optA: Option[A]) => showA.show(optA.getOrElse(defaultA.defaultValue.right.get))
 
       Show.gen[Path[String]].show(OffRoad(Some(Crossroad(Destination("A"), Destination("B"))))) ==>
       "OffRoad[String](path=Crossroad[String](left=Destination[String](value=A),right=Destination[String](value=B)))"

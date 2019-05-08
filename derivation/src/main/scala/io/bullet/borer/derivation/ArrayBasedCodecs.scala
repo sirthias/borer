@@ -22,17 +22,17 @@ object ArrayBasedCodecs {
     def combine[T](ctx: CaseClass[Encoder, T]): Encoder[T] = {
       val params = ctx.parameters
       val len    = params.size
-      Encoder { (w, value) ⇒
+      Encoder { (w, value) =>
         @tailrec def rec(w: Writer, ix: Int): Writer =
           if (ix < len) {
             val p = params(ix)
             rec(p.typeclass.write(w, p.dereference(value)), ix + 1)
           } else w
         len match {
-          case 0                  ⇒ w.writeEmptyArray()
-          case 1                  ⇒ rec(w, 0)
-          case _ if w.writingJson ⇒ rec(w.writeArrayStart(), 0).writeBreak()
-          case _                  ⇒ rec(w.writeArrayHeader(len), 0)
+          case 0                  => w.writeEmptyArray()
+          case 1                  => rec(w, 0)
+          case _ if w.writingJson => rec(w.writeArrayStart(), 0).writeBreak()
+          case _                  => rec(w.writeArrayHeader(len), 0)
         }
       }
     }
@@ -41,7 +41,7 @@ object ArrayBasedCodecs {
       val subtypes = ctx.subtypes
       val len      = subtypes.size
       val typeIds  = TypeId.getTypeIds(ctx.typeName.full, subtypes)
-      Encoder { (w, value) ⇒
+      Encoder { (w, value) =>
         @tailrec def rec(ix: Int): Writer =
           if (ix < len) {
             val sub = subtypes(ix)
@@ -64,14 +64,14 @@ object ArrayBasedCodecs {
       val len                 = params.size
       def expected(s: String) = s"$s for decoding an instance of type [${ctx.typeName.full}]"
 
-      Decoder { r ⇒
+      Decoder { r =>
         def construct(): T = ctx.construct(_.typeclass.read(r))
         len match {
-          case 0 ⇒
+          case 0 =>
             if (r.tryReadArrayHeader(0) || r.tryReadArrayStart() && r.tryReadBreak()) ctx.construct(null)
             else r.unexpectedDataItem(expected(s"Empty array"))
-          case 1 ⇒ construct()
-          case _ ⇒
+          case 1 => construct()
+          case _ =>
             if (r.tryReadArrayStart()) {
               val result = construct()
               if (r.tryReadBreak()) result
@@ -87,7 +87,7 @@ object ArrayBasedCodecs {
       val typeIds             = TypeId.getTypeIds(ctx.typeName.full, subtypes)
       def expected(s: String) = s"$s for decoding an instance of type [${ctx.typeName.full}]"
 
-      Decoder { r ⇒
+      Decoder { r =>
         @tailrec def rec(id: TypeId.Value, ix: Int): T =
           if (ix < typeIds.length) {
             if (typeIds(ix) == id) subtypes(ix).typeclass.read(r)

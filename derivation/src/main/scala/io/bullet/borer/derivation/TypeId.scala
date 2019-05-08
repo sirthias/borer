@@ -60,12 +60,12 @@ object TypeId {
 
     implicit val encoder: Encoder[Value] =
       Encoder {
-        case (w, Str(x)) ⇒ w.writeString(x)
-        case (w, Num(x)) ⇒ w.writeLong(x)
+        case (w, Str(x)) => w.writeString(x)
+        case (w, Num(x)) => w.writeLong(x)
       }
 
     implicit val decoder: Decoder[Value] =
-      Decoder { r ⇒
+      Decoder { r =>
         if (r.hasString) Str(r.readString())
         else if (r.hasLong) Num(r.readLong())
         else r.unexpectedDataItem("String or Integer for decoding a io.bullet.borer.derivation.TypeId")
@@ -73,10 +73,10 @@ object TypeId {
 
     def apply(annotation: TypeId): Value =
       annotation.value match {
-        case x: String if x.nonEmpty ⇒ Str(x)
-        case x: Int if x >= 0        ⇒ Num(x.toLong)
-        case x: Long if x >= 0       ⇒ Num(x)
-        case _ ⇒
+        case x: String if x.nonEmpty => Str(x)
+        case x: Int if x >= 0        => Num(x.toLong)
+        case x: Long if x >= 0       => Num(x)
+        case _ =>
           sys.error(
             s"Illegal @TypeId annotation argument: Must be either a non-empty String or a non-negative Int/Long!")
       }
@@ -85,13 +85,13 @@ object TypeId {
   private[derivation] def find(annotations: Array[Any], default: String, ix: Int = 0): TypeId.Value =
     if (ix < annotations.length) {
       annotations(ix) match {
-        case x: TypeId ⇒ Value(x)
-        case _         ⇒ find(annotations, default, ix + 1)
+        case x: TypeId => Value(x)
+        case _         => find(annotations, default, ix + 1)
       }
     } else Value.Str(default)
 
   private[derivation] def getTypeIds[X[_], T](typeName: String, subtypes: Seq[Subtype[X, T]]): Array[TypeId.Value] = {
-    val typeIds = Array.tabulate(subtypes.size) { ix ⇒
+    val typeIds = Array.tabulate(subtypes.size) { ix =>
       val sub = subtypes(ix)
       TypeId.find(sub.annotationsArray, sub.typeName.short)
     }

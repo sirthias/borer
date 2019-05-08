@@ -77,7 +77,7 @@ class SprayModelBenchmark extends DomBenchmark {
 
     // format: OFF
     val c = fileName match {
-      case "australia-abc.json" ⇒
+      case "australia-abc.json" =>
         implicit val a = jsonFormat2(Australia.Geometry)
         implicit val b = jsonFormat6(Australia.Properties)
         implicit val c = jsonFormat1(Australia.Properties1)
@@ -85,7 +85,7 @@ class SprayModelBenchmark extends DomBenchmark {
         implicit val e = jsonFormat2(Australia.Crs)
         jsonFormat4(Australia.RootInterface)
 
-      case "bitcoin.json" ⇒
+      case "bitcoin.json" =>
         implicit val a = jsonFormat2(Bitcoin.SpendingOutpoints)
         implicit val b = jsonFormat8(Bitcoin.PrevOut)
         implicit val c = jsonFormat4(Bitcoin.Inputs)
@@ -93,7 +93,7 @@ class SprayModelBenchmark extends DomBenchmark {
         implicit val e = jsonFormat13(Bitcoin.Txs)
         jsonFormat1(Bitcoin.RootInterface)
 
-      case "doj-blog.json" ⇒
+      case "doj-blog.json" =>
         implicit val a = jsonFormat2(DojBlog.ResponseInfo)
         implicit val b = jsonFormat3(DojBlog.Resultset)
         implicit val c = jsonFormat3(DojBlog.Metadata)
@@ -101,12 +101,12 @@ class SprayModelBenchmark extends DomBenchmark {
         implicit val e = jsonFormat13(DojBlog.Results)
         jsonFormat2(DojBlog.RootInterface)
 
-      case "eu-lobby-country.json" ⇒
+      case "eu-lobby-country.json" =>
         implicit val a = jsonFormat0(EuLobbyCountry.Facets)
         implicit val b = jsonFormat6(EuLobbyCountry.Results)
         jsonFormat7(EuLobbyCountry.RootInterface)
 
-      case "eu-lobby-financial.json" ⇒
+      case "eu-lobby-financial.json" =>
         implicit val a = jsonFormat0(EuLobbyFinancial.Facets)
         implicit val b = jsonFormat8(EuLobbyFinancial.CustomIncomes)
         implicit val c = new JsonFormat[EuLobbyFinancial.Results] {
@@ -187,7 +187,7 @@ class SprayModelBenchmark extends DomBenchmark {
         }
         jsonFormat7(EuLobbyFinancial.RootInterface)
 
-      case "eu-lobby-repr.json" ⇒
+      case "eu-lobby-repr.json" =>
         implicit val a = jsonFormat0(EuLobbyRepr.Facets)
         implicit val b = new JsonFormat[EuLobbyRepr.Results] {
           def write(obj: EuLobbyRepr.Results) =
@@ -303,7 +303,7 @@ class SprayModelBenchmark extends DomBenchmark {
         }
         jsonFormat7(EuLobbyRepr.RootInterface)
 
-      case "github-events.json" ⇒
+      case "github-events.json" =>
         implicit val a = jsonFormat6(GithubEvents.Actor)
         implicit val b = jsonFormat2(GithubEvents.Author)
         implicit val c = jsonFormat1(GithubEvents.Self)
@@ -942,28 +942,28 @@ class SprayModelBenchmark extends DomBenchmark {
         implicit val D = jsonFormat15(GithubEvents.RootInterface)
         implicitly[RootJsonFormat[List[GithubEvents.RootInterface]]]
 
-      case "github-gists.json" ⇒
+      case "github-gists.json" =>
         implicit val a = jsonFormat18(GithubGists.Owner)
         implicit val b = jsonFormat5(GithubGists.FileData)
         implicit val c = jsonFormat18(GithubGists.RootInterface)
         implicitly[RootJsonFormat[List[GithubGists.RootInterface]]]
 
-      case "json-generator.json" ⇒
+      case "json-generator.json" =>
         implicit val a = jsonFormat2(JsonGenerator.Friends)
         implicit val b = jsonFormat2(JsonGenerator.Name)
         implicit val c = jsonFormat22(JsonGenerator.RootInterface)
         implicitly[RootJsonFormat[List[JsonGenerator.RootInterface]]]
 
-      case "meteorites.json" ⇒
+      case "meteorites.json" =>
         implicit val a = jsonFormat2(Meteorites.Geolocation)
         implicit val b = jsonFormat12(Meteorites.RootInterface)
         implicitly[RootJsonFormat[List[Meteorites.RootInterface]]]
 
-      case "movies.json" ⇒
+      case "movies.json" =>
         implicit val a = jsonFormat4(Movies.RootInterface)
         implicitly[RootJsonFormat[List[Movies.RootInterface]]]
 
-      case "reddit-scala.json" ⇒
+      case "reddit-scala.json" =>
         implicit val a = jsonFormat13(Reddit.Oembed)
         implicit val b = jsonFormat2(Reddit.SecureMedia)
         implicit val c = jsonFormat5(Reddit.MediaEmbed)
@@ -1166,7 +1166,7 @@ class SprayModelBenchmark extends DomBenchmark {
         implicit val g = jsonFormat5(Reddit.Data0)
         jsonFormat2(Reddit.RootInterface)
 
-      case "rick-morty.json" ⇒
+      case "rick-morty.json" =>
         implicit val a = jsonFormat1(RickMorty.Rating)
         implicit val b = jsonFormat2(RickMorty.Schedule)
         implicit val c = jsonFormat3(RickMorty.Country)
@@ -1180,21 +1180,21 @@ class SprayModelBenchmark extends DomBenchmark {
         implicit val k = jsonFormat1(RickMorty.Embedded)
         jsonFormat21(RickMorty.RootInterface)
 
-      case "temp-anomaly.json" ⇒
+      case "temp-anomaly.json" =>
         implicit val a = jsonFormat4(TempAnomaly.Description)
         jsonFormat2(TempAnomaly.RootInterface)
 
-      case "thai-cinemas.json" ⇒
+      case "thai-cinemas.json" =>
         implicit val a = jsonFormat4(ThaiCinemas.Group)
         implicit val b = jsonFormat17(ThaiCinemas.Results)
         jsonFormat4(ThaiCinemas.RootInterface)
 
-      case "turkish.json" ⇒
+      case "turkish.json" =>
         implicit val a = jsonFormat6(Turkish.Event)
         implicit val b = jsonFormat2(Turkish.Result)
         jsonFormat1(Turkish.RootInterface)
 
-      case "twitter_api_compact_response.json" | "twitter_api_response.json" ⇒
+      case "twitter_api_compact_response.json" | "twitter_api_response.json" =>
         implicit val a = jsonFormat4(TwitterApiResponse.Urls)
         implicit val b = jsonFormat1(TwitterApiResponse.Url)
         implicit val c = jsonFormat5(TwitterApiResponse.UserMentions)

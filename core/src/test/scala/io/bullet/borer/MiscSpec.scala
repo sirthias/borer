@@ -54,8 +54,8 @@ object MiscSpec extends BorerSpec {
       roundTrip("3903e7", BigInt(-1000))
       roundTrip("1a7fffffff", BigInt(Int.MaxValue))
       roundTrip("3a7fffffff", BigInt(Int.MinValue))
-      roundTrip("1a80000000", BigInt(1l + Int.MaxValue))
-      roundTrip("1a7fffffff", BigInt(-1l - Int.MinValue))
+      roundTrip("1a80000000", BigInt(1L + Int.MaxValue))
+      roundTrip("1a7fffffff", BigInt(-1L - Int.MinValue))
       roundTrip("1b7fffffffffffffff", BigInt(Long.MaxValue))
       roundTrip("3b7fffffffffffffff", BigInt(Long.MinValue))
       roundTrip("1b8000000000000000", BigInt("9223372036854775808"))  // Long.MaxValue + 1
@@ -78,8 +78,8 @@ object MiscSpec extends BorerSpec {
       roundTrip("c48201392714", BigDecimal(-1000.5))
       roundTrip("1a7fffffff", BigDecimal(Int.MaxValue))
       roundTrip("3a7fffffff", BigDecimal(Int.MinValue))
-      roundTrip("1a80000000", BigDecimal(1l + Int.MaxValue))
-      roundTrip("1a7fffffff", BigDecimal(-1l - Int.MinValue))
+      roundTrip("1a80000000", BigDecimal(1L + Int.MaxValue))
+      roundTrip("1a7fffffff", BigDecimal(-1L - Int.MinValue))
       roundTrip("1b7fffffffffffffff", BigDecimal(Long.MaxValue))
       roundTrip("3b7fffffffffffffff", BigDecimal(Long.MinValue))
       roundTrip("1b8000000000000000", BigDecimal("9223372036854775808"))  // long.maxvalue + 1
@@ -102,7 +102,7 @@ object MiscSpec extends BorerSpec {
       val error   = Cbor.decode(encoded).to[Foo].valueEither.left.get
       assertMatch(error) {
         case e: Borer.Error.InvalidInputData[_]
-            if e.getMessage == "Expected Array Header (3) but got Array Header (0) [input position 0]" ⇒
+            if e.getMessage == "Expected Array Header (3) but got Array Header (0) [input position 0]" =>
       }
     }
 

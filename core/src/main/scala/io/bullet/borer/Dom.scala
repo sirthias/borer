@@ -22,7 +22,7 @@ import scala.util.hashing.MurmurHash3
   * Provided as an alternative to plain [[Writer]]-based encoding and [[Reader]]-based decoding.
   */
 object Dom {
-  import DataItem.{Shifts ⇒ DIS}
+  import DataItem.{Shifts => DIS}
 
   sealed abstract class Element(val dataItemShift: Int)
 
@@ -48,8 +48,8 @@ object Dom {
   final case class ByteArrayElem(value: Array[Byte]) extends AbstractBytesElem(DIS.Bytes) {
     override def hashCode() = util.Arrays.hashCode(value)
     override def equals(obj: Any) = obj match {
-      case ByteArrayElem(x) ⇒ util.Arrays.equals(value, x)
-      case _                ⇒ false
+      case ByteArrayElem(x) => util.Arrays.equals(value, x)
+      case _                => false
     }
   }
 
@@ -90,7 +90,7 @@ object Dom {
       extends Element(dataItem) {
     if (size != (elements.length >> 1)) throw new IllegalArgumentException
 
-    final def elementsInterleaved: IndexedSeq[Element] = wrapRefArray(elements)
+    final def elementsInterleaved: IndexedSeq[Element] = Predef.wrapRefArray(elements)
 
     final def isEmpty                                          = false
     final def get: (Int, Iterator[Element], Iterator[Element]) = (size, keys, values)
@@ -102,8 +102,8 @@ object Dom {
       @tailrec def rec(ix: Int): Option[Element] =
         if (ix < elements.length) {
           elements(ix) match {
-            case StringElem(`key`) ⇒ Some(elements(ix + 1))
-            case _                 ⇒ rec(ix + 2)
+            case StringElem(`key`) => Some(elements(ix + 1))
+            case _                 => rec(ix + 2)
           }
         } else None
       rec(0)
@@ -123,7 +123,7 @@ object Dom {
       rec(HashMap.empty)
     }
 
-    final override def toString = keys.zip(values).map(x ⇒ x._1 + ": " + x._2).mkString("{", ", ", "}")
+    final override def toString = keys.zip(values).map(x => x._1 + ": " + x._2).mkString("{", ", ", "}")
 
     final override def hashCode() = {
       import scala.runtime.Statics.{finalizeHash, mix}
@@ -132,10 +132,10 @@ object Dom {
 
     final override def equals(obj: Any) =
       obj match {
-        case that: MapElem ⇒
+        case that: MapElem =>
           this.size == that.size && this.dataItemShift == that.dataItemShift && util.Arrays
             .equals(this.elements.asInstanceOf[Array[Object]], that.elements.asInstanceOf[Array[Object]])
-        case _ ⇒ false
+        case _ => false
       }
   }
 
@@ -163,14 +163,14 @@ object Dom {
       def unapply(value: Unsized): Unsized                                   = value
     }
 
-    private def construct[T](entries: Iterable[(AnyRef, Element)], f: (Int, Array[Element]) ⇒ T): T = {
+    private def construct[T](entries: Iterable[(AnyRef, Element)], f: (Int, Array[Element]) => T): T = {
       val elements = new mutable.ArrayBuilder.ofRef[Dom.Element]
       elements.sizeHint(entries.size << 1)
       entries.foreach {
-        case (key, value) ⇒
+        case (key, value) =>
           var keyElem = key match {
-            case x: String  ⇒ StringElem(x)
-            case x: Element ⇒ x
+            case x: String  => StringElem(x)
+            case x: Element => x
           }
           elements += keyElem += value
       }
@@ -195,53 +195,53 @@ object Dom {
   implicit def encoder[T <: Element]: Encoder[T] = elementEncoder.asInstanceOf[Encoder[T]]
 
   val elementEncoder: Encoder[Element] = {
-    val writeElement = (w: Writer, x: Element) ⇒ w.write(x)
+    val writeElement = (w: Writer, x: Element) => w.write(x)
 
-    Encoder { (w, x) ⇒
+    Encoder { (w, x) =>
       (x.dataItemShift: @switch) match {
-        case DIS.Null      ⇒ w.writeNull()
-        case DIS.Undefined ⇒ w.writeUndefined()
-        case DIS.Bool      ⇒ w.writeBool(x.asInstanceOf[BoolElem].value)
+        case DIS.Null      => w.writeNull()
+        case DIS.Undefined => w.writeUndefined()
+        case DIS.Bool      => w.writeBool(x.asInstanceOf[BoolElem].value)
 
-        case DIS.Int          ⇒ w.writeInt(x.asInstanceOf[IntElem].value)
-        case DIS.Long         ⇒ w.writeLong(x.asInstanceOf[LongElem].value)
-        case DIS.OverLong     ⇒ val n = x.asInstanceOf[OverLongElem]; w.writeOverLong(n.negative, n.value)
-        case DIS.Float16      ⇒ w.writeFloat16(x.asInstanceOf[Float16Elem].value)
-        case DIS.Float        ⇒ w.writeFloat(x.asInstanceOf[FloatElem].value)
-        case DIS.Double       ⇒ w.writeDouble(x.asInstanceOf[DoubleElem].value)
-        case DIS.NumberString ⇒ w.writeNumberString(x.asInstanceOf[NumberStringElem].value)
+        case DIS.Int          => w.writeInt(x.asInstanceOf[IntElem].value)
+        case DIS.Long         => w.writeLong(x.asInstanceOf[LongElem].value)
+        case DIS.OverLong     => val n = x.asInstanceOf[OverLongElem]; w.writeOverLong(n.negative, n.value)
+        case DIS.Float16      => w.writeFloat16(x.asInstanceOf[Float16Elem].value)
+        case DIS.Float        => w.writeFloat(x.asInstanceOf[FloatElem].value)
+        case DIS.Double       => w.writeDouble(x.asInstanceOf[DoubleElem].value)
+        case DIS.NumberString => w.writeNumberString(x.asInstanceOf[NumberStringElem].value)
 
-        case DIS.String ⇒ w.writeString(x.asInstanceOf[StringElem].value)
-        case DIS.TextStart ⇒
+        case DIS.String => w.writeString(x.asInstanceOf[StringElem].value)
+        case DIS.TextStart =>
           x.asInstanceOf[TextStreamElem].value.foldLeft(w.writeTextStart())(writeElement).writeBreak()
 
-        case DIS.Bytes ⇒ w.writeBytes(x.asInstanceOf[ByteArrayElem].value)
-        case DIS.BytesStart ⇒
+        case DIS.Bytes => w.writeBytes(x.asInstanceOf[ByteArrayElem].value)
+        case DIS.BytesStart =>
           x.asInstanceOf[BytesStreamElem].value.foldLeft(w.writeBytesStart())(writeElement).writeBreak()
 
-        case DIS.SimpleValue ⇒ w.write(x.asInstanceOf[SimpleValueElem].value)
+        case DIS.SimpleValue => w.write(x.asInstanceOf[SimpleValueElem].value)
 
-        case DIS.ArrayHeader ⇒
+        case DIS.ArrayHeader =>
           val a = x.asInstanceOf[ArrayElem.Sized]
           a.elements.foldLeft(w.writeArrayHeader(a.elements.size))(writeElement)
-        case DIS.ArrayStart ⇒
+        case DIS.ArrayStart =>
           x.asInstanceOf[ArrayElem.Unsized].elements.foldLeft(w.writeArrayStart())(writeElement).writeBreak()
 
-        case DIS.MapHeader ⇒
+        case DIS.MapHeader =>
           val m     = x.asInstanceOf[MapElem.Sized]
           val array = m.elements
           @tailrec def rec(w: Writer, ix: Int): w.type =
             if (ix < array.length) rec(w.write(array(ix)).write(array(ix + 1)), ix + 2) else w
           rec(w.writeMapHeader(m.size), 0)
 
-        case DIS.MapStart ⇒
+        case DIS.MapStart =>
           val m     = x.asInstanceOf[MapElem.Unsized]
           val array = m.elements
           @tailrec def rec(w: Writer, ix: Int): w.type =
             if (ix < array.length) rec(w.write(array(ix)).write(array(ix + 1)), ix + 2) else w
           rec(w.writeMapStart(), 0).writeBreak()
 
-        case DIS.Tag ⇒ val n = x.asInstanceOf[TaggedElem]; w.writeTag(n.tag).write(n.value)
+        case DIS.Tag => val n = x.asInstanceOf[TaggedElem]; w.writeTag(n.tag).write(n.value)
       }
     }
   }
@@ -249,7 +249,7 @@ object Dom {
   implicit def decoder[T <: Element]: Decoder[T] = elementDecoder.asInstanceOf[Decoder[T]]
 
   val elementDecoder: Decoder[Element] = {
-    val bytesDecoder: Decoder[Vector[AbstractBytesElem]] = Decoder { r ⇒
+    val bytesDecoder: Decoder[Vector[AbstractBytesElem]] = Decoder { r =>
       r.readBytesStart()
       if (!r.tryReadBreak()) {
         val b = new immutable.VectorBuilder[AbstractBytesElem]
@@ -257,7 +257,7 @@ object Dom {
         b.result()
       } else Vector.empty
     }
-    val textDecoder: Decoder[Vector[AbstractTextElem]] = Decoder { r ⇒
+    val textDecoder: Decoder[Vector[AbstractTextElem]] = Decoder { r =>
       r.readTextStart()
       if (!r.tryReadBreak()) {
         val b = new immutable.VectorBuilder[AbstractTextElem]
@@ -266,32 +266,32 @@ object Dom {
       } else Vector.empty
     }
 
-    Decoder { r ⇒
+    Decoder { r =>
       (Integer.numberOfTrailingZeros(r.dataItem): @switch) match {
-        case DIS.Null      ⇒ r.readNull(); NullElem
-        case DIS.Undefined ⇒ r.readUndefined(); UndefinedElem
-        case DIS.Bool      ⇒ if (r.readBoolean()) BoolElem.True else BoolElem.False
+        case DIS.Null      => r.readNull(); NullElem
+        case DIS.Undefined => r.readUndefined(); UndefinedElem
+        case DIS.Bool      => if (r.readBoolean()) BoolElem.True else BoolElem.False
 
-        case DIS.Int          ⇒ IntElem(r.readInt())
-        case DIS.Long         ⇒ LongElem(r.readLong())
-        case DIS.OverLong     ⇒ OverLongElem(r.overLongNegative, r.readOverLong())
-        case DIS.Float16      ⇒ Float16Elem(r.readFloat16())
-        case DIS.Float        ⇒ FloatElem(r.readFloat())
-        case DIS.Double       ⇒ DoubleElem(r.readDouble())
-        case DIS.NumberString ⇒ NumberStringElem(r.readNumberString())
+        case DIS.Int          => IntElem(r.readInt())
+        case DIS.Long         => LongElem(r.readLong())
+        case DIS.OverLong     => OverLongElem(r.overLongNegative, r.readOverLong())
+        case DIS.Float16      => Float16Elem(r.readFloat16())
+        case DIS.Float        => FloatElem(r.readFloat())
+        case DIS.Double       => DoubleElem(r.readDouble())
+        case DIS.NumberString => NumberStringElem(r.readNumberString())
 
-        case DIS.Bytes      ⇒ ByteArrayElem(r.readByteArray())
-        case DIS.BytesStart ⇒ BytesStreamElem(r.read()(bytesDecoder))
+        case DIS.Bytes      => ByteArrayElem(r.readByteArray())
+        case DIS.BytesStart => BytesStreamElem(r.read()(bytesDecoder))
 
-        case DIS.Chars | DIS.String | DIS.Text ⇒ StringElem(r.readString())
-        case DIS.TextStart                     ⇒ TextStreamElem(r.read()(textDecoder))
+        case DIS.Chars | DIS.String | DIS.Text => StringElem(r.readString())
+        case DIS.TextStart                     => TextStreamElem(r.read()(textDecoder))
 
-        case DIS.SimpleValue ⇒ SimpleValueElem(SimpleValue(r.readSimpleValue()))
+        case DIS.SimpleValue => SimpleValueElem(SimpleValue(r.readSimpleValue()))
 
-        case DIS.ArrayHeader ⇒ ArrayElem.Sized(r.read[Vector[Element]]())
-        case DIS.ArrayStart  ⇒ ArrayElem.Unsized(r.read[Vector[Element]]())
+        case DIS.ArrayHeader => ArrayElem.Sized(r.read[Vector[Element]]())
+        case DIS.ArrayStart  => ArrayElem.Unsized(r.read[Vector[Element]]())
 
-        case DIS.MapHeader ⇒
+        case DIS.MapHeader =>
           if (!r.tryReadMapHeader(0)) {
             val elements = new mutable.ArrayBuilder.ofRef[Dom.Element]
             val size     = r.readMapHeader()
@@ -306,7 +306,7 @@ object Dom {
             rec(count)
           } else MapElem.Sized.empty
 
-        case DIS.MapStart ⇒
+        case DIS.MapStart =>
           r.skipDataItem()
           if (!r.tryReadBreak) {
             @tailrec def rec(elements: mutable.ArrayBuilder.ofRef[Dom.Element]): MapElem.Unsized =
@@ -317,7 +317,7 @@ object Dom {
             rec(new mutable.ArrayBuilder.ofRef[Dom.Element])
           } else MapElem.Unsized.empty
 
-        case DIS.Tag ⇒ TaggedElem(r.readTag(), r.read[Element]())
+        case DIS.Tag => TaggedElem(r.readTag(), r.read[Element]())
       }
     }
   }

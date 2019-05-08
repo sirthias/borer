@@ -8,7 +8,7 @@
 
 package io.bullet.borer
 
-import java.lang.{Long ⇒ JLong}
+import java.lang.{Long => JLong}
 import java.nio.ByteOrder
 import java.security.PrivilegedExceptionAction
 
@@ -23,7 +23,7 @@ object Unsafe {
     try {
       SMUnsafe.getUnsafe
     } catch {
-      case NonFatal(_) ⇒
+      case NonFatal(_) =>
         try {
           java.security.AccessController.doPrivileged {
             new PrivilegedExceptionAction[SMUnsafe] {
@@ -35,13 +35,13 @@ object Unsafe {
             }
           }
         } catch {
-          case NonFatal(_) ⇒
+          case NonFatal(_) =>
             try {
               val constructor = classOf[SMUnsafe].getDeclaredConstructor()
               constructor.setAccessible(true)
               constructor.newInstance()
             } catch {
-              case NonFatal(_) ⇒ null
+              case NonFatal(_) => null
             }
         }
     }
@@ -53,8 +53,8 @@ object Unsafe {
   def byteArrayAccess: ByteArrayAccess =
     if (UNSAFE ne null) {
       ByteOrder.nativeOrder() match {
-        case ByteOrder.LITTLE_ENDIAN ⇒ byteArrayAccessOnLittleEndian()
-        case ByteOrder.BIG_ENDIAN    ⇒ byteArrayAccessOnBigEndian()
+        case ByteOrder.LITTLE_ENDIAN => byteArrayAccessOnLittleEndian()
+        case ByteOrder.BIG_ENDIAN    => byteArrayAccessOnBigEndian()
       }
     } else null
 

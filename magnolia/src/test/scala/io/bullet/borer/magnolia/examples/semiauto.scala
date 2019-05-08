@@ -27,7 +27,7 @@ object SemiDefault {
   type Typeclass[T] = SemiDefault[T]
 
   def combine[T](ctx: CaseClass[SemiDefault, T]): SemiDefault[T] = new SemiDefault[T] {
-    def default = ctx.construct(p ⇒ p.default.getOrElse(p.typeclass.default))
+    def default = ctx.construct(p => p.default.getOrElse(p.typeclass.default))
   }
 
   def dispatch[T](ctx: SealedTrait[SemiDefault, T])(): SemiDefault[T] = new SemiDefault[T] {

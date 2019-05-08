@@ -49,7 +49,7 @@ object Patcher extends LowerPriorityPatcher {
           )
         }
         val effectiveFields = ctx.parameters.zip(fieldValues).map {
-          case (param, x) ⇒ if (x.asInstanceOf[AnyRef] ne null) x else param dereference value
+          case (param, x) => if (x.asInstanceOf[AnyRef] ne null) x else param dereference value
         }
         ctx.rawConstruct(effectiveFields.toArray)
       }
@@ -59,7 +59,7 @@ object Patcher extends LowerPriorityPatcher {
     new Patcher[T] {
 
       def patch(value: T, fieldValues: Seq[Any]): T =
-        ctx.dispatch(value)(sub ⇒ sub.typeclass.patch(sub cast value, fieldValues))
+        ctx.dispatch(value)(sub => sub.typeclass.patch(sub cast value, fieldValues))
     }
 
   implicit def gen[T]: Patcher[T] = macro Magnolia.gen[T]

@@ -166,7 +166,7 @@ object Writer {
   /**
     * Simple encapsulation of encoding logic in a stand-alone object.
     */
-  final case class Script(encode: Writer ⇒ Writer)
+  final case class Script(encode: Writer => Writer)
 
   object Script {
     val Undefined  = Script(_.writeUndefined())
@@ -176,6 +176,6 @@ object Writer {
     val MapStart   = Script(_.writeMapStart())
     val Break      = Script(_.writeBreak())
 
-    implicit val encoder: Encoder[Script] = Encoder((w, x) ⇒ x.encode(w))
+    implicit val encoder: Encoder[Script] = Encoder((w, x) => x.encode(w))
   }
 }

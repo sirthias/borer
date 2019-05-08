@@ -168,7 +168,7 @@ abstract class DerivationSpec(target: Target) extends TestSuite {
         val encoded = target.encode(dom).to[Array[Byte]].bytes
         target.decode(encoded).to[Element].value ==> dom
         assertMatch(target.decode(encoded).to[Foo].valueTry) {
-          case Failure(e) if e.getMessage == arrayBasedMissingElemErrorMsg ⇒ // ok
+          case Failure(e) if e.getMessage == arrayBasedMissingElemErrorMsg => // ok
         }
       }
 
@@ -235,40 +235,40 @@ abstract class DerivationSpec(target: Target) extends TestSuite {
         val errorMsg =
           s"Missing map key [$missingKey] for decoding an instance of type [io.bullet.borer.derivation.DerivationSpec."
         assertMatch(target.decode(encoded).to[T].valueTry) {
-          case Failure(e) if e.getMessage startsWith errorMsg ⇒ // ok
+          case Failure(e) if e.getMessage startsWith errorMsg => // ok
         }
       }
 
       def dupMemberBeforeFillCompletion[T: Encoder: Decoder](dom: MapElem, memberIx: Int, key: String): Unit = {
-        val badDom  = transform(dom)(x ⇒ x.take(memberIx) ::: x.drop(memberIx - 1))
+        val badDom  = transform(dom)(x => x.take(memberIx) ::: x.drop(memberIx - 1))
         val encoded = target.encode(badDom).to[Array[Byte]].bytes
         target.decode(encoded).to[Element].value ==> badDom
 
         assertMatch(target.decode(encoded).to[T].valueTry) {
-          case Failure(e) if e.getMessage startsWith s"Duplicate map key [$key] encountered" ⇒ // ok
+          case Failure(e) if e.getMessage startsWith s"Duplicate map key [$key] encountered" => // ok
         }
       }
 
       def dupMemberAfterFillCompletion[T: Encoder: Decoder](dom: MapElem, memberIx: Int, key: String): Unit = {
-        val badDom  = transform(dom)(x ⇒ x :+ x(memberIx))
+        val badDom  = transform(dom)(x => x :+ x(memberIx))
         val encoded = target.encode(badDom).to[Array[Byte]].bytes
         target.decode(encoded).to[Element].value ==> badDom
 
         assertMatch(target.decode(encoded).to[T].valueTry) {
-          case Failure(e) if e.getMessage startsWith s"Duplicate map key [$key] encountered" ⇒ // ok
+          case Failure(e) if e.getMessage startsWith s"Duplicate map key [$key] encountered" => // ok
         }
       }
 
       def extraMemberBeforeFillCompletion[T: Encoder: Decoder](value: T, dom: MapElem, ix: Int): Unit = {
-        val extraMember = StringElem("yeah") → StringElem("xxx")
-        val fatDom      = transform(dom)(x ⇒ (x.take(ix) :+ extraMember) ++ x.drop(ix))
+        val extraMember = StringElem("yeah") -> StringElem("xxx")
+        val fatDom      = transform(dom)(x => (x.take(ix) :+ extraMember) ++ x.drop(ix))
         val encoded     = target.encode(fatDom).to[Array[Byte]].bytes
         target.decode(encoded).to[Element].value ==> fatDom
         target.decode(encoded).to[T].value ==> value
       }
 
       def extraMemberAfterFillCompletion[T: Encoder: Decoder](value: T, dom: MapElem): Unit = {
-        val extraMember = StringElem("extra") → StringElem("xxx")
+        val extraMember = StringElem("extra") -> StringElem("xxx")
         val fatDom      = transform(dom)(_ :+ extraMember)
         val encoded     = target.encode(fatDom).to[Array[Byte]].bytes
         target.decode(encoded).to[Element].value ==> fatDom
@@ -276,15 +276,15 @@ abstract class DerivationSpec(target: Target) extends TestSuite {
       }
 
       def complexExtraMemberBeforeFC[T: Encoder: Decoder](value: T, dom: MapElem, ix: Int): Unit = {
-        val extraMember = StringElem("extra") → dom
-        val fatDom      = transform(dom)(x ⇒ (x.take(ix) :+ extraMember) ++ x.drop(ix))
+        val extraMember = StringElem("extra") -> dom
+        val fatDom      = transform(dom)(x => (x.take(ix) :+ extraMember) ++ x.drop(ix))
         val encoded     = target.encode(fatDom).to[Array[Byte]].bytes
         target.decode(encoded).to[Element].value ==> fatDom
         target.decode(encoded).to[T].value ==> value
       }
 
       def complexExtraMemberAfterFC[T: Encoder: Decoder](value: T, dom: MapElem): Unit = {
-        val extraMember = StringElem("extra") → dom
+        val extraMember = StringElem("extra") -> dom
         val fatDom      = transform(dom)(_ :+ extraMember)
         val encoded     = target.encode(fatDom).to[Array[Byte]].bytes
         target.decode(encoded).to[Element].value ==> fatDom
@@ -396,19 +396,19 @@ abstract class DerivationSpec(target: Target) extends TestSuite {
     }
   }
 
-  def transform(elem: ArrayElem)(f: Vector[Element] ⇒ Vector[Element]): ArrayElem =
+  def transform(elem: ArrayElem)(f: Vector[Element] => Vector[Element]): ArrayElem =
     elem match {
-      case ArrayElem.Sized(x)   ⇒ ArrayElem.Sized(f(x))
-      case ArrayElem.Unsized(x) ⇒ ArrayElem.Unsized(f(x))
+      case ArrayElem.Sized(x)   => ArrayElem.Sized(f(x))
+      case ArrayElem.Unsized(x) => ArrayElem.Unsized(f(x))
     }
 
-  def transform(elem: MapElem)(f: List[(Element, Element)] ⇒ List[(Element, Element)]): MapElem =
+  def transform(elem: MapElem)(f: List[(Element, Element)] => List[(Element, Element)]): MapElem =
     elem match {
-      case MapElem.Sized(_, keys, values)   ⇒ MapElem.Sized(f((keys zip values).toList): _*)
-      case MapElem.Unsized(_, keys, values) ⇒ MapElem.Unsized(f((keys zip values).toList): _*)
+      case MapElem.Sized(_, keys, values)   => MapElem.Sized(f((keys zip values).toList): _*)
+      case MapElem.Unsized(_, keys, values) => MapElem.Unsized(f((keys zip values).toList): _*)
     }
 
-  final def toHexString(bytes: Array[Byte]): String = bytes.map(x ⇒ f"${x & 0xFF}%02x").mkString
+  final def toHexString(bytes: Array[Byte]): String = bytes.map(x => f"${x & 0xFF}%02x").mkString
 }
 
 // cannot be moved into the DerivationSpec class itself due to

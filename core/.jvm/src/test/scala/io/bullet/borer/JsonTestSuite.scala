@@ -26,7 +26,7 @@ object JsonTestSuite extends TestSuite {
     Source
       .fromResource("")
       .getLines()
-      .map { name ⇒
+      .map { name =>
         val is = new BufferedInputStream(getClass.getResourceAsStream("/" + name))
         try name → Iterator.continually(is.read).takeWhile(_ != -1).map(_.toByte).toArray
         finally is.close()
@@ -40,36 +40,36 @@ object JsonTestSuite extends TestSuite {
 
     "Accept" - {
       for {
-        (name, bytes) ← testFiles
+        (name, bytes) <- testFiles
         if name startsWith "y"
       } {
         Json.decode(bytes).withConfig(config).to[Dom.Element].valueEither match {
-          case Left(e)  ⇒ throw new RuntimeException(s"Test `$name` did not parse as it should", e)
-          case Right(_) ⇒ // ok
+          case Left(e)  => throw new RuntimeException(s"Test `$name` did not parse as it should", e)
+          case Right(_) => // ok
         }
       }
     }
 
     "Reject" - {
       for {
-        (name, bytes) ← testFiles
+        (name, bytes) <- testFiles
         if name startsWith "n"
       } {
         Json.decode(bytes).withConfig(config).to[Dom.Element].valueEither match {
-          case Left(_)  ⇒ // ok
-          case Right(x) ⇒ throw new RuntimeException(s"Test `$name` parsed even though it should have failed: $x")
+          case Left(_)  => // ok
+          case Right(x) => throw new RuntimeException(s"Test `$name` parsed even though it should have failed: $x")
         }
       }
     }
 
     "Not Crash" - {
       for {
-        (name, bytes) ← testFiles
+        (name, bytes) <- testFiles
         if name startsWith "i"
       } {
         Json.decode(bytes).withConfig(config).to[Dom.Element].valueEither match {
-          case Left(e: Borer.Error.General[_]) ⇒ throw new RuntimeException(s"Test `$name` did fail unexpectedly", e)
-          case _                               ⇒ // everything else is fine
+          case Left(e: Borer.Error.General[_]) => throw new RuntimeException(s"Test `$name` did fail unexpectedly", e)
+          case _                               => // everything else is fine
         }
       }
     }

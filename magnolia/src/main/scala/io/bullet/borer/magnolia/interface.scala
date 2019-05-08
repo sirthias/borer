@@ -50,7 +50,7 @@ abstract class Param[Typeclass[_], Type](
     final val annotationsArray: Array[Any],
     defaultVal: CallByNeed[Option[_]],
     typeclassParam: CallByNeed[Typeclass[_]])
-    extends Serializable { self ⇒
+    extends Serializable { self =>
 
   /** the type of the parameter being represented
     *
@@ -149,7 +149,7 @@ abstract class CaseClass[Typeclass[_], Type](
     *  @param makeParam  lambda for converting a generic [[Param]] into the value to be used for
     *                    this parameter in the construction of a new instance of the case class
     *  @return  a new instance of the case class */
-  def construct[Return](makeParam: Param[Typeclass, Type] ⇒ Return): Type
+  def construct[Return](makeParam: Param[Typeclass, Type] => Return): Type
 
   /** constructs a new instance of the case class type
     *
@@ -209,7 +209,7 @@ final class SealedTrait[Typeclass[_], Type](
     *                 matches
     *  @return  the result of applying the `handle` lambda to subtype of the sealed trait which
     *           matches the parameter `value` */
-  def dispatch[Return](value: Type)(handle: Subtype[Typeclass, Type] ⇒ Return): Return = {
+  def dispatch[Return](value: Type)(handle: Subtype[Typeclass, Type] => Return): Return = {
     @tailrec def rec(ix: Int): Return =
       if (ix < subtypesArray.length) {
         val sub = subtypesArray(ix)

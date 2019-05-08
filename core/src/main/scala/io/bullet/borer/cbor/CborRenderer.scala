@@ -114,6 +114,6 @@ final private[borer] class CborRenderer(var out: Output) extends Receiver.Render
   }
 }
 
-object CborRenderer extends (Output ⇒ CborRenderer) {
+object CborRenderer extends (Output => CborRenderer) {
   def apply(out: Output) = new CborRenderer(out)
 }

@@ -130,9 +130,9 @@ final private[borer] class JsonRenderer(var out: Output) extends Receiver.Render
         def escaped(c: Char) = out.writeAsBytes('\\', c)
 
         value.charAt(ix) match {
-          case '"'  ⇒ rec(escaped('"'), ix + 1)
-          case '\\' ⇒ rec(escaped('\\'), ix + 1)
-          case c if c >= 0x20 ⇒ // we re-encode the character (or surrogate pair) from UTF-16 to UTF-8 right here
+          case '"'  => rec(escaped('"'), ix + 1)
+          case '\\' => rec(escaped('\\'), ix + 1)
+          case c if c >= 0x20 => // we re-encode the character (or surrogate pair) from UTF-16 to UTF-8 right here
             var index = ix
             val newOut =
               if (c > 0x7F) {
@@ -155,12 +155,12 @@ final private[borer] class JsonRenderer(var out: Output) extends Receiver.Render
               } else out.writeAsByte(c)
             rec(newOut, index + 1)
 
-          case '\b' ⇒ rec(escaped('b'), ix + 1)
-          case '\f' ⇒ rec(escaped('f'), ix + 1)
-          case '\n' ⇒ rec(escaped('n'), ix + 1)
-          case '\r' ⇒ rec(escaped('r'), ix + 1)
-          case '\t' ⇒ rec(escaped('t'), ix + 1)
-          case c ⇒
+          case '\b' => rec(escaped('b'), ix + 1)
+          case '\f' => rec(escaped('f'), ix + 1)
+          case '\n' => rec(escaped('n'), ix + 1)
+          case '\r' => rec(escaped('r'), ix + 1)
+          case '\t' => rec(escaped('t'), ix + 1)
+          case c =>
             val newOut = out
               .writeAsBytes('\\', 'u', '0', '0')
               .writeBytes(lowerHexDigit(c.toInt >> 4).toByte, lowerHexDigit(c.toInt).toByte)
@@ -258,7 +258,7 @@ final private[borer] class JsonRenderer(var out: Output) extends Receiver.Render
 
         // for large numbers we bite the bullet of performing one division every two digits
         def phase1(l: Long): Output =
-          if (l > 65535l) {
+          if (l > 65535L) {
             val q  = l / 100
             val r  = (l - q * 100).toInt
             val rq = div10(r)
@@ -285,6 +285,6 @@ final private[borer] class JsonRenderer(var out: Output) extends Receiver.Render
     throw new Borer.Error.ValidationFailure(out, msg)
 }
 
-object JsonRenderer extends (Output ⇒ JsonRenderer) {
+object JsonRenderer extends (Output => JsonRenderer) {
   def apply(out: Output) = new JsonRenderer(out)
 }

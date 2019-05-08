@@ -27,7 +27,7 @@ object WeakHash {
 
     def hash(value: T): Int =
       ctx.parameters
-        .map { param ⇒
+        .map { param =>
           param.typeclass.hash(param.dereference(value))
         }
         .foldLeft(0)(_ ^ _)

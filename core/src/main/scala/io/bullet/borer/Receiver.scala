@@ -81,10 +81,10 @@ object Receiver {
     def pull(receiver: Receiver): Int
   }
 
-  type ParserCreator[In <: Input, Config] = (In, Config) ⇒ Parser[In]
+  type ParserCreator[In <: Input, Config] = (In, Config) => Parser[In]
 
-  type Wrapper[Config] = (Receiver, Config) ⇒ Receiver
-  private[this] val _nopWrapper: Wrapper[Any] = (receiver, _) ⇒ receiver
+  type Wrapper[Config] = (Receiver, Config) => Receiver
+  private[this] val _nopWrapper: Wrapper[Any] = (receiver, _) => receiver
 
   def nopWrapper[Config]: Wrapper[Config] = _nopWrapper.asInstanceOf[Wrapper[Config]]
 

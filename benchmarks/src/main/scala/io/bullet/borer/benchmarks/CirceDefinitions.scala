@@ -77,7 +77,7 @@ class CirceModelBenchmark extends DomBenchmark {
 
     // format: OFF
     val c = fileName match {
-      case "australia-abc.json" ⇒
+      case "australia-abc.json" =>
         implicit val a = deriveEncoder[Australia.Geometry]
         implicit val b = deriveEncoder[Australia.Properties]
         implicit val c = deriveEncoder[Australia.Properties1]
@@ -85,7 +85,7 @@ class CirceModelBenchmark extends DomBenchmark {
         implicit val e = deriveEncoder[Australia.Crs]
         deriveEncoder[Australia.RootInterface]
 
-      case "bitcoin.json" ⇒
+      case "bitcoin.json" =>
         implicit val a = deriveEncoder[Bitcoin.SpendingOutpoints]
         implicit val b = deriveEncoder[Bitcoin.PrevOut]
         implicit val c = deriveEncoder[Bitcoin.Inputs]
@@ -93,7 +93,7 @@ class CirceModelBenchmark extends DomBenchmark {
         implicit val e = deriveEncoder[Bitcoin.Txs]
         deriveEncoder[Bitcoin.RootInterface]
 
-      case "doj-blog.json" ⇒
+      case "doj-blog.json" =>
         implicit val a = deriveEncoder[DojBlog.ResponseInfo]
         implicit val b = deriveEncoder[DojBlog.Resultset]
         implicit val c = deriveEncoder[DojBlog.Metadata]
@@ -101,23 +101,23 @@ class CirceModelBenchmark extends DomBenchmark {
         implicit val e = deriveEncoder[DojBlog.Results]
         deriveEncoder[DojBlog.RootInterface]
 
-      case "eu-lobby-country.json" ⇒
+      case "eu-lobby-country.json" =>
         implicit val a = deriveEncoder[EuLobbyCountry.Facets]
         implicit val b = deriveEncoder[EuLobbyCountry.Results]
         deriveEncoder[EuLobbyCountry.RootInterface]
 
-      case "eu-lobby-financial.json" ⇒
+      case "eu-lobby-financial.json" =>
         implicit val a = deriveEncoder[EuLobbyFinancial.Facets]
         implicit val b = deriveEncoder[EuLobbyFinancial.CustomIncomes]
         implicit val c = deriveEncoder[EuLobbyFinancial.Results]
         deriveEncoder[EuLobbyFinancial.RootInterface]
 
-      case "eu-lobby-repr.json" ⇒
+      case "eu-lobby-repr.json" =>
         implicit val a = deriveEncoder[EuLobbyRepr.Facets]
         implicit val b = deriveEncoder[EuLobbyRepr.Results]
         deriveEncoder[EuLobbyRepr.RootInterface]
 
-      case "github-events.json" ⇒
+      case "github-events.json" =>
         implicit val a = deriveEncoder[GithubEvents.Actor]
         implicit val b = deriveEncoder[GithubEvents.Author]
         implicit val c = deriveEncoder[GithubEvents.Self]
@@ -150,28 +150,28 @@ class CirceModelBenchmark extends DomBenchmark {
         implicit val D = deriveEncoder[GithubEvents.RootInterface]
         implicitly[Encoder[List[GithubEvents.RootInterface]]]
 
-      case "github-gists.json" ⇒
+      case "github-gists.json" =>
         implicit val a = deriveEncoder[GithubGists.Owner]
         implicit val b = deriveEncoder[GithubGists.FileData]
         implicit val c = deriveEncoder[GithubGists.RootInterface]
         implicitly[Encoder[List[GithubGists.RootInterface]]]
 
-      case "json-generator.json" ⇒
+      case "json-generator.json" =>
         implicit val a = deriveEncoder[JsonGenerator.Friends]
         implicit val b = deriveEncoder[JsonGenerator.Name]
         implicit val c = deriveEncoder[JsonGenerator.RootInterface]
         implicitly[Encoder[List[JsonGenerator.RootInterface]]]
 
-      case "meteorites.json" ⇒
+      case "meteorites.json" =>
         implicit val a = deriveEncoder[Meteorites.Geolocation]
         implicit val b = deriveEncoder[Meteorites.RootInterface]
         implicitly[Encoder[List[Meteorites.RootInterface]]]
 
-      case "movies.json" ⇒
+      case "movies.json" =>
         implicit val a = deriveEncoder[Movies.RootInterface]
         implicitly[Encoder[List[Movies.RootInterface]]]
 
-      case "reddit-scala.json" ⇒
+      case "reddit-scala.json" =>
         implicit val a = deriveEncoder[Reddit.Oembed]
         implicit val b = deriveEncoder[Reddit.SecureMedia]
         implicit val c = deriveEncoder[Reddit.MediaEmbed]
@@ -181,7 +181,7 @@ class CirceModelBenchmark extends DomBenchmark {
         implicit val g = deriveEncoder[Reddit.Data0]
         deriveEncoder[Reddit.RootInterface]
 
-      case "rick-morty.json" ⇒
+      case "rick-morty.json" =>
         implicit val a = deriveEncoder[RickMorty.Rating]
         implicit val b = deriveEncoder[RickMorty.Schedule]
         implicit val c = deriveEncoder[RickMorty.Country]
@@ -195,21 +195,21 @@ class CirceModelBenchmark extends DomBenchmark {
         implicit val k = deriveEncoder[RickMorty.Embedded]
         deriveEncoder[RickMorty.RootInterface]
 
-      case "temp-anomaly.json" ⇒
+      case "temp-anomaly.json" =>
         implicit val a = deriveEncoder[TempAnomaly.Description]
         deriveEncoder[TempAnomaly.RootInterface]
 
-      case "thai-cinemas.json" ⇒
+      case "thai-cinemas.json" =>
         implicit val a = deriveEncoder[ThaiCinemas.Group]
         implicit val b = deriveEncoder[ThaiCinemas.Results]
         deriveEncoder[ThaiCinemas.RootInterface]
 
-      case "turkish.json" ⇒
+      case "turkish.json" =>
         implicit val a = deriveEncoder[Turkish.Event]
         implicit val b = deriveEncoder[Turkish.Result]
         deriveEncoder[Turkish.RootInterface]
 
-      case "twitter_api_compact_response.json" | "twitter_api_response.json" ⇒
+      case "twitter_api_compact_response.json" | "twitter_api_response.json" =>
         implicit val a = deriveEncoder[TwitterApiResponse.Urls]
         implicit val b = deriveEncoder[TwitterApiResponse.Url]
         implicit val c = deriveEncoder[TwitterApiResponse.UserMentions]
@@ -227,14 +227,14 @@ class CirceModelBenchmark extends DomBenchmark {
   implicit lazy val decoder: Decoder[Product] = {
 
     implicit def nullableDecoder[T: Decoder: Default]: Decoder[Nullable[T]] =
-      Decoder.instance { cursor ⇒
+      Decoder.instance { cursor =>
         if (cursor.value.isNull) Right(new Nullable(Default.get[T]))
         else cursor.as[T].right.map(new Nullable(_))
       }
 
     // format: OFF
     val c = fileName match {
-      case "australia-abc.json" ⇒
+      case "australia-abc.json" =>
         implicit val a = deriveDecoder[Australia.Geometry]
         implicit val b = deriveDecoder[Australia.Properties]
         implicit val c = deriveDecoder[Australia.Properties1]
@@ -242,7 +242,7 @@ class CirceModelBenchmark extends DomBenchmark {
         implicit val e = deriveDecoder[Australia.Crs]
         deriveDecoder[Australia.RootInterface]
 
-      case "bitcoin.json" ⇒
+      case "bitcoin.json" =>
         implicit val a = deriveDecoder[Bitcoin.SpendingOutpoints]
         implicit val b = deriveDecoder[Bitcoin.PrevOut]
         implicit val c = deriveDecoder[Bitcoin.Inputs]
@@ -250,7 +250,7 @@ class CirceModelBenchmark extends DomBenchmark {
         implicit val e = deriveDecoder[Bitcoin.Txs]
         deriveDecoder[Bitcoin.RootInterface]
 
-      case "doj-blog.json" ⇒
+      case "doj-blog.json" =>
         implicit val a = deriveDecoder[DojBlog.ResponseInfo]
         implicit val b = deriveDecoder[DojBlog.Resultset]
         implicit val c = deriveDecoder[DojBlog.Metadata]
@@ -258,23 +258,23 @@ class CirceModelBenchmark extends DomBenchmark {
         implicit val e = deriveDecoder[DojBlog.Results]
         deriveDecoder[DojBlog.RootInterface]
 
-      case "eu-lobby-country.json" ⇒
+      case "eu-lobby-country.json" =>
         implicit val a = deriveDecoder[EuLobbyCountry.Facets]
         implicit val b = deriveDecoder[EuLobbyCountry.Results]
         deriveDecoder[EuLobbyCountry.RootInterface]
 
-      case "eu-lobby-financial.json" ⇒
+      case "eu-lobby-financial.json" =>
         implicit val a = deriveDecoder[EuLobbyFinancial.Facets]
         implicit val b = deriveDecoder[EuLobbyFinancial.CustomIncomes]
         implicit val c = deriveDecoder[EuLobbyFinancial.Results]
         deriveDecoder[EuLobbyFinancial.RootInterface]
 
-      case "eu-lobby-repr.json" ⇒
+      case "eu-lobby-repr.json" =>
         implicit val a = deriveDecoder[EuLobbyRepr.Facets]
         implicit val b = deriveDecoder[EuLobbyRepr.Results]
         deriveDecoder[EuLobbyRepr.RootInterface]
 
-      case "github-events.json" ⇒
+      case "github-events.json" =>
         implicit val a = deriveDecoder[GithubEvents.Actor]
         implicit val b = deriveDecoder[GithubEvents.Author]
         implicit val c = deriveDecoder[GithubEvents.Self]
@@ -307,28 +307,28 @@ class CirceModelBenchmark extends DomBenchmark {
         implicit val D = deriveDecoder[GithubEvents.RootInterface]
         implicitly[Decoder[List[GithubEvents.RootInterface]]]
 
-      case "github-gists.json" ⇒
+      case "github-gists.json" =>
         implicit val a = deriveDecoder[GithubGists.Owner]
         implicit val b = deriveDecoder[GithubGists.FileData]
         implicit val c = deriveDecoder[GithubGists.RootInterface]
         implicitly[Decoder[List[GithubGists.RootInterface]]]
 
-      case "json-generator.json" ⇒
+      case "json-generator.json" =>
         implicit val a = deriveDecoder[JsonGenerator.Friends]
         implicit val b = deriveDecoder[JsonGenerator.Name]
         implicit val c = deriveDecoder[JsonGenerator.RootInterface]
         implicitly[Decoder[List[JsonGenerator.RootInterface]]]
 
-      case "meteorites.json" ⇒
+      case "meteorites.json" =>
         implicit val a = deriveDecoder[Meteorites.Geolocation]
         implicit val b = deriveDecoder[Meteorites.RootInterface]
         implicitly[Decoder[List[Meteorites.RootInterface]]]
 
-      case "movies.json" ⇒
+      case "movies.json" =>
         implicit val a = deriveDecoder[Movies.RootInterface]
         implicitly[Decoder[List[Movies.RootInterface]]]
 
-      case "reddit-scala.json" ⇒
+      case "reddit-scala.json" =>
         implicit val a = deriveDecoder[Reddit.Oembed]
         implicit val b = deriveDecoder[Reddit.SecureMedia]
         implicit val c = deriveDecoder[Reddit.MediaEmbed]
@@ -338,7 +338,7 @@ class CirceModelBenchmark extends DomBenchmark {
         implicit val g = deriveDecoder[Reddit.Data0]
         deriveDecoder[Reddit.RootInterface]
 
-      case "rick-morty.json" ⇒
+      case "rick-morty.json" =>
         implicit val a = deriveDecoder[RickMorty.Rating]
         implicit val b = deriveDecoder[RickMorty.Schedule]
         implicit val c = deriveDecoder[RickMorty.Country]
@@ -352,21 +352,21 @@ class CirceModelBenchmark extends DomBenchmark {
         implicit val k = deriveDecoder[RickMorty.Embedded]
         deriveDecoder[RickMorty.RootInterface]
 
-      case "temp-anomaly.json" ⇒
+      case "temp-anomaly.json" =>
         implicit val a = deriveDecoder[TempAnomaly.Description]
         deriveDecoder[TempAnomaly.RootInterface]
 
-      case "thai-cinemas.json" ⇒
+      case "thai-cinemas.json" =>
         implicit val a = deriveDecoder[ThaiCinemas.Group]
         implicit val b = deriveDecoder[ThaiCinemas.Results]
         deriveDecoder[ThaiCinemas.RootInterface]
 
-      case "turkish.json" ⇒
+      case "turkish.json" =>
         implicit val a = deriveDecoder[Turkish.Event]
         implicit val b = deriveDecoder[Turkish.Result]
         deriveDecoder[Turkish.RootInterface]
 
-      case "twitter_api_compact_response.json" | "twitter_api_response.json" ⇒
+      case "twitter_api_compact_response.json" | "twitter_api_response.json" =>
         implicit val a = deriveDecoder[TwitterApiResponse.Urls]
         implicit val b = deriveDecoder[TwitterApiResponse.Url]
         implicit val c = deriveDecoder[TwitterApiResponse.UserMentions]
@@ -382,8 +382,8 @@ class CirceModelBenchmark extends DomBenchmark {
   }
 
   def setup(): Unit = root = decode[Product](new String(fileBytes, UTF_8)) match {
-    case Right(x) ⇒ x
-    case Left(e)  ⇒ throw e
+    case Right(x) => x
+    case Left(e)  => throw e
   }
 
   @Benchmark

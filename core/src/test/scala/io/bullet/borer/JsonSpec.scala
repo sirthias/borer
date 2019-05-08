@@ -42,7 +42,7 @@ object JsonSpec extends AbstractJsonSpec {
       roundTrip("890123", 890123)
       roundTrip("1000000", 1000000)
       roundTrip("2147483647", Int.MaxValue)
-      roundTrip("1000000000000", 1000000000000l)
+      roundTrip("1000000000000", 1000000000000L)
       roundTrip("9223372036854775806", Long.MaxValue - 1)
       roundTrip("9223372036854775807", Long.MaxValue)
       roundTrip("9223372036854775808", new BigInteger("9223372036854775808"))
@@ -61,7 +61,7 @@ object JsonSpec extends AbstractJsonSpec {
       roundTrip("-890123", -890123)
       roundTrip("-1000000", -1000000)
       roundTrip("-2147483648", Int.MinValue)
-      roundTrip("-1000000000000", -1000000000000l)
+      roundTrip("-1000000000000", -1000000000000L)
       roundTrip("-9223372036854775808", Long.MinValue)
       roundTrip("-18446744073709551616", new BigInteger("-18446744073709551616"))
       roundTrip("-18446744073709551617", new BigInteger("-18446744073709551617"))
@@ -115,7 +115,7 @@ object JsonSpec extends AbstractJsonSpec {
       verifyDecoding("1234567890123456789012", Dom.NumberStringElem("1234567890123456789012"))
       verifyDecoding("123456789012345678901", Dom.NumberStringElem("123456789012345678901"))
       verifyDecoding("12345678901234567890", Dom.NumberStringElem("12345678901234567890"))
-      verifyDecoding("1234567890123456789", Dom.LongElem(1234567890123456789l))
+      verifyDecoding("1234567890123456789", Dom.LongElem(1234567890123456789L))
       verifyDecoding("0.1234567890123456789", Dom.NumberStringElem("0.1234567890123456789"))
       verifyDecoding("1.234567890123456789", Dom.NumberStringElem("1.234567890123456789"))
       verifyDecoding("12.34567890123456789", Dom.NumberStringElem("12.34567890123456789"))
@@ -125,7 +125,7 @@ object JsonSpec extends AbstractJsonSpec {
       verifyDecoding("123456789012345678.9", Dom.NumberStringElem("123456789012345678.9"))
       verifyDecoding("1234567890123456789.0", Dom.NumberStringElem("1234567890123456789.0"))
 
-      verifyDecoding("123456789012345678", Dom.LongElem(123456789012345678l))
+      verifyDecoding("123456789012345678", Dom.LongElem(123456789012345678L))
       verifyDecoding("1.23456789012345678", Dom.NumberStringElem("1.23456789012345678"))
       verifyDecoding("1.2345678901234567", Dom.NumberStringElem("1.2345678901234567"))
       verifyDecoding("1.234567890123456", Dom.DoubleElem(1.234567890123456))
@@ -133,7 +133,7 @@ object JsonSpec extends AbstractJsonSpec {
       verifyDecoding("123456789012345.67", Dom.NumberStringElem("123456789012345.67"))
       verifyDecoding("123456789012345.6", Dom.DoubleElem(123456789012345.6))
 
-      verifyDecoding("1234567890123", Dom.LongElem(1234567890123l))
+      verifyDecoding("1234567890123", Dom.LongElem(1234567890123L))
       verifyDecoding("1.234567890123", Dom.DoubleElem(1.234567890123))
       verifyDecoding("12.34567890123", Dom.DoubleElem(12.34567890123))
       verifyDecoding("123.4567890123", Dom.DoubleElem(123.4567890123))
@@ -143,9 +143,9 @@ object JsonSpec extends AbstractJsonSpec {
       verifyDecoding("1234567890123.0", Dom.DoubleElem(1.234567890123e12))
       verifyDecoding("1234567890123.00", Dom.DoubleElem(1.234567890123e12))
 
-      verifyDecoding("12345678901234E0", Dom.LongElem(12345678901234l))
-      verifyDecoding("12345678901234E+0", Dom.LongElem(12345678901234l))
-      verifyDecoding("12345678901234E1", Dom.LongElem(123456789012340l))
+      verifyDecoding("12345678901234E0", Dom.LongElem(12345678901234L))
+      verifyDecoding("12345678901234E+0", Dom.LongElem(12345678901234L))
+      verifyDecoding("12345678901234E1", Dom.LongElem(123456789012340L))
       verifyDecoding("12345678901234E-1", Dom.DoubleElem(1234567890123.4))
 
       verifyDecoding("123456789012345E24", Dom.NumberStringElem("123456789012345E24"))
@@ -154,11 +154,11 @@ object JsonSpec extends AbstractJsonSpec {
       verifyDecoding("123456789012345E19", Dom.DoubleElem(1.23456789012345e33))
       verifyDecoding("123456789012345E6", Dom.DoubleElem(1.23456789012345e20))
       verifyDecoding("123456789012345E5", Dom.DoubleElem(1.23456789012345e19))
-      verifyDecoding("123456789012345E4", Dom.LongElem(1234567890123450000l))
-      verifyDecoding("123456789012345E3", Dom.LongElem(123456789012345000l))
-      verifyDecoding("123456789012345E2", Dom.LongElem(12345678901234500l))
-      verifyDecoding("123456789012345E1", Dom.LongElem(1234567890123450l))
-      verifyDecoding("123456789012345E0", Dom.LongElem(123456789012345l))
+      verifyDecoding("123456789012345E4", Dom.LongElem(1234567890123450000L))
+      verifyDecoding("123456789012345E3", Dom.LongElem(123456789012345000L))
+      verifyDecoding("123456789012345E2", Dom.LongElem(12345678901234500L))
+      verifyDecoding("123456789012345E1", Dom.LongElem(1234567890123450L))
+      verifyDecoding("123456789012345E0", Dom.LongElem(123456789012345L))
       verifyDecoding("123456789012345E-1", Dom.DoubleElem(12345678901234.5))
       verifyDecoding("123456789012345E-2", Dom.DoubleElem(1234567890123.45))
       verifyDecoding("123456789012345E-14", Dom.DoubleElem(1.23456789012345))
@@ -238,9 +238,9 @@ object JsonSpec extends AbstractJsonSpec {
 
       val strings = ('a' to 'z').mkString.inits.toList.init
       val all = for {
-        escapes ← "abdgkpv".inits.toList.init
-        str     ← strings
-      } yield escapes.foldLeft(str)((s, c) ⇒ s.replace(c, '\n'))
+        escapes <- "abdgkpv".inits.toList.init
+        str     <- strings
+      } yield escapes.foldLeft(str)((s, c) => s.replace(c, '\n'))
       roundTrip(all.map(_.replace("\n", "\\n")).mkString("[\"", "\",\"", "\"]"), all)
     }
 
@@ -259,17 +259,17 @@ object JsonSpec extends AbstractJsonSpec {
 
     "Maps" - {
       roundTrip("{}", Map.empty[Int, String])
-      intercept[Borer.Error.ValidationFailure[_ <: AnyRef]](encode(ListMap(1 → 2)))
-      roundTrip("""{"":2,"foo":4}""", ListMap(""                   → 2, "foo"     → 4))
-      roundTrip("""{"a":[[1],[]],"b":[[],[[2,3]]]}""", ListMap("a" → Left(1), "b" → Right(Vector(2, 3))))
-      roundTrip("""[[[],["a"]],[[{"b":"c"}],[]]]""", Vector(Right("a"), Left(ListMap("b" → "c"))))
+      intercept[Borer.Error.ValidationFailure[_ <: AnyRef]](encode(ListMap(1 -> 2)))
+      roundTrip("""{"":2,"foo":4}""", ListMap(""                   -> 2, "foo"     -> 4))
+      roundTrip("""{"a":[[1],[]],"b":[[],[[2,3]]]}""", ListMap("a" -> Left(1), "b" -> Right(Vector(2, 3))))
+      roundTrip("""[[[],["a"]],[[{"b":"c"}],[]]]""", Vector(Right("a"), Left(ListMap("b" -> "c"))))
       roundTrip(
         """{"a":"A","b":"B","c":"C","d":"D","e":"E"}""",
-        ListMap("a" → "A", "b" → "B", "c" → "C", "d" → "D", "e" → "E"))
+        ListMap("a" -> "A", "b" -> "B", "c" -> "C", "d" -> "D", "e" -> "E"))
 
       verifyDecoding(
         "{\"addr\":\"1x6YnuBVeeE65dQRZztRWgUPwyBjHCA5g\"\n}\n    ",
-        ListMap("addr" → "1x6YnuBVeeE65dQRZztRWgUPwyBjHCA5g"))
+        ListMap("addr" -> "1x6YnuBVeeE65dQRZztRWgUPwyBjHCA5g"))
     }
 
     "Whitespace" - {
@@ -279,7 +279,7 @@ object JsonSpec extends AbstractJsonSpec {
       val wsStrings  = Iterator.continually(wsCharIter.take(random.nextInt(20)).mkString)
       def ws         = wsStrings.next()
       val list       = List(1, 2, 3)
-      (1 to 100).foreach { _ ⇒
+      (1 to 100).foreach { _ =>
         verifyDecoding(s"$ws[${ws}1$ws,${ws}2$ws,${ws}3$ws]$ws", list)
       }
     }

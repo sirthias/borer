@@ -23,12 +23,12 @@ abstract class AbstractRfcExamplesSpec(testTypeName: String) extends BorerSpec {
   // to make it easier to decode the RFC examples
   implicit def eitherEnc[A: Encoder, B: Encoder]: Encoder[Either[A, B]] =
     Encoder {
-      case (w, Left(x))  ⇒ w.write(x)
-      case (w, Right(x)) ⇒ w.write(x)
+      case (w, Left(x))  => w.write(x)
+      case (w, Right(x)) => w.write(x)
     }
 
   implicit def eitherDec[A: Decoder, B: Decoder]: Decoder[Either[A, B]] =
-    Decoder { r ⇒
+    Decoder { r =>
       if (r.hasAnyOf(
             DataItem.ArrayHeader | DataItem.ArrayStart | DataItem.MapHeader | DataItem.MapStart | DataItem.Bool))
         Right(r[B])
@@ -48,7 +48,7 @@ abstract class AbstractRfcExamplesSpec(testTypeName: String) extends BorerSpec {
       roundTrip("1903e8", 1000)
       roundTrip("1a000f4240", 1000000)
       roundTrip("1a7fffffff", Int.MaxValue)
-      roundTrip("1b000000e8d4a51000", 1000000000000l)
+      roundTrip("1b000000e8d4a51000", 1000000000000L)
       roundTrip("1b7fffffffffffffff", Long.MaxValue)
       roundTrip("1bffffffffffffffff", new BigInteger("18446744073709551615"))
       roundTrip("c249010000000000000000", new BigInteger("18446744073709551616"))
@@ -61,7 +61,7 @@ abstract class AbstractRfcExamplesSpec(testTypeName: String) extends BorerSpec {
       roundTrip("3903e7", -1000)
       roundTrip("1a000f4240", 1000000)
       roundTrip("3a7fffffff", Int.MinValue)
-      roundTrip("1b000000e8d4a51000", 1000000000000l)
+      roundTrip("1b000000e8d4a51000", 1000000000000L)
       roundTrip("3b7fffffffffffffff", Long.MinValue)
       roundTrip("3bffffffffffffffff", new BigInteger("-18446744073709551616"))
       roundTrip("c349010000000000000000", new BigInteger("-18446744073709551617"))
@@ -174,12 +174,12 @@ abstract class AbstractRfcExamplesSpec(testTypeName: String) extends BorerSpec {
 
     "Maps" - {
       roundTrip("a0", TreeMap.empty[Int, String])
-      roundTrip("a201020304", TreeMap(1           → 2, 3         → 4))
-      roundTrip("a26161016162820203", TreeMap("a" → Left(1), "b" → Right(Vector(2, 3))))
-      roundTrip("826161a161626163", Vector(Left("a"), Right(TreeMap("b" → "c"))))
+      roundTrip("a201020304", TreeMap(1           -> 2, 3         -> 4))
+      roundTrip("a26161016162820203", TreeMap("a" -> Left(1), "b" -> Right(Vector(2, 3))))
+      roundTrip("826161a161626163", Vector(Left("a"), Right(TreeMap("b" -> "c"))))
       roundTrip(
         "a56161614161626142616361436164614461656145",
-        TreeMap("a" → "A", "b" → "B", "c" → "C", "d" → "D", "e" → "E"))
+        TreeMap("a" -> "A", "b" -> "B", "c" -> "C", "d" -> "D", "e" -> "E"))
     }
 
     "Unbounded Data Items" - {
@@ -209,17 +209,17 @@ abstract class AbstractRfcExamplesSpec(testTypeName: String) extends BorerSpec {
 
       roundTrip(
         "bf61610161629f0203ffff",
-        TreeMap("a" → Left(1), "b" → Right(List(2, 3))),
+        TreeMap("a" -> Left(1), "b" -> Right(List(2, 3))),
         Writer.Script(_ ~ MapStart ~ "a" ~ 1 ~ "b" ~ Iterator(2, 3) ~ Break))
 
       roundTrip(
         "826161bf61626163ff",
-        List(Left("a"), Right(TreeMap("b" → "c"))),
-        "a" → Writer.Script(_ ~ MapStart ~ "b" ~ "c" ~ Break))
+        List(Left("a"), Right(TreeMap("b" -> "c"))),
+        "a" -> Writer.Script(_ ~ MapStart ~ "b" ~ "c" ~ Break))
 
       roundTrip(
         "bf6346756ef563416d7421ff",
-        ListMap("Fun" → Right(true), "Amt" → Left(-2)),
+        ListMap("Fun" -> Right(true), "Amt" -> Left(-2)),
         Writer.Script(_ ~ MapStart ~ "Fun" ~ true ~ "Amt" ~ -2 ~ Break))
     }
   }

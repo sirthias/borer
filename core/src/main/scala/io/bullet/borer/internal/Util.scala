@@ -46,8 +46,8 @@ object Util {
     if (value <= 0) throw new IllegalArgumentException(s"$name must be > 0, but was $value")
     else value
 
-  private[this] val _identityFunc = (x: Any) ⇒ x
-  def identityFunc[T]: T ⇒ T      = _identityFunc.asInstanceOf[T ⇒ T]
+  private[this] val _identityFunc = (x: Any) => x
+  def identityFunc[T]: T => T     = _identityFunc.asInstanceOf[T => T]
 
   @inline def isChar(x: Int): Boolean              = (x >> 16) == 0
   @inline def isByte(x: Int): Boolean              = (x >> 7) == (x >> 31)
@@ -58,15 +58,15 @@ object Util {
 
   def emptyArray[T](implicit ct: ClassTag[T]): Array[T] =
     (ct.runtimeClass match {
-      case java.lang.Byte.TYPE      ⇒ Array.emptyByteArray
-      case java.lang.Short.TYPE     ⇒ Array.emptyShortArray
-      case java.lang.Character.TYPE ⇒ Array.emptyCharArray
-      case java.lang.Integer.TYPE   ⇒ Array.emptyIntArray
-      case java.lang.Long.TYPE      ⇒ Array.emptyLongArray
-      case java.lang.Float.TYPE     ⇒ Array.emptyFloatArray
-      case java.lang.Double.TYPE    ⇒ Array.emptyDoubleArray
-      case java.lang.Boolean.TYPE   ⇒ Array.emptyBooleanArray
-      case _                        ⇒ Array.emptyObjectArray
+      case java.lang.Byte.TYPE      => Array.emptyByteArray
+      case java.lang.Short.TYPE     => Array.emptyShortArray
+      case java.lang.Character.TYPE => Array.emptyCharArray
+      case java.lang.Integer.TYPE   => Array.emptyIntArray
+      case java.lang.Long.TYPE      => Array.emptyLongArray
+      case java.lang.Float.TYPE     => Array.emptyFloatArray
+      case java.lang.Double.TYPE    => Array.emptyDoubleArray
+      case java.lang.Boolean.TYPE   => Array.emptyBooleanArray
+      case _                        => Array.emptyObjectArray
     }).asInstanceOf[Array[T]]
 
   def toBigEndianBytes(uLong: Long): Array[Byte] = {

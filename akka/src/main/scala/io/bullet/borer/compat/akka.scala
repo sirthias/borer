@@ -42,8 +42,8 @@ object akka {
 
     def convert[B](value: B)(implicit byteAccess: ByteAccess[B]) =
       value match {
-        case x: ByteString ⇒ x
-        case x             ⇒ ByteString(byteAccess.toByteArray(x))
+        case x: ByteString => x
+        case x             => ByteString(byteAccess.toByteArray(x))
       }
 
     def empty = ByteString.empty
@@ -100,8 +100,8 @@ object akka {
         val c = _cursor
         _cursor = c + 2
         byteString.length - c match {
-          case 1 ⇒ (byteString(c) << 8 | 0xFF).toChar
-          case _ ⇒ '\uffff'
+          case 1 => (byteString(c) << 8 | 0xFF).toChar
+          case _ => '\uffff'
         }
       }
       if (_cursor < byteString.length - 1) readDoubleByteBigEndian() else readPadded()
@@ -120,10 +120,10 @@ object akka {
       def readPadded(): Int = {
         val c = _cursor
         val res = byteString.length - c match {
-          case 1 ⇒ readByte() << 24 | 0xFFFFFF
-          case 2 ⇒ readDoubleByteBigEndian() << 16 | 0xFFFF
-          case 3 ⇒ readDoubleByteBigEndian() << 16 | (readByte() & 0xFF) << 8 | 0xFF
-          case _ ⇒ -1
+          case 1 => readByte() << 24 | 0xFFFFFF
+          case 2 => readDoubleByteBigEndian() << 16 | 0xFFFF
+          case 3 => readDoubleByteBigEndian() << 16 | (readByte() & 0xFF) << 8 | 0xFF
+          case _ => -1
         }
         _cursor = c + 4
         res
@@ -135,27 +135,27 @@ object akka {
       val c = _cursor
       _cursor = c + 8
       byteString(c).toLong << 56 |
-      (byteString(c + 1) & 0xffl) << 48 |
-      (byteString(c + 2) & 0xffl) << 40 |
-      (byteString(c + 3) & 0xffl) << 32 |
-      (byteString(c + 4) & 0xffl) << 24 |
-      (byteString(c + 5) & 0xffl) << 16 |
-      (byteString(c + 6) & 0xffl) << 8 |
-      byteString(c + 7) & 0xffl
+      (byteString(c + 1) & 0XFFL) << 48 |
+      (byteString(c + 2) & 0XFFL) << 40 |
+      (byteString(c + 3) & 0XFFL) << 32 |
+      (byteString(c + 4) & 0XFFL) << 24 |
+      (byteString(c + 5) & 0XFFL) << 16 |
+      (byteString(c + 6) & 0XFFL) << 8 |
+      byteString(c + 7) & 0XFFL
     }
 
     @inline def readOctaByteBigEndianPaddedFF(): Long = {
       def readPadded(): Long = {
         val c = _cursor
         val res = byteString.length - c match {
-          case 1 ⇒ readByte().toLong << 56 | 0xffffffffffffffl
-          case 2 ⇒ readDoubleByteBigEndian().toLong << 48 | 0xffffffffffffl
-          case 3 ⇒ readDoubleByteBigEndian().toLong << 48 | (readByte() & 0xffl) << 40 | 0xffffffffffl
-          case 4 ⇒ readQuadByteBigEndian().toLong << 32 | 0xffffffffl
-          case 5 ⇒ readQuadByteBigEndian().toLong << 32 | (readByte() & 0xffl) << 24 | 0xffffffl
-          case 6 ⇒ readQuadByteBigEndian().toLong << 32 | (readDoubleByteBigEndian() & 0xffffl) << 16 | 0xffffl
-          case 7 ⇒
-            readQuadByteBigEndian().toLong << 32 | (readDoubleByteBigEndian() & 0xffffl) << 16 | (readByte() & 0xffl) << 8 | 0xffl
+          case 1 => readByte().toLong << 56 | 0XFFFFFFFFFFFFFFL
+          case 2 => readDoubleByteBigEndian().toLong << 48 | 0XFFFFFFFFFFFFL
+          case 3 => readDoubleByteBigEndian().toLong << 48 | (readByte() & 0XFFL) << 40 | 0XFFFFFFFFFFL
+          case 4 => readQuadByteBigEndian().toLong << 32 | 0XFFFFFFFFL
+          case 5 => readQuadByteBigEndian().toLong << 32 | (readByte() & 0XFFL) << 24 | 0XFFFFFFL
+          case 6 => readQuadByteBigEndian().toLong << 32 | (readDoubleByteBigEndian() & 0XFFFFL) << 16 | 0XFFFFL
+          case 7 =>
+            readQuadByteBigEndian().toLong << 32 | (readDoubleByteBigEndian() & 0XFFFFL) << 16 | (readByte() & 0XFFL) << 8 | 0XFFL
           case _ => -1
         }
         _cursor = c + 8

@@ -8,8 +8,15 @@
 
 package io.bullet.borer
 
-import java.lang.{Boolean ⇒ JBoolean, Byte ⇒ JByte, Double ⇒ JDouble, Float ⇒ JFloat, Long ⇒ JLong, Short ⇒ JShort}
-import java.math.{BigDecimal ⇒ JBigDecimal, BigInteger ⇒ JBigInteger}
+import java.lang.{
+  Boolean => JBoolean,
+  Byte => JByte,
+  Double => JDouble,
+  Float => JFloat,
+  Long => JLong,
+  Short => JShort
+}
+import java.math.{BigDecimal => JBigDecimal, BigInteger => JBigInteger}
 
 import io.bullet.borer.internal.{Macros, Util}
 
@@ -27,7 +34,7 @@ trait Decoder[T] {
 }
 
 object Decoder extends LowPrioDecoders {
-  import io.bullet.borer.{DataItem ⇒ DI}
+  import io.bullet.borer.{DataItem => DI}
 
   trait DefaultValueAware[T] extends Decoder[T] {
     def withDefaultValue(defaultValue: T): Decoder[T]
@@ -44,8 +51,8 @@ object Decoder extends LowPrioDecoders {
   def forCaseClass[T]: Decoder[T] = macro Macros.decoderForCaseClass[T]
 
   implicit final class DecoderOps[A](val underlying: Decoder[A]) extends AnyVal {
-    def map[B](f: A ⇒ B): Decoder[B]                     = Decoder(r ⇒ f(underlying.read(r)))
-    def mapWithReader[B](f: (Reader, A) ⇒ B): Decoder[B] = Decoder(r ⇒ f(r, underlying.read(r)))
+    def map[B](f: A => B): Decoder[B]                     = Decoder(r => f(underlying.read(r)))
+    def mapWithReader[B](f: (Reader, A) => B): Decoder[B] = Decoder(r => f(r, underlying.read(r)))
   }
 
   implicit def fromCodec[T](implicit codec: Codec[T]): Decoder[T] = codec.decoder
@@ -61,15 +68,15 @@ object Decoder extends LowPrioDecoders {
   implicit val forString: Decoder[String]         = Decoder(_.readString())
   implicit val forByteArray: Decoder[Array[Byte]] = Decoder(_.readByteArray())
 
-  implicit val forChar: Decoder[Char] = forInt.mapWithReader { (r, int) ⇒
+  implicit val forChar: Decoder[Char] = forInt.mapWithReader { (r, int) =>
     if ((int >> 16) != 0) r.validationFailure(s"Cannot convert int value $int to Char")
     int.toChar
   }
-  implicit val forByte: Decoder[Byte] = forInt.mapWithReader { (r, int) ⇒
+  implicit val forByte: Decoder[Byte] = forInt.mapWithReader { (r, int) =>
     if ((int >> 8) != (int >> 31)) r.validationFailure(s"Cannot convert int value $int to Byte")
     int.toByte
   }
-  implicit val forShort: Decoder[Short] = forInt.mapWithReader { (r, int) ⇒
+  implicit val forShort: Decoder[Short] = forInt.mapWithReader { (r, int) =>
     if ((int >> 16) != (int >> 31)) r.validationFailure(s"Cannot convert int value $int to Short")
     int.toShort
   }
@@ -84,7 +91,7 @@ object Decoder extends LowPrioDecoders {
   implicit def forBoxedDouble: Decoder[JDouble]   = forDouble.asInstanceOf[Decoder[JDouble]]
 
   def forJBigInteger(maxCborByteArraySize: Int = 64, maxJsonNumberStringLength: Int = 64): Decoder[JBigInteger] =
-    Decoder { r ⇒
+    Decoder { r =>
       def fromByteArray() = {
         val byteArray = r.readByteArray()
         if (byteArray.length > maxCborByteArraySize) {
@@ -93,19 +100,19 @@ object Decoder extends LowPrioDecoders {
         } else new JBigInteger(1, byteArray)
       }
       r.dataItem match {
-        case DI.Int | DI.Long ⇒ JBigInteger.valueOf(r.readLong())
-        case DI.OverLong ⇒
+        case DI.Int | DI.Long => JBigInteger.valueOf(r.readLong())
+        case DI.OverLong =>
           def value = new JBigInteger(1, Util.toBigEndianBytes(r.readOverLong()))
           if (r.overLongNegative) value.not else value
-        case DI.NumberString ⇒
+        case DI.NumberString =>
           val numberString = r.readNumberString()
           if (numberString.length > maxJsonNumberStringLength) {
             r.overflow(
               "NumberString for decoding JBigInteger is longer than the configured max of " + maxJsonNumberStringLength + " characters")
           } else new JBigInteger(numberString)
-        case _ if r.tryReadTag(Tag.PositiveBigNum) ⇒ fromByteArray()
-        case _ if r.tryReadTag(Tag.NegativeBigNum) ⇒ fromByteArray().not
-        case _                                     ⇒ r.unexpectedDataItem(expected = "BigInteger")
+        case _ if r.tryReadTag(Tag.PositiveBigNum) => fromByteArray()
+        case _ if r.tryReadTag(Tag.NegativeBigNum) => fromByteArray().not
+        case _                                     => r.unexpectedDataItem(expected = "BigInteger")
       }
     }
 
@@ -118,19 +125,19 @@ object Decoder extends LowPrioDecoders {
       maxCborAbsExponent: Int = 999,
       maxJsonNumberStringLength: Int = 64): Decoder[JBigDecimal] = {
     val bigIntMantissaDecoder = forJBigInteger(maxCborByteArraySize = maxCborBigIntMantissaByteArraySize)
-    Decoder { r ⇒
+    Decoder { r =>
       def fromBigInteger() = new JBigDecimal(_forJBigInteger.read(r))
       r.dataItem match {
-        case DI.Int | DI.Long | DI.OverLong ⇒ fromBigInteger()
-        case DI.Double                      ⇒ JBigDecimal.valueOf(r.readDouble())
-        case DI.NumberString ⇒
+        case DI.Int | DI.Long | DI.OverLong => fromBigInteger()
+        case DI.Double                      => JBigDecimal.valueOf(r.readDouble())
+        case DI.NumberString =>
           val numberString = r.readNumberString()
           if (numberString.length > maxJsonNumberStringLength) {
             r.overflow(
               "NumberString for decoding JBigDecimal is longer than the configured max of " + maxJsonNumberStringLength + " characters")
           } else new JBigDecimal(numberString)
-        case _ if r.hasTag(Tag.PositiveBigNum) | r.hasTag(Tag.NegativeBigNum) ⇒ fromBigInteger()
-        case _ if r.tryReadTag(Tag.DecimalFraction) ⇒
+        case _ if r.hasTag(Tag.PositiveBigNum) | r.hasTag(Tag.NegativeBigNum) => fromBigInteger()
+        case _ if r.tryReadTag(Tag.DecimalFraction) =>
           if (r.hasArrayHeader) {
             val len = r.readArrayHeader()
             if (len == 2) {
@@ -159,9 +166,9 @@ object Decoder extends LowPrioDecoders {
       def read(r: Reader) = {
         if (r.hasArrayHeader) {
           r.readArrayHeader() match {
-            case 0 ⇒ None
-            case 1 ⇒ Some(r.read[T]())
-            case x ⇒ r.unexpectedDataItem("Array with length 0 or 1 for decoding an `Option`", s"Array with length $x")
+            case 0 => None
+            case 1 => Some(r.read[T]())
+            case x => r.unexpectedDataItem("Array with length 0 or 1 for decoding an `Option`", s"Array with length $x")
           }
         } else if (r.tryReadArrayStart()) {
           if (r.tryReadBreak()) None
@@ -178,11 +185,11 @@ object Decoder extends LowPrioDecoders {
 
       def withDefaultValue(defaultValue: Option[T]): Decoder[Option[T]] =
         if (defaultValue ne None) this
-        else Decoder[Option[T]](r ⇒ Some(r.read[T]()))
+        else Decoder[Option[T]](r => Some(r.read[T]()))
     }
 
   implicit def forIterable[T: Decoder, M[X] <: Iterable[X]](implicit cbf: CanBuildFrom[M[T], T, M[T]]): Decoder[M[T]] =
-    Decoder { r ⇒
+    Decoder { r =>
       if (r.hasArrayHeader) {
         @tailrec def rec(remaining: Int, b: mutable.Builder[T, M[T]]): M[T] =
           if (remaining > 0) rec(remaining - 1, b += r[T]) else b.result()
@@ -199,7 +206,7 @@ object Decoder extends LowPrioDecoders {
     }
 
   implicit def forArray[T: ClassTag: Decoder]: Decoder[Array[T]] =
-    Decoder { r ⇒
+    Decoder { r =>
       if (r.hasArrayHeader) {
         val size = r.readArrayHeader()
         if (size > 0) {
@@ -233,7 +240,7 @@ object Decoder extends LowPrioDecoders {
     constructForMap[A, B, HashMap[A, B]](HashMap.empty)
 
   implicit def forEither[A: Decoder, B: Decoder]: Decoder[Either[A, B]] =
-    Decoder { r ⇒
+    Decoder { r =>
       if (r.tryReadArrayStart()) {
         if (r.readArrayStart().tryReadBreak()) {
           val x = r.readArrayStart().read[B]()
@@ -246,9 +253,9 @@ object Decoder extends LowPrioDecoders {
         }
       } else {
         r.readMapHeader(1).readInt() match {
-          case 0 ⇒ Left(r[A])
-          case 1 ⇒ Right(r[B])
-          case x ⇒
+          case 0 => Left(r[A])
+          case 1 => Right(r[B])
+          case x =>
             r.unexpectedDataItem(
               expected = "Map entry with key 0 or 1 for decoding an `Either`",
               actual = s"Map entry with key $x")
@@ -263,7 +270,7 @@ sealed abstract class LowPrioDecoders extends TupleDecoders {
     constructForMap[A, B, Map[A, B]](Map.empty)
 
   final def constructForMap[A: Decoder, B: Decoder, M <: Map[A, B]](empty: M): Decoder[M] =
-    Decoder { r ⇒
+    Decoder { r =>
       if (r.hasMapHeader) {
         @tailrec def rec(remaining: Int, map: Map[A, B]): M =
           if (remaining > 0) rec(remaining - 1, map.updated(r[A], r[B])) else map.asInstanceOf[M]

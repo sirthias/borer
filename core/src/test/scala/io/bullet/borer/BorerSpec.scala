@@ -41,15 +41,15 @@ abstract class BorerSpec extends TestSuite {
 
   final def equals[T](a: T, b: T): Boolean =
     (a, b) match {
-      case (Float16(x), Float16(y)) if x.isNaN      ⇒ y.isNaN
-      case (x: Float, y: Float) if x.isNaN          ⇒ y.isNaN
-      case (x: Double, y: Double) if x.isNaN        ⇒ y.isNaN
-      case (TaggedValue(tx, x), TaggedValue(ty, y)) ⇒ tx == ty && equals(x, y)
-      case (x: Array[_], y: Array[_])               ⇒ x.toSeq == y.toSeq
-      case _                                        ⇒ a == b
+      case (Float16(x), Float16(y)) if x.isNaN      => y.isNaN
+      case (x: Float, y: Float) if x.isNaN          => y.isNaN
+      case (x: Double, y: Double) if x.isNaN        => y.isNaN
+      case (TaggedValue(tx, x), TaggedValue(ty, y)) => tx == ty && equals(x, y)
+      case (x: Array[_], y: Array[_])               => x.toSeq == y.toSeq
+      case _                                        => a == b
     }
 
-  final def toHexString(bytes: Array[Byte]): String = bytes.map(x ⇒ f"${x & 0xFF}%02x").mkString
+  final def toHexString(bytes: Array[Byte]): String = bytes.map(x => f"${x & 0xFF}%02x").mkString
 
   final def hexBytes(hexString: String): Array[Byte] = {
     if ((hexString.length & 1) != 0) throw new IllegalArgumentException(s"[$hexString] is not a valid hex string")
@@ -58,12 +58,12 @@ abstract class BorerSpec extends TestSuite {
 
   final def escape(obj: Any): String =
     obj.toString.flatMap {
-      case c if c >= ' ' ⇒ c.toString
-      case '\b'          ⇒ "\\b"
-      case '\f'          ⇒ "\\f"
-      case '\n'          ⇒ "\\n"
-      case '\t'          ⇒ "\\t"
-      case '\r'          ⇒ "\\r"
-      case c             ⇒ f"\\u${c.toInt}%04x"
+      case c if c >= ' ' => c.toString
+      case '\b'          => "\\b"
+      case '\f'          => "\\f"
+      case '\n'          => "\\n"
+      case '\t'          => "\\t"
+      case '\r'          => "\\r"
+      case c             => f"\\u${c.toInt}%04x"
     }
 }
