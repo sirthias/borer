@@ -13,6 +13,7 @@ import io.bullet.borer.Borer.Error
 import io.bullet.borer.magnolia._
 
 import scala.annotation.tailrec
+import scala.collection.mutable
 
 object MapBasedCodecs {
 
@@ -76,8 +77,25 @@ object MapBasedCodecs {
       }
     }
 
-    @inline def dispatch[T](ctx: SealedTrait[Encoder, T]): Encoder[T] =
-      ArrayBasedCodecs.deriveEncoder.dispatch(ctx)
+    def dispatch[T](ctx: SealedTrait[Encoder, T]): Encoder[T] = {
+      val subtypes = ctx.subtypes
+      val len      = subtypes.size
+      val typeIds  = TypeId.getTypeIds(ctx.typeName.full, subtypes)
+      Encoder { (w, value) ⇒
+        @tailrec def rec(ix: Int): Writer =
+          if (ix < len) {
+            val sub = subtypes(ix)
+            if (sub.cast isDefinedAt value) {
+              def writeEntry(w: Writer) =
+                w.write(typeIds(ix))(TypeId.Value.encoder).write(sub.cast(value))(sub.typeclass)
+
+              if (w.writingCbor) writeEntry(w.writeMapHeader(1))
+              else writeEntry(w.writeMapStart()).writeBreak()
+            } else rec(ix + 1)
+          } else throw new IllegalArgumentException(s"The given value [$value] is not a sub type of [${ctx.typeName}]")
+        rec(0)
+      }
+    }
 
     def apply[T]: Encoder[T] = macro Magnolia.gen[T]
   }
@@ -208,8 +226,27 @@ object MapBasedCodecs {
       }
     }
 
-    @inline def dispatch[T](ctx: SealedTrait[Decoder, T]): Decoder[T] =
-      ArrayBasedCodecs.deriveDecoder.dispatch(ctx)
+    def dispatch[T](ctx: SealedTrait[Decoder, T]): Decoder[T] = {
+      val subtypes            = ctx.subtypes.asInstanceOf[mutable.WrappedArray[Subtype[Decoder, T]]].array
+      val typeIds             = TypeId.getTypeIds(ctx.typeName.full, subtypes)
+      def expected(s: String) = s"$s for decoding an instance of type [${ctx.typeName.full}]"
+
+      Decoder { r ⇒
+        @tailrec def rec(id: TypeId.Value, ix: Int): T =
+          if (ix < typeIds.length) {
+            if (typeIds(ix) == id) subtypes(ix).typeclass.read(r)
+            else rec(id, ix + 1)
+          } else r.unexpectedDataItem(s"Any TypeId in [${typeIds.map(_.value).mkString(", ")}]", id.value.toString)
+
+        if (r.tryReadMapStart()) {
+          val result = rec(r.read[TypeId.Value](), 0)
+          if (r.tryReadBreak()) result
+          else r.unexpectedDataItem(expected("Single-element Map"), "at least one extra element")
+        } else if (r.tryReadMapHeader(1)) {
+          rec(r.read[TypeId.Value](), 0)
+        } else r.unexpectedDataItem(expected("Single-element Map"))
+      }
+    }
 
     def apply[T]: Decoder[T] = macro Magnolia.gen[T]
   }

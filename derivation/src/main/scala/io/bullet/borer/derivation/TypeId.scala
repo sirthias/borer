@@ -9,8 +9,9 @@
 package io.bullet.borer.derivation
 
 import io.bullet.borer.{Decoder, Encoder}
+import io.bullet.borer.magnolia.Subtype
 
-import scala.annotation.StaticAnnotation
+import scala.annotation.{tailrec, StaticAnnotation}
 
 /**
   * Annotation allowing for customizing the type id that automatically derived encoder/decoders
@@ -81,11 +82,29 @@ object TypeId {
       }
   }
 
-  def find(annotations: Array[Any], default: String, ix: Int = 0): TypeId.Value =
+  private[derivation] def find(annotations: Array[Any], default: String, ix: Int = 0): TypeId.Value =
     if (ix < annotations.length) {
       annotations(ix) match {
         case x: TypeId ⇒ Value(x)
         case _         ⇒ find(annotations, default, ix + 1)
       }
     } else Value.Str(default)
+
+  private[derivation] def getTypeIds[X[_], T](typeName: String, subtypes: Seq[Subtype[X, T]]): Array[TypeId.Value] = {
+    val typeIds = Array.tabulate(subtypes.size) { ix ⇒
+      val sub = subtypes(ix)
+      TypeId.find(sub.annotationsArray, sub.typeName.short)
+    }
+    @tailrec def rec(i: Int, j: Int): Array[TypeId.Value] =
+      if (i < typeIds.length) {
+        if (j < typeIds.length) {
+          if (i != j && typeIds(i) == typeIds(j)) {
+            sys.error(
+              "@TypeId collision: At least two subtypes of [" + typeName +
+                s"] share the same TypeId [${typeIds(i).value}]")
+          } else rec(i, j + 1)
+        } else rec(i + 1, 0)
+      } else typeIds
+    rec(0, 0)
+  }
 }

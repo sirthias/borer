@@ -40,7 +40,7 @@ object ArrayBasedCodecs {
     def dispatch[T](ctx: SealedTrait[Encoder, T]): Encoder[T] = {
       val subtypes = ctx.subtypes
       val len      = subtypes.size
-      val typeIds  = getTypeIds(ctx.typeName.full, subtypes)
+      val typeIds  = TypeId.getTypeIds(ctx.typeName.full, subtypes)
       Encoder { (w, value) ⇒
         @tailrec def rec(ix: Int): Writer =
           if (ix < len) {
@@ -84,7 +84,7 @@ object ArrayBasedCodecs {
 
     def dispatch[T](ctx: SealedTrait[Decoder, T]): Decoder[T] = {
       val subtypes            = ctx.subtypes.asInstanceOf[mutable.WrappedArray[Subtype[Decoder, T]]].array
-      val typeIds             = getTypeIds(ctx.typeName.full, subtypes)
+      val typeIds             = TypeId.getTypeIds(ctx.typeName.full, subtypes)
       def expected(s: String) = s"$s for decoding an instance of type [${ctx.typeName.full}]"
 
       Decoder { r ⇒
@@ -108,22 +108,4 @@ object ArrayBasedCodecs {
   }
 
   def deriveCodec[T]: Codec[T] = macro Macros.deriveCodec[T]
-
-  private def getTypeIds[X[_], T](typeName: String, subtypes: Seq[Subtype[X, T]]): Array[TypeId.Value] = {
-    val typeIds = Array.tabulate(subtypes.size) { ix ⇒
-      val sub = subtypes(ix)
-      TypeId.find(sub.annotationsArray, sub.typeName.short)
-    }
-    @tailrec def rec(i: Int, j: Int): Array[TypeId.Value] =
-      if (i < typeIds.length) {
-        if (j < typeIds.length) {
-          if (i != j && typeIds(i) == typeIds(j)) {
-            sys.error(
-              "@TypeId collision: At least two subtypes of [" + typeName +
-                s"] share the same TypeId [${typeIds(i).value}]")
-          } else rec(i, j + 1)
-        } else rec(i + 1, 0)
-      } else typeIds
-    rec(0, 0)
-  }
 }

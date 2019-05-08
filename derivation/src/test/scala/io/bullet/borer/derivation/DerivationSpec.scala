@@ -12,6 +12,7 @@ import io.bullet.borer._
 import utest._
 
 import scala.util.Failure
+import scala.util.control.NonFatal
 
 abstract class DerivationSpec(target: Target) extends TestSuite {
   import Dom._
@@ -145,7 +146,8 @@ abstract class DerivationSpec(target: Target) extends TestSuite {
   def mapBasedFooDom: MapElem
   def mapBased100Dom: MapElem
 
-  def animalsDom: Element
+  def arrayBasedAnimalsDom: Element
+  def mapBasedAnimalsDom: Element
 
   val tests = Tests {
 
@@ -168,6 +170,33 @@ abstract class DerivationSpec(target: Target) extends TestSuite {
         assertMatch(target.decode(encoded).to[Foo].valueTry) {
           case Failure(e) if e.getMessage == arrayBasedMissingElemErrorMsg ⇒ // ok
         }
+      }
+
+      "ADT" - {
+        import ADT._
+
+        implicit val animalCodec = Codec(deriveEncoder[Animal], deriveDecoder[Animal])
+
+        val animals: List[Animal] = List(
+          Dog(12, "Fred"),
+          Cat(weight = 1.0, color = "none", home = "there"),
+          Dog(4, "Lolle"),
+          Mouse(true)
+        )
+
+        val encoded = target.encode(animals).to[Array[Byte]].bytes
+        target.decode(encoded).to[Element].value ==> arrayBasedAnimalsDom
+        target.decode(encoded).to[List[Animal]].value ==> animals
+      }
+
+      "ADT TypeId Collision" - {
+        import AdtWithTypeIdCollision._
+
+        val error = intercept[RuntimeException] {
+          deriveEncoder[Animal]
+        }
+        val clazz = s"io.bullet.borer.derivation.AdtWithTypeIdCollision.Animal"
+        error.getMessage ==> s"@TypeId collision: At least two subtypes of [$clazz] share the same TypeId [Dog]"
       }
     }
 
@@ -332,43 +361,38 @@ abstract class DerivationSpec(target: Target) extends TestSuite {
         toHexString(qux0Encoded) ==> toHexString(quxWithNilEncoded)
         target.decode(quxWithNilEncoded).to[Qux].value ==> quxWithNil
       }
-    }
 
-    "ADT" - {
-      import ArrayBasedCodecs._
+      "ADT" - {
+        import ADT._
 
-      sealed trait Animal
-      case class Dog(age: Int, name: String)                                        extends Animal
-      @TypeId("TheCAT") case class Cat(weight: Double, color: String, home: String) extends Animal
-      @TypeId(42) case class Mouse(tail: Boolean)                                   extends Animal
+        try {
+          implicit val animalCodec = Codec(deriveEncoder[Animal], deriveDecoder[Animal])
 
-      implicit val animalCodec = Codec(deriveEncoder[Animal], deriveDecoder[Animal])
+          val animals: List[Animal] = List(
+            Dog(12, "Fred"),
+            Cat(weight = 1.0, color = "none", home = "there"),
+            Dog(4, "Lolle"),
+            Mouse(true)
+          )
 
-      val animals: List[Animal] = List(
-        Dog(12, "Fred"),
-        Cat(weight = 1.0, color = "none", home = "there"),
-        Dog(4, "Lolle"),
-        Mouse(true)
-      )
-
-      val encoded = target.encode(animals).to[Array[Byte]].bytes
-      target.decode(encoded).to[Element].value ==> animalsDom
-      target.decode(encoded).to[List[Animal]].value ==> animals
-    }
-
-    "ADT TypeId Collision" - {
-      import ArrayBasedCodecs._
-
-      sealed trait Animal
-      case class Dog(age: Int, name: String)                                     extends Animal
-      @TypeId("Dog") case class Cat(weight: Double, color: String, home: String) extends Animal
-      @TypeId(42) case class Mouse(tail: Boolean)                                extends Animal
-
-      val error = intercept[RuntimeException] {
-        deriveEncoder[Animal]
+          val encoded = target.encode(animals).to[Array[Byte]].bytes
+          target.decode(encoded).to[Element].value ==> mapBasedAnimalsDom
+          target.decode(encoded).to[List[Animal]].value ==> animals
+        } catch {
+          case NonFatal(e) if target == Json =>
+            e.getMessage ==> "JSON does not support integer values as a map key [Output.ToByteArray index 124]"
+        }
       }
-      val clazz = s"io.bullet.borer.derivation.DerivationSpec.tests.Animal"
-      error.getMessage ==> s"@TypeId collision: At least two subtypes of [$clazz] share the same TypeId [Dog]"
+
+      "ADT TypeId Collision" - {
+        import AdtWithTypeIdCollision._
+
+        val error = intercept[RuntimeException] {
+          deriveEncoder[Animal]
+        }
+        val clazz = s"io.bullet.borer.derivation.AdtWithTypeIdCollision.Animal"
+        error.getMessage ==> s"@TypeId collision: At least two subtypes of [$clazz] share the same TypeId [Dog]"
+      }
     }
   }
 
@@ -385,4 +409,20 @@ abstract class DerivationSpec(target: Target) extends TestSuite {
     }
 
   final def toHexString(bytes: Array[Byte]): String = bytes.map(x ⇒ f"${x & 0xFF}%02x").mkString
+}
+
+// cannot be moved into the DerivationSpec class itself due to
+// https://github.com/scala/bug/issues/10035 not (yet) having been fixed in Scala 2.12
+object ADT {
+  sealed trait Animal
+  case class Dog(age: Int, name: String)                                        extends Animal
+  @TypeId("TheCAT") case class Cat(weight: Double, color: String, home: String) extends Animal
+  @TypeId(42) case class Mouse(tail: Boolean)                                   extends Animal
+}
+
+object AdtWithTypeIdCollision {
+  sealed trait Animal
+  case class Dog(age: Int, name: String)                                     extends Animal
+  @TypeId("Dog") case class Cat(weight: Double, color: String, home: String) extends Animal
+  @TypeId(42) case class Mouse(tail: Boolean)                                extends Animal
 }

@@ -155,11 +155,20 @@ object CborDerivationSpec extends DerivationSpec(Cbor) {
       "x99" → MapElem.Sized("red" → IntElem(0), "green" → IntElem(0), "blue" → IntElem(0), "alpha" → IntElem(255)),
     )
 
-  def animalsDom =
+  def arrayBasedAnimalsDom =
     ArrayElem.Unsized(
       ArrayElem.Sized(StringElem("Dog"), ArrayElem.Sized(IntElem(12), StringElem("Fred"))),
       ArrayElem
         .Sized(StringElem("TheCAT"), ArrayElem.Sized(Float16Elem(1.0f), StringElem("none"), StringElem("there"))),
       ArrayElem.Sized(StringElem("Dog"), ArrayElem.Sized(IntElem(4), StringElem("Lolle"))),
       ArrayElem.Sized(IntElem(42), BoolElem.True))
+
+  def mapBasedAnimalsDom =
+    ArrayElem.Unsized(
+      MapElem.Sized("Dog" -> MapElem.Sized("age" -> IntElem(12), "name" -> StringElem("Fred"))),
+      MapElem.Sized(
+        "TheCAT" -> MapElem
+          .Sized("weight" -> Float16Elem(1.0f), "color" -> StringElem("none"), "home" -> StringElem("there"))),
+      MapElem.Sized("Dog"       -> MapElem.Sized("age"  -> IntElem(4), "name" -> StringElem("Lolle"))),
+      MapElem.Sized(IntElem(42) -> MapElem.Sized("tail" -> BoolElem.True)))
 }
