@@ -329,8 +329,7 @@ object Tests extends TestSuite {
       implicit val intPatcher    = Patcher.forSingleValue[Int]
 
       val person = Person("Bob", 42)
-      val msg    = intercept[RuntimeException](implicitly[Patcher[Entity]].patch(person, Seq(null, 'killer))).getMessage
-      assert((msg eq null) || msg.contains("scala.Symbol cannot be cast to") && msg.contains("java.lang.Integer"))
+      intercept[Throwable](implicitly[Patcher[Entity]].patch(person, Seq(null, 'killer)))
     }
 
     "Inner Classes" - {
