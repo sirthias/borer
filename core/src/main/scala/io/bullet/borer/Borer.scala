@@ -143,7 +143,7 @@ case object Json extends Target {
       readIntegersAlsoAsFloatingPoint: Boolean = true,
       maxNumberAbsExponent: Int = 64,
       maxStringLength: Int = 1024 * 1024,
-      maxNumberMantissaDigits: Int = 32,
+      maxNumberMantissaDigits: Int = 34,
       maxNumberExponentDigits: Int = 3)
       extends Borer.DecodingConfig with JsonParser.Config {
 
