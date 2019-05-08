@@ -13,7 +13,6 @@ import io.bullet.borer.Borer.Error
 import io.bullet.borer.magnolia._
 
 import scala.annotation.tailrec
-import scala.collection.mutable
 
 object MapBasedCodecs {
 
@@ -78,8 +77,8 @@ object MapBasedCodecs {
     }
 
     def dispatch[T](ctx: SealedTrait[Encoder, T]): Encoder[T] = {
-      val subtypes = ctx.subtypes
-      val len      = subtypes.size
+      val subtypes = ctx.subtypesArray
+      val len      = subtypes.length
       val typeIds  = TypeId.getTypeIds(ctx.typeName.full, subtypes)
       Encoder { (w, value) =>
         @tailrec def rec(ix: Int): Writer =
@@ -148,7 +147,7 @@ object MapBasedCodecs {
             else -1
 
           @tailrec def fillMissingMembers(missingMask0: Long, missingMask1: Long): Boolean = {
-            import java.lang.Long.{numberOfTrailingZeros => ntz, lowestOneBit => lob}
+            import java.lang.Long.{lowestOneBit => lob, numberOfTrailingZeros => ntz}
             var i     = 0
             var mask0 = missingMask0
             var mask1 = missingMask1
@@ -227,7 +226,7 @@ object MapBasedCodecs {
     }
 
     def dispatch[T](ctx: SealedTrait[Decoder, T]): Decoder[T] = {
-      val subtypes            = ctx.subtypes.asInstanceOf[mutable.WrappedArray[Subtype[Decoder, T]]].array
+      val subtypes            = ctx.subtypesArray
       val typeIds             = TypeId.getTypeIds(ctx.typeName.full, subtypes)
       def expected(s: String) = s"$s for decoding an instance of type [${ctx.typeName.full}]"
 

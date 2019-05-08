@@ -8,11 +8,10 @@
 
 package io.bullet.borer.derivation
 
-import io.bullet.borer.{Codec, Decoder, Encoder, Writer}
+import io.bullet.borer._
+import io.bullet.borer.magnolia._
 
 import scala.annotation.tailrec
-import scala.collection.mutable
-import io.bullet.borer.magnolia._
 
 object ArrayBasedCodecs {
 
@@ -38,8 +37,8 @@ object ArrayBasedCodecs {
     }
 
     def dispatch[T](ctx: SealedTrait[Encoder, T]): Encoder[T] = {
-      val subtypes = ctx.subtypes
-      val len      = subtypes.size
+      val subtypes = ctx.subtypesArray
+      val len      = subtypes.length
       val typeIds  = TypeId.getTypeIds(ctx.typeName.full, subtypes)
       Encoder { (w, value) =>
         @tailrec def rec(ix: Int): Writer =
@@ -83,7 +82,7 @@ object ArrayBasedCodecs {
     }
 
     def dispatch[T](ctx: SealedTrait[Decoder, T]): Decoder[T] = {
-      val subtypes            = ctx.subtypes.asInstanceOf[mutable.WrappedArray[Subtype[Decoder, T]]].array
+      val subtypes            = ctx.subtypesArray
       val typeIds             = TypeId.getTypeIds(ctx.typeName.full, subtypes)
       def expected(s: String) = s"$s for decoding an instance of type [${ctx.typeName.full}]"
 

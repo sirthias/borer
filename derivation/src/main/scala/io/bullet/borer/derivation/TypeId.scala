@@ -90,11 +90,8 @@ object TypeId {
       }
     } else Value.Str(default)
 
-  private[derivation] def getTypeIds[X[_], T](typeName: String, subtypes: Seq[Subtype[X, T]]): Array[TypeId.Value] = {
-    val typeIds = Array.tabulate(subtypes.size) { ix =>
-      val sub = subtypes(ix)
-      TypeId.find(sub.annotationsArray, sub.typeName.short)
-    }
+  private[derivation] def getTypeIds[X[_], T](typeName: String, subtypes: Array[Subtype[X, T]]): Array[TypeId.Value] = {
+    val typeIds = subtypes.map(sub => TypeId.find(sub.annotationsArray, sub.typeName.short))
     @tailrec def rec(i: Int, j: Int): Array[TypeId.Value] =
       if (i < typeIds.length) {
         if (j < typeIds.length) {
