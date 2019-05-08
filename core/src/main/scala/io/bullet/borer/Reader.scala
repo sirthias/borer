@@ -22,16 +22,18 @@ import scala.collection.mutable
 final class InputReader[+In <: Input, +Config <: Reader.Config](
     parser: Receiver.Parser[In],
     receiverWrapper: Receiver.Wrapper[Config],
-    val config: Config,
+    config: Config,
     val target: Target) {
 
   import io.bullet.borer.{DataItem => DI}
 
-  private[this] val receiver: Receiver     = receiverWrapper(new Receptacle, config)
-  private[this] val receptacle: Receptacle = receiver.finalTarget.asInstanceOf[Receptacle]
-  private[this] var _lastCursor: Long      = _
-  private[this] var _cursor: Long          = _
-  private[this] var _dataItem: Int         = _
+  private[this] val configReadIntegersAlsoAsFloatingPoint = config.readIntegersAlsoAsFloatingPoint
+  private[this] val configReadDoubleAlsoAsFloat           = config.readDoubleAlsoAsFloat
+  private[this] val receiver: Receiver                    = receiverWrapper(new Receptacle, config)
+  private[this] val receptacle: Receptacle                = receiver.finalTarget.asInstanceOf[Receptacle]
+  private[this] var _lastCursor: Long                     = _
+  private[this] var _cursor: Long                         = _
+  private[this] var _dataItem: Int                        = _
 
   @inline def dataItem: Int = _dataItem
 
@@ -143,18 +145,18 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
 
   @inline def hasFloat: Boolean =
     hasAnyOf(DI.Float16 | DI.Float | DI.NumberString) ||
-      config.readIntegersAlsoAsFloatingPoint && hasLong ||
-      config.readDoubleAlsoAsFloat && hasDouble
+      configReadIntegersAlsoAsFloatingPoint && hasLong ||
+      configReadDoubleAlsoAsFloat && hasDouble
 
   def readFloat(): Float = {
     val result =
       _dataItem match {
-        case DI.Float16 | DI.Float                             => receptacle.floatValue
-        case DI.Double if config.readDoubleAlsoAsFloat         => receptacle.doubleValue.toFloat
-        case DI.Int if config.readIntegersAlsoAsFloatingPoint  => receptacle.intValue.toFloat
-        case DI.Long if config.readIntegersAlsoAsFloatingPoint => receptacle.longValue.toFloat
-        case DI.NumberString                                   => java.lang.Float.parseFloat(receptacle.stringValue)
-        case _                                                 => unexpectedDataItem(expected = "Float")
+        case DI.Float16 | DI.Float                            => receptacle.floatValue
+        case DI.Double if configReadDoubleAlsoAsFloat         => receptacle.doubleValue.toFloat
+        case DI.Int if configReadIntegersAlsoAsFloatingPoint  => receptacle.intValue.toFloat
+        case DI.Long if configReadIntegersAlsoAsFloatingPoint => receptacle.longValue.toFloat
+        case DI.NumberString                                  => java.lang.Float.parseFloat(receptacle.stringValue)
+        case _                                                => unexpectedDataItem(expected = "Float")
       }
     pull()
     result
@@ -165,12 +167,12 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
 
   def readDouble(): Double = {
     val result = _dataItem match {
-      case DI.Double                                         => receptacle.doubleValue
-      case DI.Float16 | DI.Float                             => receptacle.floatValue.toDouble
-      case DI.Int if config.readIntegersAlsoAsFloatingPoint  => receptacle.intValue.toDouble
-      case DI.Long if config.readIntegersAlsoAsFloatingPoint => receptacle.longValue.toDouble
-      case DI.NumberString                                   => java.lang.Double.parseDouble(receptacle.stringValue)
-      case _                                                 => unexpectedDataItem(expected = "Double")
+      case DI.Double                                        => receptacle.doubleValue
+      case DI.Float16 | DI.Float                            => receptacle.floatValue.toDouble
+      case DI.Int if configReadIntegersAlsoAsFloatingPoint  => receptacle.intValue.toDouble
+      case DI.Long if configReadIntegersAlsoAsFloatingPoint => receptacle.longValue.toDouble
+      case DI.NumberString                                  => java.lang.Double.parseDouble(receptacle.stringValue)
+      case _                                                => unexpectedDataItem(expected = "Double")
     }
     pull()
     result
