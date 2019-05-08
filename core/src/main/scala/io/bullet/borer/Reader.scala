@@ -149,11 +149,12 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
   def readFloat(): Float = {
     val result =
       _dataItem match {
-        case DI.Float16 | DI.Float                                      => receptacle.floatValue
-        case DI.Double if config.readDoubleAlsoAsFloat                  => receptacle.doubleValue.toFloat
-        case DI.Int | DI.Long if config.readIntegersAlsoAsFloatingPoint => readLong().toFloat
-        case DI.NumberString                                            => java.lang.Float.parseFloat(receptacle.stringValue)
-        case _                                                          => unexpectedDataItem(expected = "Float")
+        case DI.Float16 | DI.Float                             => receptacle.floatValue
+        case DI.Double if config.readDoubleAlsoAsFloat         => receptacle.doubleValue.toFloat
+        case DI.Int if config.readIntegersAlsoAsFloatingPoint  => receptacle.intValue.toFloat
+        case DI.Long if config.readIntegersAlsoAsFloatingPoint => receptacle.longValue.toFloat
+        case DI.NumberString                                   => java.lang.Float.parseFloat(receptacle.stringValue)
+        case _                                                 => unexpectedDataItem(expected = "Float")
       }
     pull()
     result

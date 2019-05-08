@@ -89,8 +89,7 @@ object JsonSpec extends AbstractJsonSpec {
 
         roundTrip("1.0E300", 1.0e+300)
 
-        roundTrip("6.1035156E-5", 0.000061035156f)
-        roundTrip("6.103515625E-5", 0.00006103515625)
+        roundTrip("[2.10233856E8]", List(2.10233856e8f))
       }
 
       roundTrip("-4.0", -4.0f)
