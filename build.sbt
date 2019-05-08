@@ -70,6 +70,11 @@ lazy val scalajsSettings = Seq(
   scalacOptions ~= { _.filterNot(_ == "-Ywarn-dead-code") :+ "-P:scalajs:sjsDefinedByDefault" }
 )
 
+lazy val noPublishSettings = Seq(
+  skip in publish := true,
+  publishTo := sonatypePublishTo.value
+)
+
 lazy val publishingSettings = Seq(
   publishMavenStyle := true,
   publishArtifact in Test := false,
@@ -130,14 +135,14 @@ val `javax-annotation` = Def.setting("javax.annotation"      %  "javax.annotatio
 
 lazy val borer = project.in(file("."))
   .aggregate(coreJVM, coreJS)
+  .aggregate(magnoliaJVM, magnoliaJS)
   .aggregate(akka)
   .aggregate(scodecJVM, scodecJS)
   .aggregate(derivationJVM, derivationJS)
   .aggregate(benchmarks)
   .settings(commonSettings)
-  .settings(publishingSettings)
+  .settings(noPublishSettings)
   .settings(releaseSettings)
-  .settings(publishArtifact := false)
 
 lazy val coreJVM = core.jvm
 lazy val coreJS  = core.js
@@ -233,6 +238,7 @@ lazy val benchmarks = project
   .enablePlugins(AutomateHeaderPlugin, JmhPlugin)
   .dependsOn(coreJVM, derivationJVM)
   .settings(commonSettings)
+  .settings(noPublishSettings)   
   .settings(
     publishArtifact := false,
     libraryDependencies ++= Seq(

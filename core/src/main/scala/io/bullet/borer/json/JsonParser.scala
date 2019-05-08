@@ -115,11 +115,11 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
       DataItem.NumberString
     }
 
-    /**
-      * Produces the new number string length as a return value, in `auxInt` the first non-digit character (stop-char)
-      * and in `auxLong` the negative (!) parsed value or > 0 if the parsed value cannot be represented in a Long.
-      * The input cursor is left _after_ the stop-char, i.e. the next read will not include the stop-char!
-      */
+    /*
+     * Produces the new number string length as a return value, in `auxInt` the first non-digit character (stop-char)
+     * and in `auxLong` the negative (!) parsed value or > 0 if the parsed value cannot be represented in a Long.
+     * The input cursor is left _after_ the stop-char, i.e. the next read will not include the stop-char!
+     */
     @tailrec def parseDigits(value: Long, len: Int): Int = {
       // fetch 8 bytes (chars) at the same time with the first becoming the (left-most) MSB of the `octa` long
       val octa = input.readOctaByteBigEndianPaddedFF()
@@ -181,27 +181,27 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
       }
     }
 
-    /**
-      * Parses a JSON number and dispatches it to the [[Receiver]] either as
-      * - Int
-      * - Long
-      * - Double
-      * - or NumberString,
-      *
-      * whatever is the most efficient form that the number can be easily and losslessly represented in.
-      * Since [[Int]] is just the smaller variant of [[Long]] the core task is finding out, without much overhead,
-      * whether the number fits losslessly in a [[Long]] or a [[Double]].
-      * If neither is possible the fallback is always the NumberString, which
-      * transports the number in exactly the format that is present in the JSON source.
-      *
-      * A side-task is to determine whether the number violates the JSON spec and produce the
-      * respective error if that should be the case.
-      *
-      * @param negValue the initial value to start parsing with (as the negative of the actual number)
-      * @param strLen the number of already parsed characters belonging to the number string
-      * @param negative true if the JSON number is negative
-      * @return [[DataItem]] code for the value the [[Receiver]] received
-      */
+    /*
+     * Parses a JSON number and dispatches it to the [[Receiver]] either as
+     * - Int
+     * - Long
+     * - Double
+     * - or NumberString,
+     *
+     * whatever is the most efficient form that the number can be easily and losslessly represented in.
+     * Since [[Int]] is just the smaller variant of [[Long]] the core task is finding out, without much overhead,
+     * whether the number fits losslessly in a [[Long]] or a [[Double]].
+     * If neither is possible the fallback is always the NumberString, which
+     * transports the number in exactly the format that is present in the JSON source.
+     *
+     * A side-task is to determine whether the number violates the JSON spec and produce the
+     * respective error if that should be the case.
+     *
+     * @param negValue the initial value to start parsing with (as the negative of the actual number)
+     * @param strLen the number of already parsed characters belonging to the number string
+     * @param negative true if the JSON number is negative
+     * @return [[DataItem]] code for the value the [[Receiver]] received
+     */
     def parseNumber(negValue: Long, strLen: Int, negative: Boolean): Int = {
       @inline def dispatchNumberString(len: Int) = {
         input.moveCursor(-1) // "unread" stopchar
