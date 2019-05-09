@@ -105,8 +105,8 @@ lazy val releaseSettings = {
       publishArtifacts,
       setNextVersion,
       commitNextVersion,
-      releaseStepCommand("sonatypeReleaseAll"),
-      pushChanges
+      //releaseStepCommand("sonatypeReleaseAll"),
+      //pushChanges
     )
   )
 }
@@ -138,6 +138,7 @@ lazy val borer = project.in(file("."))
   .aggregate(derivationJVM, derivationJS)
   .aggregate(benchmarks)
   .settings(commonSettings)
+  .settings(publishingSettings)
   .settings(releaseSettings)
   .settings(publishArtifact := false)
 

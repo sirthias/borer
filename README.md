@@ -678,7 +678,7 @@ case class Dog(age: Int, name: String = "<unknown>")
 
 implicit val dogCodec = deriveCodec[Dog]
 
-Cbor
+Json
   .decode("""{ "age": 4 }""")
   .to[Dog]
   .value ==> Dog(age = 4) 
@@ -731,6 +731,35 @@ fail. (See Magnolia issues [79] and [114] for more info.)
 
 When you cache the individual codecs in their own respective `val`s (or `lazy val`s) [Magnolia]'s derivation is fast
 and efficient.
+
+
+Nullable and Default
+--------------------
+
+One question that frequently arises when dealing with [JSON], and to a limited extend [CBOR] as well, is: How to deal
+with `null` values?\
+`null` values differ from missing members (see also [Map-Based Codecs above](#map-based-codecs)) in that the value for
+an element is indeed present, but it is `null`.
+
+_BORER_ handles these case is a properly types fashion: If your data model allows for certain members to be `null` in
+an encoding the members type should be wrapped with `Nullable`, i.e. `Nullable[String]`. In combination with the simple
+type class `Default[T]`, which provides the capability to supply default values for a type `T` the pre-defined 
+encoder and decoder for `Nullable[T]` will then be able to translate `null` values to respective default value and back.
+
+Example:
+
+```scala
+import io.bullet.borer._
+
+case class Dog(age: Int, name: Nullable[String])
+
+implicit val dogCodec = deriveCodec[Dog]
+
+Json
+  .decode("""{ "age": 4, "name": null }""")
+  .to[Dog]
+  .value ==> Dog(age = 4, name = "") // the `Default[String]` provides an empty String 
+```
 
 
 Akka Support

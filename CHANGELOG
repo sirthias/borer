@@ -1,3 +1,25 @@
+Version 0.9.0 (2019-05-11)
+--------------------------
+
+- significantly improved JSON support on all fronts
+- changed map-based ADT encoding to single-element map
+- rename `Encoder.compose` to `Encoder.contramap`
+- renamed @TypeId to @key, add support for custom map-key naming
+- fixed MapBasedCodecs to properly skip complex, extra data elements
+- fixed failing derivation for types with java annotations (#13)
+- fixed `Codec.forCaseClass` failing for generic case classes (#16)
+- added `Input`, `Output` and `ByteAccess` for `java.nio.ByteBuffer`
+- added configurable automatic conversion of integers to floating point values (#3)
+- added `Nullable[T]` and `Default[T]` abstraction
+- added special support for Options with default value `None`
+- added support for up to 128 case class members
+- hardened CBOR BigInteger and BigDecimal decoding (#8)
+- improved error position reporting
+- refactored `Input` design for more flexbility in supporting diverse input sources
+- internalized magnolia for various patches and Scala 2.13 support
+- added Scala 2.13 build (in the `scala2.13` branch, for now)
+
+
 Version 0.8.0 (2019-04-13)
 --------------------------
 
