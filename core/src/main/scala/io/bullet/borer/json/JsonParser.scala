@@ -50,6 +50,7 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
     extends Receiver.Parser[In] {
   import JsonParser._
 
+  private[this] val allowDoubleParsing = !config.readDecimalNumbersOnlyAsNumberStrings
   private[this] var chars: Array[Char] = new Array[Char](256)
   private[this] var state: Int         = EXPECT_VALUE
   private[this] var auxInt: Int        = _
@@ -283,11 +284,11 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
                 if (exp < 19 && negMantissa > long10pow(exp << 1)) {
                   // the value is an integer that fits into a 63 bit Long
                   dispatchIntOrLong(len, negMantissa * long10pow((exp << 1) + 1))
-                } else if (negMantissa > -(1L << 53) && exp < 23) {
+                } else if (allowDoubleParsing && negMantissa > -(1L << 53) && exp < 23) {
                   // the value is an integer that can be represented losslessly by a Double
                   dispatchDouble(negMantissa * double10pow(exp))
                 } else dispatchNumberString(len)
-              } else if (negMantissa > -(1L << 53) && exp > -23) {
+              } else if (allowDoubleParsing && negMantissa > -(1L << 53) && exp > -23) {
                 // the value is a decimal number that can be represented losslessly by a Double
                 dispatchDouble(negMantissa.toDouble / double10pow(-exp))
               } else dispatchNumberString(len)
@@ -614,6 +615,7 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
 private[borer] object JsonParser {
 
   trait Config {
+    def readDecimalNumbersOnlyAsNumberStrings: Boolean
     def maxStringLength: Int
     def maxNumberMantissaDigits: Int
     def maxNumberAbsExponent: Int

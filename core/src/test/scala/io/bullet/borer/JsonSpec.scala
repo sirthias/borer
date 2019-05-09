@@ -72,10 +72,6 @@ object JsonSpec extends AbstractJsonSpec {
 
       roundTrip("0.0", 0.0f)
       roundTrip("0.0", 0.0)
-      roundTrip("-0.0", -0.0f)
-      roundTrip("-0.0", -0.0)
-
-      decode[Double]("0.0").toString ==> "0.0"
 
       roundTrip("1.5", 1.5f)
       roundTrip("1.5", 1.5)
@@ -87,6 +83,11 @@ object JsonSpec extends AbstractJsonSpec {
       roundTrip("100000.0", 100000.0)
 
       if (Util.isJVM) {
+        roundTrip("-0.0", -0.0f)
+        roundTrip("-0.0", -0.0)
+
+        decode[Double]("0.0").toString ==> "0.0"
+
         roundTrip("1.1999999", 1.1999999f)
 
         roundTrip("3.4028234663852886E38", 3.4028234663852886e+38)
@@ -176,6 +177,13 @@ object JsonSpec extends AbstractJsonSpec {
       verifyDecoding("1.0000000000000000", Dom.NumberStringElem("1.0000000000000000"))
 
       verifyDecoding("1", 1.0f)
+
+      verifyDecoding("1.234", Dom.DoubleElem(1.234))
+      Json
+        .decode("1.234".getBytes)
+        .withConfig(Json.DecodingConfig.default.copy(readDecimalNumbersOnlyAsNumberStrings = true))
+        .to[Dom.Element]
+        .value ==> Dom.NumberStringElem("1.234")
     }
 
     "Number Exercise" - {

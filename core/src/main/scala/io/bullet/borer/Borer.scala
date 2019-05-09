@@ -136,21 +136,30 @@ case object Json extends Target {
   }
 
   /**
-    * @param readIntegersAlsoAsFloatingPoint set to false to disable automatic conversion of integer to floating point
-    *                                        values
+    * @param readIntegersAlsoAsFloatingPoint set to false to disable automatic conversion of integer to floating point values
+    * @param readDecimalNumbersOnlyAsNumberStrings set to true to disable the fast, immediate conversion of
+    *                                              JSON numbers to [[Double]] values where easily possible.
+    *                                              In rare cases this might be necessary to allow for maximum
+    *                                              possible precision when reading 32-bit [[Float]] values from JSON.
+    *                                              (see https://github.com/sirthias/borer/issues/20 for more info on this)
+    * @param maxNumberAbsExponent the maximum absolute exponent value to accept in JSON numbers
+    * @param maxStringLength the maximum string length to accept
+    *                        Note: For performance reasons this is a soft limit, that the parser will sometimes overstep.
+    *                        The only guarantee is that it will never accept Strings that are more than twice as long as
+    *                        the this limit.
+    * @param maxNumberMantissaDigits the maximum number of digits to accept before the exponent in JSON numbers
     */
   final case class DecodingConfig(
       readIntegersAlsoAsFloatingPoint: Boolean = true,
+      readDecimalNumbersOnlyAsNumberStrings: Boolean = false,
       maxNumberAbsExponent: Int = 64,
       maxStringLength: Int = 1024 * 1024,
-      maxNumberMantissaDigits: Int = 34,
-      maxNumberExponentDigits: Int = 3)
+      maxNumberMantissaDigits: Int = 34)
       extends Borer.DecodingConfig with JsonParser.Config {
 
+    Util.requirePositive(maxNumberAbsExponent, "maxNumberAbsExponent")
     Util.requirePositive(maxStringLength, "maxStringLength")
-    if (maxNumberExponentDigits < 0 || maxNumberExponentDigits > 9)
-      throw new IllegalArgumentException(
-        s"$maxNumberExponentDigits must be in the range [0..9], but was $maxNumberExponentDigits")
+    Util.requirePositive(maxNumberMantissaDigits, "maxNumberMantissaDigits")
 
     // the JsonParser never produces Float values directly (only doubles), so this is necessary
     def readDoubleAlsoAsFloat = true
