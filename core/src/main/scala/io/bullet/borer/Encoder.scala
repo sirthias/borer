@@ -127,8 +127,13 @@ object Encoder extends LowPrioEncoders {
 
   implicit val forJBigDecimal: Encoder[JBigDecimal] =
     Encoder { (w, x) =>
-      if (x.scale != 0) w.writeTag(Tag.DecimalFraction).writeArrayHeader(2).writeInt(x.scale)
-      w.write(x.unscaledValue)
+      if (w.writingCbor) {
+        if (x.scale != 0) w.writeTag(Tag.DecimalFraction).writeArrayHeader(2).writeInt(x.scale)
+        w.write(x.unscaledValue)
+      } else {
+        if (x.scale != 0) w.writeNumberString(x.toPlainString)
+        else w.write(x.unscaledValue)
+      }
     }
 
   implicit val forBigDecimal: Encoder[BigDecimal] = forJBigDecimal.contramap(_.bigDecimal)
