@@ -131,7 +131,7 @@ object Encoder extends LowPrioEncoders {
         if (x.scale != 0) w.writeTag(Tag.DecimalFraction).writeArrayHeader(2).writeInt(x.scale)
         w.write(x.unscaledValue)
       } else {
-        if (x.scale != 0) w.writeNumberString(x.toPlainString)
+        if (x.scale != 0) w.writeNumberString(x.toString)
         else w.write(x.unscaledValue)
       }
     }
