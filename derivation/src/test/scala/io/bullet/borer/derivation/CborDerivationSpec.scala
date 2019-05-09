@@ -42,7 +42,7 @@ object CborDerivationSpec extends DerivationSpec(Cbor) {
       "int"    -> IntElem(1234567),
       "long"   -> IntElem(-1),
       "float"  -> Float16Elem(1.5f),
-      "double" -> DoubleElem(26.8),
+      "dub"    -> DoubleElem(26.8),
       "string" -> StringElem("borer"),
       "empty"  -> MapElem.Sized(),
       "colors" -> ArrayElem.Unsized(

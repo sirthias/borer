@@ -28,7 +28,7 @@ abstract class DerivationSpec(target: Target) extends TestSuite {
       int: Int = 1234567,
       long: Long,
       float: Float = 1.5f,
-      double: Double = 26.8,
+      @key("dub") double: Double = 26.8,
       string: String = "borer",
       empty: Empty = Empty(),
       colors: List[Color] = List(Color(red = 0xFF), Color(green = 0xFF), Color(blue = 0xFF)))
@@ -189,14 +189,14 @@ abstract class DerivationSpec(target: Target) extends TestSuite {
         target.decode(encoded).to[List[Animal]].value ==> animals
       }
 
-      "ADT TypeId Collision" - {
-        import AdtWithTypeIdCollision._
+      "ADT Key Collision" - {
+        import AdtWithKeyCollision._
 
         val error = intercept[RuntimeException] {
           deriveEncoder[Animal]
         }
-        val clazz = s"io.bullet.borer.derivation.AdtWithTypeIdCollision.Animal"
-        error.getMessage ==> s"@TypeId collision: At least two subtypes of [$clazz] share the same TypeId [Dog]"
+        val clazz = s"io.bullet.borer.derivation.AdtWithKeyCollision.Animal"
+        error.getMessage ==> s"@key collision: At least two subtypes of [$clazz] share the same type id [Dog]"
       }
     }
 
@@ -384,14 +384,14 @@ abstract class DerivationSpec(target: Target) extends TestSuite {
         }
       }
 
-      "ADT TypeId Collision" - {
-        import AdtWithTypeIdCollision._
+      "ADT Key Collision" - {
+        import AdtWithKeyCollision._
 
         val error = intercept[RuntimeException] {
           deriveEncoder[Animal]
         }
-        val clazz = s"io.bullet.borer.derivation.AdtWithTypeIdCollision.Animal"
-        error.getMessage ==> s"@TypeId collision: At least two subtypes of [$clazz] share the same TypeId [Dog]"
+        val clazz = s"io.bullet.borer.derivation.AdtWithKeyCollision.Animal"
+        error.getMessage ==> s"@key collision: At least two subtypes of [$clazz] share the same type id [Dog]"
       }
     }
   }
@@ -415,14 +415,14 @@ abstract class DerivationSpec(target: Target) extends TestSuite {
 // https://github.com/scala/bug/issues/10035 not (yet) having been fixed in Scala 2.12
 object ADT {
   sealed trait Animal
-  case class Dog(age: Int, name: String)                                        extends Animal
-  @TypeId("TheCAT") case class Cat(weight: Double, color: String, home: String) extends Animal
-  @TypeId(42) case class Mouse(tail: Boolean)                                   extends Animal
+  case class Dog(age: Int, name: String)                                     extends Animal
+  @key("TheCAT") case class Cat(weight: Double, color: String, home: String) extends Animal
+  @key(42) case class Mouse(tail: Boolean)                                   extends Animal
 }
 
-object AdtWithTypeIdCollision {
+object AdtWithKeyCollision {
   sealed trait Animal
-  case class Dog(age: Int, name: String)                                     extends Animal
-  @TypeId("Dog") case class Cat(weight: Double, color: String, home: String) extends Animal
-  @TypeId(42) case class Mouse(tail: Boolean)                                extends Animal
+  case class Dog(age: Int, name: String)                                  extends Animal
+  @key("Dog") case class Cat(weight: Double, color: String, home: String) extends Animal
+  @key(42) case class Mouse(tail: Boolean)                                extends Animal
 }

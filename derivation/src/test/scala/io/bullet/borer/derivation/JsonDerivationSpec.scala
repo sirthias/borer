@@ -40,7 +40,7 @@ object JsonDerivationSpec extends DerivationSpec(Json) {
       "int"    -> IntElem(1234567),
       "long"   -> IntElem(-1),
       "float"  -> DoubleElem(1.5f),
-      "double" -> DoubleElem(26.8),
+      "dub"    -> DoubleElem(26.8),
       "string" -> StringElem("borer"),
       "empty"  -> MapElem.Unsized(),
       "colors" -> ArrayElem.Unsized(
