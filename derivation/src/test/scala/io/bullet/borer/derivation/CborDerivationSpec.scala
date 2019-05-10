@@ -8,10 +8,16 @@
 
 package io.bullet.borer.derivation
 
-import io.bullet.borer.{Cbor, Dom}
+import io.bullet.borer._
 
 object CborDerivationSpec extends DerivationSpec(Cbor) {
   import Dom._
+
+  def encode[T: Encoder](value: T): String =
+    toHexString(Cbor.encode(value).withConfig(Cbor.EncodingConfig.default.copy(bufferSize = 19)).toByteArray)
+
+  def decode[T: Decoder](encoded: String): T = Cbor.decode(hexBytes(encoded)).to[T].value
+  def tryDecode[T: Decoder](encoded: String) = Cbor.decode(hexBytes(encoded)).to[T].valueTry
 
   def arrayBasedFooDom =
     ArrayElem.Sized(
@@ -32,7 +38,7 @@ object CborDerivationSpec extends DerivationSpec(Cbor) {
 
   def arrayBasedMissingElemErrorMsg =
     "Expected Array Start or Array Header(10) for decoding an instance of type " +
-      "[io.bullet.borer.derivation.DerivationSpec.Foo] but got Array Header (9) [input position 0]"
+      "`io.bullet.borer.derivation.DerivationSpec.Foo` but got Array Header (9) (input position 0)"
 
   def mapBasedFooDom =
     MapElem.Sized(

@@ -49,7 +49,7 @@ object ArrayBasedCodecs {
               if (w.writingCbor) writeEntry(w.writeArrayHeader(2))
               else writeEntry(w.writeArrayStart()).writeBreak()
             } else rec(ix + 1)
-          } else throw new IllegalArgumentException(s"The given value [$value] is not a sub type of [${ctx.typeName}]")
+          } else throw new IllegalArgumentException(s"The given value `$value` is not a sub type of `${ctx.typeName}`")
         rec(0)
       }
     }
@@ -63,7 +63,7 @@ object ArrayBasedCodecs {
     def combine[T](ctx: CaseClass[Decoder, T]): Decoder[T] = {
       val params              = ctx.parameters
       val len                 = params.size
-      def expected(s: String) = s"$s for decoding an instance of type [${ctx.typeName.full}]"
+      def expected(s: String) = s"$s for decoding an instance of type `${ctx.typeName.full}`"
 
       Decoder { r =>
         def construct(): T = ctx.construct(_.typeclass.read(r))
@@ -86,12 +86,12 @@ object ArrayBasedCodecs {
     def dispatch[T](ctx: SealedTrait[Decoder, T]): Decoder[T] = {
       val subtypes            = ctx.subtypesArray
       val typeIds             = key.getTypeIds(ctx.typeName.full, subtypes)
-      def expected(s: String) = s"$s for decoding an instance of type [${ctx.typeName.full}]"
+      def expected(s: String) = s"$s for decoding an instance of type `${ctx.typeName.full}`"
 
       Decoder { r =>
         def readTypeIdAndValue(): T =
           key.tryRead(r, typeIds, 0) match {
-            case -1 => r.unexpectedDataItem(s"Any type id key of [${typeIds.map(_.value).mkString(", ")}]")
+            case -1 => r.unexpectedDataItem(s"Any type id key of `${typeIds.map(_.value).mkString(", ")}`")
             case ix => subtypes(ix).typeclass.read(r)
           }
 

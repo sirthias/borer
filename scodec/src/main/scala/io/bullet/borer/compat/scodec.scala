@@ -9,7 +9,7 @@
 package io.bullet.borer.compat
 
 import java.nio.charset.StandardCharsets
-import java.util
+import java.nio.ByteBuffer
 
 import _root_.scodec.bits.ByteVector
 import io.bullet.borer.{ByteAccess, _}
@@ -23,13 +23,24 @@ object scodec {
 
     type Out = ByteVectorOutput
 
-    @inline def newOutput = new ByteVectorOutput
+    @inline def isEmpty(bytes: ByteVector): Boolean = bytes.isEmpty
 
     @inline def sizeOf(bytes: ByteVector): Long = bytes.size
 
     @inline def fromByteArray(byteArray: Array[Byte]): ByteVector = ByteVector(byteArray)
 
     @inline def toByteArray(bytes: ByteVector): Array[Byte] = bytes.toArray
+
+    def copyToByteArray(bytes: ByteVector, byteArray: Array[Byte], startIndex: Int): ByteVector = {
+      val len = byteArray.length - startIndex
+      bytes.copyToArray(byteArray, startIndex)
+      if (len < bytes.size) bytes.drop(len.toLong) else empty
+    }
+
+    def copyToByteBuffer(bytes: ByteVector, byteBuffer: ByteBuffer): ByteVector = {
+      val copied = bytes.copyToBuffer(byteBuffer)
+      if (copied < bytes.size) bytes.drop(copied.toLong) else empty
+    }
 
     def concat(a: ByteVector, b: ByteVector) =
       if (a.nonEmpty) {
@@ -69,7 +80,7 @@ object scodec {
     @inline def cursor: Long = _cursor
     @inline def byteAccess   = ByteVectorByteAccess
 
-    def position(marker: Long): Position = Input.Position(this, marker)
+    def position(cursor: Long): Position = Input.Position(this, cursor)
 
     @inline def prepareRead(length: Long): Boolean = _cursor + length <= byteVector.length
 
@@ -177,113 +188,37 @@ object scodec {
       this
     }
 
-    @inline def precedingBytesAsAsciiString(length: Int): String =
-      new String(byteVector.toArray, StandardCharsets.ISO_8859_1)
+    @inline def precedingBytesAsAsciiString(length: Int): String = {
+      val slice = byteVector.slice(_cursor - length, _cursor)
+      StandardCharsets.ISO_8859_1.decode(slice.toByteBuffer).toString
+    }
+  }
+
+  implicit object ByteVectorOutputProvider extends Output.Provider[ByteVector] {
+    type Out = ByteVectorOutput
+    def apply(bufferSize: Int) = new ByteVectorOutput(bufferSize)
   }
 
   /**
     * Mutable [[Output]] implementation for serializing to [[ByteVector]].
     */
-  final class ByteVectorOutput extends Output {
+  final class ByteVectorOutput(bufferSize: Int) extends Output {
     // The scodec ByteVector doesn't appear to come with an efficient builder for it,
     // so rather than wrapping each incoming Byte in an extra ByteVector instance we simply
     // write into a ByteArray and only construct a ByteVector instance at the very end
-    private[this] var buffer       = new Array[Byte](64)
-    private[this] var _cursor: Int = _
+    private[this] val delegate = new Output.ToByteArray(bufferSize)
 
     type Self   = ByteVectorOutput
     type Result = ByteVector
 
-    @inline def cursor: Int = _cursor
+    def writeByte(byte: Byte)                          = ret(delegate.writeByte(byte))
+    def writeBytes(a: Byte, b: Byte)                   = ret(delegate.writeBytes(a, b))
+    def writeBytes(a: Byte, b: Byte, c: Byte)          = ret(delegate.writeBytes(a, b, c))
+    def writeBytes(a: Byte, b: Byte, c: Byte, d: Byte) = ret(delegate.writeBytes(a, b, c, d))
+    def writeBytes[Bytes: ByteAccess](bytes: Bytes)    = ret(delegate.writeBytes(bytes))
 
-    def writeByte(byte: Byte): this.type = {
-      val crs       = _cursor
-      val newCursor = crs + 1
-      if (newCursor > 0) {
-        ensureLength(newCursor)
-        buffer(crs) = byte
-        _cursor = newCursor
-        this
-      } else overflow()
-    }
+    def result() = ByteVector(delegate.result())
 
-    def writeBytes(a: Byte, b: Byte): this.type = {
-      val crs       = _cursor
-      val newCursor = crs + 2
-      if (newCursor > 0) {
-        ensureLength(newCursor)
-        buffer(crs) = a
-        buffer(crs + 1) = b
-        _cursor = newCursor
-        this
-      } else overflow()
-    }
-
-    def writeBytes(a: Byte, b: Byte, c: Byte): this.type = {
-      val crs       = _cursor
-      val newCursor = crs + 3
-      if (newCursor > 0) {
-        ensureLength(newCursor)
-        buffer(crs) = a
-        buffer(crs + 1) = b
-        buffer(crs + 2) = c
-        _cursor = newCursor
-        this
-      } else overflow()
-    }
-
-    def writeBytes(a: Byte, b: Byte, c: Byte, d: Byte): this.type = {
-      val crs       = _cursor
-      val newCursor = crs + 4
-      if (newCursor > 0) {
-        ensureLength(newCursor)
-        buffer(crs) = a
-        buffer(crs + 1) = b
-        buffer(crs + 2) = c
-        buffer(crs + 3) = d
-        _cursor = newCursor
-        this
-      } else overflow()
-    }
-
-    def writeBytes[Bytes](bytes: Bytes)(implicit byteAccess: ByteAccess[Bytes]): this.type =
-      bytes match {
-        case x: ByteVector => append(x)
-        case x             => append(byteAccess.toByteArray(x))
-      }
-
-    def append(bytes: ByteVector): this.type = {
-      val l = bytes.size
-      if (l <= Int.MaxValue) {
-        val newCursor = _cursor + l.toInt
-        if (newCursor > 0) {
-          ensureLength(newCursor)
-          bytes.copyToArray(buffer, _cursor)
-          _cursor = newCursor
-          this
-        } else overflow()
-      } else overflow()
-    }
-
-    def append(bytes: Array[Byte]): this.type = {
-      val l         = bytes.length
-      val newCursor = _cursor + l
-      if (newCursor > 0) {
-        ensureLength(newCursor)
-        System.arraycopy(bytes, 0, buffer, _cursor, l)
-        _cursor = newCursor
-        this
-      } else overflow()
-    }
-
-    @inline def result(): ByteVector = ByteVector.view(buffer, 0, _cursor)
-
-    @inline private def ensureLength(minSize: Int): Unit =
-      if (buffer.length < minSize) {
-        val newLen = math.max(buffer.length << 1, minSize)
-        buffer = util.Arrays.copyOf(buffer, newLen)
-      }
-
-    private def overflow() = throw new Borer.Error.Overflow(this, "Cannot output to byte array with > 2^31 bytes")
+    private def ret(x: delegate.Self): Self = this
   }
 }

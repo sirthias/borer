@@ -15,7 +15,7 @@ import scala.util.{Failure, Success, Try}
 
 object DecodingSetup {
 
-  sealed trait Api[In <: Input, Config <: Reader.Config] {
+  sealed trait Api[In <: Input, Config <: Borer.DecodingConfig] {
 
     /**
       * Indicates that this decoding run is not expected to consume the complete [[Input]].
@@ -71,7 +71,7 @@ object DecodingSetup {
     def valueAndInputEither: Either[Borer.Error[In#Position], (T, In)]
   }
 
-  final private[borer] class Impl[In <: Input, Config <: Reader.Config](
+  final private[borer] class Impl[In <: Input, Config <: Borer.DecodingConfig](
       input: In,
       defaultConfig: Config,
       defaultWrapper: Receiver.Wrapper[Config],

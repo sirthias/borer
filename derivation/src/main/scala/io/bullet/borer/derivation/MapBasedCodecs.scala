@@ -91,7 +91,7 @@ object MapBasedCodecs {
               if (w.writingCbor) writeEntry(w.writeMapHeader(1))
               else writeEntry(w.writeMapStart()).writeBreak()
             } else rec(ix + 1)
-          } else throw new IllegalArgumentException(s"The given value [$value] is not a sub type of [${ctx.typeName}]")
+          } else throw new IllegalArgumentException(s"The given value `$value` is not a sub type of `${ctx.typeName}`")
         rec(0)
       }
     }
@@ -104,7 +104,7 @@ object MapBasedCodecs {
 
     def combine[T](ctx: CaseClass[Decoder, T]): Decoder[T] = {
       @inline def typeName            = ctx.typeName.full
-      @inline def expected(s: String) = s"$s decoding an instance of type [$typeName]"
+      @inline def expected(s: String) = s"$s decoding an instance of type `$typeName`"
 
       val len = ctx.parametersArray.length
       if (len > 128) sys.error(s"Cannot derive Decoder[$typeName]: More than 128 members are unsupported")
@@ -137,7 +137,7 @@ object MapBasedCodecs {
         def failDuplicate(k: key.Value) =
           throw new Error.InvalidInputData(
             r.lastPosition,
-            expected(s"Duplicate map key [${k.value}] encountered during"))
+            expected(s"Duplicate map key `${k.value}` encountered during"))
 
         @tailrec def fillArgsAndConstruct(filledCount: Int, remaining: Int, filledMask0: Long, filledMask1: Long): T = {
 
@@ -155,7 +155,7 @@ object MapBasedCodecs {
                 case None =>
                   throw new Error.InvalidInputData(
                     r.lastPosition,
-                    expected(s"Missing map key [${params(i).label}] for"))
+                    expected(s"Missing map key `${paramKeys(i).value}` for"))
               }
             } // else we were able to fill all missing members w/ default values
           }
@@ -224,7 +224,7 @@ object MapBasedCodecs {
     def dispatch[T](ctx: SealedTrait[Decoder, T]): Decoder[T] = {
       val subtypes            = ctx.subtypesArray
       val typeIds             = key.getTypeIds(ctx.typeName.full, subtypes)
-      def expected(s: String) = s"$s for decoding an instance of type [${ctx.typeName.full}]"
+      def expected(s: String) = s"$s for decoding an instance of type `${ctx.typeName.full}`"
 
       Decoder { r =>
         def readTypeIdAndValue(): T =

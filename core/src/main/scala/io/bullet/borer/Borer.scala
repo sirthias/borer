@@ -51,11 +51,15 @@ case object Cbor extends Target {
     *                                        as 64-bit values, even if they could safely be represented with fewer bits
     */
   final case class EncodingConfig(
+      bufferSize: Int = 1024,
       compressFloatingPointValues: Boolean = true,
       maxArrayLength: Long = Int.MaxValue,
       maxMapLength: Long = Int.MaxValue,
       maxNestingLevels: Int = 1000)
-      extends Borer.EncodingConfig with CborValidation.Config
+      extends Borer.EncodingConfig with CborValidation.Config {
+
+    if (bufferSize < 8) throw new IllegalArgumentException(s"bufferSize must be >= 8, but was $bufferSize")
+  }
 
   object EncodingConfig {
     val default = EncodingConfig()
@@ -127,8 +131,10 @@ case object Json extends Target {
       receiverWrapper: Receiver.Wrapper[DecodingConfig] = Receiver.nopWrapper): Reader =
     new InputReader(new JsonParser(input, config), receiverWrapper, config, Json)
 
-  final case class EncodingConfig() extends Borer.EncodingConfig {
+  final case class EncodingConfig(bufferSize: Int = 1024) extends Borer.EncodingConfig {
     def compressFloatingPointValues = false
+
+    if (bufferSize < 8) throw new IllegalArgumentException(s"bufferSize must be >= 8, but was $bufferSize")
   }
 
   object EncodingConfig {
@@ -189,7 +195,10 @@ sealed abstract class Target {
   */
 object Borer {
 
-  sealed abstract class EncodingConfig extends Writer.Config
+  sealed abstract class EncodingConfig extends Writer.Config {
+    def bufferSize: Int
+  }
+
   sealed abstract class DecodingConfig extends Reader.Config
 
   abstract private[borer] class AbstractSetup[Config](defaultConfig: Config, defaultWrapper: Receiver.Wrapper[Config]) {
@@ -224,7 +233,7 @@ object Borer {
   sealed abstract class Error[IO](private var _io: IO, msg: String, cause: Throwable = null)
       extends RuntimeException(msg, cause) {
 
-    final override def getMessage = s"$msg [${_io}]"
+    final override def getMessage = s"$msg (${_io})"
 
     final def io: IO = _io
 

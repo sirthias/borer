@@ -11,11 +11,13 @@ package io.bullet.borer.derivation
 import io.bullet.borer._
 import utest._
 
-import scala.util.Failure
+import scala.util.{Failure, Try}
 import scala.util.control.NonFatal
 
-abstract class DerivationSpec(target: Target) extends TestSuite {
+abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
   import Dom._
+
+  def tryDecode[T: Decoder](encoded: String): Try[T]
 
   case class Empty()
 
@@ -158,16 +160,16 @@ abstract class DerivationSpec(target: Target) extends TestSuite {
       implicit val fooCodec   = Codec(deriveEncoder[Foo], deriveDecoder[Foo])
 
       "size match" - {
-        val encoded = target.encode(foo).to[Array[Byte]].bytes
-        target.decode(encoded).to[Element].value ==> arrayBasedFooDom
-        target.decode(encoded).to[Foo].value ==> foo
+        val encoded = encode(foo)
+        decode[Element](encoded) ==> arrayBasedFooDom
+        decode[Foo](encoded) ==> foo
       }
 
       "decoding w/ missing elements" - {
         val dom     = transform(arrayBasedFooDom)(_.tail)
-        val encoded = target.encode(dom).to[Array[Byte]].bytes
-        target.decode(encoded).to[Element].value ==> dom
-        assertMatch(target.decode(encoded).to[Foo].valueTry) {
+        val encoded = encode(dom)
+        decode[Element](encoded) ==> dom
+        assertMatch(tryDecode[Foo](encoded)) {
           case Failure(e) if e.getMessage == arrayBasedMissingElemErrorMsg => // ok
         }
       }
@@ -184,9 +186,9 @@ abstract class DerivationSpec(target: Target) extends TestSuite {
           Mouse(true)
         )
 
-        val encoded = target.encode(animals).to[Array[Byte]].bytes
-        target.decode(encoded).to[Element].value ==> arrayBasedAnimalsDom
-        target.decode(encoded).to[List[Animal]].value ==> animals
+        val encoded = encode(animals)
+        decode[Element](encoded) ==> arrayBasedAnimalsDom
+        decode[List[Animal]](encoded) ==> animals
       }
 
       "ADT Key Collision" - {
@@ -196,7 +198,7 @@ abstract class DerivationSpec(target: Target) extends TestSuite {
           deriveEncoder[Animal]
         }
         val clazz = s"io.bullet.borer.derivation.AdtWithKeyCollision.Animal"
-        error.getMessage ==> s"@key collision: At least two subtypes of [$clazz] share the same type id [Dog]"
+        error.getMessage ==> s"@key collision: At least two subtypes of `$clazz` share the same type id `Dog`"
       }
     }
 
@@ -208,87 +210,87 @@ abstract class DerivationSpec(target: Target) extends TestSuite {
       implicit val hundredCodec = Codec(deriveEncoder[Hundred], deriveDecoder[Hundred])
 
       def sizeMatch[T: Encoder: Decoder](value: T, dom: MapElem): Unit = {
-        val encoded = target.encode(value).to[Array[Byte]].bytes
-        target.decode(encoded).to[Element].value ==> dom
-        target.decode(encoded).to[T].value ==> value
+        val encoded = encode(value)
+        decode[Element](encoded) ==> dom
+        decode[T](encoded) ==> value
       }
 
       def sizeMatchUnordered[T: Encoder: Decoder](value: T, dom: MapElem): Unit = {
         val unorderedDom = transform(dom)(_.toMap.toList)
-        val encoded      = target.encode(unorderedDom).to[Array[Byte]].bytes
-        target.decode(encoded).to[Element].value ==> unorderedDom
-        target.decode(encoded).to[T].value ==> value
+        val encoded      = encode(unorderedDom)
+        decode[Element](encoded) ==> unorderedDom
+        decode[T](encoded) ==> value
       }
 
       def missingMembersWithDefaultValue[T: Encoder: Decoder](value: T, dom: MapElem): Unit = {
         val partialDom = transform(dom)(_.filter(_._1 != StringElem("int")))
-        val encoded    = target.encode(partialDom).to[Array[Byte]].bytes
-        target.decode(encoded).to[Element].value ==> partialDom
-        target.decode(encoded).to[T].value ==> value
+        val encoded    = encode(partialDom)
+        decode[Element](encoded) ==> partialDom
+        decode[T](encoded) ==> value
       }
 
       def missingMembersWithoutDefaultValue[T: Encoder: Decoder](dom: MapElem, missingKey: String): Unit = {
         val partialDom = transform(dom)(_.filter(_._1 != StringElem(missingKey)))
-        val encoded    = target.encode(partialDom).to[Array[Byte]].bytes
-        target.decode(encoded).to[Element].value ==> partialDom
+        val encoded    = encode(partialDom)
+        decode[Element](encoded) ==> partialDom
 
         val errorMsg =
-          s"Missing map key [$missingKey] for decoding an instance of type [io.bullet.borer.derivation.DerivationSpec."
-        assertMatch(target.decode(encoded).to[T].valueTry) {
+          s"Missing map key `$missingKey` for decoding an instance of type `io.bullet.borer.derivation.DerivationSpec."
+        assertMatch(tryDecode[T](encoded)) {
           case Failure(e) if e.getMessage startsWith errorMsg => // ok
         }
       }
 
       def dupMemberBeforeFillCompletion[T: Encoder: Decoder](dom: MapElem, memberIx: Int, key: String): Unit = {
         val badDom  = transform(dom)(x => x.take(memberIx) ::: x.drop(memberIx - 1))
-        val encoded = target.encode(badDom).to[Array[Byte]].bytes
-        target.decode(encoded).to[Element].value ==> badDom
+        val encoded = encode(badDom)
+        decode[Element](encoded) ==> badDom
 
-        assertMatch(target.decode(encoded).to[T].valueTry) {
-          case Failure(e) if e.getMessage startsWith s"Duplicate map key [$key] encountered" => // ok
+        assertMatch(tryDecode[T](encoded)) {
+          case Failure(e) if e.getMessage startsWith s"Duplicate map key `$key` encountered" => // ok
         }
       }
 
       def dupMemberAfterFillCompletion[T: Encoder: Decoder](dom: MapElem, memberIx: Int, key: String): Unit = {
         val badDom  = transform(dom)(x => x :+ x(memberIx))
-        val encoded = target.encode(badDom).to[Array[Byte]].bytes
-        target.decode(encoded).to[Element].value ==> badDom
+        val encoded = encode(badDom)
+        decode[Element](encoded) ==> badDom
 
-        assertMatch(target.decode(encoded).to[T].valueTry) {
-          case Failure(e) if e.getMessage startsWith s"Duplicate map key [$key] encountered" => // ok
+        assertMatch(tryDecode[T](encoded)) {
+          case Failure(e) if e.getMessage startsWith s"Duplicate map key `$key` encountered" => // ok
         }
       }
 
       def extraMemberBeforeFillCompletion[T: Encoder: Decoder](value: T, dom: MapElem, ix: Int): Unit = {
         val extraMember = StringElem("yeah") -> StringElem("xxx")
         val fatDom      = transform(dom)(x => (x.take(ix) :+ extraMember) ++ x.drop(ix))
-        val encoded     = target.encode(fatDom).to[Array[Byte]].bytes
-        target.decode(encoded).to[Element].value ==> fatDom
-        target.decode(encoded).to[T].value ==> value
+        val encoded     = encode(fatDom)
+        decode[Element](encoded) ==> fatDom
+        decode[T](encoded) ==> value
       }
 
       def extraMemberAfterFillCompletion[T: Encoder: Decoder](value: T, dom: MapElem): Unit = {
         val extraMember = StringElem("extra") -> StringElem("xxx")
         val fatDom      = transform(dom)(_ :+ extraMember)
-        val encoded     = target.encode(fatDom).to[Array[Byte]].bytes
-        target.decode(encoded).to[Element].value ==> fatDom
-        target.decode(encoded).to[T].value ==> value
+        val encoded     = encode(fatDom)
+        decode[Element](encoded) ==> fatDom
+        decode[T](encoded) ==> value
       }
 
       def complexExtraMemberBeforeFC[T: Encoder: Decoder](value: T, dom: MapElem, ix: Int): Unit = {
         val extraMember = StringElem("extra") -> dom
         val fatDom      = transform(dom)(x => (x.take(ix) :+ extraMember) ++ x.drop(ix))
-        val encoded     = target.encode(fatDom).to[Array[Byte]].bytes
-        target.decode(encoded).to[Element].value ==> fatDom
-        target.decode(encoded).to[T].value ==> value
+        val encoded     = encode(fatDom)
+        decode[Element](encoded) ==> fatDom
+        decode[T](encoded) ==> value
       }
 
       def complexExtraMemberAfterFC[T: Encoder: Decoder](value: T, dom: MapElem): Unit = {
         val extraMember = StringElem("extra") -> dom
         val fatDom      = transform(dom)(_ :+ extraMember)
-        val encoded     = target.encode(fatDom).to[Array[Byte]].bytes
-        target.decode(encoded).to[Element].value ==> fatDom
-        target.decode(encoded).to[T].value ==> value
+        val encoded     = encode(fatDom)
+        decode[Element](encoded) ==> fatDom
+        decode[T](encoded) ==> value
       }
 
       "Foo" - {
@@ -331,14 +333,14 @@ abstract class DerivationSpec(target: Target) extends TestSuite {
         val quxWithNone = Qux(42)
         val quxWithSome = Qux(42, Some(3.45))
 
-        val quxWithSomeEncoded = target.encode(quxWithSome).to[Array[Byte]].bytes
-        target.decode(quxWithSomeEncoded).to[Qux].value ==> quxWithSome
+        val quxWithSomeEncoded = encode(quxWithSome)
+        decode[Qux](quxWithSomeEncoded) ==> quxWithSome
 
-        val qux0Encoded        = target.encode(qux0).to[Array[Byte]].bytes
-        val quxWithNoneEncoded = target.encode(quxWithNone).to[Array[Byte]].bytes
+        val qux0Encoded        = encode(qux0)
+        val quxWithNoneEncoded = encode(quxWithNone)
 
-        toHexString(qux0Encoded) ==> toHexString(quxWithNoneEncoded)
-        target.decode(quxWithNoneEncoded).to[Qux].value ==> quxWithNone
+        qux0Encoded ==> quxWithNoneEncoded
+        decode[Qux](quxWithNoneEncoded) ==> quxWithNone
       }
 
       "List with default value Nil" - {
@@ -352,14 +354,14 @@ abstract class DerivationSpec(target: Target) extends TestSuite {
         val quxWithNil = Qux(42)
         val quxWithNel = Qux(42, List(3.45f))
 
-        val quxWithNelEncoded = target.encode(quxWithNel).to[Array[Byte]].bytes
-        target.decode(quxWithNelEncoded).to[Qux].value ==> quxWithNel
+        val quxWithNelEncoded = encode(quxWithNel)
+        decode[Qux](quxWithNelEncoded) ==> quxWithNel
 
-        val qux0Encoded       = target.encode(qux0).to[Array[Byte]].bytes
-        val quxWithNilEncoded = target.encode(quxWithNil).to[Array[Byte]].bytes
+        val qux0Encoded       = encode(qux0)
+        val quxWithNilEncoded = encode(quxWithNil)
 
-        toHexString(qux0Encoded) ==> toHexString(quxWithNilEncoded)
-        target.decode(quxWithNilEncoded).to[Qux].value ==> quxWithNil
+        qux0Encoded ==> quxWithNilEncoded
+        decode[Qux](quxWithNilEncoded) ==> quxWithNil
       }
 
       "ADT" - {
@@ -375,12 +377,12 @@ abstract class DerivationSpec(target: Target) extends TestSuite {
             Mouse(true)
           )
 
-          val encoded = target.encode(animals).to[Array[Byte]].bytes
-          target.decode(encoded).to[Element].value ==> mapBasedAnimalsDom
-          target.decode(encoded).to[List[Animal]].value ==> animals
+          val encoded = encode(animals)
+          decode[Element](encoded) ==> mapBasedAnimalsDom
+          decode[List[Animal]](encoded) ==> animals
         } catch {
           case NonFatal(e) if target == Json =>
-            e.getMessage ==> "JSON does not support integer values as a map key [Output.ToByteArray index 124]"
+            e.getMessage ==> "JSON does not support integer values as a map key (Output.ToByteArray index 124)"
         }
       }
 
@@ -391,7 +393,7 @@ abstract class DerivationSpec(target: Target) extends TestSuite {
           deriveEncoder[Animal]
         }
         val clazz = s"io.bullet.borer.derivation.AdtWithKeyCollision.Animal"
-        error.getMessage ==> s"@key collision: At least two subtypes of [$clazz] share the same type id [Dog]"
+        error.getMessage ==> s"@key collision: At least two subtypes of `$clazz` share the same type id `Dog`"
       }
     }
   }
@@ -407,8 +409,6 @@ abstract class DerivationSpec(target: Target) extends TestSuite {
       case MapElem.Sized(_, keys, values)   => MapElem.Sized(f((keys zip values).toList): _*)
       case MapElem.Unsized(_, keys, values) => MapElem.Unsized(f((keys zip values).toList): _*)
     }
-
-  final def toHexString(bytes: Array[Byte]): String = bytes.map(x => f"${x & 0xFF}%02x").mkString
 }
 
 // cannot be moved into the DerivationSpec class itself due to

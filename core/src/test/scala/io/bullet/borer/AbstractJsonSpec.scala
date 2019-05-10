@@ -9,7 +9,6 @@
 package io.bullet.borer
 
 import java.math.BigInteger
-import java.nio.charset.StandardCharsets.UTF_8
 
 import io.bullet.borer.internal.Util
 import utest._
@@ -17,18 +16,7 @@ import utest._
 import scala.collection.immutable.ListMap
 import scala.util.Random
 
-abstract class AbstractJsonSpec extends BorerSpec {
-  final override def encode[T: Encoder](value: T): String = Json.encode(value).toUtf8String
-
-  final override def decode[T: Decoder](encoded: String): T =
-    Json
-      .decode(encoded getBytes UTF_8)
-      .withConfig(Json.DecodingConfig.default.copy(maxNumberAbsExponent = 300))
-      .to[T]
-      .value
-}
-
-object JsonSpec extends AbstractJsonSpec {
+abstract class AbstractJsonSpec extends AbstractBorerSpec {
 
   val tests = Tests {
 
@@ -245,7 +233,7 @@ object JsonSpec extends AbstractJsonSpec {
 
       intercept[Borer.Error.InvalidInputData[_ <: AnyRef]] {
         Json.decode(hexBytes("22dd1dd83422")).to[String].value ==> "xxx"
-      }.getMessage ==> "Illegal UTF-8 character encoding [input position 1]"
+      }.getMessage ==> "Illegal UTF-8 character encoding (input position 1)"
 
       val strings = ('a' to 'z').mkString.inits.toList.init
       val all = for {
@@ -337,7 +325,7 @@ object JsonSpec extends AbstractJsonSpec {
 
     "Error Position" - {
       intercept[Borer.Error.InvalidInputData[_ <: AnyRef]](decode[List[Int]]("[12,,42]")).getMessage ==>
-      "Expected JSON value but got ',' [input position 4]"
+      "Expected JSON value but got ',' (input position 4)"
     }
   }
 }

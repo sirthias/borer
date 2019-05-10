@@ -116,17 +116,15 @@ object key {
     } else Value.Str(default)
 
   private[derivation] def getTypeIds[X[_], T](typeName: String, subtypes: Array[Subtype[X, T]]): Array[key.Value] = {
-    val typeIds = subtypes.map(sub => key.find(sub.annotationsArray, sub.typeName.short))
+    val keys = subtypes.map(sub => key.find(sub.annotationsArray, sub.typeName.short))
     @tailrec def rec(i: Int, j: Int): Array[key.Value] =
-      if (i < typeIds.length) {
-        if (j < typeIds.length) {
-          if (i != j && typeIds(i) == typeIds(j)) {
-            sys.error(
-              "@key collision: At least two subtypes of [" + typeName +
-                s"] share the same type id [${typeIds(i).value}]")
+      if (i < keys.length) {
+        if (j < keys.length) {
+          if (i != j && keys(i) == keys(j)) {
+            sys.error(s"@key collision: At least two subtypes of `$typeName` share the same type id `${keys(i).value}`")
           } else rec(i, j + 1)
         } else rec(i + 1, 0)
-      } else typeIds
+      } else keys
     rec(0, 0)
   }
 

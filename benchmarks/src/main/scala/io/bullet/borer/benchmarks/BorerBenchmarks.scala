@@ -101,7 +101,8 @@ class BorerDomBenchmark extends DomBenchmark {
 
 class BorerModelBenchmark extends DomBenchmark {
 
-  private var root: Product = _
+  private var root: Product  = _
+  private val encodingConfig = Json.EncodingConfig(bufferSize = 16384)
 
   // format: OFF
   implicit lazy val codec: Codec[Product] = {
@@ -256,7 +257,7 @@ class BorerModelBenchmark extends DomBenchmark {
   def setup(): Unit = root = Json.decode(fileBytes).to[Product].value
 
   @Benchmark
-  def encodeModel: Array[Byte] = Json.encode(root).toByteArray
+  def encodeModel: Array[Byte] = Json.encode(root).withConfig(encodingConfig).toByteArray
 
   @Benchmark
   def decodeModel: Product = Json.decode(fileBytes).to[Product].value
