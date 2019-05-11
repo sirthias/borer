@@ -429,16 +429,21 @@ your application should be able to support both [CBOR] and [JSON] at the same ti
 
 ## JSON Performance
 
-_BORER_ comes with a fast JSON parser, which enables _BORER_ to outperform most other popular JSON libraries in the
-scala eco-system, when it comes to transforming JSON into a case-class based data model.\
-A benchmark against [18 real-world JSON data examples][json-benchmark-files] from a diverse set of sources shows that
-_BORER_'s JSON parsing infrastructure outperforms [Circe] by a factor of 1.3 - 2.9 (average: 1.71), the venerable
-[spray-json] by a factor of 2.0 - 5.6 (average: 3.4) and even [Jackson Scala] by about 10 percent on average.
+_BORER_ comes with a fast JSON parser optimized for modern superscalar 64-bit CPUs, which enables _BORER_ to
+significantly outperform many other popular JSON libraries in the scala eco-system, when it comes to transforming JSON
+into a case-class based data model from raw bytes.
 
-This is _despite_ BORER's external API being geared more towards user-friendliness rather than pure performance.
-From a pure performance perspective a full type class-based design isn't ideal, since type classes can result a lot of
-call sites becoming "megamorphic". Also, _BORER_ pull-style parser provides the user with one-element look-ahead, which
-enables parsing into a DOM (if required), but, unfortunately, makes certain other performance optimizations unavailable.      
+A benchmark against [18 real-world JSON data examples][json-benchmark-files] from a diverse set of sources shows that
+_BORER_ 0.9.0's JSON parsing infrastructure outperforms [Circe] by a factor of 1.3 - 2.9 (average: 1.71), the venerable
+[spray-json] by a factor of 2.0 - 5.6 (average: 3.4) and even [Jackson Scala] by about 10 percent on average.\
+(JMH `-wi 10 -i10 -t4 -f4` on OpenJDK 12.0.1, parsing from raw bytes into the same data model.\
+Results on GraalVM are pending...)
+
+This is despite BORER's external API being geared more towards user-friendliness than pure performance.
+From a pure performance perspective a full type class-based design isn't ideal, since type classes can cause a lot of
+call sites to become "megamorphic". Also, _BORER_'s pull-style parser provides the user with one-element look-ahead,
+which enables parsing into a DOM (if required), but, unfortunately, makes certain other performance optimizations
+unavailable.      
  
  
 ## Comparison with other Scala JSON Libraries
@@ -453,9 +458,10 @@ enables parsing into a DOM (if required), but, unfortunately, makes certain othe
   - CONS
     - depends on `cats-core`
     - type class derivation can be slow (at compile time)
-    - _BORER_ parses JSON about 1.7 times as fast
+    - _BORER_ parses JSON from raw bytes about 1.7 times as fast
     - no [CBOR] support
-- [spay-json]
+    
+- [spray-json]
   - DOM- and type class-based design 
   - PROS
     - zero dependencies
@@ -464,9 +470,10 @@ enables parsing into a DOM (if required), but, unfortunately, makes certain othe
     - essentially unmaintained
     - no support for case classes w/ more than 22 members
     - no type class derivation for ADTs
-    - _BORER_ parses JSON about 3.4 times as fast
+    - _BORER_ parses JSON from raw bytes about 3.4 times as fast
     - not compatible with [scala.js]    
     - no [CBOR] support
+    
 - [µPickle]
   - pull-style, type class-based design
   - PROS
@@ -476,8 +483,9 @@ enables parsing into a DOM (if required), but, unfortunately, makes certain othe
     - compatible with [scala.js]
   - CONS
     - no support for case classes w/ more than 22 members
-    - _BORER_ parses JSON about twice as fast (on average)
+    - _BORER_ parses JSON from raw bytes about twice as fast (on average)
     - no [CBOR] support
+    
 - [Jackson Scala]
   - Java implementation with a Scala add-on
   - PROS
@@ -486,7 +494,8 @@ enables parsing into a DOM (if required), but, unfortunately, makes certain othe
   - CONS
     - no type class-based API
     - several non-Scala dependencies
-    - not compatible with [scala.js]    
+    - not compatible with [scala.js]
+        
 - [Jsoniter Scala]
   - pull-style, type class-based design
   - PROS
@@ -604,7 +613,8 @@ When you include the `borer-derivation` module as a dependency (see *Installatio
 (semi-automatically) provide encoders and decoders for case classes and ADTs by deriving them with the help of
 [Magnolia].
 
-There are two basic alternatives to choose from: *Array-Based Codecs* or *Map-Based Codecs*.
+There are two basic alternatives to choose from: [Array-Based Codecs](#array-based-codecs) or
+[Map-Based Codecs](#map-based-codecs).
 
 
 ### Array-Based Codecs
@@ -736,15 +746,16 @@ and efficient.
 Nullable and Default
 --------------------
 
-One question that frequently arises when dealing with [JSON], and to a limited extend [CBOR] as well, is: How to deal
-with `null` values?\
-`null` values differ from missing members (see also [Map-Based Codecs above](#map-based-codecs)) in that the value for
-an element is indeed present, but it is `null`.
+One question that frequently arises when dealing with [JSON], and to a limited extend [CBOR] as well, is how to deal
+with `null` values.
 
-_BORER_ handles these case is a properly types fashion: If your data model allows for certain members to be `null` in
-an encoding the members type should be wrapped with `Nullable`, i.e. `Nullable[String]`. In combination with the simple
-type class `Default[T]`, which provides the capability to supply default values for a type `T` the pre-defined 
-encoder and decoder for `Nullable[T]` will then be able to translate `null` values to respective default value and back.
+`null` values differ from missing members (see also [Map-Based Codecs above](#map-based-codecs)) in that the value for
+an element is indeed present, but is `null`.
+
+_BORER_ handles this case in a properly typed fashion: If your data model allows for certain members to have a `null`
+encoding the member's type should be wrapped with `Nullable`, e.g. `Nullable[String]`. In combination with the simple
+type class `Default[T]`, which provides the capability to supply default values for a type `T`, the pre-defined 
+encoder and decoder for `Nullable[T]` will be able to translate `null` values to the respective default value and back.
 
 Example:
 
@@ -816,3 +827,8 @@ Contributions are always welcome!
   [114]: https://github.com/propensive/magnolia/issues/114
   [Circe]: https://circe.github.io/circe/
   [spray-json]: https://github.com/spray/spray-json/
+  [json-benchmark-files]: https://github.com/sirthias/borer/tree/master/benchmarks/src/main/resources
+  [Jackson Scala]: https://github.com/FasterXML/jackson-module-scala
+  [µPickle]: http://www.lihaoyi.com/upickle/
+  [Jsoniter Scala]: https://github.com/plokhotnyuk/jsoniter-scala
+  [MessagePack]: https://msgpack.org/
