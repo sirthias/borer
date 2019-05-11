@@ -10,7 +10,10 @@ package io.bullet.borer
 
 import utest._
 
-object MiscSpec extends BorerSpec {
+object MiscCborSpec extends AbstractBorerSpec {
+
+  def encode[T: Encoder](value: T): String   = toHexString(Cbor.encode(value).toByteArray)
+  def decode[T: Decoder](encoded: String): T = Cbor.decode(hexBytes(encoded)).to[T].value
 
   case class Foo(int: Int, string: String, doubleOpt: Option[java.lang.Double])
   case class Bar(foo: Foo, optFoo: Option[Foo], stringSeq: Seq[String])
@@ -102,7 +105,7 @@ object MiscSpec extends BorerSpec {
       val error   = Cbor.decode(encoded).to[Foo].valueEither.swap.getOrElse(null)
       assertMatch(error) {
         case e: Borer.Error.InvalidInputData[_]
-            if e.getMessage == "Expected Array Header (3) but got Array Header (0) [input position 0]" =>
+            if e.getMessage == "Expected Array Header (3) but got Array Header (0) (input position 0)" =>
       }
     }
 
@@ -117,7 +120,7 @@ object MiscSpec extends BorerSpec {
 
       intercept[Borer.Error.InvalidInputData[_]](
         encode(Writer.Script(_.writeMapStart().writeInt(1).writeBreak()))
-      ).getMessage ==> "Expected map entry value data item but got BREAK [Output.ToByteArray index 2]"
+      ).getMessage ==> "Expected map entry value data item but got BREAK (Output.ToByteArray index 2)"
     }
   }
 }

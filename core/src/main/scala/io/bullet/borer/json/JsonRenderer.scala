@@ -127,14 +127,13 @@ final private[borer] class JsonRenderer(var out: Output) extends Receiver.Render
   def onString(value: String): Unit = {
     @tailrec def rec(out: Output, ix: Int): Output =
       if (ix < value.length) {
-        def escaped(c: Char) = out.writeAsBytes('\\', c)
-
-        value.charAt(ix) match {
-          case '"'  => rec(escaped('"'), ix + 1)
-          case '\\' => rec(escaped('\\'), ix + 1)
-          case c if c >= 0x20 => // we re-encode the character (or surrogate pair) from UTF-16 to UTF-8 right here
-            var index = ix
-            val newOut =
+        @inline def escaped(c: Char) = out.writeAsBytes('\\', c)
+        var index                    = ix
+        val newOut =
+          value.charAt(ix) match {
+            case '"'  => escaped('"')
+            case '\\' => escaped('\\')
+            case c if c >= 0x20 => // we re-encode the character (or surrogate pair) from UTF-16 to UTF-8 right here
               if (c > 0x7F) {
                 var codePoint = c.toInt
                 (if (codePoint > 0x7FF) {
@@ -153,19 +152,18 @@ final private[borer] class JsonRenderer(var out: Output) extends Receiver.Render
                  } else out.writeAsByte(0xC0 | (codePoint >> 6))) // 2-byte UTF-8 codepoint
                   .writeAsByte(0x80 | (codePoint & 0x3F))
               } else out.writeAsByte(c)
-            rec(newOut, index + 1)
 
-          case '\b' => rec(escaped('b'), ix + 1)
-          case '\f' => rec(escaped('f'), ix + 1)
-          case '\n' => rec(escaped('n'), ix + 1)
-          case '\r' => rec(escaped('r'), ix + 1)
-          case '\t' => rec(escaped('t'), ix + 1)
-          case c =>
-            val newOut = out
-              .writeAsBytes('\\', 'u', '0', '0')
-              .writeBytes(lowerHexDigit(c.toInt >> 4).toByte, lowerHexDigit(c.toInt).toByte)
-            rec(newOut, ix + 1)
-        }
+            case '\b' => escaped('b')
+            case '\f' => escaped('f')
+            case '\n' => escaped('n')
+            case '\r' => escaped('r')
+            case '\t' => escaped('t')
+            case c =>
+              out
+                .writeAsBytes('\\', 'u', '0', '0')
+                .writeBytes(lowerHexDigit(c.toInt >> 4).toByte, lowerHexDigit(c.toInt).toByte)
+          }
+        rec(newOut, index + 1)
       } else out
 
     out = count(rec(if (sepRequired) out.writeAsBytes(separator, '"') else out.writeAsByte('"'), 0).writeAsByte('"'))
@@ -238,7 +236,7 @@ final private[borer] class JsonRenderer(var out: Output) extends Receiver.Render
   private def writeLong(out: Output, value: Long): Output =
     if (value != 0) {
       if (value != Long.MinValue) {
-        def div10(i: Int) = {
+        @inline def div10(i: Int) = {
           var q = (i << 3) + (i << 2)
           q += (q << 12) + (q << 8) + (q << 4) + i
           q >>>= 19

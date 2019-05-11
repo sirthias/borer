@@ -8,4 +8,9 @@
 
 package io.bullet.borer
 
-object DefaultRfcExamplesSpec extends AbstractRfcExamplesSpec("Default Mutable Byte Array")
+object ByteArrayCborSpec extends AbstractCborSpec {
+
+  def encode[T: Encoder](value: T): String = toHexString(Cbor.encode(value).toByteArray)
+
+  def decode[T: Decoder](encoded: String): T = Cbor.decode(hexBytes(encoded)).to[T].value
+}

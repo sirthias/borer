@@ -77,7 +77,8 @@ object Encoder extends LowPrioEncoders {
   def forCaseClass[T]: Encoder[T] = macro Macros.encoderForCaseClass[T]
 
   implicit final class EncoderOps[A](val underlying: Encoder[A]) extends AnyVal {
-    def compose[B](f: B => A): Encoder[B] = Encoder((w, b) => underlying.write(w, f(b)))
+    def contramap[B](f: B => A): Encoder[B]                     = Encoder((w, b) => underlying.write(w, f(b)))
+    def contramapWithWriter[B](f: (Writer, B) => A): Encoder[B] = Encoder((w, b) => underlying.write(w, f(w, b)))
   }
 
   implicit def fromCodec[T](implicit codec: Codec[T]): Encoder[T] = codec.encoder
@@ -122,15 +123,20 @@ object Encoder extends LowPrioEncoders {
       }
     }
 
-  implicit val forBigInt: Encoder[BigInt] = forJBigInteger.compose(_.bigInteger)
+  implicit val forBigInt: Encoder[BigInt] = forJBigInteger.contramap(_.bigInteger)
 
   implicit val forJBigDecimal: Encoder[JBigDecimal] =
     Encoder { (w, x) =>
-      if (x.scale != 0) w.writeTag(Tag.DecimalFraction).writeArrayHeader(2).writeInt(x.scale)
-      w.write(x.unscaledValue)
+      if (w.writingCbor) {
+        if (x.scale != 0) w.writeTag(Tag.DecimalFraction).writeArrayHeader(2).writeInt(x.scale)
+        w.write(x.unscaledValue)
+      } else {
+        if (x.scale != 0) w.writeNumberString(x.toString)
+        else w.write(x.unscaledValue)
+      }
     }
 
-  implicit val forBigDecimal: Encoder[BigDecimal] = forJBigDecimal.compose(_.bigDecimal)
+  implicit val forBigDecimal: Encoder[BigDecimal] = forJBigDecimal.contramap(_.bigDecimal)
 
   implicit val forByteArrayIterator: Encoder[Iterator[Array[Byte]]] =
     Encoder { (w, x) =>

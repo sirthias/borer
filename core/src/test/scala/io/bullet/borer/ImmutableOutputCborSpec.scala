@@ -10,22 +10,14 @@ package io.bullet.borer
 
 import java.util
 
-object ImmutableOutputRfcExamplesSpec extends AbstractRfcExamplesSpec("Immutable Output to Byte Array") {
+object ImmutableOutputCborSpec extends AbstractCborSpec {
 
-  override def encode[T: Encoder](value: T): String =
-    toHexString(Cbor.encode(value).to[Array[Byte]](byteAccess).bytes)
+  def encode[T: Encoder](value: T): String   = toHexString(Cbor.encode(value).to[Array[Byte]].bytes)
+  def decode[T: Decoder](encoded: String): T = Cbor.decode(hexBytes(encoded)).to[T].value
 
-  object byteAccess extends ByteAccess[Array[Byte]] {
+  implicit object SomewhatImmutableByteArrayOutputProvider extends Output.Provider[Array[Byte]] {
     type Out = SomewhatImmutableByteArrayOutput
-
-    def newOutput = new SomewhatImmutableByteArrayOutput(new Array[Byte](8), 0)
-
-    def sizeOf(bytes: Array[Byte])                               = ByteAccess.ForByteArray.sizeOf(bytes)
-    def fromByteArray(byteArray: Array[Byte])                    = ByteAccess.ForByteArray.fromByteArray(byteArray)
-    def toByteArray(bytes: Array[Byte])                          = ByteAccess.ForByteArray.toByteArray(bytes)
-    def concat(a: Array[Byte], b: Array[Byte])                   = ByteAccess.ForByteArray.concat(a, b)
-    def convert[B](value: B)(implicit byteAccess: ByteAccess[B]) = ByteAccess.ForByteArray.convert(value)
-    def empty                                                    = ByteAccess.ForByteArray.empty
+    def apply(bufferSize: Int) = new SomewhatImmutableByteArrayOutput(new Array[Byte](8), 0)
   }
 
   final class SomewhatImmutableByteArrayOutput(buffer: Array[Byte], val cursor: Int) extends Output {

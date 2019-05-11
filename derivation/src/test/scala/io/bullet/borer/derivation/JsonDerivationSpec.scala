@@ -8,10 +8,17 @@
 
 package io.bullet.borer.derivation
 
-import io.bullet.borer.{Dom, Json}
+import java.nio.charset.StandardCharsets
+
+import io.bullet.borer.{Decoder, Dom, Encoder, Json}
 
 object JsonDerivationSpec extends DerivationSpec(Json) {
   import Dom._
+
+  def encode[T: Encoder](value: T): String =
+    Json.encode(value).withConfig(Json.EncodingConfig.default.copy(bufferSize = 13)).toUtf8String
+  def decode[T: Decoder](encoded: String): T = Json.decode(encoded getBytes StandardCharsets.UTF_8).to[T].value
+  def tryDecode[T: Decoder](encoded: String) = Json.decode(encoded getBytes StandardCharsets.UTF_8).to[T].valueTry
 
   def arrayBasedFooDom =
     ArrayElem.Unsized(
@@ -30,7 +37,7 @@ object JsonDerivationSpec extends DerivationSpec(Json) {
         ArrayElem.Unsized(IntElem(0), IntElem(0), IntElem(255), IntElem(255))
       ))
 
-  def arrayBasedMissingElemErrorMsg = "Cannot convert int value -10000 to Byte [input position 4]"
+  def arrayBasedMissingElemErrorMsg = "Cannot convert int value -10000 to Byte (input position 4)"
 
   def mapBasedFooDom =
     MapElem.Unsized(
@@ -40,7 +47,7 @@ object JsonDerivationSpec extends DerivationSpec(Json) {
       "int"    -> IntElem(1234567),
       "long"   -> IntElem(-1),
       "float"  -> DoubleElem(1.5f),
-      "double" -> DoubleElem(26.8),
+      "dub"    -> DoubleElem(26.8),
       "string" -> StringElem("borer"),
       "empty"  -> MapElem.Unsized(),
       "colors" -> ArrayElem.Unsized(

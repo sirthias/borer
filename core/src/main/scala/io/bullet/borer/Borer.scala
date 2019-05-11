@@ -51,11 +51,15 @@ case object Cbor extends Target {
     *                                        as 64-bit values, even if they could safely be represented with fewer bits
     */
   final case class EncodingConfig(
+      bufferSize: Int = 1024,
       compressFloatingPointValues: Boolean = true,
       maxArrayLength: Long = Int.MaxValue,
       maxMapLength: Long = Int.MaxValue,
       maxNestingLevels: Int = 1000)
-      extends Borer.EncodingConfig with CborValidation.Config
+      extends Borer.EncodingConfig with CborValidation.Config {
+
+    if (bufferSize < 8) throw new IllegalArgumentException(s"bufferSize must be >= 8, but was $bufferSize")
+  }
 
   object EncodingConfig {
     val default = EncodingConfig()
@@ -127,8 +131,10 @@ case object Json extends Target {
       receiverWrapper: Receiver.Wrapper[DecodingConfig] = Receiver.nopWrapper): Reader =
     new InputReader(new JsonParser(input, config), receiverWrapper, config, Json)
 
-  final case class EncodingConfig() extends Borer.EncodingConfig {
+  final case class EncodingConfig(bufferSize: Int = 1024) extends Borer.EncodingConfig {
     def compressFloatingPointValues = false
+
+    if (bufferSize < 8) throw new IllegalArgumentException(s"bufferSize must be >= 8, but was $bufferSize")
   }
 
   object EncodingConfig {
@@ -136,21 +142,30 @@ case object Json extends Target {
   }
 
   /**
-    * @param readIntegersAlsoAsFloatingPoint set to false to disable automatic conversion of integer to floating point
-    *                                        values
+    * @param readIntegersAlsoAsFloatingPoint set to false to disable automatic conversion of integer to floating point values
+    * @param readDecimalNumbersOnlyAsNumberStrings set to true to disable the fast, immediate conversion of
+    *                                              JSON numbers to [[Double]] values where easily possible.
+    *                                              In rare cases this might be necessary to allow for maximum
+    *                                              possible precision when reading 32-bit [[Float]] values from JSON.
+    *                                              (see https://github.com/sirthias/borer/issues/20 for more info on this)
+    * @param maxNumberAbsExponent the maximum absolute exponent value to accept in JSON numbers
+    * @param maxStringLength the maximum string length to accept
+    *                        Note: For performance reasons this is a soft limit, that the parser will sometimes overstep.
+    *                        The only guarantee is that it will never accept Strings that are more than twice as long as
+    *                        the this limit.
+    * @param maxNumberMantissaDigits the maximum number of digits to accept before the exponent in JSON numbers
     */
   final case class DecodingConfig(
       readIntegersAlsoAsFloatingPoint: Boolean = true,
+      readDecimalNumbersOnlyAsNumberStrings: Boolean = false,
       maxNumberAbsExponent: Int = 64,
       maxStringLength: Int = 1024 * 1024,
-      maxNumberMantissaDigits: Int = 32,
-      maxNumberExponentDigits: Int = 3)
+      maxNumberMantissaDigits: Int = 34)
       extends Borer.DecodingConfig with JsonParser.Config {
 
+    Util.requirePositive(maxNumberAbsExponent, "maxNumberAbsExponent")
     Util.requirePositive(maxStringLength, "maxStringLength")
-    if (maxNumberExponentDigits < 0 || maxNumberExponentDigits > 9)
-      throw new IllegalArgumentException(
-        s"$maxNumberExponentDigits must be in the range [0..9], but was $maxNumberExponentDigits")
+    Util.requirePositive(maxNumberMantissaDigits, "maxNumberMantissaDigits")
 
     // the JsonParser never produces Float values directly (only doubles), so this is necessary
     def readDoubleAlsoAsFloat = true
@@ -180,7 +195,10 @@ sealed abstract class Target {
   */
 object Borer {
 
-  sealed abstract class EncodingConfig extends Writer.Config
+  sealed abstract class EncodingConfig extends Writer.Config {
+    def bufferSize: Int
+  }
+
   sealed abstract class DecodingConfig extends Reader.Config
 
   abstract private[borer] class AbstractSetup[Config](defaultConfig: Config, defaultWrapper: Receiver.Wrapper[Config]) {
@@ -215,7 +233,7 @@ object Borer {
   sealed abstract class Error[IO](private var _io: IO, msg: String, cause: Throwable = null)
       extends RuntimeException(msg, cause) {
 
-    final override def getMessage = s"$msg [${_io}]"
+    final override def getMessage = s"$msg (${_io})"
 
     final def io: IO = _io
 

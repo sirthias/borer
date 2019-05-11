@@ -9,7 +9,6 @@
 package io.bullet.borer
 
 import java.math.BigInteger
-import java.nio.charset.StandardCharsets.UTF_8
 
 import io.bullet.borer.internal.Util
 import utest._
@@ -17,18 +16,7 @@ import utest._
 import scala.collection.immutable.ListMap
 import scala.util.Random
 
-abstract class AbstractJsonSpec extends BorerSpec {
-  final override def encode[T: Encoder](value: T): String = Json.encode(value).toUtf8String
-
-  final override def decode[T: Decoder](encoded: String): T =
-    Json
-      .decode(encoded getBytes UTF_8)
-      .withConfig(Json.DecodingConfig.default.copy(maxNumberAbsExponent = 300))
-      .to[T]
-      .value
-}
-
-object JsonSpec extends AbstractJsonSpec {
+abstract class AbstractJsonSpec extends AbstractBorerSpec {
 
   val tests = Tests {
 
@@ -83,6 +71,11 @@ object JsonSpec extends AbstractJsonSpec {
       roundTrip("100000.0", 100000.0)
 
       if (Util.isJVM) {
+        roundTrip("-0.0", -0.0f)
+        roundTrip("-0.0", -0.0)
+
+        decode[Double]("0.0").toString ==> "0.0"
+
         roundTrip("1.1999999", 1.1999999f)
 
         roundTrip("3.4028234663852886E38", 3.4028234663852886e+38)
@@ -172,6 +165,13 @@ object JsonSpec extends AbstractJsonSpec {
       verifyDecoding("1.0000000000000000", Dom.NumberStringElem("1.0000000000000000"))
 
       verifyDecoding("1", 1.0f)
+
+      verifyDecoding("1.234", Dom.DoubleElem(1.234))
+      Json
+        .decode("1.234".getBytes)
+        .withConfig(Json.DecodingConfig.default.copy(readDecimalNumbersOnlyAsNumberStrings = true))
+        .to[Dom.Element]
+        .value ==> Dom.NumberStringElem("1.234")
     }
 
     "Number Exercise" - {
@@ -233,7 +233,7 @@ object JsonSpec extends AbstractJsonSpec {
 
       intercept[Borer.Error.InvalidInputData[_ <: AnyRef]] {
         Json.decode(hexBytes("22dd1dd83422")).to[String].value ==> "xxx"
-      }.getMessage ==> "Illegal UTF-8 character encoding [input position 1]"
+      }.getMessage ==> "Illegal UTF-8 character encoding (input position 1)"
 
       val strings = ('a' to 'z').mkString.inits.toList.init
       val all = for {
@@ -316,9 +316,16 @@ object JsonSpec extends AbstractJsonSpec {
       roundTrip("42", Qux(42))
     }
 
+    "BigDecimal" - {
+      roundTrip("1", BigDecimal(1))
+      roundTrip("1000", BigDecimal(1000))
+      roundTrip("12345.6789", BigDecimal(12345.6789))
+      roundTrip("12345678901234567890.123456789", BigDecimal("12345678901234567890.123456789"))
+    }
+
     "Error Position" - {
       intercept[Borer.Error.InvalidInputData[_ <: AnyRef]](decode[List[Int]]("[12,,42]")).getMessage ==>
-      "Expected JSON value but got ',' [input position 4]"
+      "Expected JSON value but got ',' (input position 4)"
     }
   }
 }

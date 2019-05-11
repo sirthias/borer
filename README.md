@@ -68,7 +68,7 @@ libraryDependencies += "io.bullet" %% "borer-compat-akka" % "<version>" // for d
 libraryDependencies += "io.bullet" %% "borer-compat-scodec" % "<version>" // for direct `scodec.bits.ByteVector` support
 ```
 
-_BORER_ is available for [Scala] 2.12 as well as [scala.js] 0.6.
+_BORER_ is available for [Scala] 2.12, 2.13.0-RC1 as well as [scala.js] (0.6 for Scala 2.12 and 1.0.0-M7 for Scala 2.13).
 
 
 Basic Usage
@@ -141,15 +141,15 @@ _BORER_ comes with built-in encoding and decoding support for arbitrary combinat
 - `Array[Byte]` 
 - `java.math.BigInteger`, `java.math.BigDecimal` and their scala wrappers `BigInt` and `BigDecimal`
 - `Option[T]` 
-- `Array[T <: AnyRef]` 
+- `Array[T]` 
 - `M[T] <: Iterable[T]` 
 - `M[A, B] <: Map[A, B]`
 - `Iterator[T]`  (encoding only!)
 - `Either[A, B]`
 - `Tuple1[A]` ... `Tuple22[A, B, ... V]`
 
-All these type are encoded to exactly one [CBOR] data item (which may of course be an array or map consisting of other,
-nested data items.)
+All these type are encoded to exactly one [CBOR] (or [JSON]) data item (which may of course be an array or map
+consisting of other, nested data items.)
 
 
 Encoding and Decoding Custom Types
@@ -214,7 +214,7 @@ implicit val dec = Decoder.forCaseClass[Color]
 implicit val codec = Codec.forCaseClass[Color]
 ```
 
-The codecs created in this way always encode a case class instance to a single [CBOR] data item: a [CBOR] array with
+The codecs created in this way always encode a case class instance to a single [CBOR]/[JSON] data item: an array with
 the length corresponding to the case classes arity and the member encodings forming the array elements.\
 There is one exception though: In order to increase encoding efficiency unary case classes, with only one parameter,
 have their single member written directly, without a wrapping single-element array.
@@ -226,7 +226,7 @@ member name, check out the `borer-derivation` module [described below](#derivati
 ### Transforming Existing Encoders / Decoders
 
 If your type is not a case class but can somehow be constructed from or deconstructed to any available Encoder or
-Decoder respectively, you can rely on the `compose` and `map` methods available on Encoders / Decoders:
+Decoder respectively, you can rely on the `contramap` and `map` methods available on Encoders / Decoders:
 
 ```scala
 import io.bullet.borer.{Encoder, Decoder}
@@ -234,7 +234,7 @@ import io.bullet.borer.{Encoder, Decoder}
 class Person(name: String)
 
 // have `Person` be encoded as a simple CBOR text data item 
-implicit val encoder = Encoder.forString.compose[Person](_.name)
+implicit val encoder = Encoder.forString.contramap[Person](_.name)
 implicit val decoder = Decoder.forString.map(Person(_))
 ```
 
@@ -273,9 +273,9 @@ some kind of placeholder, like `null`, `undefined` or an empty array or map!
 To illustrate the point: The default codec for `Option[T]` for example encodes `Some[T]` to a single element array
 holding the encoding of `T`, and `None` to a zero-element (empty) array!
 
-While _BORER_ (by default) verifies that the [CBOR] created by your application is indeed valid and will thus catch any
-mistakes you made in this regard eventually, debugging structural problems can be a bit tedious since the error will
-often only be recognizable at the very end of the encoding or decoding process. Check out the section on
+While _BORER_ (by default) verifies that the [CBOR]/[JSON] created by your application is indeed valid and will thus
+catch any mistakes you made in this regard eventually, debugging structural problems can be a bit tedious since the
+error will often only be recognizable at the very end of the encoding or decoding process. Check out the section on
 [Logging](#Logging) below for more info how _BORER_ can support you in debugging (de)serialization issues.
 
 
@@ -321,6 +321,58 @@ implicit val eitherStringIntDecoder: Decoder[Either[String, Int]] =
   }
 
 ```
+
+`Input`, `Output`, `ByteAccess`
+-------------------------------
+
+In order to allow for seamless integration in all kinds of application environments _BORER_ abstracts over decoding
+input, encoding output as well as general "chunks of bytes" with three additional type classes `Input[T]`, `Output[T]`
+and `ByteAccess[T]`.
+
+
+## Input
+
+For decoding _BORER_ will happily consume any type for which an `Input.Wrapper[T]` is implicitly available,
+which is responsible for constructing an `Input` around `T`.
+
+Currently _BORER_ comes with predefined `Input` implementations for these types:
+
+- `Array[Byte]`
+- `java.nio.ByteBuffer`
+- `akka.util.ByteString` (with the `borer-compat-akka` module)
+- `scodec.bits.ByteVector` (with the `borer-compat-scodec` module)
+
+The `Input` trait isn't particularly hard to implement, especially since it merely has to support single-pass access
+to the underlying bytes with minimal buffering, no random access.   
+
+
+## Output
+
+On the encoding side _BORER_ can produce any type `T` for which an `Output.Provider[T]` is available,
+which is responsible for producing an `Output` instance whose final output result has type `T`.
+
+Currently _BORER_ comes with predefined `Output` implementations for these types:
+
+- `Array[Byte]`
+- `java.nio.ByteBuffer`
+- `akka.util.ByteString` (with the `borer-compat-akka` module)
+- `scodec.bits.ByteVector` (with the `borer-compat-scodec` module)
+
+The `Output` trait isn't hard to implement as it simply writes out all bytes in a single, monotonic pass.
+
+
+## ByteAccess
+
+Unfortunately Scala (and the whole JVM eco-system) has no single, versatile abstraction for a "chunk of bytes" that
+fits the needs of all applications. In order to remain open to the preferences of the application _BORER_ also
+abstracts over "chunks of bytes" by allowing the use of any type `T`, for which a `ByteAccess[T]` is available.
+
+Currently _BORER_ comes with predefined `ByteAccess` implementations for these types:
+
+- `Array[Byte]`
+- `java.nio.ByteBuffer`
+- `akka.util.ByteString` (with the `borer-compat-akka` module)
+- `scodec.bits.ByteVector` (with the `borer-compat-scodec` module)
 
 
 JSON Support
@@ -375,6 +427,77 @@ Arrays and Maps), but simply construct your (de)serialization logic from the _BO
 your application should be able to support both [CBOR] and [JSON] at the same time without any special casing.
 
 
+## JSON Performance
+
+_BORER_ comes with a fast JSON parser, which enables _BORER_ to outperform most other popular JSON libraries in the
+scala eco-system, when it comes to transforming JSON into a case-class based data model.\
+A benchmark against [18 real-world JSON data examples][json-benchmark-files] from a diverse set of sources shows that
+_BORER_'s JSON parsing infrastructure outperforms [Circe] by a factor of 1.3 - 2.9 (average: 1.71), the venerable
+[spray-json] by a factor of 2.0 - 5.6 (average: 3.4) and even [Jackson Scala] by about 10 percent on average.
+
+This is _despite_ BORER's external API being geared more towards user-friendliness rather than pure performance.
+From a pure performance perspective a full type class-based design isn't ideal, since type classes can result a lot of
+call sites becoming "megamorphic". Also, _BORER_ pull-style parser provides the user with one-element look-ahead, which
+enables parsing into a DOM (if required), but, unfortunately, makes certain other performance optimizations unavailable.      
+ 
+ 
+## Comparison with other Scala JSON Libraries
+
+- [Circe]
+  - DOM- and type class-based design 
+  - PROS
+    - very mature
+    - allows for extensive DOM-manipulation
+    - many integration option already available
+    - compatible with [scala.js]
+  - CONS
+    - depends on `cats-core`
+    - type class derivation can be slow (at compile time)
+    - _BORER_ parses JSON about 1.7 times as fast
+    - no [CBOR] support
+- [spay-json]
+  - DOM- and type class-based design 
+  - PROS
+    - zero dependencies
+  - CONS
+    - pre-historic, clunky type class design
+    - essentially unmaintained
+    - no support for case classes w/ more than 22 members
+    - no type class derivation for ADTs
+    - _BORER_ parses JSON about 3.4 times as fast
+    - not compatible with [scala.js]    
+    - no [CBOR] support
+- [µPickle]
+  - pull-style, type class-based design
+  - PROS
+    - zero dependencies
+    - optional DOM 
+    - also supports [MessagePack]
+    - compatible with [scala.js]
+  - CONS
+    - no support for case classes w/ more than 22 members
+    - _BORER_ parses JSON about twice as fast (on average)
+    - no [CBOR] support
+- [Jackson Scala]
+  - Java implementation with a Scala add-on
+  - PROS
+    - very mature
+    - good performance, especially when writing JSON 
+  - CONS
+    - no type class-based API
+    - several non-Scala dependencies
+    - not compatible with [scala.js]    
+- [Jsoniter Scala]
+  - pull-style, type class-based design
+  - PROS
+    - zero dependencies
+    - very high performance (about twice as fast as _BORER_)
+    - highly configurable
+  - CONS
+    - zero look-ahead API, DOM construction impossible
+    - not compatible with [scala.js]
+    - no [CBOR] support 
+
 ## When (not) to use _BORER_ for JSON
 
 Since _BORER_ treats JSON as a binary format and reads/writes from/to raw bytes it isn't optimized for consuming or
@@ -392,10 +515,10 @@ additional work required from your side, then _BORER_ should be a good choice.
 Document Object Model (DOM)
 ---------------------------
 
-While _BORER_'s core design is DOM-less, writing directly to and reading directly from the respective stream of [CBOR]
-data items, it is sometimes convenient to nevertheless have access to an object structure that mirrors the structure
-of a [CBOR] message as closely as possible. (Many JSON-libraries for example solely rely on such an "AST" structure for
-their encoding and decoding operations.)
+While _BORER_'s core design is DOM-less, writing directly to and reading directly from the respective stream of
+[CBOR]/[JSON] data items, it is sometimes convenient to nevertheless have access to an object structure that mirrors the
+structure of a [CBOR] message as closely as possible. (Many JSON-libraries for example solely rely on such an "AST"
+structure for their encoding and decoding operations.)
 
 For such cases _BORER_ provides you with a simple "DOM" ADT (see the respective source file [here][Dom Source]),
 which you can use like this:
@@ -404,8 +527,8 @@ which you can use like this:
 import io.bullet.borer.Cbor
 import io.bullet.borer.Dom._
 
-val dom = MapElem(
-  "foo" -> ArrayElem(IntElem(42), StringElem("rocks")),
+val dom = MapElem.Sized(
+  "foo" -> ArrayElem.Sized(IntElem(42), StringElem("rocks")),
   "bar" -> DoubleElem(26.8)
 )  
 
@@ -498,13 +621,13 @@ which you can use to derive the respective type classes for case classes and ADT
 Here is an example:
 
 ```scala
-import io.bullet.borer.derivation.TypeId
+import io.bullet.borer.derivation.key
 import io.bullet.borer.derivation.ArrayBasedCodecs._
 
 sealed trait Animal
 case class Dog(age: Int, name: String)                                        extends Animal
-@TypeId("TheCAT") case class Cat(weight: Double, color: String, home: String) extends Animal
-@TypeId(42) case class Mouse(tail: Boolean)                                   extends Animal
+@key("TheCAT") case class Cat(weight: Double, color: String, home: String) extends Animal
+@key(42) case class Mouse(tail: Boolean)                                   extends Animal
 
 implicit val dogCodec = deriveCodec[Dog]
 implicit val catCodec = deriveCodec[Cat]
@@ -513,8 +636,8 @@ implicit val mouseCodec = deriveCodec[Mouse]
 implicit val animalCodec = deriveCodec[Animal]
 ```   
 
-With these codecs case classes are written to [CBOR] in exactly the same fashion as with the case class support in
-`borer-core` module (see [above](#case-classes)), i.e. to simple arrays (or the unwrapped member encoding if the case
+With these codecs case classes are written to [CBOR]/[JSON] in exactly the same fashion as with the case class support
+in `borer-core` module (see [above](#case-classes)), i.e. to simple arrays (or the unwrapped member encoding if the case
 classes has arity 1).
 
 An Abstract Data Type (ADT) is encoded as a [CBOR] array of length two, with the first element holding the type id and
@@ -522,23 +645,75 @@ the second holding the instance's encoding (i.e. an array or single element).
 
 The type id is required to allow the decoder to determine which ADT sub-type to decode into.
 By default _BORER_ will use type's short class name as a (textual) type id.
-If you want to customize this you can use the `@TypeId` annotation to do so.
-Check out the `@TypeId` sources [here][TypeId Source] for more info.
+If you want to customize this you can use the `@key` annotation to do so.
+Check out the `@key` sources [here][key Source] for more info.
 
 
 ### Map-Based Codecs
 
-Map-Based Codec derivation is enabled with this import:
+Map-based codec derivation is enabled with this import:
 
 ```scala
 import io.bullet.borer.derivation.MapBasedCodecs._
 ```
 
-With these codecs case classes are encoded as [CBOR] maps with the member name as key, much as you would normally expect
-a JSON codec to do it. 
+With these codecs case classes are encoded as [CBOR]/[JSON] maps with the member name as key, much as you would normally
+expect a JSON codec to do it. 
 
-ADTs, however, are encoded in exactly the same way as with the Array-Based Codecs described above, i.e. as two-element
-arrays with the type id as first element and the map as second.
+ADTs are encoded as single-entry maps, with the key being the type id (`@key` or simple class name) and the value
+becoming the encoding of the actual ADT subtype instance.
+
+
+#### Default Values
+
+Map-based codecs support missing and extra members. Extra members (i.e. map keys present in the encoding but not defined
+as a case class member or `@key`) are simply being ignored.\
+For missing members the type's `Decoder` will use the potentially defined default value, e.g.:
+
+```scala
+import io.bullet.borer.Json
+import io.bullet.borer.derivation.MapBasedCodecs._
+
+case class Dog(age: Int, name: String = "<unknown>")
+
+implicit val dogCodec = deriveCodec[Dog]
+
+Json
+  .decode("""{ "age": 4 }""")
+  .to[Dog]
+  .value ==> Dog(age = 4) 
+``` 
+
+Also, `Encoder`/`Decoder` type classes can implement the `Encoder.DefaultValueAware` / `Decoder.DefaultValueAware`
+trait in order to alter their behavior in the presence of a default value.
+
+This is used, for example, by the pre-defined encoder and decoder for `Option[T]`, which change their encoding/decoding
+strategy, if a `None` default value is defined for a case class member. In this case the optional value will only be
+written if it's defined (and then without any wrapping structure). If the option is undefined nothing is written at all.
+Correspondingly, during decoding the presence of the member yields a defined option instance holding the decoded value
+while the member's missing in the encoding yields `None`.
+
+This behavior matches the intution of what an `Option[T]` case class member would behave like when written to a [JSON]
+representation. 
+
+
+#### Customized Member Keys
+
+_BORER_ supports customizing the name of case class members in the encoding with the `@key` annotation, that is also
+used for custom ADT type-ids (see [above](#array-based-codecs)).
+Simply annotate a case class member do provide a custom name:
+
+```scala
+import io.bullet.borer.Json
+import io.bullet.borer.derivation.key
+
+case class Dog(age: Int, @key("the-name")name: String)
+
+implicit val dogCodec = deriveCodec[Dog]
+
+Json.encode(Dog(1, "Lolle")).toUtf8String ==>
+  """{"age":1,"the-name":"Lolle"}"""
+```
 
 
 ### Derivation Gotchas
@@ -556,6 +731,35 @@ fail. (See Magnolia issues [79] and [114] for more info.)
 
 When you cache the individual codecs in their own respective `val`s (or `lazy val`s) [Magnolia]'s derivation is fast
 and efficient.
+
+
+Nullable and Default
+--------------------
+
+One question that frequently arises when dealing with [JSON], and to a limited extend [CBOR] as well, is: How to deal
+with `null` values?\
+`null` values differ from missing members (see also [Map-Based Codecs above](#map-based-codecs)) in that the value for
+an element is indeed present, but it is `null`.
+
+_BORER_ handles these case is a properly types fashion: If your data model allows for certain members to be `null` in
+an encoding the members type should be wrapped with `Nullable`, i.e. `Nullable[String]`. In combination with the simple
+type class `Default[T]`, which provides the capability to supply default values for a type `T` the pre-defined 
+encoder and decoder for `Nullable[T]` will then be able to translate `null` values to respective default value and back.
+
+Example:
+
+```scala
+import io.bullet.borer._
+
+case class Dog(age: Int, name: Nullable[String])
+
+implicit val dogCodec = deriveCodec[Dog]
+
+Json
+  .decode("""{ "age": 4, "name": null }""")
+  .to[Dog]
+  .value ==> Dog(age = 4, name = "") // the `Default[String]` provides an empty String 
+```
 
 
 Akka Support
@@ -598,6 +802,7 @@ Contributions are always welcome!
   [scala.js]: https://www.scala-js.org/
   [CBOR]: http://cbor.io/
   [JSON]: http://json.org/
+  [Borer Source]: https://github.com/sirthias/borer/blob/master/core/src/main/scala/io/bullet/borer/Borer.scala 
   [akka-actor]: https://doc.akka.io/docs/akka/2.5/actors.html#dependency
   [Magnolia]: https://propensive.com/opensource/magnolia
   [scodec]: http://scodec.org/
@@ -610,3 +815,4 @@ Contributions are always welcome!
   [79]: https://github.com/propensive/magnolia/issues/79
   [114]: https://github.com/propensive/magnolia/issues/114
   [Circe]: https://circe.github.io/circe/
+  [spray-json]: https://github.com/spray/spray-json/

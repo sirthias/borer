@@ -9,6 +9,7 @@
 package io.bullet.borer
 
 import java.nio.charset.StandardCharsets
+import java.nio.ByteBuffer
 
 import io.bullet.borer.internal.ByteArrayAccess
 
@@ -29,10 +30,10 @@ trait Input {
   def cursor: Long
 
   /**
-    * Turns the given marker (the result of some previous call to `posMarker`,
+    * Turns the given marker (the result of some previous call to `cursor`,
     * potentially with a "small" offset applied) into a [[Position]] instance.
     */
-  def position(marker: Long): Position
+  def position(cursor: Long): Position
 
   /**
     * Prepares all underlying structures for reading the given number of bytes and
@@ -103,6 +104,7 @@ trait Input {
 
   /**
     * Returns the next `length` bytes as [[Bytes]], if possible without any range checks.
+    * Will never try to read beyond the end of the buffer and therefore never has to return a padded result.
     */
   def readBytes(length: Long): Bytes
 
@@ -113,7 +115,8 @@ trait Input {
     * NOTE: Count will always be >= -8 and <= 1 and never move the cursor outside the range of the preceding
     * `readXXX` call. In particular, this means that this method will never be used to move the cursor
     * back beyond the beginning of the input or forward to a byte that hasn't been read before.
-    * Therefore an implementation does not have to apply any range check.
+    * It may be, however, that the cursor is moved beyond the end of the input and into "byte padding"
+    * that was previously applied by one of the `readXXXPaddedFF` methods!
     */
   def moveCursor(offset: Int): this.type
 
@@ -126,6 +129,9 @@ trait Input {
 
 object Input {
 
+  /**
+    * Responsible for wrapping an instance of [[T]] in a respective [[Input]].
+    */
   trait Wrapper[T] {
     type In <: Input
     def apply(value: T): In
@@ -151,7 +157,7 @@ object Input {
     @inline def cursor: Long = _cursor.toLong
     @inline def byteAccess   = ByteAccess.ForByteArray
 
-    def position(marker: Long): Position = Position(this, marker)
+    def position(cursor: Long): Position = Position(this, cursor)
 
     @inline def prepareRead(length: Long): Boolean = _cursor + length <= byteArray.length
 
@@ -241,7 +247,7 @@ object Input {
     @inline def readBytes(length: Long): Bytes = {
       val len = length.toInt
       if (length == len) {
-        if (len != 0) {
+        if (len > 0) {
           val result = new Array[Byte](len)
           val c      = _cursor
           _cursor = c + len
@@ -260,4 +266,118 @@ object Input {
       new String(byteArray, _cursor - length, length, StandardCharsets.ISO_8859_1)
   }
 
+  implicit object ByteBufferWrapper extends Wrapper[ByteBuffer] {
+    type In = FromByteBuffer
+    def apply(value: ByteBuffer) = new FromByteBuffer(value)
+  }
+
+  final class FromByteBuffer(buffer: ByteBuffer) extends Input {
+    type Bytes    = Array[Byte]
+    type Position = Input.Position
+
+    // the number of bytes we've already read beyond the limit of the underlying buffer
+    private[this] var paddedCount = 0
+
+    @inline def cursor: Long = (buffer.position() + paddedCount).toLong
+    @inline def byteAccess   = ByteAccess.ForByteArray
+
+    def position(cursor: Long): Position = Position(this, cursor)
+
+    @inline def prepareRead(length: Long): Boolean = length <= buffer.remaining
+
+    def readByte(): Byte = buffer.get()
+
+    @inline def readByteOrFF(): Byte = {
+      def readPadded(): Byte = {
+        paddedCount += 1
+        -1
+      }
+      if (buffer.hasRemaining) readByte() else readPadded()
+    }
+
+    def readDoubleByteBigEndian(): Char = buffer.getChar
+
+    @inline def readDoubleByteBigEndianPaddedFF(): Char = {
+      def readPadded(): Char = {
+        val remaining = buffer.remaining
+        paddedCount += 2 - remaining
+        remaining match {
+          case 1 => (readByte() << 8 | 0xFF).toChar
+          case _ => '\uffff'
+        }
+      }
+      if (buffer.remaining >= 2) readDoubleByteBigEndian() else readPadded()
+    }
+
+    def readQuadByteBigEndian(): Int = buffer.getInt()
+
+    @inline def readQuadByteBigEndianPaddedFF(): Int = {
+      def readPadded(): Int = {
+        val remaining = buffer.remaining
+        paddedCount += 4 - remaining
+        remaining match {
+          case 1 => readByte() << 24 | 0xFFFFFF
+          case 2 => readDoubleByteBigEndian() << 16 | 0xFFFF
+          case 3 => readDoubleByteBigEndian() << 16 | (readByte() & 0xFF) << 8 | 0xFF
+          case _ => -1
+        }
+      }
+      if (buffer.remaining >= 4) readQuadByteBigEndian() else readPadded()
+    }
+
+    def readOctaByteBigEndian(): Long = buffer.getLong()
+
+    @inline def readOctaByteBigEndianPaddedFF(): Long = {
+      def readPadded(): Long = {
+        val remaining = buffer.remaining
+        paddedCount += 8 - remaining
+        remaining match {
+          case 1 => readByte().toLong << 56 | 0XFFFFFFFFFFFFFFL
+          case 2 => readDoubleByteBigEndian().toLong << 48 | 0XFFFFFFFFFFFFL
+          case 3 => readDoubleByteBigEndian().toLong << 48 | (readByte() & 0XFFL) << 40 | 0XFFFFFFFFFFL
+          case 4 => readQuadByteBigEndian().toLong << 32 | 0XFFFFFFFFL
+          case 5 => readQuadByteBigEndian().toLong << 32 | (readByte() & 0XFFL) << 24 | 0XFFFFFFL
+          case 6 => readQuadByteBigEndian().toLong << 32 | (readDoubleByteBigEndian() & 0XFFFFL) << 16 | 0XFFFFL
+          case 7 =>
+            readQuadByteBigEndian().toLong << 32 | (readDoubleByteBigEndian() & 0XFFFFL) << 16 | (readByte() & 0XFFL) << 8 | 0XFFL
+          case _ => -1
+        }
+      }
+      if (buffer.remaining >= 8) readOctaByteBigEndian() else readPadded()
+    }
+
+    @inline def readBytes(length: Long): Array[Byte] = {
+      val len = length.toInt
+      if (length == len) {
+        if (len > 0) {
+          val bytes = new Array[Byte](len)
+          buffer.get(bytes, 0, len)
+          bytes
+        } else ByteAccess.ForByteArray.empty
+      } else throw new Borer.Error.Overflow(position(cursor), "Byte-array input is limited to size 2GB")
+    }
+
+    @inline def moveCursor(offset: Int): this.type = {
+      val targetPos = buffer.position() + paddedCount + offset
+      val limit     = buffer.limit()
+      paddedCount = if (targetPos <= limit) {
+        buffer.position(targetPos)
+        0
+      } else {
+        buffer.position(limit)
+        targetPos - limit
+      }
+      this
+    }
+
+    @inline def precedingBytesAsAsciiString(length: Int): String = {
+      val limit = buffer.limit()
+      val pos   = buffer.position()
+      moveCursor(-length)
+      buffer.limit(pos)
+      val result = StandardCharsets.ISO_8859_1.decode(buffer).toString
+      buffer.limit(limit)
+      result
+    }
+  }
 }

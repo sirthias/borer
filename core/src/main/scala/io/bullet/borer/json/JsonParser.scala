@@ -50,6 +50,7 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
     extends Receiver.Parser[In] {
   import JsonParser._
 
+  private[this] val allowDoubleParsing = !config.readDecimalNumbersOnlyAsNumberStrings
   private[this] var chars: Array[Char] = new Array[Char](256)
   private[this] var state: Int         = EXPECT_VALUE
   private[this] var auxInt: Int        = _
@@ -115,11 +116,9 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
       DataItem.NumberString
     }
 
-    /**
-      * Produces the new number string length as a return value, in `auxInt` the first non-digit character (stop-char)
-      * and in `auxLong` the negative (!) parsed value or > 0 if the parsed value cannot be represented in a Long.
-      * The input cursor is left _after_ the stop-char, i.e. the next read will not include the stop-char!
-      */
+    // Produces the new number string length as a return value, in `auxInt` the first non-digit character (stop-char)
+    // and in `auxLong` the negative (!) parsed value or > 0 if the parsed value cannot be represented in a Long.
+    // The input cursor is left _after_ the stop-char, i.e. the next read will not include the stop-char!
     @tailrec def parseDigits(value: Long, len: Int): Int = {
       // fetch 8 bytes (chars) at the same time with the first becoming the (left-most) MSB of the `octa` long
       val octa = input.readOctaByteBigEndianPaddedFF()
@@ -181,27 +180,25 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
       }
     }
 
-    /**
-      * Parses a JSON number and dispatches it to the [[Receiver]] either as
-      * - Int
-      * - Long
-      * - Double
-      * - or NumberString,
-      *
-      * whatever is the most efficient form that the number can be easily and losslessly represented in.
-      * Since [[Int]] is just the smaller variant of [[Long]] the core task is finding out, without much overhead,
-      * whether the number fits losslessly in a [[Long]] or a [[Double]].
-      * If neither is possible the fallback is always the NumberString, which
-      * transports the number in exactly the format that is present in the JSON source.
-      *
-      * A side-task is to determine whether the number violates the JSON spec and produce the
-      * respective error if that should be the case.
-      *
-      * @param negValue the initial value to start parsing with (as the negative of the actual number)
-      * @param strLen the number of already parsed characters belonging to the number string
-      * @param negative true if the JSON number is negative
-      * @return [[DataItem]] code for the value the [[Receiver]] received
-      */
+    // Parses a JSON number and dispatches it to the [[Receiver]] either as
+    // - Int
+    // - Long
+    // - Double
+    // - or NumberString,
+    //
+    // whatever is the most efficient form that the number can be easily and losslessly represented in.
+    // Since [[Int]] is just the smaller variant of [[Long]] the core task is finding out, without much overhead,
+    // whether the number fits losslessly in a [[Long]] or a [[Double]].
+    // If neither is possible the fallback is always the NumberString, which
+    // transports the number in exactly the format that is present in the JSON source.
+    //
+    // A side-task is to determine whether the number violates the JSON spec and produce the
+    // respective error if that should be the case.
+    //
+    // @param negValue the initial value to start parsing with (as the negative of the actual number)
+    // @param strLen the number of already parsed characters belonging to the number string
+    // @param negative true if the JSON number is negative
+    // @return DataItem code for the value the Receiver received
     def parseNumber(negValue: Long, strLen: Int, negative: Boolean): Int = {
       @inline def dispatchNumberString(len: Int) = {
         input.moveCursor(-1) // "unread" stopchar
@@ -209,7 +206,10 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
         input.moveCursor(1) // re-consume stopchar
         DataItem.NumberString
       }
-      @inline def dispatchDouble(d: Double) = { receiver.onDouble(if (negative) d else -d); DataItem.Double }
+      @inline def dispatchDouble(d: Double) = {
+        receiver.onDouble(if (negative || d == 0.0) d else -d)
+        DataItem.Double
+      }
       @inline def dispatchIntOrLong(len: Int, negValue: Long) = {
         var long = negValue
         if (negative || negValue != Long.MinValue && { long = -negValue; true }) {
@@ -280,11 +280,11 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
                 if (exp < 19 && negMantissa > long10pow(exp << 1)) {
                   // the value is an integer that fits into a 63 bit Long
                   dispatchIntOrLong(len, negMantissa * long10pow((exp << 1) + 1))
-                } else if (negMantissa > -(1L << 53) && exp < 23) {
+                } else if (allowDoubleParsing && negMantissa > -(1L << 53) && exp < 23) {
                   // the value is an integer that can be represented losslessly by a Double
                   dispatchDouble(negMantissa * double10pow(exp))
                 } else dispatchNumberString(len)
-              } else if (negMantissa > -(1L << 53) && exp > -23) {
+              } else if (allowDoubleParsing && negMantissa > -(1L << 53) && exp > -23) {
                 // the value is a decimal number that can be represented losslessly by a Double
                 dispatchDouble(negMantissa.toDouble / double10pow(-exp))
               } else dispatchNumberString(len)
@@ -611,6 +611,7 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
 private[borer] object JsonParser {
 
   trait Config {
+    def readDecimalNumbersOnlyAsNumberStrings: Boolean
     def maxStringLength: Int
     def maxNumberMantissaDigits: Int
     def maxNumberAbsExponent: Int

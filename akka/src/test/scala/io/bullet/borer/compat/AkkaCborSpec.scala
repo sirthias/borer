@@ -10,14 +10,10 @@ package io.bullet.borer.compat
 
 import _root_.akka.util.ByteString
 import io.bullet.borer._
-import io.bullet.borer.compat.akka._
 
-trait AbstractByteStringSpec extends BorerSpec {
+object AkkaCborSpec extends AbstractCborSpec {
+  import akka._
 
-  override def encode[T: Encoder](value: T): String =
-    toHexString(Cbor.encode(value).to[ByteString].bytes.toArray)
-
-  override def decode[T: Decoder](encoded: String): T =
-    Cbor.decode(ByteString(hexBytes(encoded))).to[T].value
-
+  def encode[T: Encoder](value: T): String   = toHexString(Cbor.encode(value).to[ByteString].bytes.toArray)
+  def decode[T: Decoder](encoded: String): T = Cbor.decode(ByteString(hexBytes(encoded))).to[T].value
 }

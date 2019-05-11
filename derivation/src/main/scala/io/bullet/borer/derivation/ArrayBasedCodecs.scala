@@ -39,15 +39,17 @@ object ArrayBasedCodecs {
     def dispatch[T](ctx: SealedTrait[Encoder, T]): Encoder[T] = {
       val subtypes = ctx.subtypesArray
       val len      = subtypes.length
-      val typeIds  = TypeId.getTypeIds(ctx.typeName.full, subtypes)
+      val typeIds  = key.getTypeIds(ctx.typeName.full, subtypes)
       Encoder { (w, value) =>
         @tailrec def rec(ix: Int): Writer =
           if (ix < len) {
             val sub = subtypes(ix)
             if (sub.cast isDefinedAt value) {
-              w.writeToArray(typeIds(ix), sub.cast(value))(TypeId.Value.encoder, sub.typeclass)
+              def writeEntry(w: Writer) = key.Value.write(w, typeIds(ix)).write(sub.cast(value))(sub.typeclass)
+              if (w.writingCbor) writeEntry(w.writeArrayHeader(2))
+              else writeEntry(w.writeArrayStart()).writeBreak()
             } else rec(ix + 1)
-          } else throw new IllegalArgumentException(s"The given value [$value] is not a sub type of [${ctx.typeName}]")
+          } else throw new IllegalArgumentException(s"The given value `$value` is not a sub type of `${ctx.typeName}`")
         rec(0)
       }
     }
@@ -61,7 +63,7 @@ object ArrayBasedCodecs {
     def combine[T](ctx: CaseClass[Decoder, T]): Decoder[T] = {
       val params              = ctx.parameters
       val len                 = params.size
-      def expected(s: String) = s"$s for decoding an instance of type [${ctx.typeName.full}]"
+      def expected(s: String) = s"$s for decoding an instance of type `${ctx.typeName.full}`"
 
       Decoder { r =>
         def construct(): T = ctx.construct(_.typeclass.read(r))
@@ -83,22 +85,22 @@ object ArrayBasedCodecs {
 
     def dispatch[T](ctx: SealedTrait[Decoder, T]): Decoder[T] = {
       val subtypes            = ctx.subtypesArray
-      val typeIds             = TypeId.getTypeIds(ctx.typeName.full, subtypes)
-      def expected(s: String) = s"$s for decoding an instance of type [${ctx.typeName.full}]"
+      val typeIds             = key.getTypeIds(ctx.typeName.full, subtypes)
+      def expected(s: String) = s"$s for decoding an instance of type `${ctx.typeName.full}`"
 
       Decoder { r =>
-        @tailrec def rec(id: TypeId.Value, ix: Int): T =
-          if (ix < typeIds.length) {
-            if (typeIds(ix) == id) subtypes(ix).typeclass.read(r)
-            else rec(id, ix + 1)
-          } else r.unexpectedDataItem(s"Any TypeId in [${typeIds.map(_.value).mkString(", ")}]", id.value.toString)
+        def readTypeIdAndValue(): T =
+          key.tryRead(r, typeIds, 0) match {
+            case -1 => r.unexpectedDataItem(s"Any type id key of `${typeIds.map(_.value).mkString(", ")}`")
+            case ix => subtypes(ix).typeclass.read(r)
+          }
 
         if (r.tryReadArrayStart()) {
-          val result = rec(r.read[TypeId.Value](), 0)
+          val result = readTypeIdAndValue()
           if (r.tryReadBreak()) result
           else r.unexpectedDataItem(expected("Array with 2 elements"), "at least one extra element")
         } else if (r.tryReadArrayHeader(2)) {
-          rec(r.read[TypeId.Value](), 0)
+          readTypeIdAndValue()
         } else r.unexpectedDataItem(expected("Array with 2 elements"))
       }
     }

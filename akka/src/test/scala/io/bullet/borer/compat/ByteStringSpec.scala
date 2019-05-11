@@ -11,9 +11,12 @@ package io.bullet.borer.compat
 import _root_.akka.util.ByteString
 import io.bullet.borer._
 import utest._
-import akka._
 
-object ByteStringSpec extends AbstractByteStringSpec {
+object ByteStringSpec extends AbstractBorerSpec {
+  import akka._
+
+  def encode[T: Encoder](value: T): String   = toHexString(Cbor.encode(value).to[ByteString].bytes.toArray)
+  def decode[T: Decoder](encoded: String): T = Cbor.decode(ByteString(hexBytes(encoded))).to[T].value
 
   case class Foo(int: Int, content: ByteString)
 

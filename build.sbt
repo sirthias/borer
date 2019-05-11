@@ -106,8 +106,8 @@ lazy val releaseSettings = {
       publishArtifacts,
       setNextVersion,
       commitNextVersion,
-      releaseStepCommand("sonatypeReleaseAll"),
-      pushChanges
+      //releaseStepCommand("sonatypeReleaseAll"),
+      //pushChanges
     )
   )
 }
@@ -139,6 +139,7 @@ lazy val borer = project.in(file("."))
   .aggregate(magnoliaJVM, magnoliaJS)
   .aggregate(derivationJVM, derivationJS)
   .settings(commonSettings)
+  .settings(publishingSettings)
   .settings(releaseSettings)
   .settings(publishArtifact := false)
 

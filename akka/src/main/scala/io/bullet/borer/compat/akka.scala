@@ -9,6 +9,7 @@
 package io.bullet.borer.compat
 
 import java.nio.charset.StandardCharsets
+import java.nio.ByteBuffer
 
 import io.bullet.borer.{ByteAccess, _}
 import _root_.akka.util.ByteString
@@ -18,11 +19,11 @@ object akka {
   /**
     * [[ByteAccess]] for [[ByteString]].
     */
-  implicit object ByteStringByteAccess extends ByteAccess[ByteString] {
+  implicit final object ByteStringByteAccess extends ByteAccess[ByteString] {
 
     type Out = ByteStringOutput
 
-    def newOutput = new ByteStringOutput
+    def isEmpty(bytes: ByteString): Boolean = bytes.isEmpty
 
     def sizeOf(bytes: ByteString): Long = bytes.length.toLong
 
@@ -40,10 +41,21 @@ object akka {
         } else a
       } else b
 
+    def copyToByteArray(bytes: ByteString, byteArray: Array[Byte], startIndex: Int): ByteString = {
+      val len = byteArray.length - startIndex
+      bytes.copyToArray(byteArray, startIndex)
+      if (len < bytes.size) bytes.drop(len) else empty
+    }
+
+    def copyToByteBuffer(bytes: ByteString, byteBuffer: ByteBuffer): ByteString = {
+      val copied = bytes.copyToBuffer(byteBuffer)
+      if (copied < bytes.size) bytes.drop(copied) else empty
+    }
+
     def convert[B](value: B)(implicit byteAccess: ByteAccess[B]) =
       value match {
         case x: ByteString => x
-        case x             => ByteString(byteAccess.toByteArray(x))
+        case x             => fromByteArray(byteAccess.toByteArray(x))
       }
 
     def empty = ByteString.empty
@@ -57,7 +69,7 @@ object akka {
   /**
     * [[Input]] around [[ByteString]].
     */
-  implicit object ByteStringWrapper extends Input.Wrapper[ByteString] {
+  implicit final object ByteStringWrapper extends Input.Wrapper[ByteString] {
     type In = FromByteString
     def apply(value: ByteString) = new FromByteString(value)
   }
@@ -71,7 +83,7 @@ object akka {
     @inline def cursor: Long = _cursor.toLong
     @inline def byteAccess   = ByteStringByteAccess
 
-    def position(marker: Long): Position = Input.Position(this, marker)
+    def position(cursor: Long): Position = Input.Position(this, cursor)
 
     @inline def prepareRead(length: Long): Boolean = _cursor + length <= byteString.length
 
@@ -181,7 +193,12 @@ object akka {
     }
 
     @inline def precedingBytesAsAsciiString(length: Int): String =
-      new String(byteString.toArray[Byte], StandardCharsets.ISO_8859_1)
+      byteString.slice(_cursor - length, _cursor).decodeString(StandardCharsets.ISO_8859_1)
+  }
+
+  implicit object ByteStringOutputProvider extends Output.Provider[ByteString] {
+    type Out = ByteStringOutput
+    def apply(bufferSize: Int) = new ByteStringOutput
   }
 
   /**
