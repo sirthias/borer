@@ -391,7 +391,7 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
       // mask '\' characters: only '\' and 0xAF become 0x80, all others become < 0x80
       val bMask = (octa7bit ^ 0X2323232323232323L) + 0X0101010101010101L
 
-      // mask ctrl characters (0 - 0x1F): only ctrl chars and [0x80 - 0x9F] get their high-bit set
+      // mask ctrl characters (0 - 0x1F): only ctrl chars and 8-bit chars get their high-bit set
       var mask = (octa | 0X1F1F1F1F1F1F1F1FL) - 0X2020202020202020L
 
       // the special chars '"', '\', 8-bit (> 127) and ctrl chars become 0x80, all normal chars zero
@@ -419,7 +419,7 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
         input.moveCursor(charCount - 7) // move the cursor to the char after the stopChar
         if (stopChar == '"') {
           val c    = stopChar0 << 8 >>> 56           // the char after the '"' (or zero, if we haven't read it yet)
-          val flag = if (c == continuation) 1 else 0 // actually branchless under the hood
+          val flag = if (c == continuation) 1 else 0 // branchless under the hood
           state += flag // if there is a ':' or ',' after the '"' we advance the state right away
           input.moveCursor(flag)
           receiver.onChars(newCursor, chars)
