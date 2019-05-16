@@ -59,14 +59,40 @@ object Decoder extends LowPrioDecoders {
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  implicit val forNull: Decoder[Null]             = Decoder(_.readNull())
-  implicit val forBoolean: Decoder[Boolean]       = Decoder(_.readBoolean())
-  implicit val forInt: Decoder[Int]               = Decoder(_.readInt())
-  implicit val forLong: Decoder[Long]             = Decoder(_.readLong())
-  implicit val forFloat: Decoder[Float]           = Decoder(_.readFloat())
-  implicit val forDouble: Decoder[Double]         = Decoder(_.readDouble())
-  implicit val forString: Decoder[String]         = Decoder(_.readString())
-  implicit val forByteArray: Decoder[Array[Byte]] = Decoder(_.readByteArray())
+  implicit val forNull: Decoder[Null]       = Decoder(_.readNull())
+  implicit val forBoolean: Decoder[Boolean] = Decoder(_.readBoolean())
+  implicit val forInt: Decoder[Int]         = Decoder(_.readInt())
+  implicit val forLong: Decoder[Long]       = Decoder(_.readLong())
+  implicit val forFloat: Decoder[Float]     = Decoder(_.readFloat())
+  implicit val forDouble: Decoder[Double]   = Decoder(_.readDouble())
+  implicit val forString: Decoder[String]   = Decoder(_.readString())
+
+  implicit val forByteArray: Decoder[Array[Byte]] =
+    Decoder { r =>
+      if (r.hasByteArray) {
+        r.readByteArray()
+      } else if (r.hasArrayHeader) {
+        val size = r.readArrayHeader()
+        if (size > 0) {
+          if (size <= Int.MaxValue) {
+            val intSize = size.toInt
+            val array   = new Array[Byte](intSize)
+
+            @tailrec def rec(ix: Int): Array[Byte] =
+              if (ix < intSize) {
+                array(ix) = r.readByte()
+                rec(ix + 1)
+              } else array
+
+            rec(0)
+          } else r.overflow(s"Cannot deserialize ByteArray with size $size (> Int.MaxValue)")
+        } else Array.emptyByteArray
+      } else if (r.tryReadArrayStart()) {
+        if (!r.tryReadBreak()) {
+          r.readUntilBreak(new mutable.ArrayBuilder.ofByte)(_ += r.readByte()).result()
+        } else Array.emptyByteArray
+      } else r.unexpectedDataItem(expected = "ByteString or Array of bytes")
+    }
 
   implicit val forChar: Decoder[Char] = forInt.mapWithReader { (r, int) =>
     if ((int >> 16) != 0) r.validationFailure(s"Cannot convert int value $int to Char")

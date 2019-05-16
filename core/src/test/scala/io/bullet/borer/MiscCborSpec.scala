@@ -113,6 +113,12 @@ object MiscCborSpec extends AbstractBorerSpec {
       roundTrip("8301182a190159", Array(1, 42, 345))
     }
 
+    "Byte Array" - {
+      verifyEncoding(hexBytes("11223344"), "4411223344")
+      verifyDecoding("4411223344", hexBytes("11223344"))
+      verifyDecoding("8411182218331844", hexBytes("11223344"))
+    }
+
     "Illegal Map Termination Error" - {
       intercept[Borer.Error.UnexpectedEndOfInput[_]](
         encode(Writer.Script(_.writeMapHeader(2).writeInt(1).writeInt(2).writeInt(3)))
