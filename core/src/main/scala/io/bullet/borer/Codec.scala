@@ -36,6 +36,11 @@ object Codec {
   def forCaseClass[T]: Codec[T] = macro Macros.codecForCaseClass[T]
 
   /**
+    * Same as `forCaseClass[T]` but doesn't compile if [[T]] is not a unary case class.
+    */
+  def forUnaryCaseClass[T]: Codec[T] = macro Macros.codecForUnaryCaseClass[T]
+
+  /**
     * Wraps implicitly available [[Encoder]] and [[Decoder]] instances for [[T]] in a [[Codec]].
     */
   @inline def implicitly[T: Encoder: Decoder]: Codec[T] =

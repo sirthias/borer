@@ -50,6 +50,12 @@ object Decoder extends LowPrioDecoders {
     */
   def forCaseClass[T]: Decoder[T] = macro Macros.decoderForCaseClass[T]
 
+  /**
+    * Decoder for unary case classes wrapping a single member of type [[T]].
+    * Same as `forCaseClass[T]` but doesn't compile if [[T]] is not a unary case class.
+    */
+  def forUnaryCaseClass[T]: Decoder[T] = macro Macros.decoderForUnaryCaseClass[T]
+
   implicit final class DecoderOps[A](val underlying: Decoder[A]) extends AnyVal {
     def map[B](f: A => B): Decoder[B]                     = Decoder(r => f(underlying.read(r)))
     def mapWithReader[B](f: (Reader, A) => B): Decoder[B] = Decoder(r => f(r, underlying.read(r)))

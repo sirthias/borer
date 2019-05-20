@@ -8,24 +8,74 @@
 
 package io.bullet.borer.derivation
 
+import java.nio.charset.StandardCharsets
+
 import io.bullet.borer._
+import io.bullet.borer.internal.Util
 import utest._
 
 object ForCaseClassSpec extends AbstractBorerSpec {
 
-  def encode[T: Encoder](value: T): String   = toHexString(Cbor.encode(value).toByteArray)
-  def decode[T: Decoder](encoded: String): T = Cbor.decode(hexBytes(encoded)).to[T].value
+  def encode[T: Encoder](value: T): String   = Json.encode(value).toUtf8String
+  def decode[T: Decoder](encoded: String): T = Json.decode(encoded getBytes StandardCharsets.UTF_8).to[T].value
+
+  final case class CaseClass3(abc: Int, d: String, efghi: Boolean)
+
+  final case class CaseClassT[T](key: String, value: T)
+
+  final case class CaseClass1(flag: Boolean)
+
+  object CaseClass1 {
+    def apply(): CaseClass1 = new CaseClass1(false)
+  }
+
+  final case class CaseClass1T[T](value: T)
 
   val tests = Tests {
 
-    "Single-Member Case Class with custom apply" - {
-      case class Box(id: String)
-      object Box {
-        def apply(): Box = new Box("default")
-      }
-      implicit val boxCodec: Codec[Box] = Codec.forCaseClass[Box]
-      roundTrip("63616263", Box("abc"))
+    "Case Class with 3 members" - {
+      implicit val codec: Codec[CaseClass3] = Codec.forCaseClass[CaseClass3]
+      roundTrip("""[42,"",true]""", CaseClass3(42, "", efghi = true))
     }
 
+    "Generic Case Class with fixed codec" - {
+      implicit val codec: Codec[CaseClassT[Double]] = Codec.forCaseClass[CaseClassT[Double]]
+      roundTrip("""["foo",18.1]""", CaseClassT("foo", 18.1))
+    }
+
+    "Generic Case Class with generic codec" - {
+      implicit def codec[T: Encoder: Decoder]: Codec[CaseClassT[T]] = Codec.forCaseClass[CaseClassT[T]]
+      roundTrip("""["foo",18.1]""", CaseClassT("foo", 18.1))
+    }
+
+    "Unary Case Class with custom apply" - {
+      implicit val codec: Codec[CaseClass1] = Codec.forCaseClass[CaseClass1]
+      roundTrip("false", CaseClass1(false))
+    }
+
+    "Unary Case Class with 'forUnaryCaseClass' codec" - {
+      implicit val codec: Codec[CaseClass1] = Codec.forUnaryCaseClass[CaseClass1]
+      roundTrip("false", CaseClass1(false))
+    }
+
+    "Generic unary Case Class" - {
+      implicit def codec[T: Encoder: Decoder]: Codec[CaseClass1T[T]] = Codec.forCaseClass[CaseClass1T[T]]
+      roundTrip(""""foo"""", CaseClass1T("foo"))
+    }
+
+    "`forUnaryCaseClass` on non-unary case class" - {
+      Util.assertCompileError("Codec.forUnaryCaseClass[CaseClass3]", ".*not a unary case class")
+    }
+
+    "Generic unary Case Class with 'forUnaryCaseClass' codec" - {
+      implicit def codec[T: Encoder: Decoder]: Codec[CaseClass1T[T]] = Codec.forUnaryCaseClass[CaseClass1T[T]]
+      roundTrip(""""foo"""", CaseClass1T("foo"))
+    }
+
+    "Local Case Class" - {
+      case class Box(id: String)
+      implicit val boxCodec: Codec[Box] = Codec.forCaseClass[Box]
+      roundTrip(""""abc"""", Box("abc"))
+    }
   }
 }

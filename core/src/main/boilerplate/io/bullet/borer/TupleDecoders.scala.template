@@ -14,15 +14,7 @@ abstract class TupleDecoders extends DecoderFromApply {
     Decoder(r ⇒ Tuple1(r[T1]))
 
   [2..#implicit def forTuple1[[#T1 :Decoder#]]: Decoder[([#T1#])] =
-    Decoder(r ⇒ close(r, open(r, 1), ([#r[T1]#])))#
+    Decoder(r ⇒ r.readArrayClose(r.readArrayOpen(1), ([#r[T1]#])))#
 
   ]
-
-  private def open[T](r: Reader, arity: Int): Boolean =
-    r.tryReadArrayStart() || { r.readArrayHeader(arity); false }
-
-  private def close[T](r: Reader, unbounded: Boolean, value: T): T = {
-    if (unbounded) r.readBreak()
-    value
-  }
 }

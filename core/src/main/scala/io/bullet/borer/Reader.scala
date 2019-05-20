@@ -409,6 +409,14 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
       skipComplex(0)
     } else skipDataItem()
 
+  def readArrayOpen(arity: Int): Boolean =
+    tryReadArrayStart() || { readArrayHeader(arity); false }
+
+  def readArrayClose[T](unbounded: Boolean, value: T): T = {
+    if (unbounded) readBreak()
+    value
+  }
+
   @inline private def pull(): Unit = {
     _lastCursor = _cursor
     _dataItem = parser.pull(receiver)

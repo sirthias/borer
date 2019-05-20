@@ -72,9 +72,15 @@ object Encoder extends LowPrioEncoders {
     Encoder((w, x) => if (unapply(x)) w.writeEmptyArray() else sys.error("Unapply unexpectedly failed: " + unapply))
 
   /**
-    * Simple macro shortening `Encoder.from(Foo.unapply _)` to `Encoder.forCaseClass[Foo]`
+    * Essentially the same as `Encoder.from(Foo.unapply _)`, but more
     */
   def forCaseClass[T]: Encoder[T] = macro Macros.encoderForCaseClass[T]
+
+  /**
+    * Encoder for unary case classes wrapping a single member of type [[T]].
+    * Same as `forCaseClass[T]` but doesn't compile if [[T]] is not a unary case class.
+    */
+  def forUnaryCaseClass[T]: Encoder[T] = macro Macros.encoderForUnaryCaseClass[T]
 
   implicit final class EncoderOps[A](val underlying: Encoder[A]) extends AnyVal {
     def contramap[B](f: B => A): Encoder[B]                     = Encoder((w, b) => underlying.write(w, f(b)))

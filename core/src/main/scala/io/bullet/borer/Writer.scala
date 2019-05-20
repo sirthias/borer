@@ -85,19 +85,16 @@ final class Writer(receiver: Receiver, val target: Target, config: Writer.Config
   @inline def write[T](value: T)(implicit encoder: Encoder[T]): this.type =
     encoder.write(this, value).asInstanceOf[this.type]
 
-  def writeEmptyArray(): this.type = if (writingJson) writeArrayStart().writeBreak() else writeArrayHeader(0)
+  def writeEmptyArray(): this.type = writeArrayOpen(0).writeArrayClose()
 
   def writeToArray[T: Encoder](x: T): this.type =
-    if (writingJson) writeArrayStart().write(x).writeBreak()
-    else writeArrayHeader(1).write(x)
+    writeArrayOpen(1).write(x).writeArrayClose()
 
   def writeToArray[A: Encoder, B: Encoder](a: A, b: B): this.type =
-    if (writingJson) writeArrayStart().write(a).write(b).writeBreak()
-    else writeArrayHeader(2).write(a).write(b)
+    writeArrayOpen(2).write(a).write(b).writeArrayClose()
 
   def writeToArray[A: Encoder, B: Encoder, C: Encoder](a: A, b: B, c: C): this.type =
-    if (writingJson) writeArrayStart().write(a).write(b).write(c).writeBreak()
-    else writeArrayHeader(3).write(a).write(b).write(c)
+    writeArrayOpen(3).write(a).write(b).write(c).writeArrayClose()
 
   def writeEmptyMap(): this.type = if (writingJson) writeMapStart().writeBreak() else writeMapHeader(0)
 
@@ -107,15 +104,9 @@ final class Writer(receiver: Receiver, val target: Target, config: Writer.Config
         write(x(ix))
         rec(ix + 1)
       }
-    if (writingJson) {
-      writeArrayStart()
-      rec(0)
-      writeBreak()
-    } else {
-      writeArrayHeader(x.size)
-      rec(0)
-      this
-    }
+    writeArrayOpen(x.size)
+    rec(0)
+    writeArrayClose()
   }
 
   def writeLinearSeq[T: Encoder](x: LinearSeq[T]): this.type = {
@@ -128,7 +119,7 @@ final class Writer(receiver: Receiver, val target: Target, config: Writer.Config
       writeArrayStart()
       rec(x)
       writeBreak()
-    } else writeArrayHeader(0)
+    } else writeEmptyArray()
   }
 
   def writeIterator[T: Encoder](iterator: Iterator[T]): this.type =
@@ -136,7 +127,7 @@ final class Writer(receiver: Receiver, val target: Target, config: Writer.Config
       writeArrayStart()
       while (iterator.hasNext) write(iterator.next())
       writeBreak()
-    } else writeArrayHeader(0)
+    } else writeEmptyArray()
 
   def writeMap[A: Encoder, B: Encoder](x: Map[A, B]): this.type = {
     val iterator = x.iterator
@@ -155,6 +146,12 @@ final class Writer(receiver: Receiver, val target: Target, config: Writer.Config
       this
     }
   }
+
+  def writeArrayOpen(arity: Int): this.type =
+    if (target eq Json) writeArrayStart() else writeArrayHeader(arity)
+
+  def writeArrayClose(): this.type =
+    if (target eq Json) writeBreak() else this
 }
 
 object Writer {

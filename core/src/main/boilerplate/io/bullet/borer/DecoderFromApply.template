@@ -11,21 +11,13 @@ package io.bullet.borer
 abstract class DecoderFromApply {
 
   def from[T](apply: () ⇒ T): Decoder[T] =
-    Decoder { r ⇒ if (r.tryReadArrayStart()) r.readBreak() else r.readArrayHeader(0); apply() }
+    Decoder { r ⇒ r.readArrayClose(r.readArrayOpen(0), apply()) }
 
   def from[T1 :Decoder, T](apply: T1 ⇒ T): Decoder[T] =
     Decoder { r ⇒ apply(r[T1]) }
 
   [2..#def from[[#T1 :Decoder#], T](apply: ([#T1#]) ⇒ T): Decoder[T] =
-    Decoder(r ⇒ close(r, open(r, 1), apply([#r[T1]#])))#
+    Decoder(r ⇒ r.readArrayClose(r.readArrayOpen(1), apply([#r[T1]#])))#
     
   ]
-
-  private def open[T](r: Reader, arity: Int): Boolean =
-    r.tryReadArrayStart() || { r.readArrayHeader(arity); false }
-
-  private def close[T](r: Reader, unbounded: Boolean, value: T): T = {
-    if (unbounded) r.readBreak()
-    value
-  }
 }
