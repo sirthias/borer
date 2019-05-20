@@ -59,7 +59,7 @@ final private[borer] class JsonRenderer(var out: Output) extends Receiver.Render
   def onUndefined(): Unit =
     failUnsupported(out, "the `undefined` value")
 
-  def onBool(value: Boolean): Unit =
+  def onBoolean(value: Boolean): Unit =
     if (isNotMapKey) {
       out = count {
         if (value) (if (sepRequired) out.writeAsByte(separator) else out).writeAsBytes('t', 'r', 'u', 'e')

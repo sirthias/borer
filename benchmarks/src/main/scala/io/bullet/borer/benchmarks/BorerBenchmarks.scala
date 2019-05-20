@@ -35,7 +35,10 @@ object BorerCodecs {
           .writeInt(x.int)
           .writeString("long")
           .writeLong(x.long)
-        x.listOfBools.foldLeft(w.writeString("listOfBools").writeArrayStart())(_ writeBool _).writeBreak().writeBreak()
+        x.listOfBools
+          .foldLeft(w.writeString("listOfBools").writeArrayStart())(_ writeBoolean _)
+          .writeBreak()
+          .writeBreak()
       },
       decoder = { r =>
         r.readMapStart()

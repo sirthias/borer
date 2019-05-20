@@ -40,7 +40,7 @@ object Macros {
         case x if x =:= stringTpe              => q"$acc.writeString($access)"
         case x if x =:= definitions.IntTpe     => q"$acc.writeInt($access)"
         case x if x =:= definitions.LongTpe    => q"$acc.writeLong($access)"
-        case x if x =:= definitions.BooleanTpe => q"$acc.writeBool($access)"
+        case x if x =:= definitions.BooleanTpe => q"$acc.writeBoolean($access)"
         case x if x =:= definitions.DoubleTpe  => q"$acc.writeDouble($access)"
         case x if x =:= definitions.FloatTpe   => q"$acc.writeFloat($access)"
         case x if x =:= definitions.CharTpe    => q"$acc.writeChar($access)"

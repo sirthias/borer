@@ -21,7 +21,7 @@ final class Writer(receiver: Receiver, val target: Target, config: Writer.Config
   @inline def writingJson: Boolean = target eq Json
   @inline def writingCbor: Boolean = target eq Cbor
 
-  @inline def ~(value: Boolean): this.type = writeBool(value)
+  @inline def ~(value: Boolean): this.type = writeBoolean(value)
   @inline def ~(value: Char): this.type    = writeChar(value)
   @inline def ~(value: Byte): this.type    = writeByte(value)
   @inline def ~(value: Short): this.type   = writeShort(value)
@@ -36,7 +36,7 @@ final class Writer(receiver: Receiver, val target: Target, config: Writer.Config
   def writeNull(): this.type      = { receiver.onNull(); this }
   def writeUndefined(): this.type = { receiver.onUndefined(); this }
 
-  @inline def writeBool(value: Boolean): this.type             = { receiver.onBool(value); this }
+  @inline def writeBoolean(value: Boolean): this.type          = { receiver.onBoolean(value); this }
   @inline def writeChar(value: Char): this.type                = writeInt(value.toInt)
   @inline def writeByte(value: Byte): this.type                = writeInt(value.toInt)
   @inline def writeShort(value: Short): this.type              = writeInt(value.toInt)

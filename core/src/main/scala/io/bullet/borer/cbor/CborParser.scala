@@ -126,11 +126,11 @@ final private[borer] class CborParser[In <: Input](val input: In, config: CborPa
     @inline def decodeExtra(info: Int, uLong: Long): Int =
       (info: @switch) match {
         case 20 =>
-          receiver.onBool(value = false)
-          DataItem.Bool
+          receiver.onBoolean(value = false)
+          DataItem.Boolean
         case 21 =>
-          receiver.onBool(value = true)
-          DataItem.Bool
+          receiver.onBoolean(value = true)
+          DataItem.Boolean
         case 22 =>
           receiver.onNull()
           DataItem.Null

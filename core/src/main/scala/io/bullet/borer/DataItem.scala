@@ -16,7 +16,7 @@ object DataItem {
   object Shifts {
     final val Null         = 0
     final val Undefined    = 1
-    final val Bool         = 2
+    final val Boolean      = 2
     final val Int          = 3
     final val Long         = 4
     final val OverLong     = 5
@@ -44,7 +44,7 @@ object DataItem {
 
   final val Null         = 1 << Shifts.Null
   final val Undefined    = 1 << Shifts.Undefined
-  final val Bool         = 1 << Shifts.Bool
+  final val Boolean      = 1 << Shifts.Boolean
   final val Int          = 1 << Shifts.Int
   final val Long         = 1 << Shifts.Long
   final val OverLong     = 1 << Shifts.OverLong
@@ -85,7 +85,7 @@ object DataItem {
 
             case Null      => "Null"
             case Undefined => "Undefined"
-            case Bool      => "Bool"
+            case Boolean   => "Bool"
 
             case Int          => "Int"
             case Long         => "Long"

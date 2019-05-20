@@ -21,7 +21,7 @@ object LoggingSpec extends TestSuite {
       ArrayElem.Sized(
         NullElem,
         UndefinedElem,
-        BoolElem(true),
+        BooleanElem(true),
         IntElem(42),
         LongElem(Int.MaxValue + 1L),
         OverLongElem(negative = false, -1),

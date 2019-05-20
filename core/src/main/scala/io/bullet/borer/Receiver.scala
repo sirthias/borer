@@ -16,7 +16,7 @@ abstract class Receiver {
 
   def onNull(): Unit
   def onUndefined(): Unit
-  def onBool(value: Boolean): Unit
+  def onBoolean(value: Boolean): Unit
 
   def onInt(value: Int): Unit
   def onLong(value: Long): Unit

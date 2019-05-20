@@ -41,7 +41,7 @@ final private[borer] class Receptacle extends Receiver with java.lang.Cloneable 
 
   def onUndefined(): Unit = ()
 
-  def onBool(value: Boolean): Unit = _bool = value
+  def onBoolean(value: Boolean): Unit = _bool = value
 
   def onInt(value: Int): Unit = _int = value
 

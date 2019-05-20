@@ -92,7 +92,7 @@ object Encoder extends LowPrioEncoders {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   implicit val forNull: Encoder[Null]             = Encoder((w, _) => w.writeNull())
-  implicit val forBoolean: Encoder[Boolean]       = Encoder(_ writeBool _)
+  implicit val forBoolean: Encoder[Boolean]       = Encoder(_ writeBoolean _)
   implicit val forChar: Encoder[Char]             = Encoder(_ writeChar _)
   implicit val forByte: Encoder[Byte]             = Encoder(_ writeByte _)
   implicit val forShort: Encoder[Short]           = Encoder(_ writeShort _)

@@ -88,14 +88,14 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
 
     @inline def parseFalse(): Int =
       if (input.readQuadByteBigEndianPaddedFF() == 0x616c7365) { // "alse"
-        receiver.onBool(value = false)
-        DataItem.Bool
+        receiver.onBoolean(value = false)
+        DataItem.Boolean
       } else failSyntaxError(-5, "`false`")
 
     @inline def parseTrue(): Int =
       if (input.moveCursor(-1).readQuadByteBigEndianPaddedFF() == 0x74727565) { // "true"
-        receiver.onBool(value = true)
-        DataItem.Bool
+        receiver.onBoolean(value = true)
+        DataItem.Boolean
       } else failSyntaxError(-4, "`true`")
 
     def parseNumberStringExponentPart(len: Int): Int = {

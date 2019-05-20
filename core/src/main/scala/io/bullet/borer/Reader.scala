@@ -76,7 +76,7 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
       pull()
       result
     } else unexpectedDataItem(expected = "Bool")
-  @inline def hasBoolean: Boolean                     = has(DI.Bool)
+  @inline def hasBoolean: Boolean                     = has(DI.Boolean)
   @inline def hasBoolean(value: Boolean): Boolean     = hasBoolean && receptacle.boolValue == value
   @inline def tryReadBoolean(value: Boolean): Boolean = pullIfTrue(hasBoolean(value))
 

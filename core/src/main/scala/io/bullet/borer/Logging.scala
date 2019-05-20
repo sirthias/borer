@@ -258,10 +258,10 @@ object Logging {
       target.onUndefined()
     }
 
-    def onBool(value: Boolean): Unit = {
+    def onBoolean(value: Boolean): Unit = {
       logger.onBool(value)
       count()
-      target.onBool(value)
+      target.onBoolean(value)
     }
 
     def onInt(value: Int): Unit = {

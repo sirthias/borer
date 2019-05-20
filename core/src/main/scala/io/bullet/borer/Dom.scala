@@ -26,13 +26,13 @@ object Dom {
 
   sealed abstract class Element(val dataItemShift: Int)
 
-  final case object NullElem                extends Element(DIS.Null)
-  final case object UndefinedElem           extends Element(DIS.Undefined)
-  final case class BoolElem(value: Boolean) extends Element(DIS.Bool)
+  final case object NullElem                   extends Element(DIS.Null)
+  final case object UndefinedElem              extends Element(DIS.Undefined)
+  final case class BooleanElem(value: Boolean) extends Element(DIS.Boolean)
 
-  object BoolElem {
-    val True  = BoolElem(true)
-    val False = BoolElem(false)
+  object BooleanElem {
+    val True  = BooleanElem(true)
+    val False = BooleanElem(false)
   }
 
   final case class IntElem(value: Int)                          extends Element(DIS.Int)
@@ -201,7 +201,7 @@ object Dom {
       (x.dataItemShift: @switch) match {
         case DIS.Null      => w.writeNull()
         case DIS.Undefined => w.writeUndefined()
-        case DIS.Bool      => w.writeBool(x.asInstanceOf[BoolElem].value)
+        case DIS.Boolean   => w.writeBoolean(x.asInstanceOf[BooleanElem].value)
 
         case DIS.Int          => w.writeInt(x.asInstanceOf[IntElem].value)
         case DIS.Long         => w.writeLong(x.asInstanceOf[LongElem].value)
@@ -270,7 +270,7 @@ object Dom {
       (Integer.numberOfTrailingZeros(r.dataItem): @switch) match {
         case DIS.Null      => r.readNull(); NullElem
         case DIS.Undefined => r.readUndefined(); UndefinedElem
-        case DIS.Bool      => if (r.readBoolean()) BoolElem.True else BoolElem.False
+        case DIS.Boolean   => if (r.readBoolean()) BooleanElem.True else BooleanElem.False
 
         case DIS.Int          => IntElem(r.readInt())
         case DIS.Long         => LongElem(r.readLong())

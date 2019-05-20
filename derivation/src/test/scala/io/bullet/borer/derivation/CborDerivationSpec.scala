@@ -59,7 +59,7 @@ object CborDerivationSpec extends DerivationSpec(Cbor) {
 
   def mapBased100Dom =
     MapElem.Sized(
-      "x00" -> BoolElem(false),
+      "x00" -> BooleanElem(false),
       "x01" -> IntElem(120),
       "x02" -> IntElem(66),
       "x03" -> IntElem(-10000),
@@ -69,7 +69,7 @@ object CborDerivationSpec extends DerivationSpec(Cbor) {
       "x07" -> DoubleElem(26.8),
       "x08" -> StringElem("borer"),
       "x09" -> MapElem.Sized("red" -> IntElem(0), "green" -> IntElem(0), "blue" -> IntElem(0), "alpha" -> IntElem(255)),
-      "x10" -> BoolElem(false),
+      "x10" -> BooleanElem(false),
       "x11" -> IntElem(120),
       "x12" -> IntElem(66),
       "x13" -> IntElem(-10000),
@@ -79,7 +79,7 @@ object CborDerivationSpec extends DerivationSpec(Cbor) {
       "x17" -> DoubleElem(26.8),
       "x18" -> StringElem("borer"),
       "x19" -> MapElem.Sized("red" -> IntElem(0), "green" -> IntElem(0), "blue" -> IntElem(0), "alpha" -> IntElem(255)),
-      "x20" -> BoolElem(false),
+      "x20" -> BooleanElem(false),
       "x21" -> IntElem(120),
       "x22" -> IntElem(66),
       "x23" -> IntElem(-10000),
@@ -89,7 +89,7 @@ object CborDerivationSpec extends DerivationSpec(Cbor) {
       "x27" -> DoubleElem(26.8),
       "x28" -> StringElem("borer"),
       "x29" -> MapElem.Sized("red" -> IntElem(0), "green" -> IntElem(0), "blue" -> IntElem(0), "alpha" -> IntElem(255)),
-      "x30" -> BoolElem(false),
+      "x30" -> BooleanElem(false),
       "x31" -> IntElem(120),
       "x32" -> IntElem(66),
       "x33" -> IntElem(-10000),
@@ -99,7 +99,7 @@ object CborDerivationSpec extends DerivationSpec(Cbor) {
       "x37" -> DoubleElem(26.8),
       "x38" -> StringElem("borer"),
       "x39" -> MapElem.Sized("red" -> IntElem(0), "green" -> IntElem(0), "blue" -> IntElem(0), "alpha" -> IntElem(255)),
-      "x40" -> BoolElem(false),
+      "x40" -> BooleanElem(false),
       "x41" -> IntElem(120),
       "x42" -> IntElem(66),
       "x43" -> IntElem(-10000),
@@ -109,7 +109,7 @@ object CborDerivationSpec extends DerivationSpec(Cbor) {
       "x47" -> DoubleElem(26.8),
       "x48" -> StringElem("borer"),
       "x49" -> MapElem.Sized("red" -> IntElem(0), "green" -> IntElem(0), "blue" -> IntElem(0), "alpha" -> IntElem(255)),
-      "x50" -> BoolElem(false),
+      "x50" -> BooleanElem(false),
       "x51" -> IntElem(120),
       "x52" -> IntElem(66),
       "x53" -> IntElem(-10000),
@@ -119,7 +119,7 @@ object CborDerivationSpec extends DerivationSpec(Cbor) {
       "x57" -> DoubleElem(26.8),
       "x58" -> StringElem("borer"),
       "x59" -> MapElem.Sized("red" -> IntElem(0), "green" -> IntElem(0), "blue" -> IntElem(0), "alpha" -> IntElem(255)),
-      "x60" -> BoolElem(false),
+      "x60" -> BooleanElem(false),
       "x61" -> IntElem(120),
       "x62" -> IntElem(66),
       "x63" -> IntElem(-10000),
@@ -129,7 +129,7 @@ object CborDerivationSpec extends DerivationSpec(Cbor) {
       "x67" -> DoubleElem(26.8),
       "x68" -> StringElem("borer"),
       "x69" -> MapElem.Sized("red" -> IntElem(0), "green" -> IntElem(0), "blue" -> IntElem(0), "alpha" -> IntElem(255)),
-      "x70" -> BoolElem(false),
+      "x70" -> BooleanElem(false),
       "x71" -> IntElem(120),
       "x72" -> IntElem(66),
       "x73" -> IntElem(-10000),
@@ -139,7 +139,7 @@ object CborDerivationSpec extends DerivationSpec(Cbor) {
       "x77" -> DoubleElem(26.8),
       "x78" -> StringElem("borer"),
       "x79" -> MapElem.Sized("red" -> IntElem(0), "green" -> IntElem(0), "blue" -> IntElem(0), "alpha" -> IntElem(255)),
-      "x80" -> BoolElem(false),
+      "x80" -> BooleanElem(false),
       "x81" -> IntElem(120),
       "x82" -> IntElem(66),
       "x83" -> IntElem(-10000),
@@ -149,7 +149,7 @@ object CborDerivationSpec extends DerivationSpec(Cbor) {
       "x87" -> DoubleElem(26.8),
       "x88" -> StringElem("borer"),
       "x89" -> MapElem.Sized("red" -> IntElem(0), "green" -> IntElem(0), "blue" -> IntElem(0), "alpha" -> IntElem(255)),
-      "x90" -> BoolElem(false),
+      "x90" -> BooleanElem(false),
       "x91" -> IntElem(120),
       "x92" -> IntElem(66),
       "x93" -> IntElem(-10000),
@@ -167,7 +167,7 @@ object CborDerivationSpec extends DerivationSpec(Cbor) {
       ArrayElem
         .Sized(StringElem("TheCAT"), ArrayElem.Sized(Float16Elem(1.0f), StringElem("none"), StringElem("there"))),
       ArrayElem.Sized(StringElem("Dog"), ArrayElem.Sized(IntElem(4), StringElem("Lolle"))),
-      ArrayElem.Sized(IntElem(42), BoolElem.True))
+      ArrayElem.Sized(IntElem(42), BooleanElem.True))
 
   def mapBasedAnimalsDom =
     ArrayElem.Unsized(
@@ -176,5 +176,5 @@ object CborDerivationSpec extends DerivationSpec(Cbor) {
         "TheCAT" -> MapElem
           .Sized("weight" -> Float16Elem(1.0f), "color" -> StringElem("none"), "home" -> StringElem("there"))),
       MapElem.Sized("Dog"       -> MapElem.Sized("age"  -> IntElem(4), "name" -> StringElem("Lolle"))),
-      MapElem.Sized(IntElem(42) -> MapElem.Sized("tail" -> BoolElem.True)))
+      MapElem.Sized(IntElem(42) -> MapElem.Sized("tail" -> BooleanElem.True)))
 }

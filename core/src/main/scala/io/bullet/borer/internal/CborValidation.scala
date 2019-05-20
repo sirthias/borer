@@ -75,10 +75,10 @@ object CborValidation {
       _target.onUndefined()
     }
 
-    def onBool(value: Boolean): Unit = {
-      checkAllowed(DI.Bool)
+    def onBoolean(value: Boolean): Unit = {
+      checkAllowed(DI.Boolean)
       count()
-      _target.onBool(value)
+      _target.onBoolean(value)
     }
 
     def onInt(value: Int): Unit = {

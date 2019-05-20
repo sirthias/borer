@@ -30,7 +30,7 @@ abstract class AbstractCborSpec extends AbstractBorerSpec {
   implicit def eitherDec[A: Decoder, B: Decoder]: Decoder[Either[A, B]] =
     Decoder { r =>
       if (r.hasAnyOf(
-            DataItem.ArrayHeader | DataItem.ArrayStart | DataItem.MapHeader | DataItem.MapStart | DataItem.Bool))
+            DataItem.ArrayHeader | DataItem.ArrayStart | DataItem.MapHeader | DataItem.MapStart | DataItem.Boolean))
         Right(r[B])
       else Left(r[A])
     }
