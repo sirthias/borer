@@ -35,19 +35,20 @@ object Macros {
     val stringTpe = typeOf[String]
     val writeOpen = if (arity == 1) q"w" else q"w.writeArrayOpen($arity)"
     val writeOpenAndFields = fields.foldLeft(writeOpen) { (acc, field) =>
-      val access = q"x.${field.name}"
-      field.typeSignatureIn(tpe).resultType match {
-        case x if x =:= stringTpe              => q"$acc.writeString($access)"
-        case x if x =:= definitions.IntTpe     => q"$acc.writeInt($access)"
-        case x if x =:= definitions.LongTpe    => q"$acc.writeLong($access)"
-        case x if x =:= definitions.BooleanTpe => q"$acc.writeBoolean($access)"
-        case x if x =:= definitions.DoubleTpe  => q"$acc.writeDouble($access)"
-        case x if x =:= definitions.FloatTpe   => q"$acc.writeFloat($access)"
-        case x if x =:= definitions.CharTpe    => q"$acc.writeChar($access)"
-        case x if x =:= definitions.ByteTpe    => q"$acc.writeByte($access)"
-        case x if x =:= definitions.ShortTpe   => q"$acc.writeShort($access)"
-        case _                                 => q"$acc.write($access)"
-      }
+      val method =
+        field.typeSignatureIn(tpe).resultType match {
+          case x if x =:= stringTpe              => "writeString"
+          case x if x =:= definitions.IntTpe     => "writeInt"
+          case x if x =:= definitions.LongTpe    => "writeLong"
+          case x if x =:= definitions.BooleanTpe => "writeBoolean"
+          case x if x =:= definitions.DoubleTpe  => "writeDouble"
+          case x if x =:= definitions.FloatTpe   => "writeFloat"
+          case x if x =:= definitions.CharTpe    => "writeChar"
+          case x if x =:= definitions.ByteTpe    => "writeByte"
+          case x if x =:= definitions.ShortTpe   => "writeShort"
+          case _                                 => "write"
+        }
+      q"$acc.${TermName(method)}(x.${field.name})"
     }
     val writeOpenFieldsAndClose = if (arity == 1) writeOpenAndFields else q"$writeOpenAndFields.writeArrayClose()"
     q"""_root_.io.bullet.borer.Encoder((w, x) => $writeOpenFieldsAndClose)"""

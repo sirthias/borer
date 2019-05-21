@@ -135,9 +135,7 @@ object MapBasedCodecs {
 
         def failSizeOverflow() = r.overflow("Maps with size >= 2^63 are not supported")
         def failDuplicate(k: key.Value) =
-          throw new Error.InvalidInputData(
-            r.lastPosition,
-            expected(s"Duplicate map key `${k.value}` encountered during"))
+          throw new Error.InvalidInputData(r.position, expected(s"Duplicate map key `${k.value}` encountered during"))
 
         @tailrec def fillArgsAndConstruct(filledCount: Int, remaining: Int, filledMask0: Long, filledMask1: Long): T = {
 
@@ -153,9 +151,7 @@ object MapBasedCodecs {
                   constructorArgs(i) = value
                   fillMissingMembers(mask0, mask1)
                 case None =>
-                  throw new Error.InvalidInputData(
-                    r.lastPosition,
-                    expected(s"Missing map key `${paramKeys(i).value}` for"))
+                  throw new Error.InvalidInputData(r.position, expected(s"Missing map key `${paramKeys(i).value}` for"))
               }
             } // else we were able to fill all missing members w/ default values
           }

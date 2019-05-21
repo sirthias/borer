@@ -239,7 +239,7 @@ object Borer {
 
     private[borer] def withPosOf[In <: Input](reader: InputReader[In, _]): Error[In#Position] = {
       val thiz = this.asInstanceOf[Error[In#Position]]
-      if (thiz._io.asInstanceOf[AnyRef] eq null) thiz._io = reader.lastPosition
+      if (thiz._io.asInstanceOf[AnyRef] eq null) thiz._io = reader.position
       thiz
     }
 

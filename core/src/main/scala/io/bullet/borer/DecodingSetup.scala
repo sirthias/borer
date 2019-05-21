@@ -98,7 +98,7 @@ object DecodingSetup {
         decodeFrom(reader)
       } catch {
         case e: Borer.Error[_] => throw e.withPosOf[In](reader)
-        case NonFatal(e)       => throw new Borer.Error.General(reader.lastPosition, e)
+        case NonFatal(e)       => throw new Borer.Error.General(reader.position, e)
       }
     }
 
@@ -108,7 +108,7 @@ object DecodingSetup {
         Success(decodeFrom(reader))
       } catch {
         case e: Borer.Error[_] => Failure(e.withPosOf[In](reader))
-        case NonFatal(e)       => Failure(new Borer.Error.General(reader.lastPosition, e))
+        case NonFatal(e)       => Failure(new Borer.Error.General(reader.position, e))
       }
     }
 
@@ -118,7 +118,7 @@ object DecodingSetup {
         Right(decodeFrom(reader))
       } catch {
         case e: Borer.Error[_] => Left(e.withPosOf[In](reader))
-        case NonFatal(e)       => Left(new Borer.Error.General(reader.lastPosition, e))
+        case NonFatal(e)       => Left(new Borer.Error.General(reader.position, e))
       }
     }
 
@@ -128,7 +128,7 @@ object DecodingSetup {
         decodeFrom(reader) -> input
       } catch {
         case e: Borer.Error[_] => throw e.withPosOf[In](reader)
-        case NonFatal(e)       => throw new Borer.Error.General(reader.lastPosition, e)
+        case NonFatal(e)       => throw new Borer.Error.General(reader.position, e)
       }
     }
 
@@ -138,7 +138,7 @@ object DecodingSetup {
         Success(decodeFrom(reader) -> input)
       } catch {
         case e: Borer.Error[_] => Failure(e.withPosOf[In](reader))
-        case NonFatal(e)       => Failure(new Borer.Error.General(reader.lastPosition, e))
+        case NonFatal(e)       => Failure(new Borer.Error.General(reader.position, e))
       }
     }
 
@@ -148,7 +148,7 @@ object DecodingSetup {
         Right(decodeFrom(reader) -> input)
       } catch {
         case e: Borer.Error[_] => Left(e.withPosOf[In](reader))
-        case NonFatal(e)       => Left(new Borer.Error.General(reader.lastPosition, e))
+        case NonFatal(e)       => Left(new Borer.Error.General(reader.position, e))
       }
     }
 
@@ -156,7 +156,6 @@ object DecodingSetup {
       new InputReader(parserCreator(input, config), receiverWrapper, config, target)
 
     private def decodeFrom(reader: Reader): AnyRef = {
-      reader.skipDataItem() // fetch first data item
       val value = decoder.read(reader)
       if (!prefixOnly) reader.readEndOfInput()
       value
