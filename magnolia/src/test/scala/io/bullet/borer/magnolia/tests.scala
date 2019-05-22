@@ -15,6 +15,7 @@
 package io.bullet.borer.magnolia
 
 import io.bullet.borer.magnolia.examples._
+import io.bullet.borer.Scalac
 import utest.{Show => _, _}
 
 import scala.annotation.StaticAnnotation
@@ -170,17 +171,19 @@ object Tests extends TestSuite {
       HasDefault.gen[Entity].defaultValue ==> Right(Company(""))
     }
 
-//    "construction of Show instance for Leaf" - {
-//      scalac"""
-//        implicitly[Show[String, Leaf[java.lang.String]]]
-//      """ ==> Returns(fqt"magnolia.examples.Show[String,magnolia.tests.Leaf[String]]")
-//    }
-//
-//    "construction of Show instance for Tree" - {
-//      scalac"""
-//        implicitly[Show[String, Tree[String]]]
-//      """ ==> Returns(fqt"magnolia.examples.Show[String,magnolia.tests.Tree[String]]")
-//    }
+    "construction of Show instance for Leaf" - {
+      assertMatch(Scalac.typecheck("implicitly[Show[String, Leaf[java.lang.String]]]")) {
+        case Scalac.TypeCheck
+              .Result(_, "io.bullet.borer.magnolia.examples.Show[String,io.bullet.borer.magnolia.Leaf[String]]") =>
+      }
+    }
+
+    "construction of Show instance for Tree" - {
+      assertMatch(Scalac.typecheck("implicitly[Show[String, Tree[String]]]")) {
+        case Scalac.TypeCheck
+              .Result(_, "io.bullet.borer.magnolia.examples.Show[String,io.bullet.borer.magnolia.Tree[String]]") =>
+      }
+    }
 
     "serialize a Leaf" - {
       implicitly[Show[String, Leaf[String]]].show(Leaf("testing")) ==> "Leaf[String](value=testing)"
@@ -218,58 +221,88 @@ object Tests extends TestSuite {
       ) ==> Address("53 High Street", Person("Richard Jones", 44))
     }
 
-//    "show error stack" - {
-//      scalac"""
-//        case class Alpha(integer: Double)
-//        case class Beta(alpha: Alpha)
-//        Show.gen[Beta]
-//      """ ==> TypecheckError(txt"""magnolia: could not find Show.Typeclass for type Double
-//      |    in parameter 'integer' of product type Alpha
-//      |    in parameter 'alpha' of product type Beta
-//      |""")
-//    }
+    "show error stack" - {
+      Scalac
+        .typecheck {
+          """
+          case class Alpha(integer: Double)
+          case class Beta(alpha: Alpha)
+          Show.gen[Beta]
+          """
+        }
+        .assertErrorMsgMatches {
+          """magnolia: could not find Show.Typeclass for type Double
+            |    in parameter 'integer' of product type Alpha
+            |    in parameter 'alpha' of product type Beta
+            |""".stripMargin
+        }
+    }
 
-//    "not attempt to instantiate Unit when producing error stack" - {
-//      scalac"""
-//        case class Gamma(unit: Unit)
-//        Show.gen[Gamma]
-//      """ ==> TypecheckError(txt"""magnolia: could not find Show.Typeclass for type Unit
-//      |    in parameter 'unit' of product type Gamma
-//      |""")
-//    }
+    "not attempt to instantiate Unit when producing error stack" - {
+      Scalac
+        .typecheck {
+          """
+          case class Gamma(unit: Unit)
+          Show.gen[Gamma]
+          """
+        }
+        .assertErrorMsgMatches {
+          """magnolia: could not find Show.Typeclass for type Unit
+            |    in parameter 'unit' of product type Gamma
+            |""".stripMargin
+        }
+    }
 
-//    "not assume full auto derivation of external value classes" - {
-//      scalac"""
-//        case class LoggingConfig(n: ServiceName1)
-//        object LoggingConfig {
-//          implicit val semi: SemiDefault[LoggingConfig] = SemiDefault.gen
-//        }
-//        """ ==> TypecheckError(txt"""magnolia: could not find SemiDefault.Typeclass for type magnolia.tests.ServiceName1
-//    in parameter 'n' of product type LoggingConfig
-//""")
-//    }
+    "not assume full auto derivation of external value classes" - {
+      Scalac
+        .typecheck {
+          """
+          case class LoggingConfig(n: ServiceName1)
+          object LoggingConfig {
+            implicit val semi: SemiDefault[LoggingConfig] = SemiDefault.gen
+          }
+          """
+        }
+        .assertErrorMsgMatches {
+          """magnolia: could not find SemiDefault.Typeclass for type io.bullet.borer.magnolia.ServiceName1
+            |    in parameter 'n' of product type LoggingConfig
+            |""".stripMargin
+        }
+    }
 
-//    "not assume full auto derivation of external products" - {
-//      scalac"""
-//        case class LoggingConfig(n: ServiceName2)
-//        object LoggingConfig {
-//          implicit val semi: SemiDefault[LoggingConfig] = SemiDefault.gen
-//        }
-//        """ ==> TypecheckError(txt"""magnolia: could not find SemiDefault.Typeclass for type magnolia.tests.ServiceName2
-//    in parameter 'n' of product type LoggingConfig
-//""")
-//    }
+    "not assume full auto derivation of external products" - {
+      Scalac
+        .typecheck {
+          """
+          case class LoggingConfig(n: ServiceName2)
+          object LoggingConfig {
+            implicit val semi: SemiDefault[LoggingConfig] = SemiDefault.gen
+          }
+          """
+        }
+        .assertErrorMsgMatches {
+          """magnolia: could not find SemiDefault.Typeclass for type io.bullet.borer.magnolia.ServiceName2
+            |    in parameter 'n' of product type LoggingConfig
+            |""".stripMargin
+        }
+    }
 
-//    "not assume full auto derivation of external coproducts" - {
-//      scalac"""
-//        case class LoggingConfig(o: Option[String])
-//        object LoggingConfig {
-//          implicit val semi: SemiDefault[LoggingConfig] = SemiDefault.gen
-//        }
-//        """ ==> TypecheckError(txt"""magnolia: could not find SemiDefault.Typeclass for type Option[String]
-//    in parameter 'o' of product type LoggingConfig
-//""")
-//    }
+    "not assume full auto derivation of external coproducts" - {
+      Scalac
+        .typecheck {
+          """
+          case class LoggingConfig(o: Option[String])
+          object LoggingConfig {
+            implicit val semi: SemiDefault[LoggingConfig] = SemiDefault.gen
+          }
+          """
+        }
+        .assertErrorMsgMatches {
+          """magnolia: could not find SemiDefault.Typeclass for type Option[String]
+            |    in parameter 'o' of product type LoggingConfig
+            |""".stripMargin
+        }
+    }
 
     "half auto derivation of sealed families" - {
       SemiDefault.gen[Halfy].default ==> Lefty()
@@ -296,13 +329,16 @@ object Tests extends TestSuite {
     }
 
     // LabelledBox being invariant in L <: String prohibits the derivation for LabelledBox[Int, _]
-//    "can't show a Box with invariant label" - {
-//      scalac"Show.gen[Box[Int]]" ==>
-//      TypecheckError(txt"""magnolia: could not find Show.Typeclass for type L
-//      |    in parameter 'label' of product type magnolia.tests.LabelledBox[Int, _ <: String]
-//      |    in coproduct type magnolia.tests.Box[Int]
-//      |""")
-//    }
+    "can't show a Box with invariant label" - {
+      Scalac
+        .typecheck("Show.gen[Box[Int]]")
+        .assertErrorMsgMatches {
+          """magnolia: could not find Show.Typeclass for type L
+            |    in parameter 'label' of product type io.bullet.borer.magnolia.LabelledBox[Int, _ <: String]
+            |    in coproduct type io.bullet.borer.magnolia.Box[Int]
+            |""".stripMargin
+        }
+    }
 
     "patch a Person via a Patcher[Entity]" - {
       // these two implicits can be removed once https://github.com/propensive/magnolia/issues/58 is closed
@@ -404,14 +440,17 @@ object Tests extends TestSuite {
       TypeNameInfo.gen[Fruit].name.full ==> s"$testPackage.Fruit"
     }
 
-//    "show chained error stack" - {
-//      scalac"""Show.gen[(Int, Seq[(Long, String)])]""" ==>
-//      TypecheckError(txt"""magnolia: could not find Show.Typeclass for type Long
-//      |    in parameter '_1' of product type (Long, String)
-//      |    in chained implicit Show.Typeclass for type Seq[(Long, String)]
-//      |    in parameter '_2' of product type (Int, Seq[(Long, String)])
-//      |""")
-//    }
+    "show chained error stack" - {
+      Scalac
+        .typecheck("Show.gen[(Int, Seq[(Long, String)])]")
+        .assertErrorMsgMatches {
+          """magnolia: could not find Show.Typeclass for type Long
+            |    in parameter '_1' of product type (Long, String)
+            |    in chained implicit Show.Typeclass for type Seq[(Long, String)]
+            |    in parameter '_2' of product type (Int, Seq[(Long, String)])
+            |""".stripMargin
+        }
+    }
 
     "show a recursive case class" - {
       Show.gen[Recursive].show(Recursive(Seq(Recursive(Nil)))) ==> "Recursive(children=[Recursive(children=[])])"
@@ -453,18 +492,22 @@ object Tests extends TestSuite {
         .show(Attributed("xyz", 100)) ==> "{MyAnnotation(0)}Attributed{MyAnnotation(0)}(p1{MyAnnotation(1)}=xyz,p2{MyAnnotation(2)}=100)"
     }
 
-//    "show underivable type with fallback" - {
-//      TypeNameInfo.gen[NotDerivable].name ==> TypeName("", "Unknown Type", Seq.empty)
-//    }
+    "show underivable type with fallback" - {
+      TypeNameInfo.gen[NotDerivable].name ==> TypeName("", "Unknown Type", Seq.empty)
+    }
 
-//    "allow no-coproduct derivation definitions" - {
-//      scalac"""WeakHash.gen[Person]""" ==> Returns(fqt"magnolia.examples.WeakHash[magnolia.tests.Person]")
-//    }
+    "allow no-coproduct derivation definitions" - {
+      assertMatch(Scalac.typecheck("WeakHash.gen[Person]")) {
+        case Scalac.TypeCheck
+              .Result(_, "io.bullet.borer.magnolia.examples.WeakHash[io.bullet.borer.magnolia.Person]") =>
+      }
+    }
 
-//    "disallow coproduct derivations without dispatch method" - {
-//      scalac"""WeakHash.gen[Entity]""" ==>
-//      TypecheckError(
-//        "magnolia: the method `dispatch` must be defined on the derivation object WeakHash to derive typeclasses for sealed traits")
-//    }
+    "disallow coproduct derivations without dispatch method" - {
+      Scalac
+        .typecheck("WeakHash.gen[Entity]")
+        .assertErrorMsgMatches(
+          "magnolia: the method `dispatch` must be defined on the derivation object WeakHash to derive typeclasses for sealed traits")
+    }
   }
 }

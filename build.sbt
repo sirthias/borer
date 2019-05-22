@@ -211,8 +211,8 @@ lazy val derivation = crossProject(JSPlatform, JVMPlatform)
   )
   .jsSettings(scalajsSettings: _*)
 
-lazy val magnoliaJVM = magnolia.jvm
-lazy val magnoliaJS  = magnolia.js
+lazy val magnoliaJVM = magnolia.jvm.dependsOn(coreJVM % "test->compile")
+lazy val magnoliaJS  = magnolia.js.dependsOn(coreJS % "test->compile")
 lazy val magnolia = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)

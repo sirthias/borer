@@ -8,10 +8,9 @@
 
 package io.bullet.borer.internal
 
-import scala.reflect.macros.{blackbox, ParseException, TypecheckException}
-import java.util.regex.Pattern
+import scala.reflect.macros.blackbox
 
-object Macros {
+private[borer] object Macros {
 
   def encoderForUnaryCaseClass[T: c.WeakTypeTag](c: blackbox.Context): c.Tree = {
     import c.universe._
@@ -122,42 +121,5 @@ object Macros {
   private def getCaseClassFields(c: blackbox.Context)(tpe: c.Type): List[c.universe.MethodSymbol] = {
     import c.universe._
     tpe.decls.collect { case m: MethodSymbol if m.isCaseAccessor => m.asMethod }.toList
-  }
-
-  /**
-    * A utility which ensures that a code fragment does not typecheck.
-    *
-    * Original Credit: Stefan Zeiger (@StefanZeiger)
-    */
-  def assertCompileError0(c: blackbox.Context)(codeFragment: c.Tree): c.Tree = assertCompileError(c)(codeFragment, null)
-
-  def assertCompileError(c: blackbox.Context)(codeFragment: c.Tree, errorMsgRegex: c.Tree): c.Tree = {
-    import c.universe._
-
-    val fragment = codeFragment match {
-      case Literal(Constant(x: String)) => x
-      case _                            => c.abort(c.enclosingPosition, "`codeFragment` argument must be a literal string")
-    }
-    val (expectedErrorMsgPattern, expected) = errorMsgRegex match {
-      case null => None -> "Code Fragment compiled without any errors"
-      case Literal(Constant(x: String)) =>
-        Some(Pattern.compile(x, Pattern.CASE_INSENSITIVE | Pattern.DOTALL)) -> s"Expected compiler error matching [$x]"
-    }
-
-    try {
-      val dummy0 = TermName(c.freshName)
-      val dummy1 = TermName(c.freshName)
-      c.typecheck(c.parse(s"object $dummy0 { val $dummy1 = { $fragment } }"))
-      c.error(c.enclosingPosition, expected)
-    } catch {
-      case e: TypecheckException =>
-        expectedErrorMsgPattern
-          .filterNot(_.matcher(e.getMessage).matches)
-          .foreach(_ => c.error(c.enclosingPosition, s"$expected but got [${e.getMessage}]"))
-
-      case e: ParseException =>
-        c.error(c.enclosingPosition, s"Parsing error:\n${e.getMessage}")
-    }
-    q"()"
   }
 }

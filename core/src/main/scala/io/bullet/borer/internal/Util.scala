@@ -103,7 +103,4 @@ object Util {
     }
     rec(0)
   }
-
-  def assertCompileError(codeFragment: String): Unit = macro Macros.assertCompileError0
-  def assertCompileError(codeFragment: String, errorMsgRegex: String): Unit = macro Macros.assertCompileError
 }

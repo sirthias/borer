@@ -11,7 +11,6 @@ package io.bullet.borer.derivation
 import java.nio.charset.StandardCharsets
 
 import io.bullet.borer._
-import io.bullet.borer.internal.Util
 import utest._
 
 object ForCaseClassSpec extends AbstractBorerSpec {
@@ -64,7 +63,9 @@ object ForCaseClassSpec extends AbstractBorerSpec {
     }
 
     "`forUnaryCaseClass` on non-unary case class" - {
-      Util.assertCompileError("Codec.forUnaryCaseClass[CaseClass3]", ".*not a unary case class")
+      Scalac
+        .typecheck("Codec.forUnaryCaseClass[CaseClass3]")
+        .assertErrorMsgMatches(".*not a unary case class".r)
     }
 
     "Generic unary Case Class with 'forUnaryCaseClass' codec" - {
@@ -76,6 +77,12 @@ object ForCaseClassSpec extends AbstractBorerSpec {
       case class Box(id: String)
       implicit val boxCodec: Codec[Box] = Codec.forCaseClass[Box]
       roundTrip(""""abc"""", Box("abc"))
+    }
+
+    "Recursive Case Class" - {
+      case class Box(x: Option[Box] = None)
+      implicit lazy val codec: Codec[Box] = Codec.forCaseClass[Box]
+      roundTrip("""[[[]]]""", Box(Some(Box(Some(Box())))))
     }
   }
 }
