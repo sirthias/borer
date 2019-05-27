@@ -31,6 +31,8 @@ object akka {
 
     def toByteArray(bytes: ByteString): Array[Byte] = bytes.toArray
 
+    def inputFrom(bytes: ByteString) = new FromByteString(bytes)
+
     def concat(a: ByteString, b: ByteString) =
       if (a.nonEmpty) {
         if (b.nonEmpty) {

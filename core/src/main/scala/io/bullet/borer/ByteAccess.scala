@@ -43,6 +43,11 @@ trait ByteAccess[Bytes] {
   def toByteArray(bytes: Bytes): Array[Byte]
 
   /**
+    * Creates a new [[Input]] that is reading from the given [[Bytes]].
+    */
+  def inputFrom(bytes: Bytes): Input
+
+  /**
     * Copies the given [[Bytes]] instance into the given `byteArray` starting at the given index.
     * Returns a [[Bytes]] instance holding all bytes that could not be written to the byte array
     * due to capacity constraints or an empty [[Bytes]] instance, if the given byte array was
@@ -86,6 +91,8 @@ object ByteAccess {
     @inline def fromByteArray(byteArray: Array[Byte]): Array[Byte] = byteArray
 
     @inline def toByteArray(bytes: Array[Byte]): Array[Byte] = bytes
+
+    @inline def inputFrom(bytes: Array[Byte]) = new Input.FromByteArray(bytes)
 
     def copyToByteArray(bytes: Array[Byte], byteArray: Array[Byte], startIndex: Int): Array[Byte] = {
       val dstRemaining = byteArray.length - startIndex
@@ -154,6 +161,8 @@ object ByteAccess {
       bytes.reset()
       byteArray
     }
+
+    @inline def inputFrom(bytes: ByteBuffer) = new Input.FromByteBuffer(bytes)
 
     def copyToByteArray(bytes: ByteBuffer, byteArray: Array[Byte], startIndex: Int): ByteBuffer = {
       bytes.mark()

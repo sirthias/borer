@@ -14,7 +14,7 @@ object CborDerivationSpec extends DerivationSpec(Cbor) {
   import Dom._
 
   def encode[T: Encoder](value: T): String =
-    toHexString(Cbor.encode(value).withConfig(Cbor.EncodingConfig.default.copy(bufferSize = 19)).toByteArray)
+    toHexString(Cbor.encode(value).withConfig(Cbor.EncodingConfig(bufferSize = 19)).toByteArray)
 
   def decode[T: Decoder](encoded: String): T = Cbor.decode(hexBytes(encoded)).to[T].value
   def tryDecode[T: Decoder](encoded: String) = Cbor.decode(hexBytes(encoded)).to[T].valueTry
@@ -37,8 +37,8 @@ object CborDerivationSpec extends DerivationSpec(Cbor) {
       ))
 
   def arrayBasedMissingElemErrorMsg =
-    "Expected Array Start or Array Header(10) for decoding an instance of type " +
-      "`io.bullet.borer.derivation.DerivationSpec.Foo` but got Array Header (9) (input position 0)"
+    "Expected Array Start or Array Header (10) for decoding an instance of type " +
+      "`DerivationSpec.this.Foo` but got Array Header (9) (input position 0)"
 
   def mapBasedFooDom =
     MapElem.Sized(
@@ -177,4 +177,6 @@ object CborDerivationSpec extends DerivationSpec(Cbor) {
           .Sized("weight" -> Float16Elem(1.0f), "color" -> StringElem("none"), "home" -> StringElem("there"))),
       MapElem.Sized("Dog"       -> MapElem.Sized("age"  -> IntElem(4), "name" -> StringElem("Lolle"))),
       MapElem.Sized(IntElem(42) -> MapElem.Sized("tail" -> BooleanElem.True)))
+
+  def recursiveBoxEncoded = "a16178a16178a0"
 }

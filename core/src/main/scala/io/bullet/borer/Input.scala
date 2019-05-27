@@ -129,6 +129,39 @@ trait Input {
 
 object Input {
 
+  implicit final class InputOps(val underlying: Input) extends AnyVal {
+
+    def readMultiByteUtf8Codepoint(b1: Int): Int = {
+      val byteCount = Integer.numberOfLeadingZeros(~b1) - 25
+      val quad      = underlying.readQuadByteBigEndianPaddedFF()
+      val b2        = quad >> 24
+      val codepoint = (byteCount | 0x80) ^ (b2 & 0xC0) match {
+        case 1 =>
+          if ((b1 & 0x1E) == 0) failIllegalUtf8(-5)
+          (b1 << 6) ^ b2 ^ 0xF80
+        case 2 =>
+          val b3 = quad << 8 >> 24
+          val cp = (b1 << 12) ^ (b2 << 6) ^ b3 ^ 0xFFFE1F80
+          if ((b1 == 0xE0 && (b2 & 0xE0) == 0x80) || (b3 & 0xC0) != 0x80 || ((cp >> 11) == 0x1b)) failIllegalUtf8(-5)
+          cp
+        case 3 =>
+          val b3 = quad << 8 >> 24
+          val b4 = quad << 16 >> 24
+          val cp = (b1 << 18) ^ (b2 << 12) ^ (b3 << 6) ^ b4 ^ 0x381F80
+          if ((b3 & 0xC0) != 0x80 || (b4 & 0xC0) != 0x80 || cp < 0x010000 || cp > 0x10FFFF) failIllegalUtf8(-5)
+          cp
+        case _ => failIllegalUtf8(-5)
+      }
+      underlying.moveCursor(byteCount - 4)
+      codepoint
+    }
+
+    private def failIllegalUtf8(offset: Int) = {
+      val pos = underlying.position(underlying.cursor + offset.toLong)
+      throw new Borer.Error.InvalidInputData(pos, "Illegal UTF-8 character encoding")
+    }
+  }
+
   /**
     * Responsible for wrapping an instance of [[T]] in a respective [[Input]].
     */

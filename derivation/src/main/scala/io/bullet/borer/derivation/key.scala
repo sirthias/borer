@@ -8,10 +8,7 @@
 
 package io.bullet.borer.derivation
 
-import io.bullet.borer.{Reader, Writer}
-import io.bullet.borer.magnolia.Subtype
-
-import scala.annotation.{tailrec, StaticAnnotation}
+import scala.annotation.StaticAnnotation
 
 /**
   * Annotation allowing for customizing
@@ -74,72 +71,3 @@ import scala.annotation.{tailrec, StaticAnnotation}
   *
   */
 final class key(val value: Any) extends StaticAnnotation
-
-object key {
-
-  sealed abstract class Value {
-    def value: Any
-  }
-
-  object Value {
-    final case class Str(value: String) extends Value
-    final case class Num(value: Long)   extends Value
-
-    def write(w: Writer, value: Value): w.type =
-      value match {
-        case Str(x) => w.writeString(x)
-        case Num(x) => w.writeLong(x)
-      }
-
-    def tryRead(r: Reader, value: Value): Boolean =
-      value match {
-        case Str(x) => r.tryReadString(x)
-        case Num(x) => r.tryReadLong(x)
-      }
-
-    def apply(annotation: key): Value =
-      annotation.value match {
-        case x: String if x.nonEmpty => Str(x)
-        case x: Int if x >= 0        => Num(x.toLong)
-        case x: Long if x >= 0       => Num(x)
-        case _ =>
-          sys.error(s"Illegal @key annotation argument: Must be either a non-empty String or a non-negative Int/Long!")
-      }
-  }
-
-  private[derivation] def find(annotations: Array[Any], default: String, ix: Int = 0): key.Value =
-    if (ix < annotations.length) {
-      annotations(ix) match {
-        case x: key => Value(x)
-        case _      => find(annotations, default, ix + 1)
-      }
-    } else Value.Str(default)
-
-  private[derivation] def getTypeIds[X[_], T](typeName: String, subtypes: Array[Subtype[X, T]]): Array[key.Value] = {
-    val keys = subtypes.map(sub => key.find(sub.annotationsArray, sub.typeName.short))
-    @tailrec def rec(i: Int, j: Int): Array[key.Value] =
-      if (i < keys.length) {
-        if (j < keys.length) {
-          if (i != j && keys(i) == keys(j)) {
-            sys.error(s"@key collision: At least two subtypes of `$typeName` share the same type id `${keys(i).value}`")
-          } else rec(i, j + 1)
-        } else rec(i + 1, 0)
-      } else keys
-    rec(0, 0)
-  }
-
-  /**
-    * Returns the index of the key (in the given `keys` array) that matches the next data item of the given reader,
-    * or -1 if none does.
-    */
-  private[derivation] def tryRead(r: Reader, keys: Array[Value], startIndex: Int): Int = {
-    @tailrec def rec(ix: Int, end: Int): Int =
-      if (ix < end) {
-        val k = keys(ix)
-        if (Value.tryRead(r, k)) ix
-        else rec(ix + 1, end)
-      } else if (startIndex != 0 && end != startIndex) rec(0, startIndex)
-      else -1
-    rec(startIndex, keys.length)
-  }
-}

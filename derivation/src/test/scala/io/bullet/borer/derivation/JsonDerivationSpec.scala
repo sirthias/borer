@@ -16,8 +16,10 @@ object JsonDerivationSpec extends DerivationSpec(Json) {
   import Dom._
 
   def encode[T: Encoder](value: T): String =
-    Json.encode(value).withConfig(Json.EncodingConfig.default.copy(bufferSize = 13)).toUtf8String
+    Json.encode(value).withConfig(Json.EncodingConfig(bufferSize = 13)).toUtf8String
+
   def decode[T: Decoder](encoded: String): T = Json.decode(encoded getBytes StandardCharsets.UTF_8).to[T].value
+
   def tryDecode[T: Decoder](encoded: String) = Json.decode(encoded getBytes StandardCharsets.UTF_8).to[T].valueTry
 
   def arrayBasedFooDom =
@@ -37,7 +39,7 @@ object JsonDerivationSpec extends DerivationSpec(Json) {
         ArrayElem.Unsized(IntElem(0), IntElem(0), IntElem(255), IntElem(255))
       ))
 
-  def arrayBasedMissingElemErrorMsg = "Cannot convert int value -10000 to Byte (input position 4)"
+  def arrayBasedMissingElemErrorMsg = "Expected Byte but got Int (input position 4)"
 
   def mapBasedFooDom =
     MapElem.Unsized(
@@ -178,4 +180,6 @@ object JsonDerivationSpec extends DerivationSpec(Json) {
           .Sized("weight" -> Float16Elem(1.0f), "color" -> StringElem("none"), "home" -> StringElem("there"))),
       MapElem.Sized("Dog"       -> MapElem.Sized("age"  -> IntElem(4), "name" -> StringElem("Lolle"))),
       MapElem.Sized(IntElem(42) -> MapElem.Sized("tail" -> BooleanElem.True)))
+
+  def recursiveBoxEncoded = """{"x":{"x":{}}}"""
 }

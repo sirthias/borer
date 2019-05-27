@@ -44,7 +44,7 @@ object Encoder extends LowPrioEncoders {
     * (e.g. because "not-present" already carries sufficient information).
     */
   trait PossiblyWithoutOutput[T] extends Encoder[T] {
-    def producesOutput(value: T): Boolean
+    def producesOutputFor(value: T): Boolean
   }
 
   /**
@@ -85,6 +85,18 @@ object Encoder extends LowPrioEncoders {
   implicit final class EncoderOps[A](val underlying: Encoder[A]) extends AnyVal {
     def contramap[B](f: B => A): Encoder[B]                     = Encoder((w, b) => underlying.write(w, f(b)))
     def contramapWithWriter[B](f: (Writer, B) => A): Encoder[B] = Encoder((w, b) => underlying.write(w, f(w, b)))
+
+    def withDefaultValue(defaultValue: A): Encoder[A] =
+      underlying match {
+        case x: Encoder.DefaultValueAware[A] => x withDefaultValue defaultValue
+        case x                               => x
+      }
+
+    def producesOutputFor(value: A): Boolean =
+      underlying match {
+        case x: Encoder.PossiblyWithoutOutput[A] => x producesOutputFor value
+        case _                                   => true
+      }
   }
 
   implicit def fromCodec[T](implicit codec: Codec[T]): Encoder[T] = codec.encoder
@@ -177,7 +189,7 @@ object Encoder extends LowPrioEncoders {
       def withDefaultValue(defaultValue: Option[T]): Encoder[Option[T]] =
         if (defaultValue eq None) {
           new PossiblyWithoutOutput[Option[T]] {
-            def producesOutput(value: Option[T]) = value ne None
+            def producesOutputFor(value: Option[T]) = value ne None
             def write(w: Writer, value: Option[T]) =
               value match {
                 case Some(x) => w.write(x)
@@ -194,8 +206,8 @@ object Encoder extends LowPrioEncoders {
       def withDefaultValue(defaultValue: M[T]): Encoder[M[T]] =
         if (defaultValue.isEmpty) {
           new PossiblyWithoutOutput[M[T]] {
-            def producesOutput(value: M[T])   = value.nonEmpty
-            def write(w: Writer, value: M[T]) = if (value.nonEmpty) w.writeIndexedSeq(value) else w
+            def producesOutputFor(value: M[T]) = value.nonEmpty
+            def write(w: Writer, value: M[T])  = if (value.nonEmpty) w.writeIndexedSeq(value) else w
           }
         } else this
     }
@@ -207,8 +219,8 @@ object Encoder extends LowPrioEncoders {
       def withDefaultValue(defaultValue: M[T]): Encoder[M[T]] =
         if (defaultValue.isEmpty) {
           new PossiblyWithoutOutput[M[T]] {
-            def producesOutput(value: M[T])   = value.nonEmpty
-            def write(w: Writer, value: M[T]) = if (value.nonEmpty) w.writeLinearSeq(value) else w
+            def producesOutputFor(value: M[T]) = value.nonEmpty
+            def write(w: Writer, value: M[T])  = if (value.nonEmpty) w.writeLinearSeq(value) else w
           }
         } else this
     }
@@ -220,8 +232,8 @@ object Encoder extends LowPrioEncoders {
       def withDefaultValue(defaultValue: M[A, B]): Encoder[M[A, B]] =
         if (defaultValue.isEmpty) {
           new PossiblyWithoutOutput[M[A, B]] {
-            def producesOutput(value: M[A, B])   = value.nonEmpty
-            def write(w: Writer, value: M[A, B]) = if (value.nonEmpty) w.writeMap(value) else w
+            def producesOutputFor(value: M[A, B]) = value.nonEmpty
+            def write(w: Writer, value: M[A, B])  = if (value.nonEmpty) w.writeMap(value) else w
           }
         } else this
     }

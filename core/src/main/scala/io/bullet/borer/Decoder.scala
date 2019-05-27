@@ -59,6 +59,12 @@ object Decoder extends LowPrioDecoders {
   implicit final class DecoderOps[A](val underlying: Decoder[A]) extends AnyVal {
     def map[B](f: A => B): Decoder[B]                     = Decoder(r => f(underlying.read(r)))
     def mapWithReader[B](f: (Reader, A) => B): Decoder[B] = Decoder(r => f(r, underlying.read(r)))
+
+    def withDefaultValue(defaultValue: A): Decoder[A] =
+      underlying match {
+        case x: Decoder.DefaultValueAware[A] => x withDefaultValue defaultValue
+        case x                               => x
+      }
   }
 
   implicit def fromCodec[T](implicit codec: Codec[T]): Decoder[T] = codec.decoder

@@ -31,6 +31,8 @@ object scodec {
 
     @inline def toByteArray(bytes: ByteVector): Array[Byte] = bytes.toArray
 
+    @inline def inputFrom(bytes: ByteVector) = new FromByteVector(bytes)
+
     def copyToByteArray(bytes: ByteVector, byteArray: Array[Byte], startIndex: Int): ByteVector = {
       val len = byteArray.length - startIndex
       bytes.copyToArray(byteArray, startIndex)

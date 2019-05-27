@@ -10,6 +10,8 @@ package io.bullet.borer.internal
 
 import io.bullet.borer._
 
+import scala.annotation.tailrec
+
 /**
   * A [[Receiver]] which simply buffers all incoming data in fields of the appropriate type,
   * for easy querying from the outside.
@@ -36,6 +38,38 @@ final private[borer] class Receptacle extends Receiver with java.lang.Cloneable 
 
   @inline def getBytes[Bytes](implicit byteAccess: ByteAccess[Bytes]): Bytes =
     byteAccess.convert(_obj)(_bytesAccess)
+
+  @inline def stringCompareBytes(string: String): Int = {
+    def failIllegalArg(msg: String) = throw new IllegalArgumentException(msg)
+    val input                       = _bytesAccess.inputFrom(_obj)
+
+    @tailrec def rec(stringIx: Int): Int =
+      if (stringIx < string.length) {
+        var six = stringIx
+        if (input.prepareRead(1)) {
+          val bytesCodepoint = {
+            val b = input.readByte().toInt
+            if (b < 0) input.readMultiByteUtf8Codepoint(b) else b
+          }
+          val stringCodepoint = {
+            val c = string.charAt(six)
+            if (Character.isHighSurrogate(c)) {
+              six += 1
+              if (six < string.length) {
+                val c2 = string.charAt(six)
+                if (Character.isLowSurrogate(c2)) Character.toCodePoint(c, c2)
+                else failIllegalArg(s"""Invalid UTF-16 surrogate pair at index $stringIx of string "$string"""")
+              } else failIllegalArg(s"""Truncated UTF-16 surrogate pair at end of string "$string"""")
+            } else c.toInt
+          }
+          val d = bytesCodepoint - stringCodepoint
+          if (d == 0) rec(six + 1) else d
+        } else -1
+      } else if (input.prepareRead(1)) /* `string` is a prefix of the parsed string */ 1
+      else 0
+
+    rec(0)
+  }
 
   def onNull(): Unit = ()
 

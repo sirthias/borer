@@ -18,6 +18,7 @@ lazy val commonSettings = Seq(
     "-feature",
     "-language:_",
     "-unchecked",
+    "-target:jvm-1.8",
     "-Xlint:_,-missing-interpolator",
     "-Ywarn-dead-code",
     "-Ywarn-numeric-widen",
@@ -195,8 +196,8 @@ lazy val scodec = crossProject(JSPlatform, JVMPlatform)
   )
   .jsSettings(scalajsSettings: _*)
 
-lazy val derivationJVM = derivation.jvm.dependsOn(magnoliaJVM, coreJVM % "compile->compile;test->test")
-lazy val derivationJS  = derivation.js.dependsOn(magnoliaJS, coreJS % "compile->compile;test->test")
+lazy val derivationJVM = derivation.jvm.dependsOn(coreJVM % "compile->compile;test->test")
+lazy val derivationJS  = derivation.js.dependsOn(coreJS % "compile->compile;test->test")
 lazy val derivation = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
@@ -207,7 +208,7 @@ lazy val derivation = crossProject(JSPlatform, JVMPlatform)
   .settings(releaseSettings)
   .settings(
     moduleName := "borer-derivation",
-    libraryDependencies ++= Seq(`scala-reflect`.value, utest.value),
+    libraryDependencies ++= Seq(`scala-compiler`.value, `scala-reflect`.value, utest.value),
   )
   .jsSettings(scalajsSettings: _*)
 

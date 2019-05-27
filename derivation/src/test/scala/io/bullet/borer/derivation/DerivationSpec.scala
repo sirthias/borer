@@ -151,13 +151,15 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
   def arrayBasedAnimalsDom: Element
   def mapBasedAnimalsDom: Element
 
+  def recursiveBoxEncoded: String
+
   val tests = Tests {
 
     "array-based" - {
       import ArrayBasedCodecs._
-      implicit val emptyCodec = Codec(deriveEncoder[Empty], deriveDecoder[Empty])
-      implicit val colorCodec = Codec(deriveEncoder[Color], deriveDecoder[Color])
-      implicit val fooCodec   = Codec(deriveEncoder[Foo], deriveDecoder[Foo])
+      implicit val emptyCodec = deriveCodec[Empty]
+      implicit val colorCodec = deriveCodec[Color]
+      implicit val fooCodec   = deriveCodec[Foo]
 
       "size match" - {
         val encoded = encode(foo)
@@ -177,7 +179,10 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
       "ADT" - {
         import ADT._
 
-        implicit val animalCodec = Codec(deriveEncoder[Animal], deriveDecoder[Animal])
+        implicit val dogCodec    = deriveCodec[Dog]
+        implicit val catCodec    = deriveCodec[Cat]
+        implicit val mouseCodec  = deriveCodec[Mouse]
+        implicit val animalCodec = deriveCodec[Animal]
 
         val animals: List[Animal] = List(
           Dog(12, "Fred"),
@@ -194,20 +199,26 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
       "ADT Key Collision" - {
         import AdtWithKeyCollision._
 
-        val error = intercept[RuntimeException] {
-          deriveEncoder[Animal]
-        }
-        val clazz = s"io.bullet.borer.derivation.AdtWithKeyCollision.Animal"
-        error.getMessage ==> s"@key collision: At least two subtypes of `$clazz` share the same type id `Dog`"
+        implicit val dogCodec   = deriveCodec[Dog]
+        implicit val catCodec   = deriveCodec[Cat]
+        implicit val mouseCodec = deriveCodec[Mouse]
+
+        Scalac
+          .typecheck("deriveEncoder[Animal]")
+          .assertErrorMsgMatches(
+            "@key collision: sub types `io.bullet.borer.derivation.AdtWithKeyCollision.Dog` and " +
+              "`io.bullet.borer.derivation.AdtWithKeyCollision.Cat` of ADT " +
+              "`io.bullet.borer.derivation.AdtWithKeyCollision.Animal` share the same type id `Dog`"
+          )
       }
     }
 
     "map-based" - {
       import MapBasedCodecs._
-      implicit val emptyCodec   = Codec(deriveEncoder[Empty], deriveDecoder[Empty])
-      implicit val colorCodec   = Codec(deriveEncoder[Color], deriveDecoder[Color])
-      implicit val fooCodec     = Codec(deriveEncoder[Foo], deriveDecoder[Foo])
-      implicit val hundredCodec = Codec(deriveEncoder[Hundred], deriveDecoder[Hundred])
+      implicit val emptyCodec   = deriveCodec[Empty]
+      implicit val colorCodec   = deriveCodec[Color]
+      implicit val fooCodec     = deriveCodec[Foo]
+      implicit val hundredCodec = deriveCodec[Hundred]
 
       def sizeMatch[T: Encoder: Decoder](value: T, dom: MapElem): Unit = {
         val encoded = encode(value)
@@ -234,10 +245,9 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
         val encoded    = encode(partialDom)
         decode[Element](encoded) ==> partialDom
 
-        val errorMsg =
-          s"Missing map key `$missingKey` for decoding an instance of type `io.bullet.borer.derivation.DerivationSpec."
+        val errorMsg = s"""Cannot decode `.*` instance due to missing map key "$missingKey".*"""
         assertMatch(tryDecode[T](encoded)) {
-          case Failure(e) if e.getMessage startsWith errorMsg => // ok
+          case Failure(e) if e.getMessage matches errorMsg => // ok
         }
       }
 
@@ -251,14 +261,11 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
         }
       }
 
-      def dupMemberAfterFillCompletion[T: Encoder: Decoder](dom: MapElem, memberIx: Int, key: String): Unit = {
+      def dupMemberAfterFillCompletion[T: Encoder: Decoder](value: T, dom: MapElem, memberIx: Int): Unit = {
         val badDom  = transform(dom)(x => x :+ x(memberIx))
         val encoded = encode(badDom)
         decode[Element](encoded) ==> badDom
-
-        assertMatch(tryDecode[T](encoded)) {
-          case Failure(e) if e.getMessage startsWith s"Duplicate map key `$key` encountered" => // ok
-        }
+        decode[T](encoded)
       }
 
       def extraMemberBeforeFillCompletion[T: Encoder: Decoder](value: T, dom: MapElem, ix: Int): Unit = {
@@ -299,7 +306,7 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
         "missing member w/ default value" - missingMembersWithDefaultValue(foo, mapBasedFooDom)
         "missing member w/o default value" - missingMembersWithoutDefaultValue[Foo](mapBasedFooDom, "long")
         "duplicate member before fill completion" - dupMemberBeforeFillCompletion[Foo](mapBasedFooDom, 3, "short")
-        "duplicate member after fill completion" - dupMemberAfterFillCompletion[Foo](mapBasedFooDom, 5, "float")
+        "duplicate member after fill completion" - dupMemberAfterFillCompletion(foo, mapBasedFooDom, 5)
         "extra member before fill completion" - extraMemberBeforeFillCompletion(foo, mapBasedFooDom, 3)
         "extra member after fill completion" - extraMemberAfterFillCompletion(foo, mapBasedFooDom)
         "complex extra member before fill completion" - complexExtraMemberBeforeFC(foo, mapBasedFooDom, 3)
@@ -326,8 +333,8 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
         case class Qux0(int: Int)
         case class Qux(int: Int, optDouble: Option[Double] = None)
 
-        implicit val qux0Codec = Codec(deriveEncoder[Qux0], deriveDecoder[Qux0])
-        implicit val quxCodec  = Codec(deriveEncoder[Qux], deriveDecoder[Qux])
+        implicit val qux0Codec = deriveCodec[Qux0]
+        implicit val quxCodec  = deriveCodec[Qux]
 
         val qux0        = Qux0(42)
         val quxWithNone = Qux(42)
@@ -347,8 +354,8 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
         case class Qux0(int: Int)
         case class Qux(int: Int, optList: List[Float] = Nil)
 
-        implicit val qux0Codec = Codec(deriveEncoder[Qux0], deriveDecoder[Qux0])
-        implicit val quxCodec  = Codec(deriveEncoder[Qux], deriveDecoder[Qux])
+        implicit val qux0Codec = deriveCodec[Qux0]
+        implicit val quxCodec  = deriveCodec[Qux]
 
         val qux0       = Qux0(42)
         val quxWithNil = Qux(42)
@@ -364,11 +371,22 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
         decode[Qux](quxWithNilEncoded) ==> quxWithNil
       }
 
+      "Recursive Case Class" - {
+        case class Box(x: Option[Box] = None)
+        object Box {
+          implicit val codec: Codec[Box] = deriveCodec[Box]
+        }
+        roundTrip(recursiveBoxEncoded, Box(Some(Box(Some(Box())))))
+      }
+
       "ADT" - {
         import ADT._
 
         try {
-          implicit val animalCodec = Codec(deriveEncoder[Animal], deriveDecoder[Animal])
+          implicit val dogCodec    = deriveCodec[Dog]
+          implicit val catCodec    = deriveCodec[Cat]
+          implicit val mouseCodec  = deriveCodec[Mouse]
+          implicit val animalCodec = deriveCodec[Animal]
 
           val animals: List[Animal] = List(
             Dog(12, "Fred"),
@@ -389,11 +407,13 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
       "ADT Key Collision" - {
         import AdtWithKeyCollision._
 
-        val error = intercept[RuntimeException] {
-          deriveEncoder[Animal]
-        }
-        val clazz = s"io.bullet.borer.derivation.AdtWithKeyCollision.Animal"
-        error.getMessage ==> s"@key collision: At least two subtypes of `$clazz` share the same type id `Dog`"
+        Scalac
+          .typecheck("deriveEncoder[Animal]")
+          .assertErrorMsgMatches(
+            "@key collision: sub types `io.bullet.borer.derivation.AdtWithKeyCollision.Dog` and " +
+              "`io.bullet.borer.derivation.AdtWithKeyCollision.Cat` of ADT " +
+              "`io.bullet.borer.derivation.AdtWithKeyCollision.Animal` share the same type id `Dog`"
+          )
       }
     }
   }

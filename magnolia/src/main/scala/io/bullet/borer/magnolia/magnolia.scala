@@ -441,7 +441,7 @@ object Magnolia {
             cls.asType.toType.decl(TermName("fallback")) != NoSymbol
           }
           .map { _ =>
-            c.warning(c.enclosingPosition, s"magnolia: using fallback derivation for $genericType")
+            //c.warning(c.enclosingPosition, s"magnolia: using fallback derivation for $genericType")
             q"""${c.prefix}.fallback[$genericType]"""
           }
       } else None

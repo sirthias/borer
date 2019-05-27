@@ -131,6 +131,25 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
     hasInt && (receptacle.intValue.toLong == value) || hasLong && (receptacle.longValue == value)
   @inline def tryReadLong(value: Long): Boolean = clearIfTrue(hasLong(value))
 
+  /**
+    * Returns one of the following 4 values:
+    * - Int.MinValue if the next data item is not a Long
+    * - minus one a if the next data item is a Long < `value`
+    * - zero if the next data item is a Long == `value`
+    * - one if the next data item is a Long > `value`
+    */
+  def longCompare(value: Long): Int =
+    if (hasLong) {
+      val long = if (hasInt) receptacle.intValue.toLong else receptacle.longValue
+      math.signum(long - value).toInt
+    } else Int.MinValue
+
+  def tryReadLongCompare(value: Long): Int = {
+    val result = longCompare(value)
+    if (result == 0) clearDataItem()
+    result
+  }
+
   def readOverLong(): Long =
     if (hasOverLong) {
       val result = receptacle.longValue
@@ -240,6 +259,11 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
   def readString(s: String): this.type = if (tryReadString(s)) this else unexpectedDataItem(expected = '"' + s + '"')
   @inline def hasString: Boolean       = hasAnyOf(DI.String | DI.Chars | DI.Text | DI.TextStart)
 
+  /**
+    * Tests the current data item for equality with the given [[String]].
+    * NOTE: This method never advances the cursor and therefore does not work for `TextStart` data items,
+    * i.e. unsized text bytes!
+    */
   @inline def hasString(value: String): Boolean =
     dataItem match {
       case DI.Chars =>
@@ -248,10 +272,45 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
           ix == len || buf(ix) == value.charAt(ix) && rec(buf, ix + 1)
         len == value.length && rec(receptacle.charBufValue, 0)
       case DI.String => receptacle.stringValue == value
-      case DI.Text   => stringOf(receptacle.getBytes[Array[Byte]]) == value
+      case DI.Text   => receptacle.stringCompareBytes(value) == 0
       case _         => false
     }
+
+  /**
+    * Tests the current data item for equality with the given [[String]] and advances the cursor if so.
+    * NOTE: This method does not recognize `TextStart` data items, i.e. unsized text bytes!
+    */
   @inline def tryReadString(value: String): Boolean = clearIfTrue(hasString(value))
+
+  /**
+    * Returns one of the following 4 values:
+    * - Int.MinValue if the next data item is not a string
+    * - a negative value (!= Int.MinValue) a if the next data item is a string that compares as '<' to `value`
+    * - zero if the next data item is a string that compares as '==' to `value`
+    * - a positive value if the next data item is a string that compares as '>' to `value`
+    *
+    * NOTE: This method does not recognize `TextStart` data items, i.e. unsized text bytes!
+    */
+  def stringCompare(value: String): Int =
+    dataItem match {
+      case DI.Chars =>
+        val limit = math.min(value.length, receptacle.intValue)
+        @tailrec def rec(buf: Array[Char], ix: Int): Int =
+          if (ix < limit) {
+            val diff = buf(ix).toInt - value.charAt(ix).toInt
+            if (diff != 0) diff else rec(buf, ix + 1)
+          } else receptacle.intValue - value.length
+        rec(receptacle.charBufValue, 0)
+      case DI.String => receptacle.stringValue.compareTo(value)
+      case DI.Text   => receptacle.stringCompareBytes(value)
+      case _         => Int.MinValue
+    }
+
+  def tryReadStringCompare(value: String): Int = {
+    val result = stringCompare(value)
+    if (result == 0) clearDataItem()
+    result
+  }
 
   def readTextBytes[Bytes: ByteAccess](): Bytes =
     dataItem match {
