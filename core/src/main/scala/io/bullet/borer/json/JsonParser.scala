@@ -55,16 +55,16 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
   private[this] var state: Int         = EXPECT_VALUE
   private[this] var auxInt: Int        = _
   private[this] var auxLong: Long      = _
-
-  private[this] var level: Int = _ // valid range: 0..64
+  private[this] var valueCursor: Long  = _
+  private[this] var level: Int         = _ // valid range: 0..64
 
   // keeps the type of each level as a bit map: 0 -> Array, 1 -> Map
   // the current level is always the LSB (bit 0)
   private[this] var levelType: Long = _
 
-  private[this] var lastCursorPlusOne: Long = _
+  private[this] var nextChar: Int = nextCharAfterWhitespace()
 
-  def lastCursor: Long = lastCursorPlusOne - 1
+  def valueIndex: Long = valueCursor - 1
 
   /**
     * Reads the next data item from the input and sends it to the given [[Receiver]].
@@ -438,8 +438,8 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
       if (level < 64) {
         levelType <<= 1
         level += 1
-        receiver.onArrayStart()
         state = EXPECT_ARRAY_VALUE_OR_BREAK
+        receiver.onArrayStart()
         DataItem.ArrayStart
       } else failOverflow(0, "This JSON parser does not support more than 64 Array/Object nesting levels")
 
@@ -447,8 +447,8 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
       if (level < 64) {
         levelType = (levelType << 1) | 1
         level += 1
-        receiver.onMapStart()
         state = EXPECT_MAP_KEY_OR_BREAK
+        receiver.onMapStart()
         DataItem.MapStart
       } else failOverflow(0, "This JSON parser does not support more than 64 Array/Object nesting levels")
 
@@ -456,13 +456,13 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
       level -= 1
       levelType >>>= 1
       state = if (level > 0) (levelType.toInt & 1) << 1 else EXPECT_END_OF_INPUT
-      markCursorForValue()
+      saveValueCursor()
       receiver.onBreak()
       DataItem.Break
     }
 
     def parseValue(c: Int): Int = {
-      markCursorForValue()
+      saveValueCursor()
       (TokenTable(c): @switch) match {
         case DQUOTE      => parseUtf8String(0, ',')
         case MAP_START   => pushMap()
@@ -493,7 +493,7 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
 
     def parseMapKey(c: Int): Int = {
       state = EXPECT_COLON_AND_MAP_VALUE
-      markCursorForValue()
+      saveValueCursor()
       if (c == '"') parseUtf8String(0, ':')
       else failSyntaxError(-1, "'\"'", c)
     }
@@ -515,20 +515,20 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
       if (c != '}') {
         if (c == '"') {
           state = EXPECT_COLON_AND_MAP_VALUE
-          markCursorForValue()
+          saveValueCursor()
           parseUtf8String(0, ':')
         } else failSyntaxError(-1, "JSON object member or '}'", c)
       } else popLevel()
 
     def parseEndOfInput(c: Int): Int =
       if (c == EOI) {
-        markCursorForValue()
+        saveValueCursor()
         receiver.onEndOfInput()
         DataItem.EndOfInput
       } else failSyntaxError(-1, "end of input", c)
 
-    val c = nextCharAfterWhitespace()
-    (state: @switch) match {
+    val c = nextChar
+    val result = (state: @switch) match {
       case EXPECT_COMMA_AND_ARRAY_VALUE_OR_BREAK => parseCommaAndArrayValueOrBreak(c)
       case EXPECT_ARRAY_VALUE                    => parseArrayValue(c)
       case EXPECT_COMMA_AND_MAP_KEY_OR_BREAK     => parseCommaAndMapKeyOrBreak(c)
@@ -541,6 +541,8 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
       case ILLEGAL_CHAR                          => failSyntaxError(0)
       case EXPECT_END_OF_INPUT                   => parseEndOfInput(c)
     }
+    nextChar = nextCharAfterWhitespace()
+    result
   }
 
   private def nextCharAfterWhitespace(): Int = {
@@ -603,7 +605,7 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
     throw new Borer.Error.InvalidInputData(pos(offset), expected, actualChar)
   }
 
-  private def markCursorForValue(): Unit = lastCursorPlusOne = input.cursor
+  @inline private def saveValueCursor(): Unit = valueCursor = input.cursor
 
   private def pos(offset: Int) = input.position(input.cursor + offset.toLong)
 }

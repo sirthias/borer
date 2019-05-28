@@ -21,9 +21,9 @@ import scala.annotation.switch
 final private[borer] class CborParser[In <: Input](val input: In, config: CborParser.Config)
     extends Receiver.Parser[In] {
 
-  private[this] var _lastCursor: Long = _
+  private[this] var _valueIndex: Long = _
 
-  def lastCursor: Long = _lastCursor
+  def valueIndex: Long = _valueIndex
 
   /**
     * Reads the next data item from the input and sends it to the given [[Receiver]].
@@ -162,7 +162,7 @@ final private[borer] class CborParser[In <: Input](val input: In, config: CborPa
           } else failUnsupported(s"CBOR major type 7 code $x is unsupported by this decoder")
       }
 
-    _lastCursor = input.cursor
+    _valueIndex = input.cursor
     if (input.prepareRead(1)) {
       val byte      = input.readByte()
       val majorType = byte << 24 >>> 29
@@ -210,7 +210,7 @@ final private[borer] class CborParser[In <: Input](val input: In, config: CborPa
   private def failOverflow(msg: String)           = throw new Borer.Error.Overflow(lastPos, msg)
   private def failUnsupported(msg: String)        = throw new Borer.Error.Unsupported(lastPos, msg)
 
-  private def lastPos = input.position(_lastCursor)
+  private def lastPos = input.position(_valueIndex)
 }
 
 object CborParser {

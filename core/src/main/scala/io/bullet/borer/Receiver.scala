@@ -71,7 +71,7 @@ object Receiver {
     /**
       * The index of the first byte of the value that was produced by the last call to `pull`.
       */
-    def lastCursor: Long
+    def valueIndex: Long
 
     /**
       * Reads the next data item from the input and sends it to the given [[Receiver]].

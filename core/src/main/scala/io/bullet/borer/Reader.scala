@@ -42,7 +42,7 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
   @inline def readingCbor: Boolean = target eq Cbor
 
   @inline def input: In             = parser.input
-  @inline def cursor: Long          = parser.lastCursor
+  @inline def cursor: Long          = parser.valueIndex
   @inline def position: In#Position = input.position(cursor)
 
   /**
