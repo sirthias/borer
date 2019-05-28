@@ -127,7 +127,6 @@ val `scodec-bits`      = Def.setting("org.scodec"            %%% "scodec-bits"  
 val utest              = Def.setting("com.lihaoyi"           %%% "utest"               % "0.6.7"            % "test")
 val `scala-compiler`   = Def.setting("org.scala-lang"        %  "scala-compiler"       % scalaVersion.value % "provided")
 val `scala-reflect`    = Def.setting("org.scala-lang"        %  "scala-reflect"        % scalaVersion.value % "provided")
-val `javax-annotation` = Def.setting("javax.annotation"      %  "javax.annotation-api" % "1.3.2"            % "test")
 
 /////////////////////// PROJECTS /////////////////////////
 
@@ -135,7 +134,6 @@ lazy val borer = project.in(file("."))
   .aggregate(coreJVM, coreJS)
   .aggregate(akka)
   .aggregate(scodecJVM, scodecJS)
-  .aggregate(magnoliaJVM, magnoliaJS)
   .aggregate(derivationJVM, derivationJS)
   .aggregate(benchmarks)
   .settings(commonSettings)
@@ -209,27 +207,6 @@ lazy val derivation = crossProject(JSPlatform, JVMPlatform)
   .settings(
     moduleName := "borer-derivation",
     libraryDependencies ++= Seq(`scala-compiler`.value, `scala-reflect`.value, utest.value),
-  )
-  .jsSettings(scalajsSettings: _*)
-
-lazy val magnoliaJVM = magnolia.jvm.dependsOn(coreJVM % "test->compile")
-lazy val magnoliaJS  = magnolia.js.dependsOn(coreJS % "test->compile")
-lazy val magnolia = crossProject(JSPlatform, JVMPlatform)
-  .withoutSuffixFor(JVMPlatform)
-  .crossType(CrossType.Pure)
-  .settings(crossSettings)
-  .settings(commonSettings)
-  .settings(publishingSettings)
-  .settings(releaseSettings)
-  .settings(
-    moduleName := "borer-magnolia",
-    macroParadise,
-    libraryDependencies ++= Seq(
-      `scala-compiler`.value,
-      `scala-reflect`.value,
-      utest.value,
-      `javax-annotation`.value
-    )
   )
   .jsSettings(scalajsSettings: _*)
 
