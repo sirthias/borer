@@ -129,6 +129,18 @@ final class Writer(receiver: Receiver, val target: Target, config: Writer.Config
       writeBreak()
     } else writeEmptyArray()
 
+  def writeBytesIterator[Bytes: ByteAccess](iterator: Iterator[Bytes]): this.type = {
+    writeBytesStart()
+    while (iterator.hasNext) writeBytes(iterator.next())
+    writeBreak()
+  }
+
+  def writeStringIterator(iterator: Iterator[String]): this.type = {
+    writeTextStart()
+    while (iterator.hasNext) writeString(iterator.next())
+    writeBreak()
+  }
+
   def writeMap[A: Encoder, B: Encoder](x: Map[A, B]): this.type = {
     val iterator = x.iterator
     def writeEntries(): Unit =

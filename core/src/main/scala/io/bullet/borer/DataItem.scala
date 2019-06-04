@@ -70,7 +70,7 @@ object DataItem {
   //////////////////////////////// COMPOUND ////////////////////////////////
 
   final val None        = 0
-  final val Complex     = ArrayHeader | ArrayStart | MapHeader | MapStart
+  final val Complex     = ArrayHeader | ArrayStart | MapHeader | MapStart | BytesStart | TextStart
   final val AllButBreak = ((EndOfInput << 1) - 1) & ~Break
 
   //////////////////////////////////////////////////////////////////////////

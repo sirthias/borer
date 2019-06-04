@@ -46,14 +46,14 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
   @inline def position: In#Position = input.position(cursor)
 
   /**
-    * Checks whether this [[Reader]] currently has a data item of the given type.
+    * Checks whether the next data item is of the given type.
     *
     * Example: reader.has(DataItem.Int)
     */
   @inline def has(item: Int): Boolean = dataItem == item
 
   /**
-    * Checks whether this [[Reader]] currently has any of the data items masked in the given bit mask.
+    * Checks whether the next data item type is masked in the given bit mask.
     *
     * Example: reader.hasAnyOf(DataItem.Int | DataItem.Float)
     */
@@ -71,9 +71,8 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
 
   def readBoolean(): Boolean =
     if (hasBoolean) {
-      val result = receptacle.boolValue
       clearDataItem()
-      result
+      receptacle.boolValue
     } else unexpectedDataItem(expected = "Bool")
   @inline def hasBoolean: Boolean                     = has(DI.Boolean)
   @inline def hasBoolean(value: Boolean): Boolean     = hasBoolean && receptacle.boolValue == value
@@ -81,9 +80,8 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
 
   def readChar(): Char =
     if (hasChar) {
-      val result = receptacle.intValue.toChar
       clearDataItem()
-      result
+      receptacle.intValue.toChar
     } else unexpectedDataItem(expected = "Char")
   @inline def hasChar: Boolean                  = hasInt && Util.isChar(receptacle.intValue)
   @inline def hasChar(value: Char): Boolean     = hasChar && receptacle.intValue == value.toInt
@@ -91,9 +89,8 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
 
   def readByte(): Byte =
     if (hasByte) {
-      val result = receptacle.intValue.toByte
       clearDataItem()
-      result
+      receptacle.intValue.toByte
     } else unexpectedDataItem(expected = "Byte")
   @inline def hasByte: Boolean                  = hasInt && Util.isByte(receptacle.intValue)
   @inline def hasByte(value: Byte): Boolean     = hasByte && receptacle.intValue == value.toInt
@@ -101,9 +98,8 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
 
   def readShort(): Short =
     if (hasShort) {
-      val result = receptacle.intValue.toShort
       clearDataItem()
-      result
+      receptacle.intValue.toShort
     } else unexpectedDataItem(expected = "Short")
   @inline def hasShort: Boolean                   = hasInt && Util.isShort(receptacle.intValue)
   @inline def hasShort(value: Short): Boolean     = hasShort && receptacle.intValue == value.toInt
@@ -111,9 +107,8 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
 
   def readInt(): Int =
     if (hasInt) {
-      val result = receptacle.intValue
       clearDataItem()
-      result
+      receptacle.intValue
     } else unexpectedDataItem(expected = "Int")
   @inline def hasInt: Boolean                 = has(DI.Int)
   @inline def hasInt(value: Int): Boolean     = hasInt && receptacle.intValue == value
@@ -152,9 +147,8 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
 
   def readOverLong(): Long =
     if (hasOverLong) {
-      val result = receptacle.longValue
       clearDataItem()
-      result
+      receptacle.longValue
     } else unexpectedDataItem(expected = "OverLong")
   @inline def hasOverLong: Boolean                  = has(DI.OverLong)
   @inline def hasOverLong(value: Long): Boolean     = hasOverLong && receptacle.longValue == value
@@ -165,9 +159,8 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
 
   def readFloat16(): Float =
     if (hasFloat16) {
-      val result = receptacle.floatValue
       clearDataItem()
-      result
+      receptacle.floatValue
     } else unexpectedDataItem(expected = "Float16")
   @inline def hasFloat16: Boolean                   = has(DI.Float16)
   @inline def hasFloat16(value: Float): Boolean     = hasFloat16 && receptacle.floatValue == value
@@ -241,12 +234,19 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
   @inline def tryReadBytesStart(): Boolean = clearIfTrue(hasBytesStart)
 
   def readUnsizedBytes[Bytes]()(implicit byteAccess: ByteAccess[Bytes]): Bytes =
+    if (hasUnsizedBytes) bufferUnsizedBytes().readSizedBytes()
+    else unexpectedDataItem(expected = "Unbounded Bytes")
+  @inline def hasUnsizedBytes: Boolean = hasBytesStart
+
+  def bufferUnsizedBytes[Bytes]()(implicit byteAccess: ByteAccess[Bytes]): this.type = {
     if (tryReadBytesStart()) {
       var result = byteAccess.empty
       while (!tryReadBreak()) result = byteAccess.concat(result, readBytes())
-      result
-    } else unexpectedDataItem(expected = "Unbounded Bytes")
-  @inline def hasUnsizedBytes: Boolean = hasBytesStart
+      receptacle.onBytes(result)
+      _dataItem = DI.Bytes
+    }
+    this
+  }
 
   def readString(): String =
     dataItem match {
@@ -260,9 +260,9 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
   @inline def hasString: Boolean       = hasAnyOf(DI.String | DI.Chars | DI.Text | DI.TextStart)
 
   /**
-    * Tests the current data item for equality with the given [[String]].
-    * NOTE: This method never advances the cursor and therefore does not work for `TextStart` data items,
-    * i.e. unsized text bytes!
+    * Tests the next data item for equality with the given [[String]].
+    * NOTE: This method causes unsized text bytes (i.e. text streams) to be buffered and converted
+    *       into to a sized text data item!
     */
   @inline def hasString(value: String): Boolean =
     dataItem match {
@@ -273,12 +273,14 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
         len == value.length && rec(receptacle.charBufValue, 0)
       case DI.String => receptacle.stringValue == value
       case DI.Text   => receptacle.stringCompareBytes(value) == 0
-      case _         => false
+      case DI.TextStart => bufferUnsizedTextBytes[Array[Byte]]().hasString(value)
+      case _            => false
     }
 
   /**
-    * Tests the current data item for equality with the given [[String]] and advances the cursor if so.
-    * NOTE: This method does not recognize `TextStart` data items, i.e. unsized text bytes!
+    * Tests the next data item for equality with the given [[String]] and advances the cursor if so.
+    * NOTE: This method causes unsized text bytes (i.e. text streams) to be buffered and converted
+    *       into to a sized text data item!
     */
   @inline def tryReadString(value: String): Boolean = clearIfTrue(hasString(value))
 
@@ -289,7 +291,8 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
     * - zero if the next data item is a string that compares as '==' to `value`
     * - a positive value if the next data item is a string that compares as '>' to `value`
     *
-    * NOTE: This method does not recognize `TextStart` data items, i.e. unsized text bytes!
+    * NOTE: This method causes unsized text bytes (i.e. text streams) to be buffered and converted
+    *       into to a sized text data item!
     */
   def stringCompare(value: String): Int =
     dataItem match {
@@ -303,7 +306,8 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
         rec(receptacle.charBufValue, 0)
       case DI.String => receptacle.stringValue.compareTo(value)
       case DI.Text   => receptacle.stringCompareBytes(value)
-      case _         => Int.MinValue
+      case DI.TextStart => bufferUnsizedTextBytes[Array[Byte]]().stringCompare(value)
+      case _            => Int.MinValue
     }
 
   def tryReadStringCompare(value: String): Int = {
@@ -331,12 +335,19 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
   @inline def tryReadTextStart(): Boolean = clearIfTrue(hasTextStart)
 
   def readUnsizedTextBytes[Bytes]()(implicit byteAccess: ByteAccess[Bytes]): Bytes =
+    if (hasUnsizedTextBytes) bufferUnsizedTextBytes().readSizedTextBytes()
+    else unexpectedDataItem(expected = "Unbounded Text Bytes")
+  @inline def hasUnsizedTextBytes: Boolean = hasTextStart
+
+  def bufferUnsizedTextBytes[Bytes]()(implicit byteAccess: ByteAccess[Bytes]): this.type = {
     if (tryReadTextStart()) {
       var result = byteAccess.empty
       while (!tryReadBreak()) result = byteAccess.concat(result, readTextBytes())
-      result
-    } else unexpectedDataItem(expected = "Unbounded Text Bytes")
-  @inline def hasUnsizedTextBytes: Boolean = hasTextStart
+      receptacle.onText(result)
+      _dataItem = DI.Text
+    }
+    this
+  }
 
   def readArrayHeader(): Long =
     if (hasArrayHeader) {
@@ -427,7 +438,8 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
     * but only the starting data item! Use `skipElement` instead if you also want to skip complex elements!
     */
   def skipDataItem(): this.type = {
-    clearDataItem()
+    if (_dataItem == DataItem.None) parser.readNextDataItem(receiver)
+    else clearDataItem()
     this
   }
 
@@ -435,37 +447,46 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
     * Moves the cursor beyond the current data element,
     * thereby also skipping complex, potentially nested array or map structures.
     */
-  def skipElement(): this.type =
-    if (hasAnyOf(DI.Complex)) {
-      // for simplicity we go for stack-based recursion here
-      // if this ever becomes a problem we can upgrade to more costly heap-based recursion instead
-      def skipComplex(level: Int): this.type = {
-        @tailrec def skipN(remaining: Long): this.type =
-          if (remaining > 0) {
-            if (hasAnyOf(DI.Complex)) skipComplex(level + 1) else clearDataItem()
-            skipN(remaining - 1)
-          } else this
+  def skipElement(): this.type = {
 
-        @tailrec def skipUntilBreak(): this.type =
-          if (!tryReadBreak()) {
-            if (hasAnyOf(DI.Complex)) skipComplex(level + 1) else clearDataItem()
-            skipUntilBreak()
-          } else this
+    // for simplicity we go for stack-based recursion here
+    // if this ever becomes a problem we can upgrade to more costly heap-based recursion instead
+    def skipComplex(level: Int): this.type = {
+      @tailrec def skipN(remaining: Long): this.type =
+        if (remaining > 0) {
+          if (hasAnyOf(DI.Complex)) skipComplex(level + 1) else clearDataItem()
+          skipN(remaining - 1)
+        } else this
 
-        if (level == 100) overflow("Structures more than 100 levels deep cannot be skipped") // TODO: make configurable
+      @tailrec def skipUntilBreak(): this.type =
+        if (!tryReadBreak()) {
+          if (hasAnyOf(DI.Complex)) skipComplex(level + 1) else clearDataItem()
+          skipUntilBreak()
+        } else this
+
+      if (level < 100) {
         dataItem match {
           case DI.ArrayHeader => skipN(readArrayHeader())
           case DI.MapHeader =>
             val elemsToSkip = readMapHeader() << 1
             if (elemsToSkip >= 0) skipN(elemsToSkip)
             else overflow("Maps with more than 2^62 elements cannot be skipped")
-          case DI.ArrayStart | DI.MapStart =>
+          case _ =>
             clearDataItem()
             skipUntilBreak()
         }
-      }
+      } else overflow("Structures more than 100 levels deep cannot be skipped") // TODO: make configurable
+    }
+
+    if (hasAnyOf(DI.Complex)) {
       skipComplex(0)
-    } else skipDataItem()
+    } else {
+      clearDataItem()
+      this
+    }
+  }
+
+  def skipTwoElements(): this.type = skipElement().skipElement()
 
   def readArrayOpen(arity: Int): Boolean =
     tryReadArrayStart() || { readArrayHeader(arity); false }
@@ -474,15 +495,6 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
     if (unbounded) readBreak()
     value
   }
-
-  @inline private def clearDataItem(): Unit = _dataItem = DataItem.None
-
-  @inline private def ret[T](value: T): T = {
-    clearDataItem()
-    value
-  }
-
-  @inline private def clearIfTrue(value: Boolean): Boolean = value && { clearDataItem(); true }
 
   @inline def validationFailure(msg: String): Nothing = throw new Borer.Error.ValidationFailure(position, msg)
 
@@ -503,6 +515,15 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
 
   @inline private def stringOf(bytes: Array[Byte]): String =
     if (bytes.length > 0) new String(bytes, StandardCharsets.UTF_8) else ""
+
+  @inline private def clearDataItem(): Unit = _dataItem = DataItem.None
+
+  @inline private def ret[T](value: T): T = {
+    clearDataItem()
+    value
+  }
+
+  @inline private def clearIfTrue(value: Boolean): Boolean = value && { clearDataItem(); true }
 }
 
 object Reader {
