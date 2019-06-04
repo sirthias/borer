@@ -25,7 +25,7 @@ final private[borer] class Receptacle extends Receiver with java.lang.Cloneable 
   private[this] var _double: Double = _
   private[this] var _obj: Any       = _
 
-  private[this] var _bytesAccess: ByteAccess[Any] = _
+  private[this] var _byteAccess: ByteAccess[Any] = _
 
   @inline def boolValue: Boolean        = _bool
   @inline def intValue: Int             = _int
@@ -37,11 +37,11 @@ final private[borer] class Receptacle extends Receiver with java.lang.Cloneable 
   @inline def tagValue: Tag             = _obj.asInstanceOf[Tag]
 
   @inline def getBytes[Bytes](implicit byteAccess: ByteAccess[Bytes]): Bytes =
-    byteAccess.convert(_obj)(_bytesAccess)
+    byteAccess.convert(_obj)(_byteAccess)
 
   @inline def stringCompareBytes(string: String): Int = {
     def failIllegalArg(msg: String) = throw new IllegalArgumentException(msg)
-    val input                       = _bytesAccess.inputFrom(_obj)
+    val input                       = _byteAccess.inputFrom(_obj)
 
     @tailrec def rec(stringIx: Int): Int =
       if (stringIx < string.length) {
@@ -96,7 +96,7 @@ final private[borer] class Receptacle extends Receiver with java.lang.Cloneable 
 
   def onBytes[Bytes](value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Unit = {
     _obj = value
-    _bytesAccess = byteAccess.asInstanceOf[ByteAccess[Any]]
+    _byteAccess = byteAccess.asInstanceOf[ByteAccess[Any]]
   }
 
   def onBytesStart(): Unit = ()
@@ -110,7 +110,7 @@ final private[borer] class Receptacle extends Receiver with java.lang.Cloneable 
 
   def onText[Bytes](value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Unit = {
     _obj = value
-    _bytesAccess = byteAccess.asInstanceOf[ByteAccess[Any]]
+    _byteAccess = byteAccess.asInstanceOf[ByteAccess[Any]]
   }
 
   def onTextStart(): Unit = ()

@@ -189,7 +189,7 @@ final private[borer] class CborParser[In <: Input](val input: In, config: CborPa
           case 28 | 29 | 30 => failInvalidInput(s"Additional info `$info` is invalid (major type `$majorType`)")
         }
 
-      (majorType: @switch) match {
+      val result = (majorType: @switch) match {
         case 0 => decodePositiveInteger(uLong)
         case 1 => decodeNegativeInteger(uLong)
         case 2 => decodeByteString(uLong, info == 31)
@@ -199,6 +199,8 @@ final private[borer] class CborParser[In <: Input](val input: In, config: CborPa
         case 6 => decodeTag(uLong)
         case 7 => decodeExtra(info, uLong)
       }
+      input.releaseBeforeCursor()
+      result
     } else {
       receiver.onEndOfInput()
       DataItem.EndOfInput

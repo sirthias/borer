@@ -399,7 +399,7 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
       // mask '\' characters: only '\' and 0xAF become 0x80, all others become < 0x80
       val bMask = (octa7bit ^ 0X2323232323232323L) + 0X0101010101010101L
 
-      // mask ctrl characters (0 - 0x1F): only ctrl chars and 8-bit chars get their high-bit set
+      // mask ctrl characters (0 - 0x1F): only ctrl chars and 0xA0 - 0xFF get their high-bit set
       var mask = (octa | 0X1F1F1F1F1F1F1F1FL) - 0X2020202020202020L
 
       // the special chars '"', '\', 8-bit (> 127) and ctrl chars become 0x80, all normal chars zero
@@ -528,7 +528,7 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
       } else failSyntaxError("end of input")
 
     valueCursor = input.cursor
-    (state: @switch) match {
+    val result = (state: @switch) match {
       case EXPECT_ARRAY_VALUE  => parseValue(EXPECT_ARRAY_VALUE, EXPECT_ARRAY_BREAK)
       case EXPECT_MAP_KEY      => parseMapKey()
       case EXPECT_ARRAY_BREAK  => parseArrayBreak()
@@ -536,8 +536,10 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
       case EXPECT_MAP_VALUE    => parseValue(EXPECT_MAP_KEY, EXPECT_MAP_BREAK)
       case EXPECT_VALUE        => parseValue(ILLEGAL_CHAR, EXPECT_END_OF_INPUT)
       case EXPECT_END_OF_INPUT => parseEndOfInput()
-      case ILLEGAL_CHAR        => failSyntaxError(-2, "End of Input")
+      case _                   => failSyntaxError(-2, "End of Input")
     }
+    input.releaseBeforeCursor()
+    result
   }
 
   @inline private def fetchNextChar(): Unit = nextChar = nextCharAfterWhitespace()
