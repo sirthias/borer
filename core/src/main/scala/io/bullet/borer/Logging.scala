@@ -69,7 +69,7 @@ object Logging {
     def onBytes[Bytes: ByteAccess](value: Bytes): Unit
     def onBytesStart(): Unit
     def onString(value: String): Unit
-    def onChars(length: Int, buffer: Array[Char]): Unit
+    def onChars(buffer: Array[Char], length: Int): Unit
     def onText[Bytes: ByteAccess](value: Bytes): Unit
     def onTextStart(): Unit
     def onArrayHeader(length: Long): Unit
@@ -102,7 +102,7 @@ object Logging {
     def onBytes[Bytes: ByteAccess](value: Bytes): Unit   = show(formatBytes("BYTES[", value))
     def onBytesStart(): Unit                             = show("BYTES-STREAM[")
     def onString(value: String): Unit                    = show(formatString(value))
-    def onChars(length: Int, buffer: Array[Char]): Unit  = show(formatString(new String(buffer, 0, length)))
+    def onChars(buffer: Array[Char], length: Int): Unit  = show(formatString(new String(buffer, 0, length)))
     def onText[Bytes: ByteAccess](value: Bytes): Unit    = show(formatString(value))
     def onTextStart(): Unit                              = show("TEXT-STREAM[")
     def onArrayHeader(length: Long): Unit                = show(if (length > 0) "[" else "[]")
@@ -324,10 +324,10 @@ object Logging {
       target.onString(value)
     }
 
-    def onChars(length: Int, buffer: Array[Char]): Unit = {
-      logger.onChars(length, buffer)
+    def onChars(buffer: Array[Char], length: Int): Unit = {
+      logger.onChars(buffer, length)
       count()
-      target.onChars(length, buffer)
+      target.onChars(buffer, length)
     }
 
     def onText[Bytes: ByteAccess](value: Bytes): Unit = {

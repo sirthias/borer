@@ -85,7 +85,7 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
         nextChar = nextCharAfterWhitespace(quad & 0xFF)
         receiver.onNull()
         DataItem.Null
-      } else failSyntaxError(-4, "`null`")
+      } else failSyntaxError(-5, "`null`")
     }
 
     @inline def parseFalse(): Int =
@@ -93,7 +93,7 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
         fetchNextChar()
         receiver.onBoolean(value = false)
         DataItem.Boolean
-      } else failSyntaxError(-5, "`false`")
+      } else failSyntaxError(-6, "`false`")
 
     @inline def parseTrue(): Int = {
       val quad = input.readQuadByteBigEndianPaddedFF()
@@ -101,7 +101,7 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
         nextChar = nextCharAfterWhitespace(quad & 0xFF)
         receiver.onBoolean(value = true)
         DataItem.Boolean
-      } else failSyntaxError(-4, "`true`")
+      } else failSyntaxError(-5, "`true`")
     }
 
     def parseNumberStringExponentPart(len: Int): Int = {
@@ -431,7 +431,7 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
             input.moveCursor(-1)
             nextCharAfterWhitespace()
           } else c.toInt
-          receiver.onChars(newCursor, chars)
+          receiver.onChars(chars, newCursor)
           DataItem.Chars
         } else if (stopChar == '\\') {
           input.moveCursor(-1)

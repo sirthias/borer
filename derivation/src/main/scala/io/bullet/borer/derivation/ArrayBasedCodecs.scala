@@ -102,13 +102,13 @@ object ArrayBasedCodecs {
             if (start < end) {
               val mid           = (start + end) >> 1
               val (typeId, sub) = typeIdsAndSubTypes(mid)
-              q"""val cmp = ${r("tryRead", typeId, "Compare")}
+              val cmp           = r("tryRead", typeId, "Compare")
+              if (start < mid) {
+                q"""val cmp = $cmp
                   if (cmp < 0) ${rec(start, mid)}
                   else if (cmp > 0) ${rec(mid + 1, end)}
                   else r.read[${sub.tpe}]()"""
-            } else if (start < typeIdsAndSubTypes.length) {
-              val (typeId, sub) = typeIdsAndSubTypes(start)
-              q"if (${r("tryRead", typeId)}) r.read[${sub.tpe}]() else fail()"
+              } else q"if ($cmp == 0) r.read[${sub.tpe}]() else fail()"
             } else q"fail()"
 
           val readTypeIdAndValue = rec(0, typeIdsAndSubTypes.length)

@@ -141,10 +141,10 @@ object CborValidation {
       _target.onString(value)
     }
 
-    def onChars(length: Int, buffer: Array[Char]): Unit = {
+    def onChars(buffer: Array[Char], length: Int): Unit = {
       checkAllowed(DI.Chars)
       count()
-      _target.onChars(length, buffer)
+      _target.onChars(buffer, length)
     }
 
     def onText[Bytes: ByteAccess](value: Bytes): Unit = {

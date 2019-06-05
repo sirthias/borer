@@ -111,12 +111,6 @@ object MapBasedCodecs {
           if (constructorIsPrivate)
             error(s"Cannot derive Decoder[$tpe] because the primary constructor of `$tpe` is private")
 
-          val arity         = params.size
-          val keysAndParams = new Array[(Key, CaseParam)](arity)
-          params.foreach(p => keysAndParams(p.index) = p.key() -> p)
-          val keysAndParamsSorted = keysAndParams.clone()
-          java.util.Arrays.sort(keysAndParamsSorted.asInstanceOf[Array[Object]], KeyPairOrdering)
-
           def decName(p: CaseParam) = TermName(s"d${p.index}")
           def varName(p: CaseParam) = TermName(s"p${p.index}")
           def expected(s: String)   = s"$s for decoding an instance of type `$tpe`"
@@ -125,6 +119,12 @@ object MapBasedCodecs {
             val tpe = p.paramType.tpe
             if (isBasicType(tpe)) q"r.${TermName(s"read$tpe")}()" else q"r.read[$tpe]()(${decName(p)})"
           }
+
+          val arity         = params.size
+          val keysAndParams = new Array[(Key, CaseParam)](arity)
+          params.foreach(p => keysAndParams(p.index) = p.key() -> p)
+          val keysAndParamsSorted = keysAndParams.clone()
+          java.util.Arrays.sort(keysAndParamsSorted.asInstanceOf[Array[Object]], KeyPairOrdering)
 
           val nonBasicParams = params.filterNot(_.isBasicType)
           val fieldDecDefs = nonBasicParams.map { p =>
@@ -181,28 +181,24 @@ object MapBasedCodecs {
           }(collection.breakOut)
 
           def readFields(start: Int, end: Int): Tree =
-            if (start < arity) {
-              def readAndAssign(key: Key, p: CaseParam) =
+            if (start < end) {
+              val mid        = (start + end) >> 1
+              val (key, p)   = keysAndParamsSorted(mid)
+              val methodName = TermName(s"readFields_${start}_$end")
+              val onMatch =
                 q"""if (${maskBitSet(p)}) failDuplicate(${literal(key.value)})
                     ${varName(p)} = ${readField(p)}
                     ${setMaskBit(p)}"""
-              val body = {
-                if (start < end) {
-                  val mid      = (start + end) >> 1
-                  val (key, p) = keysAndParamsSorted(mid)
-                  q"""val cmp = ${r("tryRead", key, "Compare")}
+              if (start < mid) {
+                q"""def $methodName(): Unit = {
+                  val cmp = ${r("tryRead", key, "Compare")}
                   if (cmp < 0) ${readFields(start, mid)}
                   else if (cmp > 0) ${readFields(mid + 1, end)}
-                  else ${readAndAssign(key, p)}"""
-                } else {
-                  val (key, p) = keysAndParamsSorted(start)
-                  q"if (${r("tryRead", key)}) ${readAndAssign(key, p)} else skipEntry()"
+                  else $onMatch
                 }
-              }
-              val methodName = TermName(s"readFields_${start}_$end")
-              q"""def $methodName(): Unit = $body
-                  $methodName()"""
-            } else q"skipEntry()"
+                $methodName()"""
+              } else q"if (${r("tryRead", key, "Compare")} == 0) $onMatch else r.skipTwoElements()"
+            } else q"r.skipTwoElements()"
 
           val typeName    = tpe.typeSymbol.name.decodedName.toString
           val decoderName = TypeName(s"${typeName}Decoder")
@@ -245,7 +241,6 @@ object MapBasedCodecs {
                     throw new _root_.io.bullet.borer.Borer.Error.InvalidInputData(r.position,
                       StringContext("Duplicate map key `", ${expected("` encountered during")}).s(k))
                   $failMissingDef
-                  def skipEntry(): Unit = r.skipElement().skipElement()
                   def readObject(remaining: scala.Int): $tpe = {
                     var rem = remaining
                     ..$maskDef
@@ -253,7 +248,7 @@ object MapBasedCodecs {
                     while (rem > 0 || rem < 0 && !r.tryReadBreak()) {
                       if ($maskIncomplete) {
                         ..${readFields(0, arity)}
-                      } else skipEntry()
+                      } else r.skipTwoElements()
                       rem -= 1
                     }
                     $construct
@@ -284,13 +279,13 @@ object MapBasedCodecs {
             if (start < end) {
               val mid           = (start + end) >> 1
               val (typeId, sub) = typeIdsAndSubTypes(mid)
-              q"""val cmp = ${r("tryRead", typeId, "Compare")}
+              val cmp           = r("tryRead", typeId, "Compare")
+              if (start < mid) {
+                q"""val cmp = $cmp
                   if (cmp < 0) ${rec(start, mid)}
                   else if (cmp > 0) ${rec(mid + 1, end)}
                   else r.read[${sub.tpe}]()"""
-            } else if (start < typeIdsAndSubTypes.length) {
-              val (typeId, sub) = typeIdsAndSubTypes(start)
-              q"if (${r("tryRead", typeId)}) r.read[${sub.tpe}]() else fail()"
+              } else q"if ($cmp == 0) r.read[${sub.tpe}]() else fail()"
             } else q"fail()"
 
           def expected(s: String) = s"$s for decoding an instance of type `$tpe`"

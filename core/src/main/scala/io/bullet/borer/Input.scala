@@ -70,7 +70,7 @@ trait Input {
     * Returns the next byte if not out-of-range, otherwise the given `byte`.
     * Advances the cursor by 1, even if this means moving it beyond the end of the input.
     */
-  def readByteOr(byte: Byte): Byte
+  def readByteOrFF(): Byte
 
   /**
     * Returns the next two bytes as an unsigned 16-bit value,
@@ -86,7 +86,7 @@ trait Input {
     * If the input has less than 2 bytes left the missing bytes are filled with the given padding shifted right.
     * Advances the cursor by 2, even if this means moving it beyond the end of the input.
     */
-  def readDoubleByteBigEndianPadded(padding: Char): Char
+  def readDoubleByteBigEndianPaddedFF(): Char
 
   /**
     * Returns the next four bytes as an [[Int]],
@@ -102,7 +102,7 @@ trait Input {
     * If the input has less than 4 bytes left the missing bytes are filled with the given padding shifted right.
     * Advances the cursor by 4, even if this means moving it beyond the end of the input.
     */
-  def readQuadByteBigEndianPadded(padding: Int): Int
+  def readQuadByteBigEndianPaddedFF(): Int
 
   /**
     * Returns the eight eight bytes as a [[Long]],
@@ -118,7 +118,7 @@ trait Input {
     * If the input has less than 8 bytes left the missing bytes are filled with the given padding shifted right.
     * Advances the cursor by 8, even if this means moving it beyond the end of the input.
     */
-  def readOctaByteBigEndianPadded(padding: Long): Long
+  def readOctaByteBigEndianPaddedFF(): Long
 
   /**
     * Returns the next `length` bytes as [[Bytes]], if possible without any range checks.
@@ -138,29 +138,20 @@ object Input {
 
   implicit final class InputOps(val underlying: Input) extends AnyVal {
 
-    def readByteOrFF(): Byte = underlying.readByteOr(-1)
-    def readByteOr00(): Byte = underlying.readByteOr(0)
-
-    def readDoubleByteBigEndianPaddedFF(): Char = underlying.readDoubleByteBigEndianPadded('\uffff')
-    def readDoubleByteBigEndianPadded00(): Char = underlying.readDoubleByteBigEndianPadded('\u0000')
-
-    def readDoubleByteBigEndianPadded(remaining: Int, padding: Char): Char = {
-      val result = if (remaining < 1) padding else ((underlying.readByte() << 8) | (padding >> 8)).toChar
+    def readDoubleByteBigEndianPaddedFF(remaining: Int): Char = {
+      val result = if (remaining < 1) '\uffff' else ((underlying.readByte() << 8) | 0xFF).toChar
       underlying.moveCursor(2 - remaining)
       result
     }
 
-    def readQuadByteBigEndianPaddedFF(): Int = underlying.readQuadByteBigEndianPadded(-1)
-    def readQuadByteBigEndianPadded00(): Int = underlying.readQuadByteBigEndianPadded(0)
-
-    def readQuadByteBigEndianPadded(remaining: Int, padding: Int): Int = {
+    def readQuadByteBigEndianPaddedFF(remaining: Int): Int = {
       import underlying.{readByte => byte, readDoubleByteBigEndian => doub}
       // format: OFF
       val result = remaining match {
-        case 0 =>                                                   padding >>>  0
-        case 1 =>                         (byte().toInt   << 24) | (padding >>>  8)
-        case 2 => (doub().toInt << 16)                           | (padding >>> 16)
-        case 3 => (doub().toInt << 16) | ((byte() & 0xFF) <<  8) | (padding >>> 24)
+        case 0 =>                                                  0xFFFFFFFF
+        case 1 =>                         (byte().toInt   << 24) | 0xFFFFFF
+        case 2 => (doub().toInt << 16)                           | 0xFFFF
+        case 3 => (doub().toInt << 16) | ((byte() & 0xFF) <<  8) | 0xFF
         case _ => throw new IllegalStateException
       }
       // format: ON
@@ -168,21 +159,18 @@ object Input {
       result
     }
 
-    def readOctaByteBigEndianPaddedFF(): Long = underlying.readOctaByteBigEndianPadded(-1)
-    def readOctaByteBigEndianPadded00(): Long = underlying.readOctaByteBigEndianPadded(0)
-
-    def readOctaByteBigEndianPadded(remaining: Int, padding: Long): Long = {
+    def readOctaByteBigEndianPaddedFF(remaining: Int): Long = {
       import underlying.{readByte => byte, readDoubleByteBigEndian => doub, readQuadByteBigEndian => quad}
       // format: OFF
       val result = remaining match {
-        case 0 =>                                                                                  padding >>>  0
-        case 1 =>                                                      (byte().toLong    << 56) | (padding >>>  8)
-        case 2 =>                         (doub().toLong      << 48)                            | (padding >>> 16)
-        case 3 =>                         (doub().toLong      << 48) | ((byte() & 0XFFL) << 40) | (padding >>> 24)
-        case 4 => (quad().toLong << 32) |                                                         (padding >>> 32)
-        case 5 => (quad().toLong << 32) |                              ((byte() & 0XFFL) << 24) | (padding >>> 40)
-        case 6 => (quad().toLong << 32) | ((doub() & 0XFFFFL) << 16) |                            (padding >>> 48)
-        case 7 => (quad().toLong << 32) | ((doub() & 0XFFFFL) << 16) | ((byte() & 0XFFL) <<  8) | (padding >>> 56)
+        case 0 =>                                                                                 0XFFFFFFFFFFFFFFFFL
+        case 1 =>                                                      (byte().toLong    << 56) | 0XFFFFFFFFFFFFFFL
+        case 2 =>                         (doub().toLong      << 48)                            | 0XFFFFFFFFFFFFL
+        case 3 =>                         (doub().toLong      << 48) | ((byte() & 0XFFL) << 40) | 0XFFFFFFFFFFL
+        case 4 => (quad().toLong << 32) |                                                         0XFFFFFFFFL
+        case 5 => (quad().toLong << 32) |                              ((byte() & 0XFFL) << 24) | 0XFFFFFFL
+        case 6 => (quad().toLong << 32) | ((doub() & 0XFFFFL) << 16) |                            0XFFFFL
+        case 7 => (quad().toLong << 32) | ((doub() & 0XFFFFL) << 16) | ((byte() & 0XFFL) <<  8) | 0XFFL
         case _ => throw new IllegalStateException
       }
       // format: ON
@@ -271,10 +259,10 @@ object Input {
       byteArray(c)
     }
 
-    @inline def readByteOr(byte: Byte): Byte =
+    @inline def readByteOrFF(): Byte =
       if (_cursor >= byteArray.length) {
         _cursor += 1
-        byte
+        -1
       } else readByte()
 
     def readDoubleByteBigEndian(): Char = {
@@ -283,10 +271,10 @@ object Input {
       baa.doubleByteBigEndian(byteArray, c)
     }
 
-    @inline def readDoubleByteBigEndianPadded(padding: Char): Char = {
+    @inline def readDoubleByteBigEndianPaddedFF(): Char = {
       val remaining = byteArray.length - _cursor
       if (remaining >= 2) readDoubleByteBigEndian()
-      else readDoubleByteBigEndianPadded(remaining, padding)
+      else readDoubleByteBigEndianPaddedFF(remaining)
     }
 
     def readQuadByteBigEndian(): Int = {
@@ -295,10 +283,10 @@ object Input {
       baa.quadByteBigEndian(byteArray, c)
     }
 
-    @inline def readQuadByteBigEndianPadded(padding: Int): Int = {
+    @inline def readQuadByteBigEndianPaddedFF(): Int = {
       val remaining = byteArray.length - _cursor
       if (remaining >= 4) readQuadByteBigEndian()
-      else readQuadByteBigEndianPadded(remaining, padding)
+      else readQuadByteBigEndianPaddedFF(remaining)
     }
 
     def readOctaByteBigEndian(): Long = {
@@ -307,10 +295,10 @@ object Input {
       baa.octaByteBigEndian(byteArray, c)
     }
 
-    @inline def readOctaByteBigEndianPadded(padding: Long): Long = {
+    @inline def readOctaByteBigEndianPaddedFF(): Long = {
       val remaining = byteArray.length - _cursor
       if (remaining >= 8) readOctaByteBigEndian()
-      else readOctaByteBigEndianPadded(remaining, padding)
+      else readOctaByteBigEndianPaddedFF(remaining)
     }
 
     @inline def readBytes(length: Long): Bytes = {
@@ -381,34 +369,34 @@ object Input {
 
     def readByte(): Byte = buffer.get()
 
-    @inline def readByteOr(byte: Byte): Byte =
+    @inline def readByteOrFF(): Byte =
       if (!buffer.hasRemaining) {
         paddedCount += 1
-        byte
+        -1
       } else readByte()
 
     def readDoubleByteBigEndian(): Char = buffer.getChar
 
-    @inline def readDoubleByteBigEndianPadded(padding: Char): Char = {
+    @inline def readDoubleByteBigEndianPaddedFF(): Char = {
       val remaining = buffer.remaining
       if (remaining >= 2) readDoubleByteBigEndian()
-      else readDoubleByteBigEndianPadded(remaining, padding)
+      else readDoubleByteBigEndianPaddedFF(remaining)
     }
 
     def readQuadByteBigEndian(): Int = buffer.getInt()
 
-    @inline def readQuadByteBigEndianPadded(padding: Int): Int = {
+    @inline def readQuadByteBigEndianPaddedFF(): Int = {
       val remaining = buffer.remaining
       if (remaining >= 4) readQuadByteBigEndian()
-      else readQuadByteBigEndianPadded(remaining, padding)
+      else readQuadByteBigEndianPaddedFF(remaining)
     }
 
     def readOctaByteBigEndian(): Long = buffer.getLong()
 
-    @inline def readOctaByteBigEndianPadded(padding: Long): Long = {
+    @inline def readOctaByteBigEndianPaddedFF(): Long = {
       val remaining = buffer.remaining
       if (remaining >= 8) readOctaByteBigEndian()
-      else readOctaByteBigEndianPadded(remaining, padding)
+      else readOctaByteBigEndianPaddedFF(remaining)
     }
 
     @inline def readBytes(length: Long): Array[Byte] = {

@@ -19,7 +19,7 @@ object scodec {
   /**
     * [[ByteAccess]] for [[ByteVector]].
     */
-  implicit object ByteVectorByteAccess extends ByteAccess[ByteVector] {
+  implicit final object ByteVectorByteAccess extends ByteAccess[ByteVector] {
 
     type Out = ByteVectorOutput
 
@@ -68,7 +68,7 @@ object scodec {
   /**
     * [[Input]] around [[ByteVector]].
     */
-  implicit object ByteVectorWrapper extends Input.Wrapper[ByteVector] {
+  implicit final object ByteVectorWrapper extends Input.Wrapper[ByteVector] {
     type In = FromByteVector
     def apply(value: ByteVector) = new FromByteVector(value)
   }
@@ -81,6 +81,18 @@ object scodec {
 
     @inline def cursor: Long = _cursor
     @inline def byteAccess   = ByteVectorByteAccess
+
+    @inline def resetTo(cursor: Long) = {
+      _cursor = cursor
+      this
+    }
+
+    @inline def moveCursor(offset: Int): this.type = {
+      _cursor += offset
+      this
+    }
+
+    @inline def releaseBeforeCursor(): this.type = this
 
     def position(cursor: Long): Position = Input.Position(this, cursor)
 
@@ -107,15 +119,9 @@ object scodec {
     }
 
     @inline def readDoubleByteBigEndianPaddedFF(): Char = {
-      def readPadded(): Char = {
-        val c = _cursor
-        _cursor = c + 2
-        byteVector.length - c match {
-          case 1 => (byteVector(c) << 8 | 0xFF).toChar
-          case _ => '\uffff'
-        }
-      }
-      if (_cursor < byteVector.length - 1) readDoubleByteBigEndian() else readPadded()
+      val remaining = byteVector.length - _cursor
+      if (remaining >= 2) readDoubleByteBigEndian()
+      else readDoubleByteBigEndianPaddedFF(remaining.toInt)
     }
 
     def readQuadByteBigEndian(): Int = {
@@ -128,18 +134,9 @@ object scodec {
     }
 
     @inline def readQuadByteBigEndianPaddedFF(): Int = {
-      def readPadded(): Int = {
-        val c = _cursor
-        val res = byteVector.length - c match {
-          case 1 => readByte() << 24 | 0xFFFFFF
-          case 2 => readDoubleByteBigEndian() << 16 | 0xFFFF
-          case 3 => readDoubleByteBigEndian() << 16 | (readByte() & 0xFF) << 8 | 0xFF
-          case _ => -1
-        }
-        _cursor = c + 4
-        res
-      }
-      if (_cursor < byteVector.length - 3) readQuadByteBigEndian() else readPadded()
+      val remaining = byteVector.length - _cursor
+      if (remaining >= 4) readQuadByteBigEndian()
+      else readQuadByteBigEndianPaddedFF(remaining.toInt)
     }
 
     def readOctaByteBigEndian(): Long = {
@@ -156,23 +153,9 @@ object scodec {
     }
 
     @inline def readOctaByteBigEndianPaddedFF(): Long = {
-      def readPadded(): Long = {
-        val c = _cursor
-        val res = byteVector.length - c match {
-          case 1 => readByte().toLong << 56 | 0XFFFFFFFFFFFFFFL
-          case 2 => readDoubleByteBigEndian().toLong << 48 | 0XFFFFFFFFFFFFL
-          case 3 => readDoubleByteBigEndian().toLong << 48 | (readByte() & 0XFFL) << 40 | 0XFFFFFFFFFFL
-          case 4 => readQuadByteBigEndian().toLong << 32 | 0XFFFFFFFFL
-          case 5 => readQuadByteBigEndian().toLong << 32 | (readByte() & 0XFFL) << 24 | 0XFFFFFFL
-          case 6 => readQuadByteBigEndian().toLong << 32 | (readDoubleByteBigEndian() & 0XFFFFL) << 16 | 0XFFFFL
-          case 7 =>
-            readQuadByteBigEndian().toLong << 32 | (readDoubleByteBigEndian() & 0XFFFFL) << 16 | (readByte() & 0XFFL) << 8 | 0XFFL
-          case _ => -1
-        }
-        _cursor = c + 8
-        res
-      }
-      if (_cursor < byteVector.length - 7) readOctaByteBigEndian() else readPadded()
+      val remaining = byteVector.length - _cursor
+      if (remaining >= 8) readOctaByteBigEndian()
+      else readOctaByteBigEndianPaddedFF(remaining.toInt)
     }
 
     @inline def readBytes(length: Long): Bytes =
@@ -184,11 +167,6 @@ object scodec {
           byteVector.slice(c, end)
         } else throw new Borer.Error.Overflow(position(cursor), "ByteVector input is limited to size 2GB")
       } else ByteVector.empty
-
-    @inline def moveCursor(offset: Int): this.type = {
-      _cursor += offset
-      this
-    }
 
     @inline def precedingBytesAsAsciiString(length: Int): String = {
       val slice = byteVector.slice(_cursor - length, _cursor)

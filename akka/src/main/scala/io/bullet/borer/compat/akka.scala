@@ -11,8 +11,8 @@ package io.bullet.borer.compat
 import java.nio.charset.StandardCharsets
 import java.nio.ByteBuffer
 
-import io.bullet.borer.{ByteAccess, _}
 import _root_.akka.util.ByteString
+import io.bullet.borer.{ByteAccess, _}
 
 object akka {
 
@@ -82,12 +82,24 @@ object akka {
 
     protected var _cursor: Int = _
 
-    @inline def cursor: Long = _cursor.toLong
-    @inline def byteAccess   = ByteStringByteAccess
+    def cursor: Long = _cursor.toLong
+    def byteAccess   = ByteStringByteAccess
+
+    def resetTo(cursor: Long) = {
+      _cursor = cursor.toInt
+      this
+    }
+
+    def moveCursor(offset: Int): this.type = {
+      _cursor += offset
+      this
+    }
+
+    def releaseBeforeCursor(): this.type = this
 
     def position(cursor: Long): Position = Input.Position(this, cursor)
 
-    @inline def prepareRead(length: Long): Boolean = _cursor + length <= byteString.length
+    def prepareRead(length: Long): Boolean = _cursor + length <= byteString.length
 
     def readByte(): Byte = {
       val c = _cursor
@@ -95,7 +107,7 @@ object akka {
       byteString(c)
     }
 
-    @inline def readByteOrFF(): Byte = {
+    def readByteOrFF(): Byte = {
       def readPadded(): Byte = {
         _cursor += 1
         -1
@@ -109,16 +121,10 @@ object akka {
       ((byteString(c) << 8) | byteString(c + 1) & 0xFF).toChar
     }
 
-    @inline def readDoubleByteBigEndianPaddedFF(): Char = {
-      def readPadded(): Char = {
-        val c = _cursor
-        _cursor = c + 2
-        byteString.length - c match {
-          case 1 => (byteString(c) << 8 | 0xFF).toChar
-          case _ => '\uffff'
-        }
-      }
-      if (_cursor < byteString.length - 1) readDoubleByteBigEndian() else readPadded()
+    def readDoubleByteBigEndianPaddedFF(): Char = {
+      val remaining = byteString.length - _cursor
+      if (remaining >= 2) readDoubleByteBigEndian()
+      else readDoubleByteBigEndianPaddedFF(remaining)
     }
 
     def readQuadByteBigEndian(): Int = {
@@ -130,19 +136,10 @@ object akka {
       byteString(c + 3) & 0xFF
     }
 
-    @inline def readQuadByteBigEndianPaddedFF(): Int = {
-      def readPadded(): Int = {
-        val c = _cursor
-        val res = byteString.length - c match {
-          case 1 => readByte() << 24 | 0xFFFFFF
-          case 2 => readDoubleByteBigEndian() << 16 | 0xFFFF
-          case 3 => readDoubleByteBigEndian() << 16 | (readByte() & 0xFF) << 8 | 0xFF
-          case _ => -1
-        }
-        _cursor = c + 4
-        res
-      }
-      if (_cursor < byteString.length - 3) readQuadByteBigEndian() else readPadded()
+    def readQuadByteBigEndianPaddedFF(): Int = {
+      val remaining = byteString.length - _cursor
+      if (remaining >= 4) readQuadByteBigEndian()
+      else readQuadByteBigEndianPaddedFF(remaining)
     }
 
     def readOctaByteBigEndian(): Long = {
@@ -158,27 +155,13 @@ object akka {
       byteString(c + 7) & 0XFFL
     }
 
-    @inline def readOctaByteBigEndianPaddedFF(): Long = {
-      def readPadded(): Long = {
-        val c = _cursor
-        val res = byteString.length - c match {
-          case 1 => readByte().toLong << 56 | 0XFFFFFFFFFFFFFFL
-          case 2 => readDoubleByteBigEndian().toLong << 48 | 0XFFFFFFFFFFFFL
-          case 3 => readDoubleByteBigEndian().toLong << 48 | (readByte() & 0XFFL) << 40 | 0XFFFFFFFFFFL
-          case 4 => readQuadByteBigEndian().toLong << 32 | 0XFFFFFFFFL
-          case 5 => readQuadByteBigEndian().toLong << 32 | (readByte() & 0XFFL) << 24 | 0XFFFFFFL
-          case 6 => readQuadByteBigEndian().toLong << 32 | (readDoubleByteBigEndian() & 0XFFFFL) << 16 | 0XFFFFL
-          case 7 =>
-            readQuadByteBigEndian().toLong << 32 | (readDoubleByteBigEndian() & 0XFFFFL) << 16 | (readByte() & 0XFFL) << 8 | 0XFFL
-          case _ => -1
-        }
-        _cursor = c + 8
-        res
-      }
-      if (_cursor < byteString.length - 7) readOctaByteBigEndian() else readPadded()
+    def readOctaByteBigEndianPaddedFF(): Long = {
+      val remaining = byteString.length - _cursor
+      if (remaining >= 8) readOctaByteBigEndian()
+      else readOctaByteBigEndianPaddedFF(remaining)
     }
 
-    @inline def readBytes(length: Long): Bytes =
+    def readBytes(length: Long): Bytes =
       if (length > 0) {
         val len = length.toInt
         val end = _cursor + len
@@ -189,12 +172,7 @@ object akka {
         } else throw new Borer.Error.Overflow(position(cursor), "ByteString input is limited to size 2GB")
       } else ByteString.empty
 
-    @inline def moveCursor(offset: Int): this.type = {
-      _cursor += offset
-      this
-    }
-
-    @inline def precedingBytesAsAsciiString(length: Int): String =
+    def precedingBytesAsAsciiString(length: Int): String =
       byteString.slice(_cursor - length, _cursor).decodeString(StandardCharsets.ISO_8859_1)
   }
 

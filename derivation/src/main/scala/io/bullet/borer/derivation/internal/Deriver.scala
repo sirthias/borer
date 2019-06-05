@@ -41,7 +41,7 @@ abstract private[derivation] class Deriver[C <: blackbox.Context](val c: C) {
     def name: TermName = symbol.asTerm.name
   }
 
-  case class SubType(tpe: Type, annotations: List[Tree]) extends WithAnnotations {
+  case class SubType(tpe: Type, index: Int, annotations: List[Tree]) extends WithAnnotations {
     def name: TypeName = tpe.typeSymbol.asType.name
   }
 
@@ -130,15 +130,16 @@ abstract private[derivation] class Deriver[C <: blackbox.Context](val c: C) {
       val (abstractTypes, concreteTypes) = children.partition(_.isAbstract)
       abstractTypes.flatMap(x => knownSubclasses(x.asClass)) ::: concreteTypes
     }
-    val subtypes = knownSubclasses(typeSymbol).map { sub =>
-      val subType     = sub.asType.toType // FIXME: Broken for path dependent types
-      val typeParams  = sub.asType.typeParams
-      val typeArgs    = c.internal.thisType(sub).baseType(typeSymbol).typeArgs
-      val mapping     = typeArgs.map(_.typeSymbol).zip(tpe.typeArgs).toMap
-      val newTypeArgs = typeParams.map(mapping.withDefault(_.asType.toType))
-      val applied     = appliedType(subType.typeConstructor, newTypeArgs)
-      val theType     = c.internal.existentialAbstraction(typeParams, applied)
-      SubType(theType, annotationTrees(theType.typeSymbol))
+    val subtypes = knownSubclasses(typeSymbol).zipWithIndex.map {
+      case (sub, ix) =>
+        val subType     = sub.asType.toType // FIXME: Broken for path dependent types
+        val typeParams  = sub.asType.typeParams
+        val typeArgs    = c.internal.thisType(sub).baseType(typeSymbol).typeArgs
+        val mapping     = typeArgs.map(_.typeSymbol).zip(tpe.typeArgs).toMap
+        val newTypeArgs = typeParams.map(mapping.withDefault(_.asType.toType))
+        val applied     = appliedType(subType.typeConstructor, newTypeArgs)
+        val theType     = c.internal.existentialAbstraction(typeParams, applied)
+        SubType(theType, ix, annotationTrees(theType.typeSymbol))
     }
 
     if (subtypes.isEmpty) error(s"Could not find any direct subtypes of `$typeSymbol`")

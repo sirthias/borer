@@ -10,30 +10,28 @@ package io.bullet.borer.internal
 
 import java.nio.charset.StandardCharsets
 
+import io.bullet.borer.Input
 import utest._
 
-object ReceptacleSpec extends TestSuite {
+object UtilSpec extends TestSuite {
 
   val tests = Tests {
 
-    "stringCompareBytes" - {
+    "stringCompare" - {
 
       val fragments = Seq("", "foo", "árvíztűrő ütvefúrógép!", "เอส เอฟ ซีเนม่า เอ็มบีเค เซ็นเตอร์", "飞机因此受到损伤")
       val strings   = for { a <- fragments; b <- fragments; c <- fragments } yield s"$a$b$c"
-
-      val receptacle = new Receptacle
 
       for {
         a <- strings
         b <- strings
       } {
-        receptacle.onText(a getBytes StandardCharsets.UTF_8)
+        val input         = new Input.FromByteArray(a getBytes StandardCharsets.UTF_8)
+        val testCompare   = math.signum(Util.stringCompare(input, b))
+        val stringCompare = math.signum(a compareTo b)
 
-        val receptacleCompare = math.signum(receptacle.stringCompareBytes(b))
-        val stringCompare     = math.signum(a compareTo b)
-
-        if (receptacleCompare != stringCompare) {
-          throw new java.lang.AssertionError(s"""receptacleCompare: $receptacleCompare for "$a" <?> "$b"""")
+        if (testCompare != stringCompare) {
+          throw new java.lang.AssertionError(s"""testCompare: $testCompare for "$a" <?> "$b"""")
         }
       }
     }

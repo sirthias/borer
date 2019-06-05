@@ -31,7 +31,7 @@ abstract class Receiver {
   def onBytesStart(): Unit
 
   def onString(value: String): Unit
-  def onChars(length: Int, buffer: Array[Char]): Unit
+  def onChars(buffer: Array[Char], length: Int): Unit
   def onText[Bytes: ByteAccess](value: Bytes): Unit
   def onTextStart(): Unit
 

@@ -8,6 +8,8 @@
 
 package io.bullet.borer.internal
 
+import io.bullet.borer.Input
+
 import scala.annotation.tailrec
 import scala.reflect.ClassTag
 
@@ -101,6 +103,42 @@ object Util {
     @tailrec def rec(ix: Int): Unit = if (ix < bytes.length) {
       bytes(ix) = (~bytes(ix).toInt).toByte; rec(ix + 1)
     }
+    rec(0)
+  }
+
+  /**
+    * Compares the UTF8 encoding in `input` to the given String and returns
+    * a value < 0 if `input` < `string`
+    * a 0 if `input` == `string`
+    * a value > 0 if `input` > `string`
+    */
+  def stringCompare(input: Input, string: String): Int = {
+    @tailrec def rec(stringIx: Int): Int =
+      if (stringIx < string.length) {
+        var six = stringIx
+        if (input.prepareRead(1)) {
+          val bytesCodepoint = {
+            val b = input.readByte().toInt
+            if (b < 0) input.readMultiByteUtf8Codepoint(b) else b
+          }
+          val stringCodepoint = {
+            val c = string.charAt(six)
+            if (Character.isHighSurrogate(c)) {
+              def failIllegalArg(msg: String) = throw new IllegalArgumentException(msg)
+              six += 1
+              if (six < string.length) {
+                val c2 = string.charAt(six)
+                if (Character.isLowSurrogate(c2)) Character.toCodePoint(c, c2)
+                else failIllegalArg(s"""Invalid UTF-16 surrogate pair at index $stringIx of string "$string"""")
+              } else failIllegalArg(s"""Truncated UTF-16 surrogate pair at end of string "$string"""")
+            } else c.toInt
+          }
+          val d = bytesCodepoint - stringCodepoint
+          if (d == 0) rec(six + 1) else d
+        } else -1
+      } else if (input.prepareRead(1)) /* `string` is a prefix of the parsed string */ 1
+      else 0
+
     rec(0)
   }
 }

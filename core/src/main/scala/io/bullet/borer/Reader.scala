@@ -209,7 +209,7 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
     if (hasNumberString) ret(receptacle.stringValue)
     else unexpectedDataItem(expected = "NumberString")
   @inline def hasNumberString: Boolean                    = has(DI.NumberString)
-  @inline def hasNumberString(value: String): Boolean     = hasNumberString && receptacle.stringValue == value
+  @inline def hasNumberString(value: String): Boolean     = hasNumberString && stringCompare(value) == 0
   @inline def tryReadNumberString(value: String): Boolean = clearIfTrue(hasNumberString(value))
 
   def readByteArray(): Array[Byte]  = readBytes[Array[Byte]]()
@@ -271,8 +271,8 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
         @tailrec def rec(buf: Array[Char], ix: Int): Boolean =
           ix == len || buf(ix) == value.charAt(ix) && rec(buf, ix + 1)
         len == value.length && rec(receptacle.charBufValue, 0)
-      case DI.String => receptacle.stringValue == value
-      case DI.Text   => receptacle.stringCompareBytes(value) == 0
+      case DI.String    => receptacle.stringValue == value
+      case DI.Text      => receptacle.textCompare(value) == 0
       case DI.TextStart => bufferUnsizedTextBytes[Array[Byte]]().hasString(value)
       case _            => false
     }
@@ -304,8 +304,8 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
             if (diff != 0) diff else rec(buf, ix + 1)
           } else receptacle.intValue - value.length
         rec(receptacle.charBufValue, 0)
-      case DI.String => receptacle.stringValue.compareTo(value)
-      case DI.Text   => receptacle.stringCompareBytes(value)
+      case DI.String    => receptacle.stringValue.compareTo(value)
+      case DI.Text      => receptacle.textCompare(value)
       case DI.TextStart => bufferUnsizedTextBytes[Array[Byte]]().stringCompare(value)
       case _            => Int.MinValue
     }
@@ -438,7 +438,7 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
     * but only the starting data item! Use `skipElement` instead if you also want to skip complex elements!
     */
   def skipDataItem(): this.type = {
-    if (_dataItem == DataItem.None) parser.readNextDataItem(receiver)
+    if (_dataItem == DataItem.None) parser.pull(receiver)
     else clearDataItem()
     this
   }
