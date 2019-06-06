@@ -176,7 +176,7 @@ object akka {
       byteString.slice(_cursor - length, _cursor).decodeString(StandardCharsets.ISO_8859_1)
   }
 
-  implicit object ByteStringOutputProvider extends Output.Provider[ByteString] {
+  implicit object ByteStringOutputProvider extends Output.ToTypeProvider[ByteString] {
     type Out = ByteStringOutput
     def apply(bufferSize: Int) = new ByteStringOutput
   }

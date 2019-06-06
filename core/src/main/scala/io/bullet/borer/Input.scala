@@ -8,8 +8,10 @@
 
 package io.bullet.borer
 
+import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.ByteBuffer
+import java.nio.file.Files
 
 import io.bullet.borer.internal.ByteArrayAccess
 
@@ -419,5 +421,10 @@ object Input {
       buffer.limit(limit)
       result
     }
+  }
+
+  implicit object FileWrapper extends Wrapper[File] {
+    type In = FromByteArray
+    def apply(value: File) = new FromByteArray(Files.readAllBytes(value.toPath))
   }
 }

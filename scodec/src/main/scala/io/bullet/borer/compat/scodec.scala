@@ -174,7 +174,7 @@ object scodec {
     }
   }
 
-  implicit object ByteVectorOutputProvider extends Output.Provider[ByteVector] {
+  implicit object ByteVectorOutputProvider extends Output.ToTypeProvider[ByteVector] {
     type Out = ByteVectorOutput
     def apply(bufferSize: Int) = new ByteVectorOutput(bufferSize)
   }

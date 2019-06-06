@@ -15,7 +15,7 @@ object ImmutableOutputCborSpec extends AbstractCborSpec {
   def encode[T: Encoder](value: T): String   = toHexString(Cbor.encode(value).to[Array[Byte]].bytes)
   def decode[T: Decoder](encoded: String): T = Cbor.decode(hexBytes(encoded)).to[T].value
 
-  implicit object SomewhatImmutableByteArrayOutputProvider extends Output.Provider[Array[Byte]] {
+  implicit object SomewhatImmutableByteArrayOutputProvider extends Output.ToTypeProvider[Array[Byte]] {
     type Out = SomewhatImmutableByteArrayOutput
     def apply(bufferSize: Int) = new SomewhatImmutableByteArrayOutput(new Array[Byte](8), 0)
   }

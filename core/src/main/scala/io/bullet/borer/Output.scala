@@ -8,6 +8,7 @@
 
 package io.bullet.borer
 
+import java.io.{BufferedOutputStream, File, FileOutputStream}
 import java.nio.ByteBuffer
 
 import scala.annotation.tailrec
@@ -45,9 +46,17 @@ object Output {
   /**
     * Responsible for providing an Output that produces instances of [[T]].
     */
-  trait Provider[T] {
+  trait ToTypeProvider[T] {
     type Out <: Output { type Result = T }
     def apply(bufferSize: Int): Out
+  }
+
+  /**
+    * Responsible for providing an Output that outputs into the given value [[T]].
+    */
+  trait ToValueProvider[T] {
+    type Out <: Output { type Result = T }
+    def apply(value: T, bufferSize: Int): Out
   }
 
   implicit final class OutputOps(val underlying: Output) extends AnyVal {
@@ -77,7 +86,7 @@ object Output {
 
   final private class Chunk[T <: AnyRef](val buffer: T, var next: Chunk[T])
 
-  implicit object ToByteArrayProvider extends Provider[Array[Byte]] {
+  implicit object ToByteArrayProvider extends ToTypeProvider[Array[Byte]] {
     type Out = ToByteArray
     def apply(bufferSize: Int) = new ToByteArray(bufferSize)
   }
@@ -182,7 +191,7 @@ object Output {
     override def toString = s"Output.ToByteArray index $size"
   }
 
-  implicit object ToByteBufferProvider extends Provider[ByteBuffer] {
+  implicit object ToByteBufferProvider extends ToTypeProvider[ByteBuffer] {
     type Out = ToByteBuffer
     def apply(bufferSize: Int) = new ToByteBuffer(bufferSize)
   }
@@ -286,5 +295,39 @@ object Output {
     }
 
     override def toString = s"Output.ToByteBuffer index $size"
+  }
+
+  implicit object ToFileProvider extends ToValueProvider[File] {
+    type Out = ToFile
+    def apply(file: File, bufferSize: Int) = new ToFile(file, bufferSize)
+  }
+
+  /**
+    * Default, mutable implementation for serializing to files.
+    */
+  final class ToFile(file: File, bufferSize: Int) extends Output {
+    private[this] val outputStream = new BufferedOutputStream(new FileOutputStream(file), bufferSize)
+
+    type Self   = ToFile
+    type Result = File
+
+    def writeByte(byte: Byte): this.type = {
+      outputStream.write(byte.toInt)
+      this
+    }
+
+    def writeBytes(a: Byte, b: Byte): this.type                   = writeByte(a).writeByte(b)
+    def writeBytes(a: Byte, b: Byte, c: Byte): this.type          = writeByte(a).writeByte(b).writeByte(c)
+    def writeBytes(a: Byte, b: Byte, c: Byte, d: Byte): this.type = writeByte(a).writeByte(b).writeByte(c).writeByte(d)
+
+    def writeBytes[Bytes](bytes: Bytes)(implicit byteAccess: ByteAccess[Bytes]): this.type = {
+      outputStream.write(byteAccess.toByteArray(bytes))
+      this
+    }
+
+    def result(): File = {
+      outputStream.close()
+      file
+    }
   }
 }
