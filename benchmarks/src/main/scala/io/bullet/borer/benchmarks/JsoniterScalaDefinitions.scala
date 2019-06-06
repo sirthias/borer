@@ -60,44 +60,38 @@ class JsoniterScalaModelBenchmark extends DomBenchmark {
   private var codec: JsonValueCodec[Product] = _
 
   implicit val nullableDoubleCodec: JsonValueCodec[Nullable[Double]] = new JsonValueCodec[Nullable[Double]] {
+    override val nullValue: Nullable[Double]                             = Default.get[Double]
+    override def encodeValue(x: Nullable[Double], out: JsonWriter): Unit = out.writeVal(x.value)
     override def decodeValue(in: JsonReader, default: Nullable[Double]): Nullable[Double] =
       if (in.isNextToken('n')) in.readNullOrError(default, "expected Double or Null")
       else {
         in.rollbackToken()
         in.readDouble()
       }
-
-    override def encodeValue(x: Nullable[Double], out: JsonWriter): Unit = out.writeVal(x.value)
-
-    override val nullValue: Nullable[Double] = new Nullable(Default.get[Double])
   }
 
   implicit val nullableIntCodec: JsonValueCodec[Nullable[Int]] = new JsonValueCodec[Nullable[Int]] {
+    override val nullValue: Nullable[Int]                             = Default.get[Int]
+    override def encodeValue(x: Nullable[Int], out: JsonWriter): Unit = out.writeVal(x.value)
     override def decodeValue(in: JsonReader, default: Nullable[Int]): Nullable[Int] =
       if (in.isNextToken('n')) in.readNullOrError(default, "expected Int or Null")
       else {
         in.rollbackToken()
-        new Nullable(in.readInt())
+        in.readInt()
       }
-
-    override def encodeValue(x: Nullable[Int], out: JsonWriter): Unit = out.writeVal(x.value)
-
-    override val nullValue: Nullable[Int] = new Nullable(Default.get[Int])
   }
 
   implicit val nullableStringCodec: JsonValueCodec[Nullable[String]] = new JsonValueCodec[Nullable[String]] {
+    override val nullValue: Nullable[String] = Default.get[String]
+    override def encodeValue(x: Nullable[String], out: JsonWriter): Unit =
+      if (x.value == null) out.writeNull() else out.writeVal(x.value)
+
     override def decodeValue(in: JsonReader, default: Nullable[String]): Nullable[String] =
-      if (in.isNextToken('n')) in.readNullOrError(default, "expected Int or Null")
+      if (in.isNextToken('n')) in.readNullOrError(default, "expected String or Null")
       else {
         in.rollbackToken()
-        new Nullable(in.readString(null))
+        in.readString(null)
       }
-
-    override def encodeValue(x: Nullable[String], out: JsonWriter): Unit =
-      if (x.value == null) out.writeNull()
-      else out.writeVal(x.value)
-
-    override val nullValue: Nullable[String] = new Nullable(Default.get[String])
   }
 
   def setup(): Unit = {
