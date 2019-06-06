@@ -25,6 +25,8 @@ import scala.util.Random
   * > sbt "jmh:run -i 10 -wi 10 -f 2 -t 1 io.bullet.borer.benchmarks.*EncodingBenchmark"
   */
 @State(Scope.Thread)
+@Warmup(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS)
+@Measurement(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS)
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
 abstract class EncodingBenchmark extends EncodingDecodingExampleData
@@ -37,6 +39,8 @@ abstract class EncodingBenchmark extends EncodingDecodingExampleData
   * > sbt "jmh:run -i 10 -wi 10 -f 2 -t 1 io.bullet.borer.benchmarks.*DecodingBenchmark"
   */
 @State(Scope.Thread)
+@Warmup(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS)
+@Measurement(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS)
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
 abstract class DecodingBenchmark extends EncodingDecodingExampleData
@@ -49,6 +53,8 @@ abstract class DecodingBenchmark extends EncodingDecodingExampleData
   * > sbt "jmh:run -i 10 -wi 10 -f 2 -t 1 io.bullet.borer.benchmarks.*DomBenchmark"
   */
 @State(Scope.Thread)
+@Warmup(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS)
+@Measurement(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS)
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
 abstract class DomBenchmark {
@@ -73,7 +79,7 @@ abstract class DomBenchmark {
       "turkish.json",
       "twitter_api_compact_response.json",
       "twitter_api_response.json"))
-  var fileName: String = _
+  var fileName: String = "twitter_api_response.json"
 
   var fileBytes: Array[Byte] = _
 
@@ -95,7 +101,7 @@ object Foo {
 sealed abstract class EncodingDecodingExampleData {
 
   lazy val ints: List[Int] = {
-    val random = new Random()
+    val random = new Random(100L /* use the same seed for all benchmarks */ )
     Iterator.continually(random.nextInt(10000000)).take(10000).toList
   }
 
