@@ -292,8 +292,8 @@ abstract class AbstractJsonSpec extends AbstractBorerSpec {
       case class Bar(foo: Foo, optFoo: Option[Foo], stringSeq: Seq[String])
 
       // we cannot use `Codec.deriveForCaseClass` since we are in the same compilation module
-      implicit val fooCodec = Codec(Encoder.from(Foo.unapply _), Decoder.from(Foo.apply _))
-      implicit val barCodec = Codec(Encoder.from(Bar.unapply _), Decoder.from(Bar.apply _))
+      implicit val fooCodec = Codec.forCaseClass[Foo]
+      implicit val barCodec = Codec.forCaseClass[Bar]
 
       roundTrip(
         """[[[42,"foo",[]],[[43,"",[1.0]]],[]],[[-44,"árvíztűrő ütvefúrógép",[26.18]],[],["a","bravo","zulu"]],""" +
@@ -308,14 +308,14 @@ abstract class AbstractJsonSpec extends AbstractBorerSpec {
 
     "Zero-Member Case Class" - {
       case class Qux()
-      implicit val quxCodec = Codec(Encoder.from(Qux.unapply _), Decoder.from(Qux.apply _))
+      implicit val quxCodec = Codec.forCaseClass[Qux]
 
       roundTrip("[]", Qux())
     }
 
     "Single-Member Case Class" - {
       case class Qux(i: Int)
-      implicit val quxCodec = Codec(Encoder.from(Qux.unapply _), Decoder.from(Qux.apply _))
+      implicit val quxCodec = Codec.forCaseClass[Qux]
 
       roundTrip("42", Qux(42))
     }

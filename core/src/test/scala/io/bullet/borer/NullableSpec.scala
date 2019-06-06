@@ -22,8 +22,8 @@ object NullableSpec extends AbstractBorerSpec {
   case class Bar(foo: Nullable[Option[Foo]])
 
   // we cannot use `Codec.deriveForCaseClass` since we are in the same compilation module
-  implicit val fooCodec = Codec(Encoder.from(Foo.unapply _), Decoder.from(Foo.apply _))
-  implicit val barCodec = Codec(Encoder.from(Bar.unapply _), Decoder.from(Bar.apply _))
+  implicit val fooCodec = Codec.forCaseClass[Foo]
+  implicit val barCodec = Codec.forCaseClass[Bar]
 
   val tests = Tests {
 

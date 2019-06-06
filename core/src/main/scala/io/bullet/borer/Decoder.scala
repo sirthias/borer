@@ -46,7 +46,11 @@ object Decoder extends LowPrioDecoders {
   def apply[T](decoder: Decoder[T]): Decoder[T] = decoder
 
   /**
-    * Simple macro shortening `Decoder.from(Foo.apply _)` to `Decoder.forCaseClass[Foo]`
+    * Simple macro creating a [[Decoder]] that converts an array of values to an instance of case class `T`.
+    * Decoders for all members of [[T]] must be implicitly available at the call site of `forCaseClass`.
+    *
+    * NOTE: If `T` is unary (i.e. only has a single member) then the member value is expected in an unwrapped form,
+    * i.e. without the array container.
     */
   def forCaseClass[T]: Decoder[T] = macro Macros.decoderForCaseClass[T]
 

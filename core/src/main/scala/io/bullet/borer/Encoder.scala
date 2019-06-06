@@ -53,26 +53,11 @@ object Encoder extends LowPrioEncoders {
   def apply[T](encoder: Encoder[T]): Encoder[T] = encoder
 
   /**
-    * Allows for concise [[Encoder]] definition for case classes, without any macro magic.
-    * Can be used e.g. like this:
+    * Simple macro creating a [[Encoder]] that converts instances of case class `T` to an array of values.
+    * Encoders for all members of [[T]] must be implicitly available at the call site of `forCaseClass`.
     *
-    * {{{
-    * case class Foo(int: Int, string: String, doubleOpt: Option[Double])
-    *
-    * val fooEncoder = Encoder.from(Foo.unapply _) // if you only need an `Encoder` for `Foo`
-    * }}}
-    */
-  def from[T, Unapplied](unapply: T => Option[Unapplied])(implicit tupleEnc: Encoder[Unapplied]): Encoder[T] =
-    Encoder((w, x) => tupleEnc.write(w, unapply(x).get))
-
-  /**
-    * Same as the other `from` overload above, but for nullary case classes (i.e. with an empty parameter list).
-    */
-  def from[T](unapply: T => Boolean): Encoder[T] =
-    Encoder((w, x) => if (unapply(x)) w.writeEmptyArray() else sys.error("Unapply unexpectedly failed: " + unapply))
-
-  /**
-    * Essentially the same as `Encoder.from(Foo.unapply _)`, but more
+    * NOTE: If `T` is unary (i.e. only has a single member) then the member value is written in an unwrapped form,
+    * i.e. without the array container.
     */
   def forCaseClass[T]: Encoder[T] = macro Macros.encoderForCaseClass[T]
 
