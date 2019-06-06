@@ -223,7 +223,7 @@ lazy val derivation = crossProject(JSPlatform, JVMPlatform)
   .jsSettings(scalajsSettings: _*)
 
 lazy val benchmarks = project
-  .enablePlugins(AutomateHeaderPlugin, JmhPlugin)
+  .enablePlugins(AutomateHeaderPlugin, JmhPlugin, BenchmarkResultsPlugin)
   .dependsOn(coreJVM, derivationJVM)
   .settings(commonSettings)
   .settings(
