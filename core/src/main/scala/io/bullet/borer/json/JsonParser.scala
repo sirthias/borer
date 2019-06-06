@@ -51,7 +51,7 @@ final private[borer] class JsonParser[In <: Input](val input: In, val config: Js
   import JsonParser._
 
   private[this] val allowDoubleParsing = !config.readDecimalNumbersOnlyAsNumberStrings
-  private[this] var chars: Array[Char] = new Array[Char](256)
+  private[this] var chars: Array[Char] = new Array[Char](config.initialCharbufferSize)
   private[this] var state: Int         = EXPECT_VALUE
   private[this] var auxLong: Long      = _
   private[this] var valueCursor: Long  = _
@@ -615,6 +615,7 @@ private[borer] object JsonParser {
     def maxStringLength: Int
     def maxNumberMantissaDigits: Int
     def maxNumberAbsExponent: Int
+    def initialCharbufferSize: Int
   }
 
   final private[this] val _creator: Receiver.ParserCreator[Input, JsonParser.Config] =

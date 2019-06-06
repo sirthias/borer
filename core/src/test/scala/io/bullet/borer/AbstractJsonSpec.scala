@@ -164,6 +164,10 @@ abstract class AbstractJsonSpec extends AbstractBorerSpec {
       verifyDecoding("1.000000000000000", Dom.DoubleElem(1.0f))
       verifyDecoding("1.0000000000000000", Dom.NumberStringElem("1.0000000000000000"))
 
+      verifyDecoding("1234567890123456789012e15", Dom.NumberStringElem("1234567890123456789012e15"))
+      verifyDecoding("1234567890123456789012e+5", Dom.NumberStringElem("1234567890123456789012e+5"))
+      verifyDecoding("1234567890123456789012e-1", Dom.NumberStringElem("1234567890123456789012e-1"))
+
       verifyDecoding("1", 1.0f)
 
       verifyDecoding("1.234", Dom.DoubleElem(1.234))

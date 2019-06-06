@@ -17,7 +17,7 @@ object ByteArrayJsonSpec extends AbstractJsonSpec {
   def decode[T: Decoder](encoded: String): T =
     Json
       .decode(encoded getBytes StandardCharsets.UTF_8)
-      .withConfig(Json.DecodingConfig.default.copy(maxNumberAbsExponent = 300))
+      .withConfig(Json.DecodingConfig.default.copy(maxNumberAbsExponent = 300, initialCharbufferSize = 8))
       .to[T]
       .value
 }

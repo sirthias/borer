@@ -60,6 +60,18 @@ lazy val commonSettings = Seq(
 
   testFrameworks += new TestFramework("utest.runner.Framework"),
   initialCommands in console := """import io.bullet.borer._""",
+
+  commands += Command.command("openCoverageReport") { state =>
+    val uri = s"file://${Project.extract(state).get(crossTarget)}/scoverage-report/index.html"
+    state.log.info(s"Opening browser at $uri ...")
+    java.awt.Desktop.getDesktop.browse(new java.net.URI(uri))
+    state
+  },
+
+  commands += Command.command("testCoverage") { state =>
+    val cmds = List("clean", "coverage", "test", "coverageReport", "openCoverageReport").map(Exec(_, None))
+    state.copy(remainingCommands = cmds ::: state.remainingCommands)
+  }
 )
 
 lazy val crossSettings = Seq(

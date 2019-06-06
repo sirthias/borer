@@ -160,7 +160,8 @@ case object Json extends Target {
       readDecimalNumbersOnlyAsNumberStrings: Boolean = false,
       maxNumberAbsExponent: Int = 64,
       maxStringLength: Int = 1024 * 1024,
-      maxNumberMantissaDigits: Int = 34)
+      maxNumberMantissaDigits: Int = 34,
+      initialCharbufferSize: Int = 256)
       extends Borer.DecodingConfig with JsonParser.Config {
 
     Util.requirePositive(maxNumberAbsExponent, "maxNumberAbsExponent")
