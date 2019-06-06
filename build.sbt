@@ -122,8 +122,8 @@ lazy val macroParadise =
 
 /////////////////////// DEPENDENCIES /////////////////////////
 
-val `akka-actor`       = Def.setting("com.typesafe.akka"     %%% "akka-actor"          % "2.5.22")
-val `scodec-bits`      = Def.setting("org.scodec"            %%% "scodec-bits"         % "1.1.10")
+val `akka-actor`       = Def.setting("com.typesafe.akka"     %%% "akka-actor"          % "2.5.23")
+val `scodec-bits`      = Def.setting("org.scodec"            %%% "scodec-bits"         % "1.1.11")
 val utest              = Def.setting("com.lihaoyi"           %%% "utest"               % "0.6.7"            % "test")
 val `scala-compiler`   = Def.setting("org.scala-lang"        %  "scala-compiler"       % scalaVersion.value % "provided")
 val `scala-reflect`    = Def.setting("org.scala-lang"        %  "scala-reflect"        % scalaVersion.value % "provided")
@@ -217,13 +217,13 @@ lazy val benchmarks = project
   .settings(
     publishArtifact := false,
     libraryDependencies ++= Seq(
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"   % "0.48.2",
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "0.48.2" % Provided,
-      "com.fasterxml.jackson.module"          %% "jackson-module-scala"  % "2.9.8",
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"   % "0.49.1",
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "0.49.1" % Provided,
+      "com.fasterxml.jackson.module"          %% "jackson-module-scala"  % "2.9.9",
       "com.lihaoyi"                           %% "upickle"               % "0.7.4",
-      "io.circe"                              %% "circe-core"            % "0.12.0-M1",
+      "io.circe"                              %% "circe-core"            % "0.12.0-M2",
       "io.circe"                              %% "circe-derivation"      % "0.12.0-M1",
-      "io.circe"                              %% "circe-jawn"            % "0.12.0-M1",
+      "io.circe"                              %% "circe-jawn"            % "0.12.0-M2",
       "io.spray"                              %% "spray-json"            % "1.3.5",
     )
   )
