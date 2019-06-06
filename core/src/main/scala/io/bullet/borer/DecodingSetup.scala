@@ -15,7 +15,7 @@ import scala.util.{Failure, Success, Try}
 
 object DecodingSetup {
 
-  sealed trait Api[In <: Input, Config <: Borer.DecodingConfig] {
+  sealed trait Api[In <: Input[_], Config <: Borer.DecodingConfig] {
 
     /**
       * Indicates that this decoding run is not expected to consume the complete [[Input]].
@@ -56,26 +56,27 @@ object DecodingSetup {
     def to[T: Decoder]: Sealed[In, T]
   }
 
-  sealed trait Sealed[In <: Input, T] {
+  sealed trait Sealed[In <: Input[_], T] {
 
     def value: T
 
     def valueTry: Try[T]
 
-    def valueEither: Either[Borer.Error[In#Position], T]
+    def valueEither: Either[Borer.Error[Input.Position], T]
 
     def valueAndInput: (T, In)
 
     def valueAndInputTry: Try[(T, In)]
 
-    def valueAndInputEither: Either[Borer.Error[In#Position], (T, In)]
+    def valueAndInputEither: Either[Borer.Error[Input.Position], (T, In)]
   }
 
-  final private[borer] class Impl[In <: Input, Config <: Borer.DecodingConfig](
+  final private[borer] class Impl[Bytes, In <: Input[Bytes], Config <: Borer.DecodingConfig](
       input: In,
+      byteAccess: ByteAccess[Bytes],
       defaultConfig: Config,
       defaultWrapper: Receiver.Wrapper[Config],
-      parserCreator: Receiver.ParserCreator[In, Config],
+      parserCreator: Receiver.ParserCreator[Bytes, Config],
       target: Target)
       extends Borer.AbstractSetup[Config](defaultConfig, defaultWrapper) with Api[In, Config] with Sealed[In, AnyRef] {
 
@@ -97,7 +98,7 @@ object DecodingSetup {
       try {
         decodeFrom(reader)
       } catch {
-        case e: Borer.Error[_] => throw e.withPosOf[In](reader)
+        case e: Borer.Error[_] => throw e.withPosOf(reader)
         case NonFatal(e)       => throw new Borer.Error.General(reader.position, e)
       }
     }
@@ -107,17 +108,17 @@ object DecodingSetup {
       try {
         Success(decodeFrom(reader))
       } catch {
-        case e: Borer.Error[_] => Failure(e.withPosOf[In](reader))
+        case e: Borer.Error[_] => Failure(e.withPosOf(reader))
         case NonFatal(e)       => Failure(new Borer.Error.General(reader.position, e))
       }
     }
 
-    def valueEither: Either[Borer.Error[In#Position], AnyRef] = {
+    def valueEither: Either[Borer.Error[Input.Position], AnyRef] = {
       val reader = newReader()
       try {
         Right(decodeFrom(reader))
       } catch {
-        case e: Borer.Error[_] => Left(e.withPosOf[In](reader))
+        case e: Borer.Error[_] => Left(e.withPosOf(reader))
         case NonFatal(e)       => Left(new Borer.Error.General(reader.position, e))
       }
     }
@@ -127,7 +128,7 @@ object DecodingSetup {
       try {
         decodeFrom(reader) -> input
       } catch {
-        case e: Borer.Error[_] => throw e.withPosOf[In](reader)
+        case e: Borer.Error[_] => throw e.withPosOf(reader)
         case NonFatal(e)       => throw new Borer.Error.General(reader.position, e)
       }
     }
@@ -137,23 +138,23 @@ object DecodingSetup {
       try {
         Success(decodeFrom(reader) -> input)
       } catch {
-        case e: Borer.Error[_] => Failure(e.withPosOf[In](reader))
+        case e: Borer.Error[_] => Failure(e.withPosOf(reader))
         case NonFatal(e)       => Failure(new Borer.Error.General(reader.position, e))
       }
     }
 
-    def valueAndInputEither: Either[Borer.Error[In#Position], (AnyRef, In)] = {
+    def valueAndInputEither: Either[Borer.Error[Input.Position], (AnyRef, In)] = {
       val reader = newReader()
       try {
         Right(decodeFrom(reader) -> input)
       } catch {
-        case e: Borer.Error[_] => Left(e.withPosOf[In](reader))
+        case e: Borer.Error[_] => Left(e.withPosOf(reader))
         case NonFatal(e)       => Left(new Borer.Error.General(reader.position, e))
       }
     }
 
-    private def newReader(): InputReader[In, Config] =
-      new InputReader(parserCreator(input, config), receiverWrapper, config, target)
+    private def newReader(): Reader =
+      new InputReader(parserCreator(input, byteAccess, config), receiverWrapper, config, target)
 
     private def decodeFrom(reader: Reader): AnyRef = {
       val value = decoder.read(reader)

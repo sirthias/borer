@@ -19,8 +19,8 @@ import scala.collection.mutable
 /**
   * Stateful, mutable abstraction for reading a stream of CBOR or JSON data from the given `input`.
   */
-final class InputReader[+In <: Input, +Config <: Reader.Config](
-    parser: Receiver.Parser[In],
+final class InputReader[Config <: Reader.Config](
+    parser: Receiver.Parser[_],
     receiverWrapper: Receiver.Wrapper[Config],
     config: Config,
     val target: Target) {
@@ -41,9 +41,9 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
   @inline def readingJson: Boolean = target eq Json
   @inline def readingCbor: Boolean = target eq Cbor
 
-  @inline def input: In             = parser.input
-  @inline def cursor: Long          = parser.valueIndex
-  @inline def position: In#Position = input.position(cursor)
+  @inline def input: Input[_]          = parser.input
+  @inline def cursor: Long             = parser.valueIndex
+  @inline def position: Input.Position = input.position(cursor)
 
   /**
     * Checks whether the next data item is of the given type.
@@ -261,8 +261,7 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
 
   /**
     * Tests the next data item for equality with the given [[String]].
-    * NOTE: This method causes unsized text bytes (i.e. text streams) to be buffered and converted
-    *       into to a sized text data item!
+    * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to string data items!
     */
   @inline def hasString(value: String): Boolean =
     dataItem match {
@@ -271,16 +270,14 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
         @tailrec def rec(buf: Array[Char], ix: Int): Boolean =
           ix == len || buf(ix) == value.charAt(ix) && rec(buf, ix + 1)
         len == value.length && rec(receptacle.charBufValue, 0)
-      case DI.String    => receptacle.stringValue == value
-      case DI.Text      => receptacle.textCompare(value) == 0
-      case DI.TextStart => bufferUnsizedTextBytes[Array[Byte]]().hasString(value)
-      case _            => false
+      case DI.String              => receptacle.stringValue == value
+      case DI.Text | DI.TextStart => decodeTextBytes().hasString(value)
+      case _                      => false
     }
 
   /**
     * Tests the next data item for equality with the given [[String]] and advances the cursor if so.
-    * NOTE: This method causes unsized text bytes (i.e. text streams) to be buffered and converted
-    *       into to a sized text data item!
+    * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to string data items!
     */
   @inline def tryReadString(value: String): Boolean = clearIfTrue(hasString(value))
 
@@ -291,8 +288,7 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
     * - zero if the next data item is a string that compares as '==' to `value`
     * - a positive value if the next data item is a string that compares as '>' to `value`
     *
-    * NOTE: This method causes unsized text bytes (i.e. text streams) to be buffered and converted
-    *       into to a sized text data item!
+    * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to string data items!
     */
   def stringCompare(value: String): Int =
     dataItem match {
@@ -304,12 +300,22 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
             if (diff != 0) diff else rec(buf, ix + 1)
           } else receptacle.intValue - value.length
         rec(receptacle.charBufValue, 0)
-      case DI.String    => receptacle.stringValue.compareTo(value)
-      case DI.Text      => receptacle.textCompare(value)
-      case DI.TextStart => bufferUnsizedTextBytes[Array[Byte]]().stringCompare(value)
-      case _            => Int.MinValue
+      case DI.String              => receptacle.stringValue.compareTo(value)
+      case DI.Text | DI.TextStart => decodeTextBytes().stringCompare(value)
+      case _                      => Int.MinValue
     }
 
+  /**
+    * Returns one of the following 4 values:
+    * - Int.MinValue if the next data item is not a string
+    * - a negative value (!= Int.MinValue) a if the next data item is a string that compares as '<' to `value`
+    * - zero if the next data item is a string that compares as '==' to `value`
+    * - a positive value if the next data item is a string that compares as '>' to `value`
+    *
+    * Advanced the cursor if the return value is zero.
+    *
+    * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to string data items!
+    */
   def tryReadStringCompare(value: String): Int = {
     val result = stringCompare(value)
     if (result == 0) clearDataItem()
@@ -339,6 +345,9 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
     else unexpectedDataItem(expected = "Unbounded Text Bytes")
   @inline def hasUnsizedTextBytes: Boolean = hasTextStart
 
+  /**
+    * If the current data item is an unsized Text item it'll be buffered and converted into a sized text item.
+    */
   def bufferUnsizedTextBytes[Bytes]()(implicit byteAccess: ByteAccess[Bytes]): this.type = {
     if (tryReadTextStart()) {
       var result = byteAccess.empty
@@ -348,6 +357,19 @@ final class InputReader[+In <: Input, +Config <: Reader.Config](
     }
     this
   }
+
+  /**
+    * If the current data item is a sized or unsized Text item it'll be buffered and decoded into a string data item.
+    */
+  def decodeTextBytes(): this.type =
+    dataItem match {
+      case DI.Text =>
+        receptacle.onString(stringOf(receptacle.getBytes[Array[Byte]]))
+        _dataItem = DI.String
+        this
+      case DI.TextStart => bufferUnsizedTextBytes[Array[Byte]]().decodeTextBytes()
+      case _            => this
+    }
 
   def readArrayHeader(): Long =
     if (hasArrayHeader) {

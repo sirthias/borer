@@ -37,8 +37,6 @@ final private[borer] class Receptacle extends Receiver with java.lang.Cloneable 
   @inline def getBytes[Bytes](implicit byteAccess: ByteAccess[Bytes]): Bytes =
     byteAccess.convert(_obj)(_byteAccess)
 
-  @inline def textCompare(string: String): Int = Util.stringCompare(_byteAccess.inputFrom(_obj), string)
-
   def onNull(): Unit = ()
 
   def onUndefined(): Unit = ()

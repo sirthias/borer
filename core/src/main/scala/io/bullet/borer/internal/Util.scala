@@ -8,8 +8,6 @@
 
 package io.bullet.borer.internal
 
-import io.bullet.borer.Input
-
 import scala.annotation.tailrec
 import scala.reflect.ClassTag
 
@@ -30,23 +28,24 @@ object Util {
     if (isJS && onlyDigits(s.length - 1)) s + ".0" else s
   }
 
-  @inline def requireNonNegative(value: Int, name: String): Int = {
-    requireNonNegative(value.toLong, name)
-    value
-  }
+  @inline def requireNonNegative(value: Int, name: String): Int = requireNonNegative(value.toLong, name).toInt
 
   @inline def requireNonNegative(value: Long, name: String): Long =
     if (value < 0) throw new IllegalArgumentException(s"$name must be >= 0, but was $value")
     else value
 
-  @inline def requirePositive(value: Int, name: String): Int = {
-    requirePositive(value.toLong, name)
-    value
-  }
+  @inline def requirePositive(value: Int, name: String): Int = requirePositive(value.toLong, name).toInt
 
   @inline def requirePositive(value: Long, name: String): Long =
     if (value <= 0) throw new IllegalArgumentException(s"$name must be > 0, but was $value")
     else value
+
+  @inline def requireRange(value: Int, min: Int, max: Int, name: String): Int =
+    requireRange(value.toLong, min.toLong, max.toLong, name).toInt
+
+  @inline def requireRange(value: Long, min: Long, max: Long, name: String): Long =
+    if (min <= value && value <= max) value
+    else throw new IllegalArgumentException(s"$name must be in the range [$min, $max], but was $value")
 
   private[this] val _identityFunc = (x: Any) => x
   def identityFunc[T]: T => T     = _identityFunc.asInstanceOf[T => T]
@@ -106,39 +105,18 @@ object Util {
     rec(0)
   }
 
-  /**
-    * Compares the UTF8 encoding in `input` to the given String and returns
-    * a value < 0 if `input` < `string`
-    * a 0 if `input` == `string`
-    * a value > 0 if `input` > `string`
-    */
-  def stringCompare(input: Input, string: String): Int = {
-    @tailrec def rec(stringIx: Int): Int =
-      if (stringIx < string.length) {
-        var six = stringIx
-        if (input.prepareRead(1)) {
-          val bytesCodepoint = {
-            val b = input.readByte().toInt
-            if (b < 0) input.readMultiByteUtf8Codepoint(b) else b
-          }
-          val stringCodepoint = {
-            val c = string.charAt(six)
-            if (Character.isHighSurrogate(c)) {
-              def failIllegalArg(msg: String) = throw new IllegalArgumentException(msg)
-              six += 1
-              if (six < string.length) {
-                val c2 = string.charAt(six)
-                if (Character.isLowSurrogate(c2)) Character.toCodePoint(c, c2)
-                else failIllegalArg(s"""Invalid UTF-16 surrogate pair at index $stringIx of string "$string"""")
-              } else failIllegalArg(s"""Truncated UTF-16 surrogate pair at end of string "$string"""")
-            } else c.toInt
-          }
-          val d = bytesCodepoint - stringCodepoint
-          if (d == 0) rec(six + 1) else d
-        } else -1
-      } else if (input.prepareRead(1)) /* `string` is a prefix of the parsed string */ 1
-      else 0
+  implicit final class RichIterator[T](val underlying: Iterator[T]) extends AnyVal {
 
-    rec(0)
+    def +:(element: T): Iterator[T] =
+      new Iterator[T] {
+        private[this] var pending = true
+        def hasNext               = pending || underlying.hasNext
+
+        def next() =
+          if (pending) {
+            pending = false
+            element
+          } else underlying.next()
+      }
   }
 }

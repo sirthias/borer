@@ -11,12 +11,15 @@ package io.bullet.borer.input
 import java.io.File
 import java.nio.file.Files
 
-import io.bullet.borer.Input.Wrapper
+import io.bullet.borer.ByteAccess
+import io.bullet.borer.Input.Provider
 
 trait FromFileInput { this: FromByteArrayInput =>
 
-  implicit object FileWrapper extends Wrapper[File] {
-    type In = FromByteArray
+  implicit object FileProvider extends Provider[File] {
+    type Bytes = Array[Byte]
+    type In    = FromByteArray
+    def byteAccess         = ByteAccess.ForByteArray
     def apply(value: File) = new FromByteArray(Files.readAllBytes(value.toPath))
   }
 

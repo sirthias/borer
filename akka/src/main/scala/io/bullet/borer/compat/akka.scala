@@ -31,8 +31,6 @@ object akka {
 
     def toByteArray(bytes: ByteString): Array[Byte] = bytes.toArray
 
-    def inputFrom(bytes: ByteString) = new FromByteString(bytes)
-
     def concat(a: ByteString, b: ByteString) =
       if (a.nonEmpty) {
         if (b.nonEmpty) {
@@ -71,33 +69,22 @@ object akka {
   /**
     * [[Input]] around [[ByteString]].
     */
-  implicit final object ByteStringWrapper extends Input.Wrapper[ByteString] {
-    type In = FromByteString
+  implicit final object ByteStringProvider extends Input.Provider[ByteString] {
+    type Bytes = ByteString
+    type In    = FromByteString
+    def byteAccess               = ByteStringByteAccess
     def apply(value: ByteString) = new FromByteString(value)
   }
 
-  final class FromByteString(byteString: ByteString) extends Input {
-    type Bytes    = ByteString
-    type Position = Input.Position
-
-    protected var _cursor: Int = _
+  final class FromByteString(byteString: ByteString) extends Input[ByteString] {
+    private[this] var _cursor: Int = _
 
     def cursor: Long = _cursor.toLong
-    def byteAccess   = ByteStringByteAccess
-
-    def resetTo(cursor: Long) = {
-      _cursor = cursor.toInt
-      this
-    }
 
     def moveCursor(offset: Int): this.type = {
       _cursor += offset
       this
     }
-
-    def releaseBeforeCursor(): this.type = this
-
-    def position(cursor: Long): Position = Input.Position(this, cursor)
 
     def prepareRead(length: Long): Boolean = _cursor + length <= byteString.length
 
@@ -107,13 +94,9 @@ object akka {
       byteString(c)
     }
 
-    def readByteOrFF(): Byte = {
-      def readPadded(): Byte = {
-        _cursor += 1
-        -1
-      }
-      if (_cursor < byteString.length) readByte() else readPadded()
-    }
+    def readBytePadded(pp: Input.PaddingProvider[ByteString]): Byte =
+      if (_cursor < byteString.length) readByte()
+      else pp.padByte()
 
     def readDoubleByteBigEndian(): Char = {
       val c = _cursor
@@ -121,10 +104,10 @@ object akka {
       ((byteString(c) << 8) | byteString(c + 1) & 0xFF).toChar
     }
 
-    def readDoubleByteBigEndianPaddedFF(): Char = {
+    def readDoubleByteBigEndianPadded(pp: Input.PaddingProvider[ByteString]): Char = {
       val remaining = byteString.length - _cursor
       if (remaining >= 2) readDoubleByteBigEndian()
-      else readDoubleByteBigEndianPaddedFF(remaining)
+      else pp.padDoubleByte(remaining)
     }
 
     def readQuadByteBigEndian(): Int = {
@@ -136,10 +119,10 @@ object akka {
       byteString(c + 3) & 0xFF
     }
 
-    def readQuadByteBigEndianPaddedFF(): Int = {
+    def readQuadByteBigEndianPadded(pp: Input.PaddingProvider[ByteString]): Int = {
       val remaining = byteString.length - _cursor
       if (remaining >= 4) readQuadByteBigEndian()
-      else readQuadByteBigEndianPaddedFF(remaining)
+      else pp.padQuadByte(remaining)
     }
 
     def readOctaByteBigEndian(): Long = {
@@ -155,22 +138,24 @@ object akka {
       byteString(c + 7) & 0XFFL
     }
 
-    def readOctaByteBigEndianPaddedFF(): Long = {
+    def readOctaByteBigEndianPadded(pp: Input.PaddingProvider[ByteString]): Long = {
       val remaining = byteString.length - _cursor
       if (remaining >= 8) readOctaByteBigEndian()
-      else readOctaByteBigEndianPaddedFF(remaining)
+      else pp.padOctaByte(remaining)
     }
 
-    def readBytes(length: Long): Bytes =
-      if (length > 0) {
-        val len = length.toInt
-        val end = _cursor + len
-        if (len == length && end >= 0) {
+    def readBytes(length: Long, pp: Input.PaddingProvider[ByteString]) = {
+      val remaining = (byteString.length - _cursor).toLong
+      val len       = math.min(remaining, length).toInt
+      val bytes =
+        if (len > 0) {
           val c = _cursor
-          _cursor = end
-          byteString.slice(c, end)
-        } else throw new Borer.Error.Overflow(position(cursor), "ByteString input is limited to size 2GB")
-      } else ByteString.empty
+          _cursor = c + len
+          byteString.slice(c, _cursor)
+        } else ByteString.empty
+      if (length <= remaining) bytes
+      else pp.padBytes(bytes, length - remaining)
+    }
 
     def precedingBytesAsAsciiString(length: Int): String =
       byteString.slice(_cursor - length, _cursor).decodeString(StandardCharsets.ISO_8859_1)

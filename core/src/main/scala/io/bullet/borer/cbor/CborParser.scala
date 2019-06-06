@@ -18,8 +18,8 @@ import scala.annotation.switch
 /**
   * Encapsulates the basic CBOR decoding logic.
   */
-final private[borer] class CborParser[In <: Input](val input: In, config: CborParser.Config)
-    extends Receiver.Parser[In] {
+final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes], config: CborParser.Config)
+    extends Receiver.Parser[Bytes] {
 
   private[this] var _valueIndex: Long = _
 
@@ -63,8 +63,7 @@ final private[borer] class CborParser[In <: Input](val input: In, config: CborPa
         receiver.onBytesStart()
         DataItem.BytesStart
       } else if (Util.isUnsignedLong(uLong)) {
-        if (!input.prepareRead(uLong)) failUnexpectedEOI(s"ByteString with length $uLong")
-        receiver.onBytes(input.readBytes(uLong))(input.byteAccess)
+        receiver.onBytes(input.readBytes(uLong, this))
         DataItem.Bytes
       } else failOverflow("This decoder does not support byte strings with size >= 2^63")
 
@@ -73,8 +72,7 @@ final private[borer] class CborParser[In <: Input](val input: In, config: CborPa
         receiver.onTextStart()
         DataItem.TextStart
       } else if (Util.isUnsignedLong(uLong)) {
-        if (!input.prepareRead(uLong)) failUnexpectedEOI(s"TextString with length $uLong")
-        receiver.onText(input.readBytes(uLong))(input.byteAccess)
+        receiver.onText(input.readBytes(uLong, this))
         DataItem.Text
       } else failOverflow("This decoder does not support text strings with size >= 2^63")
 
@@ -162,9 +160,10 @@ final private[borer] class CborParser[In <: Input](val input: In, config: CborPa
           } else failUnsupported(s"CBOR major type 7 code $x is unsupported by this decoder")
       }
 
-    _valueIndex = input.cursor
-    if (input.prepareRead(1)) {
-      val byte      = input.readByte()
+    _valueIndex = -1
+    val byte = input.readBytePadded(this)
+    if (_valueIndex < 0) {
+      _valueIndex = input.cursor - 1
       val majorType = byte << 24 >>> 29
       val info      = byte & 0x1F
       val uLong =
@@ -172,24 +171,16 @@ final private[borer] class CborParser[In <: Input](val input: In, config: CborPa
           case 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 |
               23 =>
             info.toLong
-          case 24 =>
-            if (!input.prepareRead(1)) failUnexpectedEOI("8-bit integer")
-            input.readByte() & 0XFFL
-          case 25 =>
-            if (!input.prepareRead(2)) failUnexpectedEOI("16-bit integer")
-            input.readDoubleByteBigEndian() & 0XFFFFL
-          case 26 =>
-            if (!input.prepareRead(4)) failUnexpectedEOI("32-bit integer")
-            input.readQuadByteBigEndian() & 0XFFFFFFFFL
-          case 27 =>
-            if (!input.prepareRead(8)) failUnexpectedEOI("64-bit integer")
-            input.readOctaByteBigEndian()
+          case 24 => input.readBytePadded(this) & 0XFFL
+          case 25 => input.readDoubleByteBigEndianPadded(this) & 0XFFFFL
+          case 26 => input.readQuadByteBigEndianPadded(this) & 0XFFFFFFFFL
+          case 27 => input.readOctaByteBigEndianPadded(this)
           case 31 if 2 <= majorType && majorType <= 5 || majorType == 7 =>
             0L // handled specially
           case 28 | 29 | 30 => failInvalidInput(s"Additional info `$info` is invalid (major type `$majorType`)")
         }
 
-      val result = (majorType: @switch) match {
+      (majorType: @switch) match {
         case 0 => decodePositiveInteger(uLong)
         case 1 => decodeNegativeInteger(uLong)
         case 2 => decodeByteString(uLong, info == 31)
@@ -199,13 +190,21 @@ final private[borer] class CborParser[In <: Input](val input: In, config: CborPa
         case 6 => decodeTag(uLong)
         case 7 => decodeExtra(info, uLong)
       }
-      input.releaseBeforeCursor()
-      result
     } else {
       receiver.onEndOfInput()
       DataItem.EndOfInput
     }
   }
+
+  def padByte() =
+    if (_valueIndex < 0) {
+      _valueIndex = 0
+      0
+    } else failUnexpectedEOI("8-bit integer")
+  def padDoubleByte(remaining: Int)        = failUnexpectedEOI("16-bit integer")
+  def padQuadByte(remaining: Int)          = failUnexpectedEOI("32-bit integer")
+  def padOctaByte(remaining: Int)          = failUnexpectedEOI("64-bit integer")
+  def padBytes(rest: Bytes, missing: Long) = failUnexpectedEOI(s"at least $missing more bytes")
 
   private def failUnexpectedEOI(expected: String) = throw new Borer.Error.UnexpectedEndOfInput(lastPos, expected)
   private def failInvalidInput(msg: String)       = throw new Borer.Error.InvalidInputData(lastPos, msg)
@@ -222,9 +221,9 @@ object CborParser {
     def maxTextStringLength: Int
   }
 
-  private[this] val _creator: Receiver.ParserCreator[Input, CborParser.Config] =
-    (input, config) => new CborParser[Input](input, config)
+  private[this] val _creator: Receiver.ParserCreator[Any, CborParser.Config] =
+    (input, byteAccess, config) => new CborParser(input, config)(byteAccess)
 
-  def creator[In <: Input, Conf <: CborParser.Config]: Receiver.ParserCreator[In, Conf] =
-    _creator.asInstanceOf[Receiver.ParserCreator[In, Conf]]
+  def creator[Bytes, Conf <: CborParser.Config]: Receiver.ParserCreator[Bytes, Conf] =
+    _creator.asInstanceOf[Receiver.ParserCreator[Bytes, Conf]]
 }

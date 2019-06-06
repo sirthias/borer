@@ -10,42 +10,31 @@ package io.bullet.borer.input
 
 import java.nio.charset.StandardCharsets
 
-import io.bullet.borer.{Borer, ByteAccess, Input}
-import io.bullet.borer.Input.{Position, Wrapper}
+import io.bullet.borer.{ByteAccess, Input}
+import io.bullet.borer.Input.Provider
 import io.bullet.borer.internal.ByteArrayAccess
 
 trait FromByteArrayInput {
 
-  implicit object ByteArrayWrapper extends Wrapper[Array[Byte]] {
-    type In = FromByteArray
+  implicit object ByteArrayProvider extends Provider[Array[Byte]] {
+    type Bytes = Array[Byte]
+    type In    = FromByteArray
+    def byteAccess                = ByteAccess.ForByteArray
     def apply(value: Array[Byte]) = new FromByteArray(value)
   }
 
-  final class FromByteArray(byteArray: Array[Byte]) extends Input {
+  final class FromByteArray(byteArray: Array[Byte]) extends Input[Array[Byte]] {
 
-    type Bytes    = Array[Byte]
-    type Position = Input.Position
+    private[this] var _cursor: Int = _
 
-    protected var _cursor: Int = _
+    def cursor: Long = _cursor.toLong
 
-    @inline def cursor: Long = _cursor.toLong
-    @inline def byteAccess   = ByteAccess.ForByteArray
-
-    @inline def resetTo(cursor: Long) = {
-      _cursor = cursor.toInt
-      this
-    }
-
-    @inline def moveCursor(offset: Int): this.type = {
+    def moveCursor(offset: Int): this.type = {
       _cursor += offset
       this
     }
 
-    @inline def releaseBeforeCursor(): this.type = this
-
-    def position(cursor: Long): Position = Position(this, cursor)
-
-    @inline def prepareRead(length: Long): Boolean = _cursor + length <= byteArray.length
+    def prepareRead(length: Long): Boolean = _cursor + length <= byteArray.length
 
     def readByte(): Byte = {
       val c = _cursor
@@ -53,11 +42,8 @@ trait FromByteArrayInput {
       byteArray(c)
     }
 
-    @inline def readByteOrFF(): Byte =
-      if (_cursor >= byteArray.length) {
-        _cursor += 1
-        -1
-      } else readByte()
+    def readBytePadded(pp: Input.PaddingProvider[Array[Byte]]): Byte =
+      if (_cursor >= byteArray.length) pp.padByte() else readByte()
 
     def readDoubleByteBigEndian(): Char = {
       val c = _cursor
@@ -65,10 +51,10 @@ trait FromByteArrayInput {
       ByteArrayAccess.instance.doubleByteBigEndian(byteArray, c)
     }
 
-    @inline def readDoubleByteBigEndianPaddedFF(): Char = {
+    def readDoubleByteBigEndianPadded(pp: Input.PaddingProvider[Array[Byte]]): Char = {
       val remaining = byteArray.length - _cursor
       if (remaining >= 2) readDoubleByteBigEndian()
-      else readDoubleByteBigEndianPaddedFF(remaining)
+      else pp.padDoubleByte(remaining)
     }
 
     def readQuadByteBigEndian(): Int = {
@@ -77,10 +63,10 @@ trait FromByteArrayInput {
       ByteArrayAccess.instance.quadByteBigEndian(byteArray, c)
     }
 
-    @inline def readQuadByteBigEndianPaddedFF(): Int = {
+    def readQuadByteBigEndianPadded(pp: Input.PaddingProvider[Array[Byte]]): Int = {
       val remaining = byteArray.length - _cursor
       if (remaining >= 4) readQuadByteBigEndian()
-      else readQuadByteBigEndianPaddedFF(remaining)
+      else pp.padQuadByte(remaining)
     }
 
     def readOctaByteBigEndian(): Long = {
@@ -89,15 +75,16 @@ trait FromByteArrayInput {
       ByteArrayAccess.instance.octaByteBigEndian(byteArray, c)
     }
 
-    @inline def readOctaByteBigEndianPaddedFF(): Long = {
+    def readOctaByteBigEndianPadded(pp: Input.PaddingProvider[Array[Byte]]): Long = {
       val remaining = byteArray.length - _cursor
       if (remaining >= 8) readOctaByteBigEndian()
-      else readOctaByteBigEndianPaddedFF(remaining)
+      else pp.padOctaByte(remaining)
     }
 
-    @inline def readBytes(length: Long): Bytes = {
-      val len = length.toInt
-      if (length == len) {
+    def readBytes(length: Long, pp: Input.PaddingProvider[Array[Byte]]): Array[Byte] = {
+      val remaining = (byteArray.length - _cursor).toLong
+      val len       = math.min(remaining, length).toInt
+      val bytes =
         if (len > 0) {
           val result = new Array[Byte](len)
           val c      = _cursor
@@ -105,10 +92,11 @@ trait FromByteArrayInput {
           System.arraycopy(byteArray, c, result, 0, len)
           result
         } else Array.emptyByteArray
-      } else throw new Borer.Error.Overflow(position(cursor), "Byte-array input is limited to size 2GB")
+      if (length <= remaining) bytes
+      else pp.padBytes(bytes, length - remaining)
     }
 
-    @inline def precedingBytesAsAsciiString(length: Int): String =
+    def precedingBytesAsAsciiString(length: Int): String =
       new String(byteArray, _cursor - length, length, StandardCharsets.ISO_8859_1)
   }
 }

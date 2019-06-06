@@ -10,6 +10,6 @@ package io.bullet
 
 package object borer {
 
-  type Reader = InputReader[Input, Reader.Config]
+  type Reader = InputReader[_]
 
 }

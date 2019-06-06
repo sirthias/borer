@@ -61,12 +61,12 @@ object Receiver {
   /**
     * Common parent type of [[io.bullet.borer.cbor.CborParser]] and [[io.bullet.borer.json.JsonParser]]
     */
-  abstract class Parser[In <: Input] {
+  abstract class Parser[Bytes] extends Input.PaddingProvider[Bytes] {
 
     /**
       * The [[Input]] the parser is parsing from.
       */
-    def input: In
+    def input: Input[Bytes]
 
     /**
       * The index of the first byte of the value that was produced by the last call to `pull`.
@@ -81,7 +81,7 @@ object Receiver {
     def pull(receiver: Receiver): Int
   }
 
-  type ParserCreator[In <: Input, Config] = (In, Config) => Parser[In]
+  type ParserCreator[Bytes, Config] = (Input[Bytes], ByteAccess[Bytes], Config) => Parser[Bytes]
 
   type Wrapper[Config] = (Receiver, Config) => Receiver
   private[this] val _nopWrapper: Wrapper[Any] = (receiver, _) => receiver

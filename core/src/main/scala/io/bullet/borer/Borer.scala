@@ -25,8 +25,14 @@ case object Cbor extends Target {
   /**
     * Entry point into the CBOR decoding mini-DSL.
     */
-  def decode[T](input: T)(implicit w: Input.Wrapper[T]): DecodingSetup.Api[w.In, DecodingConfig] =
-    new DecodingSetup.Impl(w(input), DecodingConfig.default, CborValidation.wrapper, CborParser.creator, this)
+  def decode[T](value: T)(implicit p: Input.Provider[T]): DecodingSetup.Api[p.In, DecodingConfig] =
+    new DecodingSetup.Impl(
+      p(value),
+      p.byteAccess,
+      DecodingConfig.default,
+      CborValidation.wrapper,
+      CborParser.creator[p.Bytes, DecodingConfig],
+      this)
 
   /**
     * Constructs a new [[Writer]] that writes CBOR to the given [[Output]].
@@ -40,11 +46,12 @@ case object Cbor extends Target {
   /**
     * Constructs a new [[Reader]] that reads CBOR from the given [[Input]].
     */
-  def reader[In <: Input](
-      input: In,
+  def reader[T](
+      value: T,
       config: DecodingConfig = DecodingConfig.default,
-      receiverWrapper: Receiver.Wrapper[DecodingConfig] = CborValidation.wrapper): Reader =
-    new InputReader(new CborParser(input, config), receiverWrapper, config, this)
+      receiverWrapper: Receiver.Wrapper[DecodingConfig] = CborValidation.wrapper)(
+      implicit p: Input.Provider[T]): Reader =
+    new InputReader(new CborParser(p(value), config)(p.byteAccess), receiverWrapper, config, this)
 
   /**
     * @param compressFloatingPointValues set to false in order to always write floats as 32-bit values and doubles
@@ -105,12 +112,13 @@ case object Json extends Target {
   /**
     * Entry point into the JSON decoding mini-DSL.
     */
-  def decode[T](input: T)(implicit w: Input.Wrapper[T]): DecodingSetup.Api[w.In, DecodingConfig] =
-    new DecodingSetup.Impl[w.In, DecodingConfig](
-      w(input),
+  def decode[T](value: T)(implicit p: Input.Provider[T]): DecodingSetup.Api[p.In, DecodingConfig] =
+    new DecodingSetup.Impl[p.Bytes, p.In, DecodingConfig](
+      p(value),
+      p.byteAccess,
       DecodingConfig.default,
       Receiver.nopWrapper,
-      JsonParser.creator,
+      JsonParser.creator[p.Bytes, DecodingConfig],
       null)
 
   /**
@@ -125,11 +133,11 @@ case object Json extends Target {
   /**
     * Constructs a new [[Reader]] that reads JSON from the given [[Input]].
     */
-  def reader[In <: Input](
-      input: In,
+  def reader[T](
+      value: T,
       config: DecodingConfig = DecodingConfig.default,
-      receiverWrapper: Receiver.Wrapper[DecodingConfig] = Receiver.nopWrapper): Reader =
-    new InputReader(new JsonParser(input, config), receiverWrapper, config, Json)
+      receiverWrapper: Receiver.Wrapper[DecodingConfig] = Receiver.nopWrapper)(implicit p: Input.Provider[T]): Reader =
+    new InputReader(new JsonParser(p(value), config), receiverWrapper, config, Json)
 
   final case class EncodingConfig(bufferSize: Int = 1024) extends Borer.EncodingConfig {
     def compressFloatingPointValues = false
@@ -164,9 +172,9 @@ case object Json extends Target {
       initialCharbufferSize: Int = 256)
       extends Borer.DecodingConfig with JsonParser.Config {
 
-    Util.requirePositive(maxNumberAbsExponent, "maxNumberAbsExponent")
+    Util.requireRange(maxNumberAbsExponent, 1, 999, "maxNumberAbsExponent")
     Util.requirePositive(maxStringLength, "maxStringLength")
-    Util.requirePositive(maxNumberMantissaDigits, "maxNumberMantissaDigits")
+    Util.requireRange(maxNumberMantissaDigits, 1, 200, "maxNumberMantissaDigits")
 
     // the JsonParser never produces Float values directly (only doubles), so this is necessary
     def readDoubleAlsoAsFloat = true
@@ -188,7 +196,7 @@ sealed abstract class Target {
 
   def encode[T: Encoder](value: T): EncodingSetup.Api[T, _]
 
-  def decode[T](input: T)(implicit w: Input.Wrapper[T]): DecodingSetup.Api[w.In, _]
+  def decode[T](input: T)(implicit w: Input.Provider[T]): DecodingSetup.Api[w.In, _]
 }
 
 /**
@@ -238,8 +246,8 @@ object Borer {
 
     final def io: IO = _io
 
-    private[borer] def withPosOf[In <: Input](reader: InputReader[In, _]): Error[In#Position] = {
-      val thiz = this.asInstanceOf[Error[In#Position]]
+    private[borer] def withPosOf(reader: Reader): Error[Input.Position] = {
+      val thiz = this.asInstanceOf[Error[Input.Position]]
       if (thiz._io.asInstanceOf[AnyRef] eq null) thiz._io = reader.position
       thiz
     }
