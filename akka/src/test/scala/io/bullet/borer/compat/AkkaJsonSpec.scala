@@ -17,7 +17,7 @@ object AkkaJsonSpec extends AbstractJsonSpec {
   import akka._
 
   def encode[T: Encoder](value: T): String =
-    Json.encode(value).to[ByteString].bytes.utf8String
+    Json.encode(value).to[ByteString].result.utf8String
 
   def decode[T: Decoder](encoded: String): T =
     Json

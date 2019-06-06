@@ -15,7 +15,7 @@ import utest._
 object ByteVectorSpec extends AbstractBorerSpec {
   import scodec._
 
-  def encode[T: Encoder](value: T): String   = toHexString(Cbor.encode(value).to[ByteVector].bytes.toArray)
+  def encode[T: Encoder](value: T): String   = toHexString(Cbor.encode(value).to[ByteVector].result.toArray)
   def decode[T: Decoder](encoded: String): T = Cbor.decode(ByteVector(hexBytes(encoded))).to[T].value
 
   case class Foo(int: Int, content: ByteVector)

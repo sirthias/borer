@@ -14,6 +14,6 @@ import io.bullet.borer._
 object AkkaCborSpec extends AbstractCborSpec {
   import akka._
 
-  def encode[T: Encoder](value: T): String   = toHexString(Cbor.encode(value).to[ByteString].bytes.toArray)
+  def encode[T: Encoder](value: T): String   = toHexString(Cbor.encode(value).to[ByteString].result.toArray)
   def decode[T: Decoder](encoded: String): T = Cbor.decode(ByteString(hexBytes(encoded))).to[T].value
 }

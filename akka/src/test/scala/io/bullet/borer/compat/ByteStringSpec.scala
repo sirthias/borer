@@ -15,7 +15,7 @@ import utest._
 object ByteStringSpec extends AbstractBorerSpec {
   import akka._
 
-  def encode[T: Encoder](value: T): String   = toHexString(Cbor.encode(value).to[ByteString].bytes.toArray)
+  def encode[T: Encoder](value: T): String   = toHexString(Cbor.encode(value).to[ByteString].result.toArray)
   def decode[T: Decoder](encoded: String): T = Cbor.decode(ByteString(hexBytes(encoded))).to[T].value
 
   case class Foo(int: Int, content: ByteString)

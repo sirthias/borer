@@ -14,6 +14,6 @@ import io.bullet.borer._
 object ScodecCborSpec extends AbstractCborSpec {
   import scodec._
 
-  def encode[T: Encoder](value: T): String   = toHexString(Cbor.encode(value).to[ByteVector].bytes.toArray)
+  def encode[T: Encoder](value: T): String   = toHexString(Cbor.encode(value).to[ByteVector].result.toArray)
   def decode[T: Decoder](encoded: String): T = Cbor.decode(ByteVector(hexBytes(encoded))).to[T].value
 }

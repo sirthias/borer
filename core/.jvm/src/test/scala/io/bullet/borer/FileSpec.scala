@@ -27,7 +27,7 @@ object FileSpec extends TestSuite {
     "read and write files" - {
       val tempFile = File.createTempFile("borer", ".json")
       try {
-        Json.encode(Foo()).to(tempFile).bytes ==> tempFile
+        Json.encode(Foo()).to(tempFile).result ==> tempFile
 
         new String(Files.readAllBytes(tempFile.toPath), "UTF8") ==>
         """["This is a really long text for testing writing to a file",42,0.0]"""

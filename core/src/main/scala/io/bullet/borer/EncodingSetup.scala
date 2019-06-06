@@ -79,11 +79,11 @@ object EncodingSetup {
 
   sealed trait Sealed[Out <: Output, Result] {
 
-    def bytes: Result
+    def result: Result
 
-    def bytesTry: Try[Result]
+    def resultTry: Try[Result]
 
-    def bytesEither: Either[Borer.Error[Out], Result]
+    def resultEither: Either[Borer.Error[Out], Result]
 
     def output: Out
 
@@ -114,13 +114,13 @@ object EncodingSetup {
 
     def toUtf8String: String = new String(toByteArray, UTF_8)
 
-    def toByteArray: Array[Byte] = to[Array[Byte]].bytes
+    def toByteArray: Array[Byte] = to[Array[Byte]].result
 
-    def toByteArrayTry: Try[Array[Byte]] = to[Array[Byte]].bytesTry
+    def toByteArrayTry: Try[Array[Byte]] = to[Array[Byte]].resultTry
 
-    def toByteBuffer: ByteBuffer = to[ByteBuffer].bytes
+    def toByteBuffer: ByteBuffer = to[ByteBuffer].result
 
-    def toByteBufferTry: Try[ByteBuffer] = to[ByteBuffer].bytesTry
+    def toByteBufferTry: Try[ByteBuffer] = to[ByteBuffer].resultTry
 
     def to[R](implicit op: Output.ToTypeProvider[R]): Sealed[op.Out, R] = {
       _output = op(config.bufferSize)
@@ -132,7 +132,7 @@ object EncodingSetup {
       this.asInstanceOf[Sealed[op.Out, R]]
     }
 
-    def bytes: AnyRef = {
+    def result: AnyRef = {
       val renderer = rendererCreator(_output)
       try {
         render(renderer).out.result()
@@ -142,7 +142,7 @@ object EncodingSetup {
       }
     }
 
-    def bytesTry: Try[AnyRef] = {
+    def resultTry: Try[AnyRef] = {
       val renderer = rendererCreator(_output)
       try {
         Success(render(renderer).out.result())
@@ -152,7 +152,7 @@ object EncodingSetup {
       }
     }
 
-    def bytesEither: Either[Borer.Error[Output], AnyRef] = {
+    def resultEither: Either[Borer.Error[Output], AnyRef] = {
       val renderer = rendererCreator(_output)
       try {
         Right(render(renderer).out.result())

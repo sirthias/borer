@@ -16,7 +16,7 @@ object ScodecJsonSpec extends AbstractJsonSpec {
   import scodec._
 
   def encode[T: Encoder](value: T): String =
-    Json.encode(value).to[ByteVector].bytes.decodeUtf8.right.get
+    Json.encode(value).to[ByteVector].result.decodeUtf8.right.get
 
   def decode[T: Decoder](encoded: String): T =
     Json

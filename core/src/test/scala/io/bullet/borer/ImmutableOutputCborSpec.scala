@@ -12,7 +12,7 @@ import java.util
 
 object ImmutableOutputCborSpec extends AbstractCborSpec {
 
-  def encode[T: Encoder](value: T): String   = toHexString(Cbor.encode(value).to[Array[Byte]].bytes)
+  def encode[T: Encoder](value: T): String   = toHexString(Cbor.encode(value).to[Array[Byte]].result)
   def decode[T: Decoder](encoded: String): T = Cbor.decode(hexBytes(encoded)).to[T].value
 
   implicit object SomewhatImmutableByteArrayOutputProvider extends Output.ToTypeProvider[Array[Byte]] {
