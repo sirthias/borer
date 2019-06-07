@@ -56,9 +56,12 @@ trait FromInputIteratorInput {
             inputIterator = remainingInputs
           } else {
             input.moveCursor(-inputCursor.toInt)
-            val head :: tail = history // mismatch => illegal state: rollback too far
-            history = tail
-            rec(head, inputStart, input +: inputIterator)
+            history match {
+              case head :: tail =>
+                history = tail
+                rec(head, inputStart, input +: inputIterator)
+              case Nil => throw new IllegalStateException // rollback too far?
+            }
           }
         }
         rec(previous, cursor, current +: inputIterator)

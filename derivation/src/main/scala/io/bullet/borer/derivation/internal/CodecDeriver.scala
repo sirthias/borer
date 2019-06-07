@@ -43,7 +43,7 @@ abstract private[derivation] class CodecDeriver[C <: blackbox.Context](ctx: C) e
   }
 
   def getTypeIds(tpe: Type, subTypes: List[SubType]): Array[Key] = {
-    val annos: Array[Key] = subTypes.map(_.key())(collection.breakOut)
+    val annos: Array[Key] = subTypes.map(_.key()).toArray
 
     @tailrec def rec(i: Int, j: Int): Array[Key] =
       if (i < annos.length) {

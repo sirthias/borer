@@ -178,7 +178,7 @@ object MapBasedCodecs {
                   rem -= 1
                   ${readField(p)}
                 } else $defaultValue"""
-          }(collection.breakOut)
+          }.toList
 
           def readFields(start: Int, end: Int): Tree =
             if (start < end) {

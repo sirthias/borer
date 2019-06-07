@@ -25,7 +25,7 @@ import io.bullet.borer.internal.Macros
   */
 final case class Codec[A](encoder: Encoder[A], decoder: Decoder[A]) {
 
-  @inline def bimap[B](f: B ⇒ A, g: A ⇒ B): Codec[B] = Codec.bimap(f, g)(encoder, decoder)
+  @inline def bimap[B](f: B => A, g: A => B): Codec[B] = Codec.bimap(f, g)(encoder, decoder)
 }
 
 object Codec {
@@ -49,6 +49,6 @@ object Codec {
   /**
     * Constructs a `Codec[B]` from an `Encoder[A]`, a `Decoder[A]` and two functions.
     */
-  @inline def bimap[A, B](f: B ⇒ A, g: A ⇒ B)(ea: Encoder[A], da: Decoder[A]): Codec[B] =
+  @inline def bimap[A, B](f: B => A, g: A => B)(ea: Encoder[A], da: Decoder[A]): Codec[B] =
     Codec(ea contramap f, da map g)
 }

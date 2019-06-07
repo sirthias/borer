@@ -11,10 +11,10 @@ package io.bullet.borer
 abstract class TupleDecoders {
 
   implicit def forTuple1[T1 :Decoder]: Decoder[Tuple1[T1]] =
-    Decoder(r ⇒ Tuple1(r[T1]))
+    Decoder(r => Tuple1(r[T1]))
 
   [2..#implicit def forTuple1[[#T1 :Decoder#]]: Decoder[([#T1#])] =
-    Decoder(r ⇒ r.readArrayClose(r.readArrayOpen(1), ([#r[T1]#])))#
+    Decoder(r => r.readArrayClose(r.readArrayOpen(1), ([#r[T1]#])))#
 
   ]
 }
