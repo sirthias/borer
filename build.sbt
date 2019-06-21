@@ -10,7 +10,8 @@ lazy val commonSettings = Seq(
   unmanagedResources in Compile += baseDirectory.value.getParentFile.getParentFile / "LICENSE",
   scmInfo := Some(ScmInfo(url("https://github.com/sirthias/borer"), "scm:git:git@github.com:sirthias/borer.git")),
 
-  scalaVersion := "2.12.8",
+  scalaVersion := "2.13.0",
+  crossScalaVersions := Seq("2.12.8", "2.13.0"),
 
   scalacOptions ++= Seq(
     "-deprecation",
@@ -118,8 +119,8 @@ lazy val releaseSettings = {
       publishArtifacts,
       setNextVersion,
       commitNextVersion,
-      //releaseStepCommand("sonatypeReleaseAll"),
-      //pushChanges
+      releaseStepCommand("sonatypeReleaseAll"),
+      pushChanges
     )
   )
 }
@@ -134,11 +135,12 @@ lazy val macroParadise =
 
 /////////////////////// DEPENDENCIES /////////////////////////
 
-val `akka-actor`       = Def.setting("com.typesafe.akka"     %%% "akka-actor"          % "2.5.23")
-val `scodec-bits`      = Def.setting("org.scodec"            %%% "scodec-bits"         % "1.1.11")
-val utest              = Def.setting("com.lihaoyi"           %%% "utest"               % "0.6.7"            % "test")
-val `scala-compiler`   = Def.setting("org.scala-lang"        %  "scala-compiler"       % scalaVersion.value % "provided")
-val `scala-reflect`    = Def.setting("org.scala-lang"        %  "scala-reflect"        % scalaVersion.value % "provided")
+val `collection-compat` = Def.setting("org.scala-lang.modules" %%% "scala-collection-compat" % "2.0.0")
+val `akka-actor`        = Def.setting("com.typesafe.akka"      %%% "akka-actor"              % "2.5.23")
+val `scodec-bits`       = Def.setting("org.scodec"             %%% "scodec-bits"             % "1.1.12")
+val utest               = Def.setting("com.lihaoyi"            %%% "utest"                   % "0.7.1"            % "test")
+val `scala-compiler`    = Def.setting("org.scala-lang"         %  "scala-compiler"           % scalaVersion.value % "provided")
+val `scala-reflect`     = Def.setting("org.scala-lang"         %  "scala-reflect"            % scalaVersion.value % "provided")
 
 /////////////////////// PROJECTS /////////////////////////
 
@@ -166,7 +168,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .settings(
     moduleName := "borer-core",
     macroParadise,
-    libraryDependencies ++= Seq(`scala-reflect`.value, utest.value),
+    libraryDependencies ++= Seq(`collection-compat`.value, `scala-reflect`.value, utest.value),
 
     // point sbt-boilerplate to the common "project"
     boilerplateSource in Compile := baseDirectory.value.getParentFile / "src" / "main" / "boilerplate",
@@ -229,13 +231,13 @@ lazy val benchmarks = project
   .settings(
     publishArtifact := false,
     libraryDependencies ++= Seq(
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"   % "0.49.1",
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "0.49.1" % Provided,
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"   % "0.51.1",
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "0.51.1" % Provided,
       "com.fasterxml.jackson.module"          %% "jackson-module-scala"  % "2.9.9",
-      "com.lihaoyi"                           %% "upickle"               % "0.7.4",
-      "io.circe"                              %% "circe-core"            % "0.12.0-M2",
-      "io.circe"                              %% "circe-derivation"      % "0.12.0-M1",
-      "io.circe"                              %% "circe-jawn"            % "0.12.0-M2",
+      "com.lihaoyi"                           %% "upickle"               % "0.7.5",
+      "io.circe"                              %% "circe-core"            % "0.12.0-M3",
+      "io.circe"                              %% "circe-derivation"      % "0.12.0-M3",
+      "io.circe"                              %% "circe-jawn"            % "0.12.0-M3",
       "io.spray"                              %% "spray-json"            % "1.3.5",
     )
   )

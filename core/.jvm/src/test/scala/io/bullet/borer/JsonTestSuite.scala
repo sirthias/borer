@@ -22,17 +22,18 @@ object JsonTestSuite extends TestSuite {
     "n_structure_whitespace_formfeed.json"
   )
 
-  val testFiles: Map[String, Array[Byte]] =
+  val testFiles =
     Source
       .fromResource("")
       .getLines()
       .map { name =>
         val is = new BufferedInputStream(getClass.getResourceAsStream("/" + name))
-        try name → Iterator.continually(is.read).takeWhile(_ != -1).map(_.toByte).toArray
+        try name -> Iterator.continually(is.read).takeWhile(_ != -1).map(_.toByte).toArray
         finally is.close()
       }
       .toMap
-      .filterKeys(!disabled.contains(_))
+      .view
+      .filter(t => !disabled.contains(t._1))
 
   val config = Json.DecodingConfig.default.copy(maxNumberMantissaDigits = 99, maxNumberAbsExponent = 999)
 

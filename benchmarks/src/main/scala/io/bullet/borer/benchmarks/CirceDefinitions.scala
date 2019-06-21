@@ -25,6 +25,8 @@ object CirceCodecs {
 
   implicit val intsEncoder = implicitly[Encoder[List[Int]]]
   implicit val intsDecoder = implicitly[Decoder[List[Int]]]
+
+  val throwError = () => throw new IllegalStateException
 }
 
 import io.bullet.borer.benchmarks.CirceCodecs._
@@ -44,19 +46,19 @@ class CirceEncodingBenchmark extends EncodingBenchmark {
 class CirceDecodingBenchmark extends DecodingBenchmark {
 
   @Benchmark
-  def decodeFoos: Map[String, Foo] = decode[Map[String, Foo]](new String(foosJson, UTF_8)).right.get
+  def decodeFoos: Map[String, Foo] = decode[Map[String, Foo]](new String(foosJson, UTF_8)).getOrElse(throwError())
 
   @Benchmark
-  def decodeInts: List[Int] = decode[List[Int]](new String(intsJson, UTF_8)).right.get
+  def decodeInts: List[Int] = decode[List[Int]](new String(intsJson, UTF_8)).getOrElse(throwError())
 
   @Benchmark
-  def decodeEmptyArray: List[Int] = decode[List[Int]](new String(emptyArrayJson, UTF_8)).right.get
+  def decodeEmptyArray: List[Int] = decode[List[Int]](new String(emptyArrayJson, UTF_8)).getOrElse(throwError())
 }
 
 class CirceDomBenchmark extends DomBenchmark {
 
   private var root: Json = _
-  def setup(): Unit      = root = parse(new String(fileBytes, UTF_8)).right.get
+  def setup(): Unit      = root = parse(new String(fileBytes, UTF_8)).getOrElse(throwError())
 
   @Benchmark
   def encodeDom: Array[Byte] = root.noSpaces.getBytes(UTF_8)
@@ -64,7 +66,7 @@ class CirceDomBenchmark extends DomBenchmark {
   @Benchmark
   def decodeDom: Json =
     // first decoding into a string and then parsing appears to be faster than directly parsing from the bytes
-    parse(new String(fileBytes, UTF_8)).right.get
+    parse(new String(fileBytes, UTF_8)).getOrElse(throwError())
 }
 
 class CirceModelBenchmark extends DomBenchmark {
@@ -229,7 +231,7 @@ class CirceModelBenchmark extends DomBenchmark {
     implicit def nullableDecoder[T: Decoder: Default]: Decoder[Nullable[T]] =
       Decoder.instance { cursor =>
         if (cursor.value.isNull) Right(new Nullable(Default.get[T]))
-        else cursor.as[T].right.map(new Nullable(_))
+        else cursor.as[T].map(new Nullable(_))
       }
 
     // format: OFF
@@ -392,5 +394,5 @@ class CirceModelBenchmark extends DomBenchmark {
   @Benchmark
   def decodeModel: Product =
     // first decoding into a string and then parsing appears to be faster than directly parsing from the bytes
-    decode[Product](new String(fileBytes, UTF_8)).right.get
+    decode[Product](new String(fileBytes, UTF_8)).getOrElse(throwError())
 }

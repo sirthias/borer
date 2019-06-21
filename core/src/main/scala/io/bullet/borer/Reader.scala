@@ -13,8 +13,8 @@ import java.nio.charset.StandardCharsets
 import io.bullet.borer.internal.{Receptacle, Util}
 
 import scala.annotation.tailrec
-import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable
+import scala.collection.compat._
 
 /**
   * Stateful, mutable abstraction for reading a stream of CBOR or JSON data from the given `input`.
@@ -256,7 +256,7 @@ final class InputReader[Config <: Reader.Config](
       case DI.TextStart => stringOf(readUnsizedTextBytes[Array[Byte]]())
       case _            => unexpectedDataItem(expected = "String or Text Bytes")
     }
-  def readString(s: String): this.type = if (tryReadString(s)) this else unexpectedDataItem(expected = '"' + s + '"')
+  def readString(s: String): this.type = if (tryReadString(s)) this else unexpectedDataItem(expected = s""""$s"""")
   @inline def hasString: Boolean       = hasAnyOf(DI.String | DI.Chars | DI.Text | DI.TextStart)
 
   /**
@@ -442,10 +442,10 @@ final class InputReader[Config <: Reader.Config](
 
   @inline def read[T]()(implicit decoder: Decoder[T]): T = decoder.read(this)
 
-  def readUntilBreak[M[_], T: Decoder]()(implicit cbf: CanBuildFrom[M[T], T, M[T]]): M[T] = {
+  def readUntilBreak[M[_], T: Decoder]()(implicit factory: Factory[T, M[T]]): M[T] = {
     @tailrec def rec(b: mutable.Builder[T, M[T]]): M[T] =
       if (tryReadBreak()) b.result() else rec(b += read[T]())
-    rec(cbf())
+    rec(factory.newBuilder)
   }
 
   def readUntilBreak[T](zero: T)(f: T => T): T = {

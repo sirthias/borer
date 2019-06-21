@@ -12,6 +12,7 @@ import java.util
 
 import scala.annotation.{switch, tailrec}
 import scala.collection.{immutable, mutable}
+import scala.collection.compat.immutable.ArraySeq
 import scala.collection.immutable.HashMap
 import scala.util.hashing.MurmurHash3
 
@@ -90,7 +91,7 @@ object Dom {
       extends Element(dataItem) {
     if (size != (elements.length >> 1)) throw new IllegalArgumentException
 
-    final def elementsInterleaved: IndexedSeq[Element] = Predef.wrapRefArray(elements)
+    final def elementsInterleaved: IndexedSeq[Element] = ArraySeq.unsafeWrapArray(elements)
 
     final def isEmpty                                          = false
     final def get: (Int, Iterator[Element], Iterator[Element]) = (size, keys, values)
@@ -123,7 +124,7 @@ object Dom {
       rec(HashMap.empty)
     }
 
-    final override def toString = keys.zip(values).map(x => x._1 + ": " + x._2).mkString("{", ", ", "}")
+    final override def toString = keys.zip(values).map(x => x._1.toString + ": " + x._2).mkString("{", ", ", "}")
 
     final override def hashCode() = {
       import scala.runtime.Statics.{finalizeHash, mix}
