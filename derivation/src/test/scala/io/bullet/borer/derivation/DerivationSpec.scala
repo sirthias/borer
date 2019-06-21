@@ -415,6 +415,20 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
               "`io.bullet.borer.derivation.AdtWithKeyCollision.Animal` share the same type id `Dog`"
           )
       }
+
+      "Diamond" - {
+        import MapBasedCodecs._
+
+        sealed trait A
+        sealed trait B       extends A
+        sealed trait C       extends A
+        case class D(a: Int) extends B with C
+
+        implicit val d = deriveCodec[D]
+        implicit val c = deriveCodec[C]
+        implicit val b = deriveCodec[B]
+        implicit val a = deriveCodec[A]
+      }
     }
   }
 
