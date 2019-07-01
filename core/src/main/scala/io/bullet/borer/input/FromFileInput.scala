@@ -16,7 +16,7 @@ import io.bullet.borer.Input.Provider
 
 trait FromFileInput { this: FromByteArrayInput =>
 
-  implicit object FileProvider extends Provider[File] {
+  implicit object FromFileProvider extends Provider[File] {
     type Bytes = Array[Byte]
     type In    = FromByteArray
     def byteAccess         = ByteAccess.ForByteArray

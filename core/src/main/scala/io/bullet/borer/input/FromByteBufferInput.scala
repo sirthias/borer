@@ -9,14 +9,13 @@
 package io.bullet.borer.input
 
 import java.nio.ByteBuffer
-import java.nio.charset.StandardCharsets
 
 import io.bullet.borer.{ByteAccess, Input}
 import io.bullet.borer.Input.Provider
 
 trait FromByteBufferInput {
 
-  implicit object ByteBufferProvider extends Provider[ByteBuffer] {
+  implicit object FromByteBufferProvider extends Provider[ByteBuffer] {
     type Bytes = Array[Byte]
     type In    = FromByteBuffer
     def byteAccess               = ByteAccess.ForByteArray
@@ -25,25 +24,12 @@ trait FromByteBufferInput {
 
   final class FromByteBuffer(buffer: ByteBuffer) extends Input[Array[Byte]] {
 
-    // the number of bytes we've already read beyond the limit of the underlying buffer
-    private[this] var paddedCount = 0
+    def cursor: Long = buffer.position().toLong
 
-    def cursor: Long = (buffer.position() + paddedCount).toLong
-
-    def moveCursor(offset: Int): this.type = {
-      val targetPos = buffer.position() + paddedCount + offset
-      val limit     = buffer.limit()
-      paddedCount = if (targetPos <= limit) {
-        buffer.position(targetPos)
-        0
-      } else {
-        buffer.position(limit)
-        targetPos - limit
-      }
+    def unread(numberOfBytes: Int): this.type = {
+      buffer.position(buffer.position - numberOfBytes)
       this
     }
-
-    def prepareRead(length: Long): Boolean = length <= buffer.remaining
 
     def readByte(): Byte = buffer.get()
 
@@ -86,16 +72,6 @@ trait FromByteBufferInput {
         } else ByteAccess.ForByteArray.empty
       if (length <= remaining) bytes
       else pp.padBytes(bytes, length - remaining)
-    }
-
-    def precedingBytesAsAsciiString(length: Int): String = {
-      val limit = buffer.limit()
-      val pos   = buffer.position()
-      moveCursor(-length)
-      buffer.limit(pos)
-      val result = StandardCharsets.ISO_8859_1.decode(buffer).toString
-      buffer.limit(limit)
-      result
     }
   }
 }

@@ -8,7 +8,6 @@
 
 package io.bullet.borer.compat
 
-import java.nio.charset.StandardCharsets
 import java.nio.ByteBuffer
 
 import _root_.scodec.bits.ByteVector
@@ -78,12 +77,10 @@ object scodec {
 
     def cursor: Long = _cursor
 
-    def moveCursor(offset: Int): this.type = {
-      _cursor += offset
+    def unread(numberOfBytes: Int): this.type = {
+      _cursor -= numberOfBytes
       this
     }
-
-    def prepareRead(length: Long): Boolean = _cursor + length <= byteVector.length
 
     def readByte(): Byte = {
       val c = _cursor
@@ -152,11 +149,6 @@ object scodec {
         } else ByteVector.empty
       if (length <= remaining) bytes
       else pp.padBytes(bytes, length - remaining)
-    }
-
-    def precedingBytesAsAsciiString(length: Int): String = {
-      val slice = byteVector.slice(_cursor - length, _cursor)
-      StandardCharsets.ISO_8859_1.decode(slice.toByteBuffer).toString
     }
   }
 

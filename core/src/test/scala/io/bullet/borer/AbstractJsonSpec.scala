@@ -184,12 +184,11 @@ abstract class AbstractJsonSpec extends AbstractBorerSpec {
           number  <- "123456789123456789123456".tails.toList.init
           ix      <- (-1 until number.length).toList
           trailer <- List("", " ")
-        } yield
-          ix match {
-            case -1                     => number + trailer
-            case 0                      => "0." + number + trailer
-            case x if x < number.length => number.substring(0, x) + "." + number.substring(x)
-          }
+        } yield ix match {
+          case -1                     => number + trailer
+          case 0                      => "0." + number + trailer
+          case x if x < number.length => number.substring(0, x) + "." + number.substring(x)
+        }
       val json0                                = numbers.mkString("[", ",", "]")
       val dom0 @ Dom.ArrayElem.Unsized(elems0) = decode[Dom.Element](json0).asInstanceOf[Dom.ArrayElem.Unsized]
       val json1                                = encode(dom0)

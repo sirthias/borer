@@ -8,7 +8,6 @@
 
 package io.bullet.borer.compat
 
-import java.nio.charset.StandardCharsets
 import java.nio.ByteBuffer
 
 import _root_.akka.util.ByteString
@@ -81,12 +80,10 @@ object akka {
 
     def cursor: Long = _cursor.toLong
 
-    def moveCursor(offset: Int): this.type = {
-      _cursor += offset
+    def unread(numberOfBytes: Int): this.type = {
+      _cursor -= numberOfBytes
       this
     }
-
-    def prepareRead(length: Long): Boolean = _cursor + length <= byteString.length
 
     def readByte(): Byte = {
       val c = _cursor
@@ -156,9 +153,6 @@ object akka {
       if (length <= remaining) bytes
       else pp.padBytes(bytes, length - remaining)
     }
-
-    def precedingBytesAsAsciiString(length: Int): String =
-      byteString.slice(_cursor - length, _cursor).decodeString(StandardCharsets.ISO_8859_1)
   }
 
   implicit object ByteStringOutputProvider extends Output.ToTypeProvider[ByteString] {

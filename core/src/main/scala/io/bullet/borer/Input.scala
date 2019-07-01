@@ -8,7 +8,7 @@
 
 package io.bullet.borer
 
-import io.bullet.borer.input.{FromByteArrayInput, FromByteBufferInput, FromFileInput}
+import io.bullet.borer.input.{FromByteArrayInput, FromByteBufferInput, FromFileInput, FromIteratorInput}
 
 /**
   * Mutable abstraction wrapping some source of bytes to serve as parser input.
@@ -21,11 +21,15 @@ trait Input[Bytes] {
   def cursor: Long
 
   /**
-    * Moves the cursor by the given offset, which is guaranteed to be in the range [-255, 1].
-    * This method will only ever be used to move the cursor back "a little" from the current reading head,
-    * so a cache of the last 256 bytes will always suffice.
+    * "Unreads" the given number of bytes, which is guaranteed to be in the range [1, 255].
+    * This is the same as moving the cursor the given number of positions back.
+    *
+    * NOTE: This method will never be used to move the cursor beyond the beginning of the input.
+    *       As such, no range check is required by the implementation.
+    *       Also the maximum number of bytes that is unread, _in total_, will never exceed 255.
+    *       So any input will never have to cache more that the last 255 bytes from the head of the input.
     */
-  def moveCursor(offset: Int): this.type
+  def unread(numberOfBytes: Int): this.type
 
   /**
     * Returns the next byte, if possible without any range checks.
@@ -91,17 +95,9 @@ trait Input[Bytes] {
     * Otherwise the current [[Input.PaddingProvider]] is called to perform the padding and its result returned.
     */
   def readBytes(length: Long, pp: Input.PaddingProvider[Bytes]): Bytes
-
-  /**
-    * Returns the given number of bytes _before_ the current cursor position as an ASCII string.
-    * Does not move the cursor.
-    *
-    * The given `length` is guaranteed to be in the range [0, 255].
-    */
-  def precedingBytesAsAsciiString(length: Int): String
 }
 
-object Input extends FromByteArrayInput with FromByteBufferInput with FromFileInput {
+object Input extends FromByteArrayInput with FromByteBufferInput with FromFileInput with FromIteratorInput {
 
   abstract class PaddingProvider[Bytes] {
     def padByte(): Byte

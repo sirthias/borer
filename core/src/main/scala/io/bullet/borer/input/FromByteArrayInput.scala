@@ -8,15 +8,13 @@
 
 package io.bullet.borer.input
 
-import java.nio.charset.StandardCharsets
-
 import io.bullet.borer.{ByteAccess, Input}
 import io.bullet.borer.Input.Provider
 import io.bullet.borer.internal.ByteArrayAccess
 
 trait FromByteArrayInput {
 
-  implicit object ByteArrayProvider extends Provider[Array[Byte]] {
+  implicit object FromByteArrayProvider extends Provider[Array[Byte]] {
     type Bytes = Array[Byte]
     type In    = FromByteArray
     def byteAccess                = ByteAccess.ForByteArray
@@ -29,12 +27,10 @@ trait FromByteArrayInput {
 
     def cursor: Long = _cursor.toLong
 
-    def moveCursor(offset: Int): this.type = {
-      _cursor += offset
+    def unread(numberOfBytes: Int): this.type = {
+      _cursor -= numberOfBytes
       this
     }
-
-    def prepareRead(length: Long): Boolean = _cursor + length <= byteArray.length
 
     def readByte(): Byte = {
       val c = _cursor
@@ -95,8 +91,5 @@ trait FromByteArrayInput {
       if (length <= remaining) bytes
       else pp.padBytes(bytes, length - remaining)
     }
-
-    def precedingBytesAsAsciiString(length: Int): String =
-      new String(byteArray, _cursor - length, length, StandardCharsets.ISO_8859_1)
   }
 }

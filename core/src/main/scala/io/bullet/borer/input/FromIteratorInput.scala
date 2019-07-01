@@ -8,68 +8,73 @@
 
 package io.bullet.borer.input
 
-import java.nio.charset.StandardCharsets
-
 import io.bullet.borer._
 import io.bullet.borer.internal.Util.RichIterator
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 
-trait FromInputIteratorInput {
+trait FromIteratorInput {
 
-  implicit def inputIteratorProvider[T](implicit p: Input.Provider[T]): Input.Provider[Iterator[T]] =
+  implicit def FromIteratorProvider[T](implicit p: Input.Provider[T]): Input.Provider[Iterator[T]] =
     new Input.Provider[Iterator[T]] {
       type Bytes = p.Bytes
-      type In    = FromInputIterator[p.Bytes]
+      type In    = FromIterator[p.Bytes]
       def byteAccess                = p.byteAccess
-      def apply(value: Iterator[T]) = new FromInputIterator[p.Bytes](value.map(p(_)), byteAccess)
+      def apply(value: Iterator[T]) = new FromIterator[p.Bytes](value.map(p(_)), byteAccess)
     }
 
-  final class FromInputIterator[Bytes](
+  final class FromIterator[Bytes](
       private[this] var inputIterator: Iterator[Input[Bytes]],
       byteAccess: ByteAccess[Bytes])
       extends Input.PaddingProvider[Bytes] with Input[Bytes] {
 
     private[this] var history                                            = List.empty[Input[Bytes]]
     private[this] var previous: Input[Bytes]                             = _
-    private[this] var current: Input[Bytes]                              = _
+    private[this] var current: Input[Bytes]                              = if (inputIterator.hasNext) inputIterator.next() else null
     private[this] var currentStart: Long                                 = _
     private[this] var outerPaddingProvider: Input.PaddingProvider[Bytes] = _
     private[this] var padBytesRecursion                                  = false
     private[this] var padBytesRecursionRest: Bytes                       = _
     private[this] var padBytesRecursionMissing: Long                     = _
 
-    private def currentCursor: Long = if (current ne null) current.cursor else 0L
+    def cursor: Long = currentStart + cursorOf(current)
 
-    def cursor: Long = currentStart + currentCursor
+    def unread(numberOfBytes: Int): this.type = {
+      @tailrec def rollBackOne(
+          input: Input[Bytes],
+          inputEnd: Long,
+          target: Long,
+          remainingInputs: Iterator[Input[Bytes]]): Iterator[Input[Bytes]] = {
 
-    def moveCursor(offset: Int): this.type = {
-      def rollBack(cursor: Long, target: Long): Unit = {
-        @tailrec def rec(input: Input[Bytes], index: Long, remainingInputs: Iterator[Input[Bytes]]): Unit = {
-          val inputCursor = input.cursor
-          val inputStart  = index - inputCursor
-          if (inputStart <= target) {
-            input.moveCursor((target - index).toInt)
-            previous = null
-            current = input
-            inputIterator = remainingInputs
-          } else {
-            input.moveCursor(-inputCursor.toInt)
-            history match {
-              case head :: tail =>
-                history = tail
-                rec(head, inputStart, input +: inputIterator)
-              case Nil => throw new IllegalStateException // rollback too far?
-            }
+        val inputCursor = input.cursor
+        val inputStart  = inputEnd - inputCursor
+        if (inputStart <= target) {
+          input.unread((inputEnd - target).toInt)
+          previous = history match {
+            case head :: tail => history = tail; head
+            case Nil          => null
+          }
+          current = input
+          currentStart = inputStart
+          remainingInputs
+        } else {
+          input.unread(inputCursor.toInt)
+          history match {
+            case head :: tail =>
+              history = tail
+              rollBackOne(head, inputStart, target, input +: remainingInputs)
+            case Nil => throw new IllegalStateException // rollback too far?
           }
         }
-        rec(previous, cursor, current +: inputIterator)
       }
 
-      val currentCursor = this.currentCursor
-      if (currentCursor + offset < 0) rollBack(currentStart + currentCursor, cursor + offset)
-      else current.moveCursor(offset)
+      val currentCursor = cursorOf(current)
+      if (currentCursor < numberOfBytes) {
+        current.unread(currentCursor.toInt)
+        val target = currentStart + currentCursor - numberOfBytes
+        inputIterator = rollBackOne(previous, currentStart, target, current +: inputIterator)
+      } else current.unread(numberOfBytes)
       this
     }
 
@@ -205,28 +210,23 @@ trait FromInputIteratorInput {
         byteAccess.empty
       }
 
-    def precedingBytesAsAsciiString(length: Int): String =
-      if (currentCursor < length) {
-        moveCursor(-length)
-        val bytes = byteAccess.toByteArray(readBytes(length.toLong, this))
-        new String(bytes, StandardCharsets.ISO_8859_1)
-      } else current.precedingBytesAsAsciiString(length)
-
     private def fetchNext(remaining: Int): Unit = {
-      val currentCursor = this.currentCursor
+      val currentCursor = cursorOf(current)
       val cursor        = currentStart + currentCursor
 
-      history = if (currentCursor < 256) {
+      history = if ((previous ne null) && currentCursor < 256) {
         // keep the prefix of the history that is required to maintain a total history length of >= 256 bytes
         @tailrec def rec(rest: List[Input[Bytes]], size: Long, buf: ListBuffer[Input[Bytes]]): List[Input[Bytes]] =
-          if (size < 256 && rest.nonEmpty) rec(rest.tail, size + rest.head.cursor, buf += rest.head)
+          if (size < 256 && rest.nonEmpty) rec(rest.tail, size + cursorOf(rest.head), buf += rest.head)
           else buf.toList
-        rec(history, previous.cursor, new ListBuffer[Input[Bytes]] += previous)
+        rec(history, cursorOf(previous), new ListBuffer[Input[Bytes]] += previous)
       } else Nil
 
       previous = current
       currentStart = cursor + remaining.toLong
       current = inputIterator.next()
     }
+
+    private def cursorOf(input: Input[Bytes]): Long = if (input ne null) input.cursor else 0L
   }
 }

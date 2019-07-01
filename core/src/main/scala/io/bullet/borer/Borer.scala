@@ -137,7 +137,7 @@ case object Json extends Target {
       value: T,
       config: DecodingConfig = DecodingConfig.default,
       receiverWrapper: Receiver.Wrapper[DecodingConfig] = Receiver.nopWrapper)(implicit p: Input.Provider[T]): Reader =
-    new InputReader(new JsonParser(p(value), config), receiverWrapper, config, Json)
+    new InputReader(new JsonParser(p(value), config)(p.byteAccess), receiverWrapper, config, Json)
 
   final case class EncodingConfig(bufferSize: Int = 1024) extends Borer.EncodingConfig {
     def compressFloatingPointValues = false
