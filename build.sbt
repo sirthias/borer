@@ -135,7 +135,7 @@ lazy val macroParadise =
 
 /////////////////////// DEPENDENCIES /////////////////////////
 
-val `collection-compat` = Def.setting("org.scala-lang.modules" %%% "scala-collection-compat" % "2.0.0")
+val `collection-compat` = Def.setting("org.scala-lang.modules" %%% "scala-collection-compat" % "2.1.1")
 val `akka-actor`        = Def.setting("com.typesafe.akka"      %%% "akka-actor"              % "2.5.23")
 val `scodec-bits`       = Def.setting("org.scodec"             %%% "scodec-bits"             % "1.1.12")
 val utest               = Def.setting("com.lihaoyi"            %%% "utest"                   % "0.7.1"            % "test")
@@ -231,13 +231,13 @@ lazy val benchmarks = project
   .settings(
     publishArtifact := false,
     libraryDependencies ++= Seq(
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"   % "0.51.1",
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "0.51.1" % Provided,
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"   % "0.51.3",
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "0.51.3" % Provided,
       "com.fasterxml.jackson.module"          %% "jackson-module-scala"  % "2.9.9",
       "com.lihaoyi"                           %% "upickle"               % "0.7.5",
-      "io.circe"                              %% "circe-core"            % "0.12.0-M3",
+      "io.circe"                              %% "circe-core"            % "0.12.0-M4",
       "io.circe"                              %% "circe-derivation"      % "0.12.0-M3",
-      "io.circe"                              %% "circe-jawn"            % "0.12.0-M3",
+      "io.circe"                              %% "circe-jawn"            % "0.12.0-M4",
       "io.spray"                              %% "spray-json"            % "1.3.5",
     )
   )
