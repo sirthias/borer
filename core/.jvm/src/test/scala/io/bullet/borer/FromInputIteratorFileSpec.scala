@@ -26,8 +26,7 @@ object FromInputIteratorFileSpec extends TestSuite with TestUtils {
 
     "test file" - {
       Json
-      //.decode(chunkedInput(List(3, 2, 1, 0, 100, 71)))
-        .decode(chunkedInput(100))
+        .decode(chunkedInput(3, 2, 1, 0, 100, 71))
         .withConfig(config)
         .to[Dom.Element]
         .value ==> dom

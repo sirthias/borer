@@ -9,12 +9,11 @@
 package io.bullet.borer.input
 
 import io.bullet.borer.{ByteAccess, Input}
-import io.bullet.borer.Input.Provider
 import io.bullet.borer.internal.ByteArrayAccess
 
 trait FromByteArrayInput {
 
-  implicit object FromByteArrayProvider extends Provider[Array[Byte]] {
+  implicit object FromByteArrayProvider extends Input.Provider[Array[Byte]] {
     type Bytes = Array[Byte]
     type In    = FromByteArray
     def byteAccess                = ByteAccess.ForByteArray

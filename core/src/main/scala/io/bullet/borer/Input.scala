@@ -121,6 +121,17 @@ object Input extends FromByteArrayInput with FromByteBufferInput with FromFileIn
     def apply(value: T): In
   }
 
+  /**
+    * The trivial provider for an already existing [[Input]].
+    */
+  implicit def provider[B: ByteAccess] =
+    new Provider[Input[B]] {
+      type Bytes = B
+      type In    = Input[B]
+      def byteAccess: ByteAccess[B]  = implicitly[ByteAccess[B]]
+      def apply(value: Input[B]): In = value
+    }
+
   final case class Position(input: Input[_], index: Long) {
     override def toString = s"input position $index"
   }

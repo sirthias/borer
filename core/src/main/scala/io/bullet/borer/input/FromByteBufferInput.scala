@@ -11,11 +11,10 @@ package io.bullet.borer.input
 import java.nio.ByteBuffer
 
 import io.bullet.borer.{ByteAccess, Input}
-import io.bullet.borer.Input.Provider
 
 trait FromByteBufferInput {
 
-  implicit object FromByteBufferProvider extends Provider[ByteBuffer] {
+  implicit object FromByteBufferProvider extends Input.Provider[ByteBuffer] {
     type Bytes = Array[Byte]
     type In    = FromByteBuffer
     def byteAccess               = ByteAccess.ForByteArray
