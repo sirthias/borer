@@ -38,7 +38,7 @@ trait Input[Bytes] {
   def readByte(): Byte
 
   /**
-    * Returns the next byte if not out-of-range, otherwise the one returned by the current [[Input.PaddingProvider]].
+    * Returns the next byte if not out-of-range, otherwise the one returned by the given [[Input.PaddingProvider]].
     */
   def readBytePadded(pp: Input.PaddingProvider[Bytes]): Byte
 
@@ -53,7 +53,7 @@ trait Input[Bytes] {
   /**
     * Returns the next two bytes as an unsigned 16-bit value,
     * with the first becoming the more-significant byte (i.e. big endian/network byte order).
-    * If the input has less than 2 bytes left the current [[Input.PaddingProvider]] is called to perform the padding
+    * If the input has less than 2 bytes left the given [[Input.PaddingProvider]] is called to perform the padding
     * and its result returned.
     */
   def readDoubleByteBigEndianPadded(pp: Input.PaddingProvider[Bytes]): Char
@@ -69,7 +69,7 @@ trait Input[Bytes] {
   /**
     * Returns the next four bytes as an [[Int]],
     * with the first becoming the most-significant byte (i.e. big endian/network byte order).
-    * If the input has less than 4 bytes left the current [[Input.PaddingProvider]] is called to perform the padding
+    * If the input has less than 4 bytes left the given [[Input.PaddingProvider]] is called to perform the padding
     * and its result returned.
     */
   def readQuadByteBigEndianPadded(pp: Input.PaddingProvider[Bytes]): Int
@@ -85,14 +85,14 @@ trait Input[Bytes] {
   /**
     * Returns the next eight bytes as a [[Long]],
     * with the first becoming the most-significant byte (i.e. big endian/network byte order).
-    * If the input has less than 8 bytes left the current [[Input.PaddingProvider]] is called to perform the padding
+    * If the input has less than 8 bytes left the given [[Input.PaddingProvider]] is called to perform the padding
     * and its result returned.
     */
   def readOctaByteBigEndianPadded(pp: Input.PaddingProvider[Bytes]): Long
 
   /**
     * Returns the next `length` bytes as [[Bytes]] if the input still has this many bytes available.
-    * Otherwise the current [[Input.PaddingProvider]] is called to perform the padding and its result returned.
+    * Otherwise the given [[Input.PaddingProvider]] is called to perform the padding and its result returned.
     */
   def readBytes(length: Long, pp: Input.PaddingProvider[Bytes]): Bytes
 }

@@ -630,14 +630,17 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       chars = util.Arrays.copyOf(chars, newLen)
     }
 
-  @inline private def unread(count: Int): Unit =
-    if (cursorExtra > 0) {
+  @inline private def unread(count: Int): Unit = {
+    def unreadWithExtra(): Unit = {
       val n = count - cursorExtra
       cursorExtra = if (n > 0) {
         input.unread(n)
         0
       } else -n
-    } else if (count > 0) input.unread(count)
+    }
+
+    if (cursorExtra > 0) unreadWithExtra() else input.unread(count)
+  }
 
   private def antePrecedingBytesAsAsciiString(len: Int): String = {
     unread(len + 1)
