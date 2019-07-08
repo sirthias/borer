@@ -9,6 +9,7 @@
 package io.bullet.borer
 
 import utest._
+import io.bullet.borer.internal.Util._
 
 object MiscCborSpec extends AbstractBorerSpec {
 
@@ -114,9 +115,9 @@ object MiscCborSpec extends AbstractBorerSpec {
     }
 
     "Byte Array" - {
-      verifyEncoding(hexBytes("11223344"), "4411223344")
-      verifyDecoding("4411223344", hexBytes("11223344"))
-      verifyDecoding("8411182218331844", hexBytes("11223344"))
+      verifyEncoding(hex"11223344", "4411223344")
+      verifyDecoding("4411223344", hex"11223344")
+      verifyDecoding("8411182218331844", hex"11223344")
     }
 
     "Illegal Map Termination Error" - {

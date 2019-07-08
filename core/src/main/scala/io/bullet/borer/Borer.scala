@@ -14,6 +14,8 @@ import io.bullet.borer.cbor._
 import io.bullet.borer.internal.{CborValidation, Util}
 import io.bullet.borer.json._
 
+import scala.annotation.unchecked.uncheckedVariance
+
 case object Cbor extends Target {
 
   /**
@@ -54,8 +56,12 @@ case object Cbor extends Target {
     new InputReader(new CborParser(p(value), config)(p.byteAccess), receiverWrapper, config, this)
 
   /**
+    * @param bufferSize                  the buffer size used for configuring the respective [[Output]]
     * @param compressFloatingPointValues set to false in order to always write floats as 32-bit values and doubles
-    *                                        as 64-bit values, even if they could safely be represented with fewer bits
+    *                                    as 64-bit values, even if they could safely be represented with fewer bits
+    * @param maxArrayLength the maximum array length to accept
+    * @param maxMapLength the maximum map length to accept
+    * @param maxNestingLevels the maximum number of nesting levels to accept
     */
   final case class EncodingConfig(
       bufferSize: Int = 1024,
@@ -73,8 +79,13 @@ case object Cbor extends Target {
   }
 
   /**
-    * @param readIntegersAlsoAsFloatingPoint set to false to disable automatic conversion of integer to floating point
-    *                                        values
+    * @param readIntegersAlsoAsFloatingPoint set to false to disable automatic conversion of integer to floating point values
+    * @param readDoubleAlsoAsFloat set to false to disable automatic conversion of [[Double]] to [[Float]] values
+    * @param maxTextStringLength the maximum text string length to accept
+    * @param maxByteStringLength the maximum byte string length to accept
+    * @param maxArrayLength the maximum array length to accept
+    * @param maxMapLength the maximum map length to accept
+    * @param maxNestingLevels the maximum number of nesting levels to accept
     */
   final case class DecodingConfig(
       readIntegersAlsoAsFloatingPoint: Boolean = true,
@@ -162,6 +173,8 @@ case object Json extends Target {
     *                        The only guarantee is that it will never accept Strings that are more than twice as long as
     *                        the this limit.
     * @param maxNumberMantissaDigits the maximum number of digits to accept before the exponent in JSON numbers
+    * @param initialCharbufferSize the initial size of the parser's Char buffer. Will grow to the max string length in
+    *                              the document rounded up to the next power of two
     */
   final case class DecodingConfig(
       readIntegersAlsoAsFloatingPoint: Boolean = true,
@@ -175,6 +188,10 @@ case object Json extends Target {
     Util.requireRange(maxNumberAbsExponent, 1, 999, "maxNumberAbsExponent")
     Util.requirePositive(maxStringLength, "maxStringLength")
     Util.requireRange(maxNumberMantissaDigits, 1, 200, "maxNumberMantissaDigits")
+    Util.requirePositive(initialCharbufferSize, "initialCharbufferSize")
+    if (!Util.isPowerOf2(initialCharbufferSize))
+      throw new IllegalArgumentException(
+        s"initialCharbufferSize must be a power of two, but was $initialCharbufferSize")
 
     // the JsonParser never produces Float values directly (only doubles), so this is necessary
     def readDoubleAlsoAsFloat = true
@@ -239,7 +256,7 @@ object Borer {
     }
   }
 
-  sealed abstract class Error[IO](private var _io: IO, msg: String, cause: Throwable = null)
+  sealed abstract class Error[+IO](private var _io: IO @uncheckedVariance, msg: String, cause: Throwable = null)
       extends RuntimeException(msg, cause) {
 
     final override def getMessage = s"$msg (${_io})"

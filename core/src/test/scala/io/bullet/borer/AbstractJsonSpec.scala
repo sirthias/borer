@@ -10,7 +10,7 @@ package io.bullet.borer
 
 import java.math.BigInteger
 
-import io.bullet.borer.internal.Util
+import io.bullet.borer.internal.Util._
 import utest._
 
 import scala.collection.immutable.ListMap
@@ -70,7 +70,7 @@ abstract class AbstractJsonSpec extends AbstractBorerSpec {
       roundTrip("100000.0", 100000.0f)
       roundTrip("100000.0", 100000.0)
 
-      if (Util.isJVM) {
+      if (isJVM) {
         roundTrip("-0.0", -0.0f)
         roundTrip("-0.0", -0.0)
 
@@ -235,7 +235,7 @@ abstract class AbstractJsonSpec extends AbstractBorerSpec {
         /*  */ "เอสds飞机hu เอฟ到a ซ'ีเ$นม่า เอ็#ม损บีเ00因0ค เซ็นเbตอร์")
 
       intercept[Borer.Error.InvalidInputData[_ <: AnyRef]] {
-        Json.decode(hexBytes("22dd1dd83422")).to[String].value ==> "xxx"
+        Json.decode(hex"22dd1dd83422").to[String].value ==> "xxx"
       }.getMessage ==> "Illegal UTF-8 character encoding (input position 1)"
 
       val strings = ('a' to 'z').mkString.inits.toList.init

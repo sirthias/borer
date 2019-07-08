@@ -11,6 +11,7 @@ package io.bullet.borer
 import java.math.BigInteger
 
 import utest._
+import io.bullet.borer.internal.Util._
 
 import scala.collection.immutable.{ListMap, TreeMap}
 
@@ -145,14 +146,14 @@ abstract class AbstractCborSpec extends AbstractBorerSpec {
       roundTrip("c074323031332d30332d32315432303a30343a30305a", Tag.DateTimeString @@ "2013-03-21T20:04:00Z")
       roundTrip("c11a514b67b0", Tag.EpochDateTime @@ 1363896240)
       roundTrip("c1fb41d452d9ec200000", Tag.EpochDateTime @@ 1363896240.5)
-      roundTrip("d74401020304", Tag.HintBase16 @@ hexBytes("01020304"))
-      roundTrip("d818456449455446", Tag.EmbeddedCBOR @@ hexBytes("6449455446"))
+      roundTrip("d74401020304", Tag.HintBase16 @@ hex"01020304")
+      roundTrip("d818456449455446", Tag.EmbeddedCBOR @@ hex"6449455446")
       roundTrip("d82076687474703a2f2f7777772e6578616d706c652e636f6d", Tag.TextUri @@ "http://www.example.com")
     }
 
     "Byte Strings" - {
       roundTrip("40", Array.emptyByteArray)
-      roundTrip("4401020304", hexBytes("01020304"))
+      roundTrip("4401020304", hex"01020304")
     }
 
     "Text Strings" - {
@@ -185,7 +186,7 @@ abstract class AbstractCborSpec extends AbstractBorerSpec {
     "Unbounded Data Items" - {
       import Writer.Script._
 
-      roundTrip("5f42010243030405ff", hexBytes("0102030405"), Iterator(hexBytes("0102"), hexBytes("030405")))
+      roundTrip("5f42010243030405ff", hex"0102030405", Iterator(hex"0102", hex"030405"))
 
       roundTrip("7f657374726561646d696e67ff", "streaming", Iterator("strea", "ming"))
 

@@ -10,6 +10,7 @@ package io.bullet.borer.internal
 
 import scala.annotation.tailrec
 import scala.reflect.ClassTag
+import scala.util.control.NonFatal
 
 object Util {
 
@@ -46,6 +47,8 @@ object Util {
   @inline def requireRange(value: Long, min: Long, max: Long, name: String): Long =
     if (min <= value && value <= max) value
     else throw new IllegalArgumentException(s"$name must be in the range [$min, $max], but was $value")
+
+  def isPowerOf2(i: Int): Boolean = Integer.lowestOneBit(i) == i
 
   private[this] val _identityFunc = (x: Any) => x
   def identityFunc[T]: T => T     = _identityFunc.asInstanceOf[T => T]
@@ -118,5 +121,19 @@ object Util {
             element
           } else underlying.next()
       }
+  }
+
+  implicit class StringInterpolators(val sc: StringContext) extends AnyVal {
+
+    def hex(args: Any*): Array[Byte] = {
+      val hexString = sc.s(args: _*)
+      try {
+        if ((hexString.length & 1) != 0) sys.error("string length is not even")
+        hexString.grouped(2).map(Integer.parseInt(_, 16).toByte).toArray
+      } catch {
+        case NonFatal(e) =>
+          throw new IllegalArgumentException(s"`$hexString` is not a valid hex string", e)
+      }
+    }
   }
 }

@@ -10,6 +10,7 @@ package io.bullet.borer.input
 
 import io.bullet.borer._
 import utest._
+import io.bullet.borer.internal.Util._
 
 object FromInputIteratorSpec extends TestSuite with TestUtils {
 
@@ -86,10 +87,10 @@ object FromInputIteratorSpec extends TestSuite with TestUtils {
 
     input.readBytePadded(pp) ==> 0x18
 
-    input.readBytes(16, pp) ==> hexBytes("0019001A001B001C001D001E001F0020")
+    input.readBytes(16, pp) ==> hex"0019001A001B001C001D001E001F0020"
 
     input.unread(7)
-    input.readBytes(16, pp) ==> hexBytes("1D001E001F0020002100220023002400")
+    input.readBytes(16, pp) ==> hex"1D001E001F0020002100220023002400"
 
     input.readBytePadded(pp) ==> 0x25
 
