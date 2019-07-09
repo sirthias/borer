@@ -28,6 +28,9 @@ trait Input[Bytes] {
     *       As such, no range check is required by the implementation.
     *       Also the maximum number of bytes that is unread, _in total_, will never exceed 255.
     *       So any input will never have to cache more that the last 255 bytes from the head of the input.
+    *
+    * Also: Decoding CBOR never needs unreading, so if your use case doesn't have to support JSON
+    *       then it's file to simply "implement" this method with `???`.
     */
   def unread(numberOfBytes: Int): this.type
 
@@ -111,8 +114,10 @@ object Input extends FromByteArrayInput with FromByteBufferInput with FromFileIn
     def position(cursor: Long): Input.Position = Input.Position(underlying, cursor)
   }
 
+  //#provider
   /**
-    * Responsible for converting an instance of [[T]] in a respective [[Input]] instance.
+    * Responsible for converting an instance of [[T]]
+    * to a respective [[Input]] instance.
     */
   trait Provider[T] {
     type Bytes
@@ -120,6 +125,7 @@ object Input extends FromByteArrayInput with FromByteBufferInput with FromFileIn
     def byteAccess: ByteAccess[Bytes]
     def apply(value: T): In
   }
+  //#provider
 
   /**
     * The trivial provider for an already existing [[Input]].

@@ -10,10 +10,9 @@ package io.bullet.borer.output
 
 import java.io.{BufferedOutputStream, File, FileOutputStream}
 
-import io.bullet.borer.{ByteAccess, Output}
 import io.bullet.borer.Output.ToValueProvider
 
-trait ToFileOutput {
+trait ToFileOutput { this: ToOutputStreamOutput =>
 
   implicit object ToFileProvider extends ToValueProvider[File] {
     type Out = ToFile
@@ -21,27 +20,12 @@ trait ToFileOutput {
   }
 
   /**
-    * Default, mutable implementation for serializing to files.
+    * Default, mutable implementation for serializing to a given [[File]].
     */
-  final class ToFile(file: File, bufferSize: Int) extends Output {
-    private[this] val outputStream = new BufferedOutputStream(new FileOutputStream(file), bufferSize)
-
+  final class ToFile(file: File, bufferSize: Int)
+      extends ToOutputStreamBase(new BufferedOutputStream(new FileOutputStream(file), bufferSize), bufferSize) {
     type Self   = ToFile
     type Result = File
-
-    def writeByte(byte: Byte): this.type = {
-      outputStream.write(byte.toInt)
-      this
-    }
-
-    def writeBytes(a: Byte, b: Byte): this.type                   = writeByte(a).writeByte(b)
-    def writeBytes(a: Byte, b: Byte, c: Byte): this.type          = writeByte(a).writeByte(b).writeByte(c)
-    def writeBytes(a: Byte, b: Byte, c: Byte, d: Byte): this.type = writeByte(a).writeByte(b).writeByte(c).writeByte(d)
-
-    def writeBytes[Bytes](bytes: Bytes)(implicit byteAccess: ByteAccess[Bytes]): this.type = {
-      outputStream.write(byteAccess.toByteArray(bytes))
-      this
-    }
 
     def result(): File = {
       outputStream.close()
