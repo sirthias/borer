@@ -23,7 +23,7 @@ object FileSpec extends TestSuite {
       int: Int = 42,
       double: Double = 0.0)
 
-  implicit val fooCodec = Codec.forCaseClass[Foo]
+  implicit val fooCodec = Codec(Encoder.from(Foo.unapply _), Decoder.from(Foo.apply _))
 
   val tests = Tests {
 

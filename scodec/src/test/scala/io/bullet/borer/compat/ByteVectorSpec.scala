@@ -10,6 +10,7 @@ package io.bullet.borer.compat
 
 import _root_.scodec.bits.ByteVector
 import io.bullet.borer._
+import io.bullet.borer.derivation.ArrayBasedCodecs
 import utest._
 
 object ByteVectorSpec extends AbstractBorerSpec {
@@ -20,7 +21,7 @@ object ByteVectorSpec extends AbstractBorerSpec {
 
   case class Foo(int: Int, content: ByteVector)
 
-  implicit val fooCodec = Codec.forCaseClass[Foo]
+  implicit val fooCodec = ArrayBasedCodecs.deriveCodec[Foo]
 
   val tests = Tests {
 

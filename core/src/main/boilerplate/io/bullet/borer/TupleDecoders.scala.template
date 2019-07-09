@@ -8,7 +8,7 @@
 
 package io.bullet.borer
 
-abstract class TupleDecoders {
+abstract class TupleDecoders extends DecoderFromApply {
 
   implicit def forTuple1[T1 :Decoder]: Decoder[Tuple1[T1]] =
     Decoder(r => Tuple1(r[T1]))

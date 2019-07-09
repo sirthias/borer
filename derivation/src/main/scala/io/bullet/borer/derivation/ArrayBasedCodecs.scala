@@ -15,14 +15,60 @@ import scala.reflect.macros.blackbox
 
 object ArrayBasedCodecs {
 
+  /**
+    * Macro that creates an [[Encoder]] for [[T]] provided that
+    * - [[T]] is a `case class`, `sealed abstract class` or `sealed trait`
+    * - [[Encoder]] instances for all members of [[T]] (if [[T]] is a `case class`)
+    *   or all sub-types of [[T]] (if [[T]] is an ADT) are implicitly available
+    *
+    * Case classes are converted into an array of values, one value for each member.
+    *
+    * NOTE: If `T` is unary (i.e. only has a single member) then the member value is written in an unwrapped form,
+    * i.e. without the array container.
+    */
   def deriveEncoder[T]: Encoder[T] = macro Macros.encoder[T]
 
+  /**
+    * Same as `deriveEncoder[T]` but doesn't compile if [[T]] is not a unary case class,
+    * i.e. a case class with exactly one member.
+    */
+  def deriveEncoderForUnaryCaseClass[T]: Encoder[T] = macro Macros.encoderForUnaryCaseClass[T]
+
+  /**
+    * Macro that creates a [[Decoder]] for [[T]] provided that
+    * - [[T]] is a `case class`, `sealed abstract class` or `sealed trait`
+    * - [[Decoder]] instances for all members of [[T]] (if [[T]] is a `case class`)
+    *   or all sub-types of [[T]] (if [[T]] is an ADT) are implicitly available
+    *
+    * Case classes are created from an array of deserialized values, one value for each member.
+    *
+    * NOTE: If `T` is unary (i.e. only has a single member) then the member value is expected in an unwrapped form,
+    * i.e. without the array container.
+    */
   def deriveDecoder[T]: Decoder[T] = macro Macros.decoder[T]
 
+  /**
+    * Macro that creates an [[Encoder]] and [[Decoder]] pair for [[T]].
+    * Convenience shortcut for `Codec(deriveEncoder[T], deriveDecoder[T])"`.
+    */
   def deriveCodec[T]: Codec[T] = macro Macros.codec[T]
+
+  /**
+    * Same as `deriveCodec[T]` but doesn't compile if [[T]] is not a unary case class,
+    * i.e. a case class with exactly one member.
+    */
+  def deriveCodecForUnaryCaseClass[T]: Codec[T] = macro Macros.codecForUnaryCaseClass[T]
 
   private object Macros {
     import MacroSupport._
+
+    def encoderForUnaryCaseClass[T: c.WeakTypeTag](c: blackbox.Context): c.Tree = {
+      import c.universe._
+      val tpe    = weakTypeOf[T].dealias
+      val fields = tpe.decls.collect { case m: MethodSymbol if m.isCaseAccessor => m.asMethod }.toList
+      if (fields.lengthCompare(1) == 0) encoder(c)
+      else c.abort(c.enclosingPosition, s"`$tpe` is not a unary case class")
+    }
 
     def encoder[T: ctx.WeakTypeTag](ctx: blackbox.Context): ctx.Tree = DeriveWith[T](ctx) {
       new CodecDeriver[ctx.type](ctx) {
@@ -122,5 +168,13 @@ object ArrayBasedCodecs {
     }
 
     def codec[T: c.WeakTypeTag](c: blackbox.Context): c.Tree = codecMacro(c)("ArrayBasedCodecs")
+
+    def codecForUnaryCaseClass[T: c.WeakTypeTag](c: blackbox.Context): c.Tree = {
+      import c.universe._
+      val tpe      = weakTypeOf[T]
+      val borerPkg = c.mirror.staticPackage("io.bullet.borer")
+      val prefix   = q"$borerPkg.derivation.ArrayBasedCodecs"
+      q"$borerPkg.Codec($prefix.deriveEncoderForUnaryCaseClass[$tpe], $prefix.deriveDecoder[$tpe])"
+    }
   }
 }

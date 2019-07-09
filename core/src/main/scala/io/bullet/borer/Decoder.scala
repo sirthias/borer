@@ -18,13 +18,13 @@ import java.lang.{
 }
 import java.math.{BigDecimal => JBigDecimal, BigInteger => JBigInteger}
 
-import io.bullet.borer.internal.{Macros, Util}
+import io.bullet.borer.internal.Util
 
 import scala.annotation.tailrec
+import scala.collection.compat._
 import scala.collection.immutable.{HashMap, ListMap, TreeMap}
 import scala.collection.mutable
 import scala.reflect.ClassTag
-import scala.collection.compat._
 
 /**
   * Type class responsible for reading an instance of type [[T]] from a [[Reader]].
@@ -44,21 +44,6 @@ object Decoder extends LowPrioDecoders {
     * Creates a [[Decoder]] from the given function.
     */
   def apply[T](decoder: Decoder[T]): Decoder[T] = decoder
-
-  /**
-    * Simple macro creating a [[Decoder]] that converts an array of values to an instance of case class `T`.
-    * Decoders for all members of [[T]] must be implicitly available at the call site of `forCaseClass`.
-    *
-    * NOTE: If `T` is unary (i.e. only has a single member) then the member value is expected in an unwrapped form,
-    * i.e. without the array container.
-    */
-  def forCaseClass[T]: Decoder[T] = macro Macros.decoderForCaseClass[T]
-
-  /**
-    * Decoder for unary case classes wrapping a single member of type [[T]].
-    * Same as `forCaseClass[T]` but doesn't compile if [[T]] is not a unary case class.
-    */
-  def forUnaryCaseClass[T]: Decoder[T] = macro Macros.decoderForUnaryCaseClass[T]
 
   implicit final class DecoderOps[A](val underlying: Decoder[A]) extends AnyVal {
     def map[B](f: A => B): Decoder[B]                     = Decoder(r => f(underlying.read(r)))

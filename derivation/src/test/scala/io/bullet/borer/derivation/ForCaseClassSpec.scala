@@ -33,55 +33,56 @@ object ForCaseClassSpec extends AbstractBorerSpec {
   val tests = Tests {
 
     "Case Class with 3 members" - {
-      implicit val codec: Codec[CaseClass3] = Codec.forCaseClass[CaseClass3]
+      implicit val codec: Codec[CaseClass3] = ArrayBasedCodecs.deriveCodec[CaseClass3]
       roundTrip("""[42,"",true]""", CaseClass3(42, "", efghi = true))
     }
 
     "Generic Case Class with fixed codec" - {
-      implicit val codec: Codec[CaseClassT[Double]] = Codec.forCaseClass[CaseClassT[Double]]
+      implicit val codec: Codec[CaseClassT[Double]] = ArrayBasedCodecs.deriveCodec[CaseClassT[Double]]
       roundTrip("""["foo",18.1]""", CaseClassT("foo", 18.1))
     }
 
     "Generic Case Class with generic codec" - {
-      implicit def codec[T: Encoder: Decoder]: Codec[CaseClassT[T]] = Codec.forCaseClass[CaseClassT[T]]
+      implicit def codec[T: Encoder: Decoder]: Codec[CaseClassT[T]] = ArrayBasedCodecs.deriveCodec[CaseClassT[T]]
       roundTrip("""["foo",18.1]""", CaseClassT("foo", 18.1))
     }
 
     "Unary Case Class with custom apply" - {
-      implicit val codec: Codec[CaseClass1] = Codec.forCaseClass[CaseClass1]
+      implicit val codec: Codec[CaseClass1] = ArrayBasedCodecs.deriveCodec[CaseClass1]
       roundTrip("false", CaseClass1(false))
     }
 
     "Unary Case Class with 'forUnaryCaseClass' codec" - {
-      implicit val codec: Codec[CaseClass1] = Codec.forUnaryCaseClass[CaseClass1]
+      implicit val codec: Codec[CaseClass1] = ArrayBasedCodecs.deriveCodecForUnaryCaseClass[CaseClass1]
       roundTrip("false", CaseClass1(false))
     }
 
     "Generic unary Case Class" - {
-      implicit def codec[T: Encoder: Decoder]: Codec[CaseClass1T[T]] = Codec.forCaseClass[CaseClass1T[T]]
+      implicit def codec[T: Encoder: Decoder]: Codec[CaseClass1T[T]] = ArrayBasedCodecs.deriveCodec[CaseClass1T[T]]
       roundTrip(""""foo"""", CaseClass1T("foo"))
     }
 
     "`forUnaryCaseClass` on non-unary case class" - {
       Scalac
-        .typecheck("Codec.forUnaryCaseClass[CaseClass3]")
+        .typecheck("ArrayBasedCodecs.deriveCodecForUnaryCaseClass[CaseClass3]")
         .assertErrorMsgMatches(".*not a unary case class".r)
     }
 
     "Generic unary Case Class with 'forUnaryCaseClass' codec" - {
-      implicit def codec[T: Encoder: Decoder]: Codec[CaseClass1T[T]] = Codec.forUnaryCaseClass[CaseClass1T[T]]
+      implicit def codec[T: Encoder: Decoder]: Codec[CaseClass1T[T]] =
+        ArrayBasedCodecs.deriveCodecForUnaryCaseClass[CaseClass1T[T]]
       roundTrip(""""foo"""", CaseClass1T("foo"))
     }
 
     "Local Case Class" - {
       case class Box(id: String)
-      implicit val boxCodec: Codec[Box] = Codec.forCaseClass[Box]
+      implicit val boxCodec: Codec[Box] = ArrayBasedCodecs.deriveCodec[Box]
       roundTrip(""""abc"""", Box("abc"))
     }
 
     "Recursive Case Class" - {
       case class Box(x: Option[Box] = None)
-      implicit lazy val codec: Codec[Box] = Codec.forCaseClass[Box]
+      implicit lazy val codec: Codec[Box] = ArrayBasedCodecs.deriveCodec[Box]
       roundTrip("""[[[]]]""", Box(Some(Box(Some(Box())))))
     }
   }

@@ -8,8 +8,6 @@
 
 package io.bullet.borer
 
-import io.bullet.borer.internal.Macros
-
 /**
   * A simple encapsulation of an [[Encoder]] and [[Decoder]] for the same type, as one entity.
   *
@@ -29,16 +27,6 @@ final case class Codec[A](encoder: Encoder[A], decoder: Decoder[A]) {
 }
 
 object Codec {
-
-  /**
-    * Simple macro shortening `Coder(Encoder.forCaseClass[Foo], Decoder.forCaseClass[Foo])` to `Codec.forCaseClass[Foo]`
-    */
-  def forCaseClass[T]: Codec[T] = macro Macros.codecForCaseClass[T]
-
-  /**
-    * Same as `forCaseClass[T]` but doesn't compile if [[T]] is not a unary case class.
-    */
-  def forUnaryCaseClass[T]: Codec[T] = macro Macros.codecForUnaryCaseClass[T]
 
   /**
     * Wraps implicitly available [[Encoder]] and [[Decoder]] instances for [[T]] in a [[Codec]].

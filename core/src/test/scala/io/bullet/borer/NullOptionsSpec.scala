@@ -22,8 +22,7 @@ object NullOptionsSpec extends AbstractBorerSpec {
 
   implicit val fooCodec = {
     import NullOptions._
-
-    Codec.forCaseClass[Foo]
+    Codec(Encoder.from(Foo.unapply _), Decoder.from(Foo.apply _))
   }
 
   val tests = Tests {

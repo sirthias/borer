@@ -18,7 +18,7 @@ import java.lang.{
 }
 import java.math.{BigDecimal => JBigDecimal, BigInteger => JBigInteger}
 
-import io.bullet.borer.internal.{Macros, Util}
+import io.bullet.borer.internal.Util
 
 import scala.annotation.tailrec
 import scala.collection.LinearSeq
@@ -53,19 +53,25 @@ object Encoder extends LowPrioEncoders {
   def apply[T](encoder: Encoder[T]): Encoder[T] = encoder
 
   /**
-    * Simple macro creating a [[Encoder]] that converts instances of case class `T` to an array of values.
-    * Encoders for all members of [[T]] must be implicitly available at the call site of `forCaseClass`.
+    * Allows for somewhat concise [[Encoder]] definition for case classes, without any macro magic.
+    * Can be used e.g. like this:
     *
-    * NOTE: If `T` is unary (i.e. only has a single member) then the member value is written in an unwrapped form,
-    * i.e. without the array container.
+    * {{{
+    * case class Foo(int: Int, string: String, doubleOpt: Option[Double])
+    *
+    * val fooEncoder = Encoder.from(Foo.unapply _)
+    * }}}
+    *
+    * Encodes an instance as a simple array of values.
     */
-  def forCaseClass[T]: Encoder[T] = macro Macros.encoderForCaseClass[T]
+  def from[T, Unapplied](unapply: T => Option[Unapplied])(implicit tupleEnc: Encoder[Unapplied]): Encoder[T] =
+    Encoder((w, x) => tupleEnc.write(w, unapply(x).get))
 
   /**
-    * Encoder for unary case classes wrapping a single member of type [[T]].
-    * Same as `forCaseClass[T]` but doesn't compile if [[T]] is not a unary case class.
+    * Same as the other `from` overload above, but for nullary case classes (i.e. with an empty parameter list).
     */
-  def forUnaryCaseClass[T]: Encoder[T] = macro Macros.encoderForUnaryCaseClass[T]
+  def from[T](unapply: T => Boolean): Encoder[T] =
+    Encoder((w, x) => if (unapply(x)) w.writeEmptyArray() else sys.error("Unapply unexpectedly failed: " + unapply))
 
   implicit final class EncoderOps[A](val underlying: Encoder[A]) extends AnyVal {
     def contramap[B](f: B => A): Encoder[B]                     = Encoder((w, b) => underlying.write(w, f(b)))

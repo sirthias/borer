@@ -10,6 +10,7 @@ package io.bullet.borer.compat
 
 import _root_.akka.util.ByteString
 import io.bullet.borer._
+import io.bullet.borer.derivation.ArrayBasedCodecs
 import utest._
 
 object ByteStringSpec extends AbstractBorerSpec {
@@ -20,7 +21,7 @@ object ByteStringSpec extends AbstractBorerSpec {
 
   case class Foo(int: Int, content: ByteString)
 
-  implicit val fooCodec = Codec.forCaseClass[Foo]
+  implicit val fooCodec = ArrayBasedCodecs.deriveCodec[Foo]
 
   val tests = Tests {
 

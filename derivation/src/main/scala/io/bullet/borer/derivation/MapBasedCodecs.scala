@@ -15,10 +15,34 @@ import scala.reflect.macros.blackbox
 
 object MapBasedCodecs {
 
+  /**
+    * Macro that creates an [[Encoder]] for [[T]] provided that
+    * - [[T]] is a `case class`, `sealed abstract class` or `sealed trait`
+    * - [[Encoder]] instances for all members of [[T]] (if [[T]] is a `case class`)
+    *   or all sub-types of [[T]] (if [[T]] is an ADT) are implicitly available
+    *
+    * Case classes are converted into a map of values, one key-value pair for each member.
+    * The key for each member is a `String` holding the member's name.
+    * This can be customized with the [[key]] annotation.
+    */
   def deriveEncoder[T]: Encoder[T] = macro Macros.encoder[T]
 
+  /**
+    * Macro that creates a [[Decoder]] for [[T]] provided that
+    * - [[T]] is a `case class`, `sealed abstract class` or `sealed trait`
+    * - [[Decoder]] instances for all members of [[T]] (if [[T]] is a `case class`)
+    *   or all sub-types of [[T]] (if [[T]] is an ADT) are implicitly available
+    *
+    * Case classes are created from a map of values, one key-value pair for each member.
+    * The key for each member is a `String` holding the member's name.
+    * This can be customized with the [[key]] annotation.
+    */
   def deriveDecoder[T]: Decoder[T] = macro Macros.decoder[T]
 
+  /**
+    * Macro that creates an [[Encoder]] and [[Decoder]] pair for [[T]].
+    * Convenience shortcut for `Codec(deriveEncoder[T], deriveDecoder[T])"`.
+    */
   def deriveCodec[T]: Codec[T] = macro Macros.codec[T]
 
   private object Macros {
