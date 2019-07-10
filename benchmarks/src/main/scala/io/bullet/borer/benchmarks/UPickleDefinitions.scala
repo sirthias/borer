@@ -232,11 +232,11 @@ class UPickleModelBenchmark extends DomBenchmark {
   }
   // format: ON
 
-  def setup(): Unit = root = read[Product](new String(fileBytes, UTF_8))
+  def setup(): Unit = root = read[Product](fileBytes)
 
   @Benchmark
   def encodeModel: Array[Byte] = write(root).getBytes(UTF_8)
 
   @Benchmark
-  def decodeModel: Product = read[Product](new String(fileBytes, UTF_8))
+  def decodeModel: Product = read[Product](fileBytes)
 }
