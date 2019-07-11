@@ -1,7 +1,7 @@
 borer
 =====
 
-![borer logo](site/src/main/paradox/assets/images/borer-logo.svg)
+<img src="/site/src/main/paradox/assets/images/borer-logo.svg" alt="borer Logo" width="60"/>
 
 Efficient [CBOR] and [JSON] (de)serialization for [Scala].
 
