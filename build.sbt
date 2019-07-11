@@ -160,6 +160,7 @@ lazy val borer = project.in(file("."))
   .aggregate(site)
   .settings(commonSettings)
   .settings(releaseSettings)
+  .settings(publish / skip := true)
 
 lazy val coreJVM = core.jvm
 lazy val coreJS  = core.js
@@ -233,12 +234,12 @@ lazy val benchmarks = project
   .settings(
     skip in publish := true,
     libraryDependencies ++= Seq(
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"   % "0.51.3",
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "0.51.3" % Provided,
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"   % "0.51.4",
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "0.51.4" % Provided,
       "com.fasterxml.jackson.module"          %% "jackson-module-scala"  % "2.9.9",
       "com.lihaoyi"                           %% "upickle"               % "0.7.5",
       "io.circe"                              %% "circe-core"            % "0.12.0-M4",
-      "io.circe"                              %% "circe-derivation"      % "0.12.0-M3",
+      "io.circe"                              %% "circe-derivation"      % "0.12.0-M4",
       "io.circe"                              %% "circe-jawn"            % "0.12.0-M4",
       "io.spray"                              %% "spray-json"            % "1.3.5",
     )
@@ -292,15 +293,7 @@ lazy val site = project
         s"https://github.com/sirthias/borer/tree/${if (v.endsWith("SNAPSHOT")) "master" else "v" + v}"
       },
       "extref.rfc.base_url" -> "http://tools.ietf.org/html/rfc%s",
-      "extref.akka.base_url" -> "http://doc.akka.io/docs/akka/2.4/scala/%s.html",
       "snip.test.base_dir" -> s"${(Test / sourceDirectory).value}/scala/io/bullet/borer/site",
       "snip.core.base_dir" -> s"${baseDirectory.value}/../core/src/main/scala/io/bullet/borer",
-      "scaladoc.org.reactivestreams.base_url" -> "http://www.reactive-streams.org/reactive-streams-1.0.0-javadoc/",
-      "scaladoc.akka.base_url" -> "http://doc.akka.io/api/akka/2.4/",
-      "scaladoc.scodec.bits.base_url" -> "http://scodec.org/api/scodec-bits/1.1.2/",
-      "scaladoc.swave.compat.akka.base_url" -> "http://swave.cc/api/compat-akka/latest/",
-      "scaladoc.swave.compat.scodec.base_url" -> "http://swave.cc/api/compat-scodec/latest/",
-      "scaladoc.swave.core.base_url" -> "http://swave.cc/api/core/latest/",
-      "scaladoc.swave.testkit.base_url" -> "http://swave.cc/api/testkit/latest/"
     )
   )
