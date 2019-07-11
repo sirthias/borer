@@ -19,6 +19,8 @@ abstract private[derivation] class CodecDeriver[C <: blackbox.Context](ctx: C) e
   import c.universe._
   import MacroSupport._
 
+  val borerPkg = c.mirror.staticPackage("_root_.io.bullet.borer")
+
   def deriveForCaseObject(tpe: Type, module: ModuleSymbol) =
     error(
       s"Cannot derive Encoder for case object `$tpe`. " +

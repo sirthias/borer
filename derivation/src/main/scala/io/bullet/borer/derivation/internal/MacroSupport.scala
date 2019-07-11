@@ -38,7 +38,7 @@ private[derivation] object MacroSupport {
     import c.universe._
 
     val tpe      = weakTypeOf[T]
-    val borerPkg = c.mirror.staticPackage("io.bullet.borer")
+    val borerPkg = c.mirror.staticPackage("_root_.io.bullet.borer")
     val prefix   = q"$borerPkg.derivation.${TermName(objectName)}"
     q"$borerPkg.Codec($prefix.deriveEncoder[$tpe], $prefix.deriveDecoder[$tpe])"
   }

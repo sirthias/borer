@@ -87,12 +87,12 @@ object ArrayBasedCodecs {
             q"$acc.${TermName(s"write${field.basicTypeNameOrEmpty}")}(x.${field.name})"
           }
           val writeOpenFieldsAndClose = if (arity == 1) writeOpenAndFields else q"$writeOpenAndFields.writeArrayClose()"
-          q"""_root_.io.bullet.borer.Encoder((w, x) => $writeOpenFieldsAndClose)"""
+          q"""$borerPkg.Encoder((w, x) => $writeOpenFieldsAndClose)"""
         }
 
         def deriveForSealedTrait(tpe: Type, subTypes: List[SubType]) = {
           val cases = adtSubtypeWritingCases(tpe, subTypes)
-          q"""_root_.io.bullet.borer.Encoder { (w, value) =>
+          q"""$borerPkg.Encoder { (w, value) =>
                 w.writeArrayOpen(2)
                 value match { case ..$cases }
                 w.writeArrayClose()
@@ -137,7 +137,7 @@ object ArrayBasedCodecs {
                     } else if (r.tryReadArrayHeader($x)) readObject()
                     else r.unexpectedDataItem(${expected(s"Array Start or Array Header ($x)")})"""
             }
-          q"_root_.io.bullet.borer.Decoder(r => $readObjectWithWrapping)"
+          q"$borerPkg.Decoder(r => $readObjectWithWrapping)"
         }
 
         def deriveForSealedTrait(tpe: Type, subTypes: List[SubType]) = {
@@ -159,7 +159,7 @@ object ArrayBasedCodecs {
 
           val readTypeIdAndValue = rec(0, typeIdsAndSubTypes.length)
 
-          q"""_root_.io.bullet.borer.Decoder { r =>
+          q"""$borerPkg.Decoder { r =>
                 def fail() = r.unexpectedDataItem(${s"type id key for subtype of `$tpe`"})
                 r.readArrayClose(r.readArrayOpen(2), $readTypeIdAndValue)
               }"""

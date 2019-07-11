@@ -64,7 +64,7 @@ object MapBasedCodecs {
           val fieldEncDefs = nonBasicParams.map { p =>
             val paramType = p.paramType.tpe
             val fieldEnc =
-              Option(c.inferImplicitValue(toType(tq"_root_.io.bullet.borer.Encoder[$paramType]")))
+              Option(c.inferImplicitValue(toType(tq"$borerPkg.Encoder[$paramType]")))
                 .filterNot(_.isEmpty)
                 .getOrElse {
                   error(s"Could not find implicit Encoder[$paramType] for parameter `${p.name}` of case class $tpe")
@@ -90,10 +90,10 @@ object MapBasedCodecs {
 
           q"""final class $encoderName {
                 ..$fieldEncDefs
-                def write(w: _root_.io.bullet.borer.Writer, value: $tpe): w.type = {
+                def write(w: $borerPkg.Writer, value: $tpe): w.type = {
                   var count = ${params.size}
                   ..$fieldOutputFlags
-                  def writeEntries(w: _root_.io.bullet.borer.Writer): w.type = {
+                  def writeEntries(w: $borerPkg.Writer): w.type = {
                     ..$writeEntries
                     w
                   }
@@ -102,19 +102,19 @@ object MapBasedCodecs {
                 }
               }
 
-              new _root_.io.bullet.borer.Encoder[$tpe] {
+              new $borerPkg.Encoder[$tpe] {
                 private[this] var inner: $encoderName = _
-                def write(w: _root_.io.bullet.borer.Writer, value: $tpe) = {
+                def write(w: $borerPkg.Writer, value: $tpe) = {
                   if (inner eq null) inner = new $encoderName
                   inner.write(w, value)
                 }
-              }: _root_.io.bullet.borer.Encoder[$tpe]"""
+              }: $borerPkg.Encoder[$tpe]"""
         }
 
         def deriveForSealedTrait(tpe: Type, subTypes: List[SubType]) = {
           val cases = adtSubtypeWritingCases(tpe, subTypes)
-          q"""_root_.io.bullet.borer.Encoder { (w, value) =>
-              def writeEntry(w: Writer): w.type = value match { case ..$cases }
+          q"""$borerPkg.Encoder { (w, value) =>
+              def writeEntry(w: $borerPkg.Writer): w.type = value match { case ..$cases }
               if (w.writingCbor) writeEntry(w.writeMapHeader(1))
               else writeEntry(w.writeMapStart()).writeBreak()
            }"""
@@ -154,7 +154,7 @@ object MapBasedCodecs {
           val fieldDecDefs = nonBasicParams.map { p =>
             val paramType = p.paramType.tpe
             val fieldDec =
-              Option(c.inferImplicitValue(toType(tq"_root_.io.bullet.borer.Decoder[$paramType]")))
+              Option(c.inferImplicitValue(toType(tq"$borerPkg.Decoder[$paramType]")))
                 .filterNot(_.isEmpty)
                 .getOrElse {
                   error(s"Could not find implicit Decoder[$paramType] for parameter `${p.name}` of case class $tpe")
@@ -230,7 +230,7 @@ object MapBasedCodecs {
           val failMissingDef =
             if (params.nonEmpty) {
               q"""def failMissing(..$maskAsParams) = {
-                    _root_.io.bullet.borer.derivation.internal.Helpers.failMissing(r, ${literal(typeName)},
+                    $borerPkg.derivation.internal.Helpers.failMissing(r, ${literal(typeName)},
                       ..$maskAsArgs, Array(..${params.map(p => literal(p.name.decodedName.toString))}))}"""
             } else q"()"
 
@@ -260,9 +260,9 @@ object MapBasedCodecs {
 
           q"""final class $decoderName {
                 ..$fieldDecDefs
-                def read(r: _root_.io.bullet.borer.Reader): $tpe = {
+                def read(r: $borerPkg.Reader): $tpe = {
                   def failDuplicate(k: Any) =
-                    throw new _root_.io.bullet.borer.Borer.Error.InvalidInputData(r.position,
+                    throw new $borerPkg.Borer.Error.InvalidInputData(r.position,
                       StringContext("Duplicate map key `", ${expected("` encountered during")}).s(k))
                   $failMissingDef
                   def readObject(remaining: scala.Int): $tpe = {
@@ -286,13 +286,13 @@ object MapBasedCodecs {
                 }
               }
 
-              new _root_.io.bullet.borer.Decoder[$tpe] {
+              new $borerPkg.Decoder[$tpe] {
                 private[this] var inner: $decoderName = _
-                def read(r: _root_.io.bullet.borer.Reader): $tpe = {
+                def read(r: $borerPkg.Reader): $tpe = {
                   if (inner eq null) inner = new $decoderName
                   inner.read(r)
                 }
-              }: _root_.io.bullet.borer.Decoder[$tpe]"""
+              }: $borerPkg.Decoder[$tpe]"""
         }
 
         def deriveForSealedTrait(tpe: Type, subTypes: List[SubType]) = {
@@ -314,7 +314,7 @@ object MapBasedCodecs {
 
           def expected(s: String) = s"$s for decoding an instance of type `$tpe`"
 
-          q"""_root_.io.bullet.borer.Decoder { r =>
+          q"""$borerPkg.Decoder { r =>
                 def fail() = r.unexpectedDataItem(${s"type id key for subtype of `$tpe`"})
                 def readTypeIdAndValue(): $tpe = ${rec(0, typeIdsAndSubTypes.length)}
 

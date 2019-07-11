@@ -18,6 +18,10 @@ private[derivation] object DeriveWith {
     deriver.deriveFor(c.universe.weakTypeOf[T].dealias)
 }
 
+/**
+  * Heavily inspired and some parts actually copied from Magnolia (https://github.com/propensive/magnolia),
+  * which is Copyright 2018 Jon Pretty, Propensive Ltd. and licensed under the Apache License, Version 2.0.
+  */
 abstract private[derivation] class Deriver[C <: blackbox.Context](val c: C) {
   import c.universe._
 
