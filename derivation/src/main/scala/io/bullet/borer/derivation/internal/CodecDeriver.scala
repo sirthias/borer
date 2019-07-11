@@ -13,7 +13,6 @@ import io.bullet.borer.derivation.key
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 import scala.reflect.macros.blackbox
-import scala.util.control.NonFatal
 
 abstract private[derivation] class CodecDeriver[C <: blackbox.Context](ctx: C) extends Deriver[C](ctx) {
   import c.universe._
@@ -35,7 +34,7 @@ abstract private[derivation] class CodecDeriver[C <: blackbox.Context](ctx: C) e
         cases += cq"x: ${subType.tpe} => w.$writeTypeId(${literal(typeId.value)}).write(x)"
     }
     val errorMsg = s"""s"The given value `$$x` is not a sub type of `$tpe`""""
-    cases += cq"""x => throw new IllegalArgumentException($errorMsg)"""
+    cases += cq"""x => throw new _root_.java.lang.IllegalArgumentException($errorMsg)"""
     cases.toList
   }
 
@@ -86,23 +85,18 @@ abstract private[derivation] class CodecDeriver[C <: blackbox.Context](ctx: C) e
   implicit class RichWithAnnotations(underlying: WithAnnotations) {
 
     def key(): Key = {
-      val keyAnnoTrees = underlying.annotations.filter(_.tpe =:= typeOf[key])
-      val keyAnnos = keyAnnoTrees.map { anno =>
-        try {
-          eval[key](anno).value match {
-            case x: String => Key.String(x)
-            case x: Int    => Key.Long(x.toLong)
-            case x: Long   => Key.Long(x)
-            case _         => c.abort(anno.pos, s"The '@key' annotation only supports String or Int/Long arguments.")
-          }
-        } catch {
-          case NonFatal(_) => c.abort(anno.pos, s"Cannot evaluate a parameter of the '@key' annotation")
-        }
-      }
+      val keyAnnos = underlying.annotations
+        .filter(_.tpe =:= typeOf[key])
+        .flatMap(_.children.tail.collect {
+          case Literal(Constant(x: String)) => Key.String(x)
+          case Literal(Constant(x: Int))    => Key.Long(x.toLong)
+          case Literal(Constant(x: Long))   => Key.Long(x)
+          case x                            => c.abort(x.pos, s"The '@key' annotation only supports String or Int/Long literal arguments.")
+        })
       keyAnnos.lengthCompare(1) match {
         case -1 => Key.String(underlying.name.decodedName.toString)
         case 0  => keyAnnos.head
-        case 1  => c.abort(keyAnnoTrees.tail.head.pos, s"Duplicate '@key' annotation")
+        case 1  => c.abort(underlying.annotations.head.pos, s"Duplicate '@key' annotation")
       }
     }
   }
