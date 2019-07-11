@@ -283,7 +283,7 @@ lazy val site = project
     },
 
     paradoxProperties ++= Map(
-      "latest-version" -> "0.9.0",
+      "latest-version" -> "0.10.0",
       "project.description" -> "Fast and lightweight CBOR and JSON (de)serialization for Scala",
       "scala.binaryVersion" -> scalaBinaryVersion.value,
       "scala.version" -> scalaVersion.value,

@@ -1,3 +1,23 @@
+Version 0.10.0 (2019-07-11)
+---------------------------
+
+- renamed method `bytes` (and friends) of `EncodingSetup#Sealed` to `result`
+- renamed `...Bool` to `...Boolean` everywhere, for consistency
+- removed `forCaseClass` macros from `core` module (use array-based derivation instead)
+- removed dependendy on magnolia
+- added alternative codec for Options (`NullOptions`) (#29)
+- added `Codec.bimap` (#25)
+- added support for directly reading from and writing to files
+- added support for reading from `Iterator[Input]`
+- added support for writing to `java.io.OutputStream`
+- improved codec derivation (#28, #31)
+- fixed key collision error when deriving codec for diamond ADT (#34)
+- extended `Decoder[Array[Byte]]` to also accept arrays (#15)
+- expanded benchmarking scope to also include upickle and jsoniter-scala
+- enabled unified Scala 2.12/2.13 cross-building
+- added paradox-based project website
+
+
 Version 0.9.0 (2019-05-11)
 --------------------------
 
