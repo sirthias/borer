@@ -168,8 +168,9 @@ object Encoder extends LowPrioEncoders {
       w.writeBreak()
     }
 
-  implicit def forOption[T: Encoder]: DefaultValueAware[Option[T]] =
-    new DefaultValueAware[Option[T]] {
+  //#option-encoder
+  implicit def forOption[T: Encoder]: Encoder.DefaultValueAware[Option[T]] =
+    new Encoder.DefaultValueAware[Option[T]] {
 
       def write(w: Writer, value: Option[T]) =
         value match {
@@ -179,7 +180,7 @@ object Encoder extends LowPrioEncoders {
 
       def withDefaultValue(defaultValue: Option[T]): Encoder[Option[T]] =
         if (defaultValue eq None) {
-          new PossiblyWithoutOutput[Option[T]] {
+          new Encoder.PossiblyWithoutOutput[Option[T]] {
             def producesOutputFor(value: Option[T]) = value ne None
             def write(w: Writer, value: Option[T]) =
               value match {
@@ -189,6 +190,7 @@ object Encoder extends LowPrioEncoders {
           }
         } else this
     }
+  //#option-encoder
 
   implicit def forIndexedSeq[T: Encoder, M[X] <: IndexedSeq[X]]: DefaultValueAware[M[T]] =
     new DefaultValueAware[M[T]] {

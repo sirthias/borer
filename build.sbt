@@ -1,6 +1,9 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import ReleaseTransformations._
 
+def scala213 = "2.13.0"
+def scala212 = "2.12.8"
+
 lazy val commonSettings = Seq(
   organization := "io.bullet",
   homepage := Some(new URL("https://github.com/sirthias/borer")),
@@ -10,8 +13,8 @@ lazy val commonSettings = Seq(
   unmanagedResources in Compile += baseDirectory.value.getParentFile.getParentFile / "LICENSE",
   scmInfo := Some(ScmInfo(url("https://github.com/sirthias/borer"), "scm:git:git@github.com:sirthias/borer.git")),
 
-  scalaVersion := "2.13.0",
-  crossScalaVersions := Seq("2.12.8", "2.13.0"),
+  scalaVersion := scala213,
+  crossScalaVersions := Seq(scala212, scala213),
 
   scalacOptions ++= Seq(
     "-deprecation",
@@ -55,12 +58,28 @@ lazy val commonSettings = Seq(
 
   // file headers
   headerLicense := Some(HeaderLicense.MPLv2("2019", "Mathias Doenitz")),
-  
+
   // reformat main and test sources on compile
   scalafmtOnCompile := true,
 
   testFrameworks += new TestFramework("utest.runner.Framework"),
   initialCommands in console := """import io.bullet.borer._""",
+
+  // publishing
+  publishMavenStyle := true,
+  publishArtifact in Test := false,
+  pomIncludeRepository := { _ ⇒
+    false
+  },
+  publishTo := sonatypePublishTo.value,
+  developers := List(
+    Developer("sirthias", "Mathias Doenitz", "devnull@bullet.io", url("https://github.com/sirthias"))
+  ),
+
+  // test coverage
+  coverageMinimum := 90,
+  coverageFailOnMinimum := false,
+  coverageExcludedPackages := """ui\.bullet\.borer\.benchmarks\..*""",
 
   commands += Command.command("openCoverageReport") { state =>
     val uri = s"file://${Project.extract(state).get(crossTarget)}/scoverage-report/index.html"
@@ -84,18 +103,6 @@ lazy val scalajsSettings = Seq(
   scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule).withSourceMap(false)),
   scalaJSStage in Global := FastOptStage,
   scalacOptions ~= { _.filterNot(_ == "-Ywarn-dead-code") :+ "-P:scalajs:sjsDefinedByDefault" }
-)
-
-lazy val publishingSettings = Seq(
-  publishMavenStyle := true,
-  publishArtifact in Test := false,
-  pomIncludeRepository := { _ ⇒
-    false
-  },
-  publishTo := sonatypePublishTo.value,
-  developers := List(
-    Developer("sirthias", "Mathias Doenitz", "devnull@bullet.io", url("https://github.com/sirthias"))
-  )
 )
 
 lazy val releaseSettings = {
@@ -150,10 +157,9 @@ lazy val borer = project.in(file("."))
   .aggregate(scodecJVM, scodecJS)
   .aggregate(derivationJVM, derivationJS)
   .aggregate(benchmarks)
+  .aggregate(site)
   .settings(commonSettings)
-  .settings(publishingSettings)
   .settings(releaseSettings)
-  .settings(publishArtifact := false)
 
 lazy val coreJVM = core.jvm
 lazy val coreJS  = core.js
@@ -163,7 +169,6 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .enablePlugins(AutomateHeaderPlugin, BoilerplatePlugin)
   .settings(crossSettings)
   .settings(commonSettings)
-  .settings(publishingSettings)
   .settings(releaseSettings)
   .settings(
     moduleName := "borer-core",
@@ -181,7 +186,6 @@ lazy val akka = project
   .dependsOn(coreJVM % "compile->compile;test->test")
   .dependsOn(derivationJVM % "test->compile")
   .settings(commonSettings)
-  .settings(publishingSettings)
   .settings(releaseSettings)
   .settings(
     moduleName := "borer-compat-akka",
@@ -200,7 +204,6 @@ lazy val scodec = crossProject(JSPlatform, JVMPlatform)
   .enablePlugins(AutomateHeaderPlugin)
   .settings(crossSettings)
   .settings(commonSettings)
-  .settings(publishingSettings)
   .settings(releaseSettings)
   .settings(
     moduleName := "borer-compat-scodec",
@@ -216,7 +219,6 @@ lazy val derivation = crossProject(JSPlatform, JVMPlatform)
   .enablePlugins(AutomateHeaderPlugin)
   .settings(crossSettings)
   .settings(commonSettings)
-  .settings(publishingSettings)
   .settings(releaseSettings)
   .settings(
     moduleName := "borer-derivation",
@@ -229,7 +231,7 @@ lazy val benchmarks = project
   .dependsOn(coreJVM, derivationJVM)
   .settings(commonSettings)
   .settings(
-    publishArtifact := false,
+    skip in publish := true,
     libraryDependencies ++= Seq(
       "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"   % "0.51.3",
       "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "0.51.3" % Provided,
@@ -239,5 +241,66 @@ lazy val benchmarks = project
       "io.circe"                              %% "circe-derivation"      % "0.12.0-M3",
       "io.circe"                              %% "circe-jawn"            % "0.12.0-M4",
       "io.spray"                              %% "spray-json"            % "1.3.5",
+    )
+  )
+
+lazy val site = project
+  .in(file("site"))
+  .dependsOn(coreJVM % "compile->compile;test->test", derivationJVM, akka, scodecJVM)
+  .enablePlugins(
+    ParadoxPlugin,
+    ParadoxMaterialThemePlugin,
+    ParadoxSitePlugin,
+    GhpagesPlugin
+  )
+  .settings(commonSettings)
+  .settings(
+    publish / skip := true,
+    libraryDependencies ++= Seq(utest.value),
+
+    com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo := scmInfo.value.get.connection.drop("scm:git:".length),
+    ghpagesNoJekyll := true,
+
+    ParadoxMaterialThemePlugin.paradoxMaterialThemeSettings(Compile),
+    Compile / paradoxMaterialTheme := {
+      ParadoxMaterialTheme()
+        .withFavicon("assets/images/favicon.ico")
+        .withColor("indigo", "orange")
+        .withLogo("assets/images/borer-logo-white.svg")
+        .withCustomStylesheet("assets/stylesheets/borer.css")
+        .withCopyright("Copyright (C) 2019 Mathias Doenitz")
+        .withRepository(scmInfo.value.get.browseUrl.toURI)
+        .withSocial(uri("https://github.com/sirthias"), uri("https://twitter.com/sirthias"))
+        .withSearch()
+    },
+
+    commands += Command.command("openSite") { state =>
+      val uri = s"file://${Project.extract(state).get(Compile / paradox / target)}/index.html"
+      state.log.info(s"Opening browser at $uri ...")
+      java.awt.Desktop.getDesktop.browse(new java.net.URI(uri))
+      state
+    },
+
+    paradoxProperties ++= Map(
+      "latest-version" -> "0.9.0",
+      "project.description" -> "Fast and lightweight CBOR and JSON (de)serialization for Scala",
+      "scala.binaryVersion" -> scalaBinaryVersion.value,
+      "scala.version" -> scalaVersion.value,
+      "image.base_url" -> ".../assets/images",
+      "github.base_url" -> {
+        val v = version.value
+        s"https://github.com/sirthias/borer/tree/${if (v.endsWith("SNAPSHOT")) "master" else "v" + v}"
+      },
+      "extref.rfc.base_url" -> "http://tools.ietf.org/html/rfc%s",
+      "extref.akka.base_url" -> "http://doc.akka.io/docs/akka/2.4/scala/%s.html",
+      "snip.test.base_dir" -> s"${(Test / sourceDirectory).value}/scala/io/bullet/borer/site",
+      "snip.core.base_dir" -> s"${baseDirectory.value}/../core/src/main/scala/io/bullet/borer",
+      "scaladoc.org.reactivestreams.base_url" -> "http://www.reactive-streams.org/reactive-streams-1.0.0-javadoc/",
+      "scaladoc.akka.base_url" -> "http://doc.akka.io/api/akka/2.4/",
+      "scaladoc.scodec.bits.base_url" -> "http://scodec.org/api/scodec-bits/1.1.2/",
+      "scaladoc.swave.compat.akka.base_url" -> "http://swave.cc/api/compat-akka/latest/",
+      "scaladoc.swave.compat.scodec.base_url" -> "http://swave.cc/api/compat-scodec/latest/",
+      "scaladoc.swave.core.base_url" -> "http://swave.cc/api/core/latest/",
+      "scaladoc.swave.testkit.base_url" -> "http://swave.cc/api/testkit/latest/"
     )
   )

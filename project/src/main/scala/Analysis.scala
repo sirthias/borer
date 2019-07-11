@@ -46,10 +46,10 @@ object Analysis {
         val (maxParam, maxFactor) = factors.maxBy(_._2)
         println(
           f"""$library:
-             |  avg: $avg%.2f
-             |  mean: $mean%.2f
              |  min: $minFactor%.2f ($minParam)
+             |  avg: $avg%.2f
              |  max: $maxFactor%.2f ($maxParam)
+             |  mean: $mean%.2f
           """.stripMargin
         )
       }
