@@ -159,10 +159,16 @@ final class Writer(receiver: Receiver, val target: Target, config: Writer.Config
     }
   }
 
-  def writeArrayOpen(arity: Int): this.type =
-    if (target eq Json) writeArrayStart() else writeArrayHeader(arity)
+  def writeArrayOpen(size: Int): this.type =
+    if (target eq Json) writeArrayStart() else writeArrayHeader(size)
 
   def writeArrayClose(): this.type =
+    if (target eq Json) writeBreak() else this
+
+  def writeMapOpen(size: Int): this.type =
+    if (target eq Json) writeMapStart() else writeMapHeader(size)
+
+  def writeMapClose(): this.type =
     if (target eq Json) writeBreak() else this
 }
 
