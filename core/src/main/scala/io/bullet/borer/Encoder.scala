@@ -73,6 +73,14 @@ object Encoder extends LowPrioEncoders {
   def from[T](unapply: T => Boolean): Encoder[T] =
     Encoder((w, x) => if (unapply(x)) w.writeEmptyArray() else sys.error("Unapply unexpectedly failed: " + unapply))
 
+  /**
+    * Creates a "unified" [[Encoder]] from two encoders that each target only a single data format.
+    */
+  def targetSpecific[T](cbor: Encoder[T], json: Encoder[T]): Encoder[T] = { (w, x) =>
+    if (w.target == Cbor) cbor.write(w, x)
+    else json.write(w, x)
+  }
+
   implicit final class EncoderOps[A](val underlying: Encoder[A]) extends AnyVal {
     def contramap[B](f: B => A): Encoder[B]                     = Encoder((w, b) => underlying.write(w, f(b)))
     def contramapWithWriter[B](f: (Writer, B) => A): Encoder[B] = Encoder((w, b) => underlying.write(w, f(w, b)))

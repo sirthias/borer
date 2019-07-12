@@ -39,4 +39,10 @@ object Codec {
     */
   @inline def bimap[A, B](f: B => A, g: A => B)(ea: Encoder[A], da: Decoder[A]): Codec[B] =
     Codec(ea contramap f, da map g)
+
+  /**
+    * Creates a "unified" [[Codec]] from two codecs that each target only a single data format.
+    */
+  @inline def targetSpecific[T](cbor: Codec[T], json: Codec[T]): Codec[T] =
+    Codec(Encoder.targetSpecific(cbor.encoder, json.encoder), Decoder.targetSpecific(cbor.decoder, json.decoder))
 }

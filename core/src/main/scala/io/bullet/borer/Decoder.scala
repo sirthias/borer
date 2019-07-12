@@ -45,6 +45,13 @@ object Decoder extends LowPrioDecoders {
     */
   def apply[T](decoder: Decoder[T]): Decoder[T] = decoder
 
+  /**
+    * Creates a "unified" [[Decoder]] from two decoders that each target only a single data format.
+    */
+  def targetSpecific[T](cbor: Decoder[T], json: Decoder[T]): Decoder[T] = { r =>
+    if (r.target == Cbor) cbor.read(r) else json.read(r)
+  }
+
   implicit final class DecoderOps[A](val underlying: Decoder[A]) extends AnyVal {
     def map[B](f: A => B): Decoder[B]                     = Decoder(r => f(underlying.read(r)))
     def mapWithReader[B](f: (Reader, A) => B): Decoder[B] = Decoder(r => f(r, underlying.read(r)))
