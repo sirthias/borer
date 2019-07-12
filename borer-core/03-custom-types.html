@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+<meta name="description" content="CBOR and JSON (de)serialization in Scala">
+<meta name="generator" content="Paradox, paradox-material-theme=0.7.0, mkdocs-material=3.0.3">
+
+<meta name="lang:clipboard.copy" content="Copy to clipboard">
+<meta name="lang:clipboard.copied" content="Copied to clipboard">
+<meta name="lang:search.language" content="">
+<meta name="lang:search.pipeline.stopwords" content="true">
+<meta name="lang:search.pipeline.trimmer" content="true">
+<meta name="lang:search.result.none" content="No matching documents">
+<meta name="lang:search.result.one" content="1 matching document">
+<meta name="lang:search.result.other" content="# matching documents">
+<meta name="lang:search.tokenizer" content="[\s\-]+">
+
+
+<meta name="description" content="CBOR and JSON (de)serialization in Scala">
+<link rel="shortcut icon" href="../assets/images/favicon.ico">
+<title>Encoding and Decoding Custom Types · borer</title>
+<link rel="stylesheet" href="../assets/stylesheets/application.451f80e5.css">
+<link rel="stylesheet" href="../assets/stylesheets/application-palette.22915126.css">
+<meta name="theme-color" content="#3f51b5" />
+<link rel="stylesheet" href="../lib/material__tabs/dist/mdc.tabs.min.css">
+<link rel="stylesheet" href="../lib/prettify/prettify.css">
+<script src="../assets/javascripts/modernizr.1aa3b519.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+<style>
+body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}
+code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}
+</style>
+<link rel="stylesheet" href="../assets/fonts/font-awesome.css">
+<link rel="stylesheet" href="../assets/fonts/material-icons.css">
+<link rel="stylesheet" href="../assets/stylesheets/paradox-material-theme.css">
+<link rel="stylesheet" href="../assets/stylesheets/borer.css">
+</head>
+<body
+data-md-color-primary="indigo"
+data-md-color-accent="orange"
+>
+<input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+<input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+<label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+<header class="md-header" data-md-component="header">
+<nav class="md-header-nav md-grid">
+<div class="md-flex">
+<div class="md-flex__cell md-flex__cell--shrink">
+<a href="../index.html" title="borer" class="md-header-nav__button md-logo">
+<img src="../assets/images/borer-logo-white.svg" width="24" height="24">
+</a>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+</div>
+<div class="md-flex__cell md-flex__cell--stretch">
+<div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+<span class="md-header-nav__topic">
+borer
+</span>
+<span class="md-header-nav__topic">
+Encoding and Decoding Custom Types
+</span>
+</div>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+<label class="md-icon md-search__icon" for="__search"></label>
+<button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">&#xE5CD;</button>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix>
+<div class="md-search-result" data-md-component="result">
+<div class="md-search-result__meta">
+Type to start searching
+</div>
+<ol class="md-search-result__list"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<div class="md-header-nav__source">
+<a href="https://github.com/sirthias/borer"
+title="Go to repository"
+class="md-source"
+data-md-source="github">
+<div class="md-source__icon">
+<i class="fa fa-github"></i>
+</div>
+<div class="md-source__repository">
+sirthias/borer
+</div>
+</a>
+
+</div>
+</div>
+</div>
+</nav>
+</header>
+
+<div class="md-container">
+<main class="md-main">
+<div class="md-main__inner md-grid" data-md-component="container">
+<div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--primary" data-md-level="0" style="visibility: hidden">
+<label class="md-nav__title md-nav__title--site" for="drawer">
+<a href="../index.html" title="borer" class="md-nav__button md-logo">
+<span class="md-nav__button md-logo">
+<img src="../assets/images/borer-logo-white.svg" width="24" height="24">
+</a>
+<a href="../index.html" title="borer">
+borer
+</a>
+</label>
+<div class="md-nav__source">
+<a href="https://github.com/sirthias/borer"
+title="Go to repository"
+class="md-source"
+data-md-source="github">
+<div class="md-source__icon">
+<i class="fa fa-github"></i>
+</div>
+<div class="md-source__repository">
+sirthias/borer
+</div>
+</a>
+
+</div>
+<ul>
+  <li><a href="../01-design-principles.html" class="page">Basic Design Principles and Limitations</a></li>
+  <li><a href="../02-getting-started.html" class="page">Getting Started</a></li>
+  <li><a href="../borer-core/index.html" class="page"><code>borer-core</code></a>
+  <ul>
+    <li><a href="../borer-core/01-encoding-and-decoding.html" class="page">Encoding and Decoding</a></li>
+    <li><a href="../borer-core/02-supported-types.html" class="page">Types Supported Out-of-the-Box</a></li>
+    <li><a href="../borer-core/03-custom-types.html" class="active page">Encoding and Decoding Custom Types</a></li>
+    <li><a href="../borer-core/04-nullable-and-default.html" class="page">Nullable and Default</a></li>
+    <li><a href="../borer-core/05-supporting-typeclasses.html" class="page"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a></li>
+    <li><a href="../borer-core/06-JSON-specifics.html" class="page">JSON Specifics</a></li>
+    <li><a href="../borer-core/07-JSON-performance.html" class="page">JSON Performance</a></li>
+    <li><a href="../borer-core/08-DOM.html" class="page">Document Object Model (DOM)</a></li>
+    <li><a href="../borer-core/09-debugging.html" class="page">Debugging</a></li>
+  </ul></li>
+  <li><a href="../04-borer-derivation.html" class="page"><code>borer-derivation</code></a></li>
+  <li><a href="../05-borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
+  <li><a href="../06-borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
+  <li><a href="../project/index.html" class="page">Project Info</a>
+  <ul>
+    <li><a href="../project/01-license.html" class="page">License</a></li>
+    <li><a href="../project/02-changelog.html" class="page">Changelog</a></li>
+    <li><a href="../project/03-references.html" class="page">References</a></li>
+    <li><a href="../project/04-sponsors.html" class="page">Sponsors</a></li>
+  </ul></li>
+</ul>
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="../borer-core/03-custom-types.html#encoding-and-decoding-custom-types" class="header">Encoding and Decoding Custom Types</a>
+  <ul>
+    <li><a href="../borer-core/03-custom-types.html#case-classes" class="header">Case Classes</a></li>
+    <li><a href="../borer-core/03-custom-types.html#transforming-existing-encoders-decoders" class="header">Transforming Existing Encoders / Decoders</a></li>
+    <li><a href="../borer-core/03-custom-types.html#construction" class="header">&ldquo;Manual&rdquo; Construction</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</nav>
+<ul style="display: none">
+<li class="md-nav__item md-version" id="project.version">
+<label class="md-nav__link" for="__version">
+<i class="md-icon" title="Version">label_outline</i> 0.10.0
+</label>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="../borer-core/03-custom-types.html#encoding-and-decoding-custom-types" class="header">Encoding and Decoding Custom Types</a>
+  <ul>
+    <li><a href="../borer-core/03-custom-types.html#case-classes" class="header">Case Classes</a></li>
+    <li><a href="../borer-core/03-custom-types.html#transforming-existing-encoders-decoders" class="header">Transforming Existing Encoders / Decoders</a></li>
+    <li><a href="../borer-core/03-custom-types.html#construction" class="header">&ldquo;Manual&rdquo; Construction</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</div>
+</div>
+</div>
+<div class="md-content">
+<article class="md-content__inner md-typeset">
+<div class="md-content__searchable">
+<h1><a href="#encoding-and-decoding-custom-types" name="encoding-and-decoding-custom-types" class="anchor"><span class="anchor-link"></span></a>Encoding and Decoding Custom Types</h1>
+<p>In order to encode some custom type <code>T</code> you&rsquo;ll have to implicitly provide an <code>Encoder[T]</code>:</p>
+<pre class="prettyprint"><code class="language-scala">trait Encoder[T] {
+  def write(w: Writer, value: T): w.type
+}
+</code></pre>
+<p>Similarly, for decoding of <code>T</code> you&rsquo;ll have to implicitly provide <code>Decoder[T]</code>:</p>
+<pre class="prettyprint"><code class="language-scala">trait Decoder[T] {
+  def read(r: Reader): T
+}
+</code></pre>
+<p>Many times, when encoding <em>and</em> decoding must be available for a type, it&rsquo;s easier to supply just a single implicit for <code>T</code>, rather than two. As an alternative to providing a separate <code>Encoder[T]</code> as well as a <code>Decoder[T]</code> you can also provide a <code>Codec[T]</code>, which is defined like this:</p>
+<pre class="prettyprint"><code class="language-scala">final case class Codec[T](encoder: Encoder[T], decoder: Decoder[T])
+</code></pre>
+<p>Encoders and Decoders can be implicitly &ldquo;unpacked&rdquo; from a <code>Codec</code>.</p>
+<p>There are several ways to provide such encoders, decoders or codecs for your custom types.<br> The following sections outline the alternatives.</p><div class="callout note "><div class="callout-title">Note</div>
+<p>In order to not hinder composability Codecs should only ever be <em>supplied</em>, never consumed.<br> So, if you write an <code>Encoder</code>, <code>Decoder</code> or <code>Codec</code> for a generic type, which itself requires implicitly available encoders and/or decoders for certain type parameters (like <code>Encoder.forOption</code>, for example) then you should never require an implicitly available <code>Codec[T]</code>, but rather an <code>Encoder[T]</code> and <code>Decoder[T]</code> separately.</p>
+<p>For example, you should say:</p>
+<pre class="prettyprint"><code class="language-scala">// ok: require `Encoder`/`Decoder` instances and supply a `Codec`
+implicit def forOption[T: Encoder :Decoder]: Codec[Option[T]] = ...
+</code></pre>
+<p>rather than</p>
+<pre class="prettyprint"><code class="language-scala">// bad: requiring a `Codec` (here: as a Context Bound)
+implicit def forOption[T: Codec]: Codec[Option[T]] = ...
+</code></pre></div>
+<h2><a href="#case-classes" name="case-classes" class="anchor"><span class="anchor-link"></span></a>Case Classes</h2>
+<p>The best way to concisely generate codecs for case classes is <em>borer</em>&rsquo;s <a href="../04-borer-derivation.html">Derivation</a> module.</p>
+<p>If for some reason you cannot or don&rsquo;t want to use macro-based codec derivation and array-based codecs are sufficient for you use case then there is a macro-less solution available with the <code>borer-core</code> alone:</p>
+<p>If <code>T</code> is a case class with at most 22 members then an <code>Encoder[T]</code> and/or <code>Decoder[T]</code> can be concisely provided by via the <code>unapply</code> / <code>apply</code> methods of the <code>T</code> companion object: </p>
+<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/CustomCodecsSpec.scala#L12-L23" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.{Codec, Decoder, Encoder}
+
+case class Color(name: String, value: Int)
+
+implicit val encoder = Encoder.from(Color.unapply _)
+implicit val decoder = Decoder.from(Color.apply _)
+
+// alternative: provide an Encoder and Decoder at the same time
+implicit val codec = Codec(
+  Encoder.from(Color.unapply _),
+  Decoder.from(Color.apply _)
+)</code></pre>
+<p>The codecs created in this way always encode a case class instance to a single <a href="http://cbor.io/">CBOR</a>/<a href="http://json.org/">JSON</a> data item: an array with the length corresponding to the case classes arity and the member encodings forming the array elements.<br> There is one exception though: In order to increase encoding efficiency unary case classes, with only one parameter, have their single member written directly, without a wrapping single-element array.</p>
+<p>The encoding strategy is thus identical to the one produced by the macro-derived <a href="../04-borer-derivation.html#array-based-codecs">ArrayBasedCodecs</a>.</p>
+<p>If you would like your case classes to be encoded in a more JSON-esque way, as maps with each member being keyed by its member name, the <a href="../04-borer-derivation.html#map-based-codecs">MapBasedCodecs</a> from the <a href="../04-borer-derivation.html"><code>borer-derivation</code></a> module are your only option, short of <a href="03-custom-types.html#construction">Manual Construction</a>. </p>
+<h2><a href="#transforming-existing-encoders-decoders" name="transforming-existing-encoders-decoders" class="anchor"><span class="anchor-link"></span></a>Transforming Existing Encoders / Decoders</h2>
+<p>If your type can somehow be constructed from or deconstructed to another type that an Encoder or Decoder is already available for, you can rely on the <code>contramap</code> and <code>map</code> methods available on Encoders / Decoders:</p>
+<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/CustomCodecsSpec.scala#L36-L42" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.{Decoder, Encoder}
+
+class Person(val name: String)
+
+// have `Person` be encoded as a simple CBOR/JSON text data item
+implicit val personEncoder = Encoder.forString.contramap[Person](_.name)
+implicit val personDecoder = Decoder.forString.map(new Person(_))</code></pre>
+<h2><a href="#construction" name="construction" class="anchor"><span class="anchor-link"></span></a>&ldquo;Manual&rdquo; Construction</h2>
+<p>For full flexibility of how your type <code>T</code> is to be encoded in <a href="http://cbor.io/">CBOR</a>/<a href="http://json.org/">JSON</a> you can of course also write the respective <code>Encoder[T]</code> / <code>Decoder[T]</code> manually. This is done by explicitly defining how your type is to be written to a <code>Writer</code> and read from a <code>Reader</code>:</p>
+<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/CustomCodecsSpec.scala#L55-L74" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.{Decoder, Encoder}
+
+class Person(val name: String, val age: Int)
+
+implicit val encoder: Encoder[Person] = Encoder { (writer, person) =&gt;
+  writer
+    .writeArrayOpen(2)
+    .writeString(person.name)
+    .writeInt(person.age)
+    .writeArrayClose()
+}
+
+implicit val decoder: Decoder[Person] = Decoder { reader =&gt;
+  val unbounded = reader.readArrayOpen(2)
+  val person = new Person(
+    reader.readString(),
+    reader.readInt()
+  )
+  reader.readArrayClose(unbounded, person)
+}</code></pre>
+<p>On the encoding side the <code>Writer</code> gives you a number of different methods for writing <a href="http://cbor.io/">CBOR</a>/<a href="http://json.org/">JSON</a> primitives, while the <code>Reader</code> offers their counterparts on the decoding side. The <a href="03-custom-types.html#reader-and-writer">next section</a> has some more details on how to work with these two types. </p>
+<p>While this low-level way of defining the encoding/decoding logic is the most powerful it also requires a little more care.<br> For performance reasons both the <code>Writer</code> and <code>Reader</code> types are mutable abstractions, which means that the order in which you call their methods matters a lot.</p><div class="callout warning "><div class="callout-title">Caution</div>
+<p>Also, very importantly, when deciding on an encoding logic for any type (i.e. how to represent the type with the available <a href="http://cbor.io/">CBOR</a>/<a href="http://json.org/">JSON</a> primitives) make sure to always encode it to exactly <strong>one</strong> data item! (Unless you know exactly, what you are doing.) All built-in encoders and decoders, e.g. for case classes, arrays, maps, etc., always assume that any object is written to exactly data item.</p>
+<p>So, if you need to write several values, wrap them in an array or map! And rather than writing no value at all write some kind of placeholder, like <code>null</code>, <code>undefined</code> or an empty array or map!</p></div>
+<p>To illustrate the point: The default codec for <code>Option[T]</code> for example encodes <code>Some[T]</code> to a single element array holding the encoding of <code>T</code>, and <code>None</code> to a zero-element (empty) array.</p>
+<p>While <em>borer</em> (by default) verifies that the <a href="http://cbor.io/">CBOR</a>/<a href="http://json.org/">JSON</a> created by your application is indeed valid and will thus catch any mistakes you made in this regard eventually, debugging structural problems can be a bit tedious since the error will often only be recognizable at the very end of the encoding or decoding process. Check out the section on <a href="09-debugging.html">Debugging</a> for more info how <em>borer</em> can support you in debugging (de)serialization issues.</p>
+<h3><a href="#reader-and-writer" name="reader-and-writer" class="anchor"><span class="anchor-link"></span></a>Reader and Writer</h3>
+<p>All pre-defined Encoders and Decoders, as well as the ones you might write yourself, describe how to encode or decode and object by operating on a <code>Writer</code> or <code>Reader</code>, respectively.</p>
+<p>The <code>Writer</code> (sources <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Writer.scala">here</a>) contains a largish number of methods (like <code>writeInt</code>, <code>writeString</code> or <code>writeArrayHeader</code>) that more or less directly write the respective data item to the output.<br> The <code>Reader</code> (sources <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Reader.scala">here</a>) contains the respective counterparts (like <code>readInt</code>, <code>readString</code> or <code>readArrayHeader</code>).</p>
+<p>The <code>Writer</code> and <code>Reader</code> operate directly on the respective <code>Output</code> and <code>Input</code> data &ldquo;streams&rdquo; and simply cause the respective low-level &ldquo;primitive&rdquo; to be written or read. This means, that the logic working with them has to have at least a basic understanding of the rules governing how these primitives can be or must be combined in order to produce valid output.</p>
+<p>For example, an &ldquo;indefinite-length array&rdquo; (in <a href="http://cbor.io/">CBOR</a> terminology) is written by first calling <code>writer.writeArrayStart()</code>, then writing all the elements (recursively descending into any nested structures) and finally &ldquo;closing&rdquo; the array with <code>writer.writeBreak()</code>.</p>
+<p>On the reading side this is mirrored by first having to call <code>reader.readArrayStart()</code>, then reading all the elements (recursively decoding nested structures) and finally consuming the &ldquo;closing&rdquo; with <code>reader.readBreak()</code>.</p>
+<p>While <em>borer</em> implements validation logic (enabled by default), which verifies the structural integrity of all produced and consumed data, there are no static (type-level, i.e. compile-time) checks that catch you, when you forget to write or read the BREAK primitive at the end!</p>
+<p>When consuming <a href="http://cbor.io/">CBOR</a> data during decoding the <code>Reader</code> gives you one-element look-ahead. This means that you can &ldquo;see&rdquo; the kind of the next data item (primitive) that is available <em>before</em> reading it, which is often very helpful.</p>
+<p>For example, here is an potential <code>Decoder[Either[String, Int]]</code>:</p>
+<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/CustomCodecsSpec.scala#L88-L95" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.Decoder
+
+implicit val eitherStringIntDecoder: Decoder[Either[String, Int]] =
+  Decoder { reader =&gt;
+    if (reader.hasString) Left(reader.readString())
+    else if (reader.hasInt) Right(reader.readInt())
+    else reader.unexpectedDataItem(expected = &quot;`String` or `Int`&quot;)
+  }</code></pre>
+</div>
+<div>
+<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-core/03-custom-types.md" title="Edit this page" class="md-source-file md-edit">
+Edit this page
+</a>
+</div>
+<div class="print-only">
+<span class="md-source-file md-version">
+0.10.0
+</span>
+</div>
+</article>
+</div>
+</div>
+</main>
+<footer class="md-footer">
+<div class="md-footer-nav">
+<nav class="md-footer-nav__inner md-grid">
+<a href="../borer-core/02-supported-types.html" title="Types Supported Out-of-the-Box" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<div class="md-flex__cell md-flex__cell--shrink">
+<i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+</div>
+<div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+<span class="md-flex__ellipsis">
+<span class="md-footer-nav__direction">
+Previous
+</span>
+Types Supported Out-of-the-Box
+</span>
+</div>
+</a>
+<a href="../borer-core/04-nullable-and-default.html" title="Nullable and Default" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+<span class="md-flex__ellipsis">
+<span class="md-footer-nav__direction">
+Next
+</span>
+Nullable and Default
+</span>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+</div>
+</a>
+</nav>
+</div>
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-footer-copyright">
+<div class="md-footer-copyright__highlight">
+Copyright (C) 2019 Mathias Doenitz
+</div>
+Powered by
+<a href="https://github.com/lightbend/paradox">Paradox</a>
+and
+<a href="https://jonas.github.io/paradox-material-theme/">Paradox Material Theme</a>
+
+</div>
+<div class="md-footer-social">
+<a href="https://github.com/sirthias" class="md-footer-social__link fa fa-github"></a><a href="https://twitter.com/sirthias" class="md-footer-social__link fa fa-twitter"></a>
+</div>
+
+</div>
+</div>
+</footer>
+
+</div>
+<script src="../assets/javascripts/application.583bbe55.js"></script>
+<script src="../assets/javascripts/paradox-material-theme.js"></script>
+<script>app.initialize({version:"0.17",url:{base:"../."}})</script>
+<script type="text/javascript" src="../lib/prettify/prettify.js"></script>
+<script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
+<script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function(event) {
+window.prettyPrint && prettyPrint();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+dt { font-weight: bold }
+.md-typeset dd { margin-top: 0 }
+.md-typeset pre { margin-bottom: 3em }
+.md-typeset .admonition, .md-typeset details { font-size: 1.6rem }
+
+dl.mdc-tab-bar dt.mdc-tab { font-size: inherit; background-color: #f7f7f7; border-right: 4px solid white }
+.mdc-tab-bar:not(.mdc-tab-bar-upgraded) .mdc-tab::after { width: 100% }
+
+#benchmark-results img { margin: 2em 0 }
+
+div.pros::before { content: "PROs" }
+div.pros { float: left; width: 45% }
+
+div.cons::before { content: "CONs" }
+div.cons { float: right; width: 45% }
+
+hr { clear: both }

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+<meta name="description" content="CBOR and JSON (de)serialization in Scala">
+<meta name="generator" content="Paradox, paradox-material-theme=0.7.0, mkdocs-material=3.0.3">
+
+<meta name="lang:clipboard.copy" content="Copy to clipboard">
+<meta name="lang:clipboard.copied" content="Copied to clipboard">
+<meta name="lang:search.language" content="">
+<meta name="lang:search.pipeline.stopwords" content="true">
+<meta name="lang:search.pipeline.trimmer" content="true">
+<meta name="lang:search.result.none" content="No matching documents">
+<meta name="lang:search.result.one" content="1 matching document">
+<meta name="lang:search.result.other" content="# matching documents">
+<meta name="lang:search.tokenizer" content="[\s\-]+">
+
+
+<meta name="description" content="CBOR and JSON (de)serialization in Scala">
+<link rel="shortcut icon" href="../assets/images/favicon.ico">
+<title>Changelog · borer</title>
+<link rel="stylesheet" href="../assets/stylesheets/application.451f80e5.css">
+<link rel="stylesheet" href="../assets/stylesheets/application-palette.22915126.css">
+<meta name="theme-color" content="#3f51b5" />
+<link rel="stylesheet" href="../lib/material__tabs/dist/mdc.tabs.min.css">
+<link rel="stylesheet" href="../lib/prettify/prettify.css">
+<script src="../assets/javascripts/modernizr.1aa3b519.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+<style>
+body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}
+code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}
+</style>
+<link rel="stylesheet" href="../assets/fonts/font-awesome.css">
+<link rel="stylesheet" href="../assets/fonts/material-icons.css">
+<link rel="stylesheet" href="../assets/stylesheets/paradox-material-theme.css">
+<link rel="stylesheet" href="../assets/stylesheets/borer.css">
+</head>
+<body
+data-md-color-primary="indigo"
+data-md-color-accent="orange"
+>
+<input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+<input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+<label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+<header class="md-header" data-md-component="header">
+<nav class="md-header-nav md-grid">
+<div class="md-flex">
+<div class="md-flex__cell md-flex__cell--shrink">
+<a href="../index.html" title="borer" class="md-header-nav__button md-logo">
+<img src="../assets/images/borer-logo-white.svg" width="24" height="24">
+</a>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+</div>
+<div class="md-flex__cell md-flex__cell--stretch">
+<div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+<span class="md-header-nav__topic">
+borer
+</span>
+<span class="md-header-nav__topic">
+Changelog
+</span>
+</div>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+<label class="md-icon md-search__icon" for="__search"></label>
+<button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">&#xE5CD;</button>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix>
+<div class="md-search-result" data-md-component="result">
+<div class="md-search-result__meta">
+Type to start searching
+</div>
+<ol class="md-search-result__list"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<div class="md-header-nav__source">
+<a href="https://github.com/sirthias/borer"
+title="Go to repository"
+class="md-source"
+data-md-source="github">
+<div class="md-source__icon">
+<i class="fa fa-github"></i>
+</div>
+<div class="md-source__repository">
+sirthias/borer
+</div>
+</a>
+
+</div>
+</div>
+</div>
+</nav>
+</header>
+
+<div class="md-container">
+<main class="md-main">
+<div class="md-main__inner md-grid" data-md-component="container">
+<div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--primary" data-md-level="0" style="visibility: hidden">
+<label class="md-nav__title md-nav__title--site" for="drawer">
+<a href="../index.html" title="borer" class="md-nav__button md-logo">
+<span class="md-nav__button md-logo">
+<img src="../assets/images/borer-logo-white.svg" width="24" height="24">
+</a>
+<a href="../index.html" title="borer">
+borer
+</a>
+</label>
+<div class="md-nav__source">
+<a href="https://github.com/sirthias/borer"
+title="Go to repository"
+class="md-source"
+data-md-source="github">
+<div class="md-source__icon">
+<i class="fa fa-github"></i>
+</div>
+<div class="md-source__repository">
+sirthias/borer
+</div>
+</a>
+
+</div>
+<ul>
+  <li><a href="../01-design-principles.html" class="page">Basic Design Principles and Limitations</a></li>
+  <li><a href="../02-getting-started.html" class="page">Getting Started</a></li>
+  <li><a href="../borer-core/index.html" class="page"><code>borer-core</code></a>
+  <ul>
+    <li><a href="../borer-core/01-encoding-and-decoding.html" class="page">Encoding and Decoding</a></li>
+    <li><a href="../borer-core/02-supported-types.html" class="page">Types Supported Out-of-the-Box</a></li>
+    <li><a href="../borer-core/03-custom-types.html" class="page">Encoding and Decoding Custom Types</a></li>
+    <li><a href="../borer-core/04-nullable-and-default.html" class="page">Nullable and Default</a></li>
+    <li><a href="../borer-core/05-supporting-typeclasses.html" class="page"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a></li>
+    <li><a href="../borer-core/06-JSON-specifics.html" class="page">JSON Specifics</a></li>
+    <li><a href="../borer-core/07-JSON-performance.html" class="page">JSON Performance</a></li>
+    <li><a href="../borer-core/08-DOM.html" class="page">Document Object Model (DOM)</a></li>
+    <li><a href="../borer-core/09-debugging.html" class="page">Debugging</a></li>
+  </ul></li>
+  <li><a href="../04-borer-derivation.html" class="page"><code>borer-derivation</code></a></li>
+  <li><a href="../05-borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
+  <li><a href="../06-borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
+  <li><a href="../project/index.html" class="page">Project Info</a>
+  <ul>
+    <li><a href="../project/01-license.html" class="page">License</a></li>
+    <li><a href="../project/02-changelog.html" class="active page">Changelog</a></li>
+    <li><a href="../project/03-references.html" class="page">References</a></li>
+    <li><a href="../project/04-sponsors.html" class="page">Sponsors</a></li>
+  </ul></li>
+</ul>
+<nav class="md-nav md-nav--secondary">
+</nav>
+
+</nav>
+<ul style="display: none">
+<li class="md-nav__item md-version" id="project.version">
+<label class="md-nav__link" for="__version">
+<i class="md-icon" title="Version">label_outline</i> 0.10.0
+</label>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="md-content">
+<article class="md-content__inner md-typeset">
+<div class="md-content__searchable">
+<h1><a href="#changelog" name="changelog" class="anchor"><span class="anchor-link"></span></a>Changelog</h1>
+<p>This is the current <em>borer</em> <a href="https://github.com/sirthias/borer/tree/master/CHANGELOG">CHANGELOG</a>:</p>
+<br>
+<pre><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/CHANGELOG" target="_blank" title="Go to snippet source"></a><code>Version 0.10.0 (2019-07-11)
+---------------------------
+
+- renamed method `bytes` (and friends) of `EncodingSetup#Sealed` to `result`
+- renamed `...Bool` to `...Boolean` everywhere, for consistency
+- removed `forCaseClass` macros from `core` module (use array-based derivation instead)
+- removed dependendy on magnolia
+- added alternative codec for Options (`NullOptions`) (#29)
+- added `Codec.bimap` (#25)
+- added support for directly reading from and writing to files
+- added support for reading from `Iterator[Input]`
+- added support for writing to `java.io.OutputStream`
+- improved codec derivation (#28, #31)
+- fixed key collision error when deriving codec for diamond ADT (#34)
+- extended `Decoder[Array[Byte]]` to also accept arrays (#15)
+- expanded benchmarking scope to also include upickle and jsoniter-scala
+- enabled unified Scala 2.12/2.13 cross-building
+- added paradox-based project website
+
+
+Version 0.9.0 (2019-05-11)
+--------------------------
+
+- significantly improved JSON support on all fronts
+- changed map-based ADT encoding to single-element map
+- rename `Encoder.compose` to `Encoder.contramap`
+- renamed @TypeId to @key, add support for custom map-key naming
+- fixed MapBasedCodecs to properly skip complex, extra data elements
+- fixed failing derivation for types with java annotations (#13)
+- fixed `Codec.forCaseClass` failing for generic case classes (#16)
+- added `Input`, `Output` and `ByteAccess` for `java.nio.ByteBuffer`
+- added configurable automatic conversion of integers to floating point values (#3)
+- added `Nullable[T]` and `Default[T]` abstraction
+- added special support for Options with default value `None`
+- added support for up to 128 case class members
+- hardened CBOR BigInteger and BigDecimal decoding (#8)
+- improved error position reporting
+- refactored `Input` design for more flexbility in supporting diverse input sources
+- internalized magnolia for various patches and Scala 2.13 support
+- added Scala 2.13 build (in the `scala2.13` branch, for now)
+
+
+Version 0.8.0 (2019-04-13)
+--------------------------
+
+- added JSON support
+- simplified package structure (`io.bullet.borer.core.Cbor` is now `io.bullet.borer.Cbor`)
+- added @inline annotations to selected methods likely relevant for JS perf
+- flexibilized derived codecs to always accept indefinite-length as well
+- added comparative performance benchmarks (JSON only so far)
+- introduced &quot;NumberString&quot; abstraction for cleaner &amp; faster JSON decoding
+- added missing pre-defined decoder for `HashMap[T]`
+- extended pre-defined `Array` codec to also support primitives (issue #2)
+- many other larger and smaller improvements across the whole library
+
+
+Version 0.7.0 (2019-03-08)
+--------------------------
+
+borer-core:
+- simplify API by removing explicit `Bytes` type parameter from all abstractions
+- allow for mixed `ByteAccess` in a single encoding / decoding run
+- various smaller improvements
+
+borer-akka &amp; border-scodec:
+- add missing Codecs for akka ByteString and scodec ByteVector
+
+
+Version 0.6.0 (2019-03-06)
+--------------------------
+
+borer-core:
+-Refactor main entry-point DSL for clarity and convenience
+
+borer-core &amp; borer-derivation:
+- Remove array-wrapping of derived codecs for `Product1` types
+
+
+Version 0.5.1 (2019-03-05)
+--------------------------
+
+borer-derivation:
+- Fix broken round-trip of `deriveCaseClassCodec` for zero- and single-member case classes
+
+
+Version 0.5.0 (2019-03-04)
+--------------------------
+
+first public release</code></pre>
+</div>
+<div>
+<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/project/02-changelog.md" title="Edit this page" class="md-source-file md-edit">
+Edit this page
+</a>
+</div>
+<div class="print-only">
+<span class="md-source-file md-version">
+0.10.0
+</span>
+</div>
+</article>
+</div>
+</div>
+</main>
+<footer class="md-footer">
+<div class="md-footer-nav">
+<nav class="md-footer-nav__inner md-grid">
+<a href="../project/01-license.html" title="License" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<div class="md-flex__cell md-flex__cell--shrink">
+<i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+</div>
+<div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+<span class="md-flex__ellipsis">
+<span class="md-footer-nav__direction">
+Previous
+</span>
+License
+</span>
+</div>
+</a>
+<a href="../project/03-references.html" title="References" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+<span class="md-flex__ellipsis">
+<span class="md-footer-nav__direction">
+Next
+</span>
+References
+</span>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+</div>
+</a>
+</nav>
+</div>
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-footer-copyright">
+<div class="md-footer-copyright__highlight">
+Copyright (C) 2019 Mathias Doenitz
+</div>
+Powered by
+<a href="https://github.com/lightbend/paradox">Paradox</a>
+and
+<a href="https://jonas.github.io/paradox-material-theme/">Paradox Material Theme</a>
+
+</div>
+<div class="md-footer-social">
+<a href="https://github.com/sirthias" class="md-footer-social__link fa fa-github"></a><a href="https://twitter.com/sirthias" class="md-footer-social__link fa fa-twitter"></a>
+</div>
+
+</div>
+</div>
+</footer>
+
+</div>
+<script src="../assets/javascripts/application.583bbe55.js"></script>
+<script src="../assets/javascripts/paradox-material-theme.js"></script>
+<script>app.initialize({version:"0.17",url:{base:"../."}})</script>
+<script type="text/javascript" src="../lib/prettify/prettify.js"></script>
+<script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
+<script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function(event) {
+window.prettyPrint && prettyPrint();
+});
+</script>
+</body>
+</html>
