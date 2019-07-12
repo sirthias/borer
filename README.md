@@ -5,7 +5,7 @@ borer
 
 Efficient [CBOR] and [JSON] (de)serialization for [Scala].
 
-See the [project website](https://sirthias.github.io/borer/) for all documentation.
+**See the [project website](https://sirthias.github.io/borer/) for all documentation.**
 
   [CBOR]: http://cbor.io/
   [JSON]: http://json.org/

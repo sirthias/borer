@@ -14,6 +14,6 @@ addSbtPlugin("com.typesafe.sbt"       % "sbt-ghpages"                 % "0.6.3")
 addSbtPlugin("com.typesafe.sbt"       % "sbt-site"                    % "1.4.0")
 
 libraryDependencies ++= Seq(
-  "io.bullet" %% "borer-core"       % "0.9.1-SNAPSHOT",
-  "io.bullet" %% "borer-derivation" % "0.9.1-SNAPSHOT"
+  "io.bullet" %% "borer-core"       % "0.10.0",
+  "io.bullet" %% "borer-derivation" % "0.10.0"
 )

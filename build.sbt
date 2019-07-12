@@ -6,12 +6,12 @@ def scala212 = "2.12.8"
 
 lazy val commonSettings = Seq(
   organization := "io.bullet",
-  homepage := Some(new URL("https://github.com/sirthias/borer")),
+  homepage := Some(new URL("https://github.com/sirthias/borer/")),
   description := "CBOR and JSON (de)serialization in Scala",
   startYear := Some(2019),
   licenses := Seq("MPLv2" → new URL("https://www.mozilla.org/en-US/MPL/2.0/")),
   unmanagedResources in Compile += baseDirectory.value.getParentFile.getParentFile / "LICENSE",
-  scmInfo := Some(ScmInfo(url("https://github.com/sirthias/borer"), "scm:git:git@github.com:sirthias/borer.git")),
+  scmInfo := Some(ScmInfo(url("https://github.com/sirthias/borer/"), "scm:git:git@github.com:sirthias/borer.git")),
 
   scalaVersion := scala213,
   crossScalaVersions := Seq(scala212, scala213),
@@ -73,7 +73,7 @@ lazy val commonSettings = Seq(
   },
   publishTo := sonatypePublishTo.value,
   developers := List(
-    Developer("sirthias", "Mathias Doenitz", "devnull@bullet.io", url("https://github.com/sirthias"))
+    Developer("sirthias", "Mathias Doenitz", "devnull@bullet.io", url("https://github.com/sirthias/"))
   ),
 
   // test coverage
@@ -282,11 +282,9 @@ lazy val site = project
       state
     },
 
+    Compile / paradox / version := "0.10.0",
+
     paradoxProperties ++= Map(
-      "latest-version" -> "0.10.0",
-      "project.description" -> "Fast and lightweight CBOR and JSON (de)serialization for Scala",
-      "scala.binaryVersion" -> scalaBinaryVersion.value,
-      "scala.version" -> scalaVersion.value,
       "image.base_url" -> ".../assets/images",
       "github.base_url" -> {
         val v = version.value
