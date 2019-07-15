@@ -37,7 +37,7 @@ object Codec {
   /**
     * Constructs a `Codec[B]` from an `Encoder[A]`, a `Decoder[A]` and two functions.
     */
-  @inline def bimap[A, B](f: B => A, g: A => B)(ea: Encoder[A], da: Decoder[A]): Codec[B] =
+  @inline def bimap[A, B](f: B => A, g: A => B)(implicit ea: Encoder[A], da: Decoder[A]): Codec[B] =
     Codec(ea contramap f, da map g)
 
   /**
