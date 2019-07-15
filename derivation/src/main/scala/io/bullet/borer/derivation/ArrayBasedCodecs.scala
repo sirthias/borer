@@ -32,7 +32,7 @@ object ArrayBasedCodecs {
     * Same as `deriveEncoder[T]` but doesn't compile if [[T]] is not a unary case class,
     * i.e. a case class with exactly one member.
     */
-  def deriveEncoderForUnaryCaseClass[T]: Encoder[T] = macro Macros.encoderForUnaryCaseClass[T]
+  def deriveUnaryEncoder[T]: Encoder[T] = macro Macros.encoderForUnaryCaseClass[T]
 
   /**
     * Macro that creates a [[Decoder]] for [[T]] provided that
@@ -57,7 +57,7 @@ object ArrayBasedCodecs {
     * Same as `deriveCodec[T]` but doesn't compile if [[T]] is not a unary case class,
     * i.e. a case class with exactly one member.
     */
-  def deriveCodecForUnaryCaseClass[T]: Codec[T] = macro Macros.codecForUnaryCaseClass[T]
+  def deriveUnaryCodec[T]: Codec[T] = macro Macros.unaryCodec[T]
 
   private object Macros {
     import MacroSupport._
@@ -169,12 +169,12 @@ object ArrayBasedCodecs {
 
     def codec[T: c.WeakTypeTag](c: blackbox.Context): c.Tree = codecMacro(c)("ArrayBasedCodecs")
 
-    def codecForUnaryCaseClass[T: c.WeakTypeTag](c: blackbox.Context): c.Tree = {
+    def unaryCodec[T: c.WeakTypeTag](c: blackbox.Context): c.Tree = {
       import c.universe._
       val tpe      = weakTypeOf[T]
       val borerPkg = c.mirror.staticPackage("io.bullet.borer")
       val prefix   = q"$borerPkg.derivation.ArrayBasedCodecs"
-      q"$borerPkg.Codec($prefix.deriveEncoderForUnaryCaseClass[$tpe], $prefix.deriveDecoder[$tpe])"
+      q"$borerPkg.Codec($prefix.deriveUnaryEncoder[$tpe], $prefix.deriveDecoder[$tpe])"
     }
   }
 }

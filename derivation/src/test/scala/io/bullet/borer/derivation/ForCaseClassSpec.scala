@@ -53,7 +53,7 @@ object ForCaseClassSpec extends AbstractBorerSpec {
     }
 
     "Unary Case Class with 'forUnaryCaseClass' codec" - {
-      implicit val codec: Codec[CaseClass1] = ArrayBasedCodecs.deriveCodecForUnaryCaseClass[CaseClass1]
+      implicit val codec: Codec[CaseClass1] = ArrayBasedCodecs.deriveUnaryCodec[CaseClass1]
       roundTrip("false", CaseClass1(false))
     }
 
@@ -70,7 +70,7 @@ object ForCaseClassSpec extends AbstractBorerSpec {
 
     "Generic unary Case Class with 'forUnaryCaseClass' codec" - {
       implicit def codec[T: Encoder: Decoder]: Codec[CaseClass1T[T]] =
-        ArrayBasedCodecs.deriveCodecForUnaryCaseClass[CaseClass1T[T]]
+        ArrayBasedCodecs.deriveUnaryCodec[CaseClass1T[T]]
       roundTrip(""""foo"""", CaseClass1T("foo"))
     }
 
