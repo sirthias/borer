@@ -64,7 +64,7 @@ object ForCaseClassSpec extends AbstractBorerSpec {
 
     "`forUnaryCaseClass` on non-unary case class" - {
       Scalac
-        .typecheck("ArrayBasedCodecs.deriveCodecForUnaryCaseClass[CaseClass3]")
+        .typecheck("ArrayBasedCodecs.deriveUnaryCodec[CaseClass3]")
         .assertErrorMsgMatches(".*not a unary case class".r)
     }
 
