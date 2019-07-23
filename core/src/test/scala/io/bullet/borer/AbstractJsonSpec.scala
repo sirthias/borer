@@ -326,6 +326,11 @@ abstract class AbstractJsonSpec extends AbstractBorerSpec {
       roundTrip("12345678901234567890.123456789", BigDecimal("12345678901234567890.123456789"))
     }
 
+    "Byte Arrays" - {
+      roundTrip("\"ASNFZ4mrze8SNFY=\"", hex"0123456789ABCDEF123456")
+      roundTrip("""["","3q2+7w=="]""", List(Array.emptyByteArray, hex"DEADBEEF"))
+    }
+
     "Error Position" - {
       intercept[Borer.Error.InvalidInputData[_ <: AnyRef]](decode[List[Int]]("[12,,42]")).getMessage ==>
       "Expected JSON value but got ',' (input position 4)"

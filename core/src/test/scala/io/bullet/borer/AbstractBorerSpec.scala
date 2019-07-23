@@ -45,7 +45,8 @@ abstract class AbstractBorerSpec extends TestSuite with TestUtils {
       case (x: Float, y: Float) if x.isNaN          => y.isNaN
       case (x: Double, y: Double) if x.isNaN        => y.isNaN
       case (TaggedValue(tx, x), TaggedValue(ty, y)) => tx == ty && equals(x, y)
-      case (x: Array[_], y: Array[_])               => x.toSeq == y.toSeq
+      case (x: Array[_], y: Array[_])               => equals(x.toSeq, y.toSeq)
+      case (x: Seq[_], y: Seq[_])                   => x.size == y.size && x.zip(y).forall(t => equals(t._1, t._2))
       case _                                        => a == b
     }
 }

@@ -16,6 +16,11 @@ abstract class ByteArrayAccess {
 
   def octaByteBigEndian(byteArray: Array[Byte], ix: Int): Long
 
+  def setDoubleByteBigEndian(byteArray: Array[Byte], ix: Int, value: Char): Unit
+
+  def setQuadByteBigEndian(byteArray: Array[Byte], ix: Int, value: Int): Unit
+
+  def setOctaByteBigEndian(byteArray: Array[Byte], ix: Int, value: Long): Unit
 }
 
 object ByteArrayAccess {
@@ -45,6 +50,29 @@ object ByteArrayAccess {
       (byteArray(ix + 5) & 0XFFL) << 16 |
       (byteArray(ix + 6) & 0XFFL) << 8 |
       byteArray(ix + 7) & 0XFFL
+    }
+
+    def setDoubleByteBigEndian(byteArray: Array[Byte], ix: Int, value: Char): Unit = {
+      byteArray(ix + 0) = (value >> 8).toByte
+      byteArray(ix + 1) = value.toByte
+    }
+
+    def setQuadByteBigEndian(byteArray: Array[Byte], ix: Int, value: Int): Unit = {
+      byteArray(ix + 0) = (value >> 24).toByte
+      byteArray(ix + 1) = (value >> 16).toByte
+      byteArray(ix + 2) = (value >> 8).toByte
+      byteArray(ix + 3) = value.toByte
+    }
+
+    def setOctaByteBigEndian(byteArray: Array[Byte], ix: Int, value: Long): Unit = {
+      byteArray(ix + 0) = (value >> 56).toByte
+      byteArray(ix + 1) = (value >> 48).toByte
+      byteArray(ix + 2) = (value >> 40).toByte
+      byteArray(ix + 3) = (value >> 32).toByte
+      byteArray(ix + 4) = (value >> 24).toByte
+      byteArray(ix + 5) = (value >> 16).toByte
+      byteArray(ix + 6) = (value >> 8).toByte
+      byteArray(ix + 7) = value.toByte
     }
   }
 }

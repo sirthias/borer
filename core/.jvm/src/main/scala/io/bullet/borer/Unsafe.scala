@@ -69,6 +69,15 @@ object Unsafe {
 
       def octaByteBigEndian(byteArray: Array[Byte], ix: Int): Long =
         JLong.reverseBytes(UNSAFE.getLong(byteArray, (ix + BYTE_ARRAY_BASE_OFFSET).toLong))
+
+      def setDoubleByteBigEndian(byteArray: Array[Byte], ix: Int, value: Char): Unit =
+        UNSAFE.putChar(byteArray, (ix + BYTE_ARRAY_BASE_OFFSET).toLong, Character.reverseBytes(value))
+
+      def setQuadByteBigEndian(byteArray: Array[Byte], ix: Int, value: Int): Unit =
+        UNSAFE.putInt(byteArray, (ix + BYTE_ARRAY_BASE_OFFSET).toLong, Integer.reverseBytes(value))
+
+      def setOctaByteBigEndian(byteArray: Array[Byte], ix: Int, value: Long): Unit =
+        UNSAFE.putLong(byteArray, (ix + BYTE_ARRAY_BASE_OFFSET).toLong, JLong.reverseBytes(value))
     }
 
   private def byteArrayAccessOnBigEndian(): ByteArrayAccess =
@@ -82,5 +91,14 @@ object Unsafe {
 
       def octaByteBigEndian(byteArray: Array[Byte], ix: Int): Long =
         UNSAFE.getLong(byteArray, (ix + BYTE_ARRAY_BASE_OFFSET).toLong)
+
+      def setDoubleByteBigEndian(byteArray: Array[Byte], ix: Int, value: Char): Unit =
+        UNSAFE.putChar(byteArray, (ix + BYTE_ARRAY_BASE_OFFSET).toLong, value)
+
+      def setQuadByteBigEndian(byteArray: Array[Byte], ix: Int, value: Int): Unit =
+        UNSAFE.putInt(byteArray, (ix + BYTE_ARRAY_BASE_OFFSET).toLong, value)
+
+      def setOctaByteBigEndian(byteArray: Array[Byte], ix: Int, value: Long): Unit =
+        UNSAFE.putLong(byteArray, (ix + BYTE_ARRAY_BASE_OFFSET).toLong, value)
     }
 }

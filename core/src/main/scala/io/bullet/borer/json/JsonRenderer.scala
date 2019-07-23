@@ -143,8 +143,8 @@ final private[borer] class JsonRenderer(var out: Output) extends Receiver.Render
                         if (index < value.length) {
                           codePoint = Character.toCodePoint(c, value.charAt(index))
                           out.writeBytes((0xF0 | (codePoint >> 18)).toByte, (0x80 | ((codePoint >> 12) & 0x3F)).toByte)
-                        } else failValidation(s"""Truncated UTF-16 surrogate pair at end of string $value"""")
-                      } else failValidation(s"""Invalid UTF-16 surrogate pair at index $index of string "value"""")
+                        } else failValidation("Truncated UTF-16 surrogate pair at end of string")
+                      } else failValidation(s"Invalid UTF-16 surrogate pair at string index $index")
                     } else out.writeAsByte(0xE0 | (codePoint >> 12))) // 3-byte UTF-8 codepoint
                      .writeAsByte(0x80 | ((codePoint >> 6) & 0x3F))
                  } else out.writeAsByte(0xC0 | (codePoint >> 6))) // 2-byte UTF-8 codepoint
