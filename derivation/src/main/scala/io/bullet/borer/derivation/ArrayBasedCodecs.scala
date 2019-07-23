@@ -74,6 +74,9 @@ object ArrayBasedCodecs {
       new CodecDeriver[ctx.type](ctx) {
         import c.universe._
 
+        def deriveForCaseObject(tpe: Type, module: ModuleSymbol) =
+          q"$borerPkg.Encoder.forUnit.contramap[${module.typeSignature}](_ => ())"
+
         def deriveForCaseClass(
             tpe: Type,
             companion: ModuleSymbol,
@@ -104,6 +107,9 @@ object ArrayBasedCodecs {
     def decoder[T: ctx.WeakTypeTag](ctx: blackbox.Context): ctx.Tree = DeriveWith[T](ctx) {
       new CodecDeriver[ctx.type](ctx) {
         import c.universe._
+
+        def deriveForCaseObject(tpe: Type, module: ModuleSymbol) =
+          q"$borerPkg.Decoder.forUnit.map(_ => $module)"
 
         def deriveForCaseClass(
             tpe: Type,

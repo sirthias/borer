@@ -124,7 +124,11 @@ object Dom {
       rec(HashMap.empty)
     }
 
-    final override def toString = keys.zip(values).map(x => x._1.toString + ": " + x._2).mkString("{", ", ", "}")
+    final override def toString =
+      keys
+        .zip(values)
+        .map(x => x._1.toString + ": " + x._2)
+        .mkString(if (dataItem == DIS.MapStart) "*{" else "{", ", ", "}")
 
     final override def hashCode() = {
       import scala.runtime.Statics.{finalizeHash, mix}

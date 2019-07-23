@@ -178,5 +178,15 @@ object CborDerivationSpec extends DerivationSpec(Cbor) {
       MapElem.Sized("Dog"       -> MapElem.Sized("age"  -> IntElem(4), "name" -> StringElem("Lolle"))),
       MapElem.Sized(IntElem(42) -> MapElem.Sized("tail" -> BooleanElem.True)))
 
+  def arrayBasedCaseObjectAdtDom =
+    ArrayElem.Unsized(
+      ArrayElem.Sized(StringElem("Err"), StringElem("foo")),
+      ArrayElem.Sized(StringElem("Ok"), IntElem(0)))
+
+  def mapBasedCaseObjectAdtDom =
+    ArrayElem.Unsized(
+      MapElem.Sized("Err" -> MapElem.Sized("reason" -> StringElem("foo"))),
+      MapElem.Sized("Ok"  -> IntElem(0)))
+
   def recursiveBoxEncoded = "a16178a16178a0"
 }

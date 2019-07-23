@@ -151,6 +151,9 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
   def arrayBasedAnimalsDom: Element
   def mapBasedAnimalsDom: Element
 
+  def arrayBasedCaseObjectAdtDom: Element
+  def mapBasedCaseObjectAdtDom: Element
+
   def recursiveBoxEncoded: String
 
   val tests = Tests {
@@ -210,6 +213,33 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
               "`io.bullet.borer.derivation.AdtWithKeyCollision.Cat` of ADT " +
               "`io.bullet.borer.derivation.AdtWithKeyCollision.Animal` share the same type id `Dog`"
           )
+      }
+
+      "Diamond" - {
+        sealed trait A
+        sealed trait B       extends A
+        sealed trait C       extends A
+        case class D(a: Int) extends B with C
+
+        implicit val d = deriveCodec[D]
+        implicit val c = deriveCodec[C]
+        implicit val b = deriveCodec[B]
+        implicit val a = deriveCodec[A]
+      }
+
+      "Case Objects" - {
+        sealed trait CaseObjectAdt
+        case class Err(reason: String) extends CaseObjectAdt
+        case object Ok                 extends CaseObjectAdt
+
+        implicit val errCodec = deriveCodec[Err]
+        implicit val okCodec  = deriveCodec[Ok.type]
+        implicit val adtCodec = deriveCodec[CaseObjectAdt]
+
+        val values: List[CaseObjectAdt] = List(Err("foo"), Ok)
+        val encoded                     = encode(values)
+        decode[Element](encoded) ==> arrayBasedCaseObjectAdtDom
+        decode[List[CaseObjectAdt]](encoded) ==> values
       }
     }
 
@@ -417,8 +447,6 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
       }
 
       "Diamond" - {
-        import MapBasedCodecs._
-
         sealed trait A
         sealed trait B       extends A
         sealed trait C       extends A
@@ -428,6 +456,21 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
         implicit val c = deriveCodec[C]
         implicit val b = deriveCodec[B]
         implicit val a = deriveCodec[A]
+      }
+
+      "Case Objects" - {
+        sealed trait CaseObjectAdt
+        case class Err(reason: String) extends CaseObjectAdt
+        case object Ok                 extends CaseObjectAdt
+
+        implicit val errCodec = deriveCodec[Err]
+        implicit val okCodec  = deriveCodec[Ok.type]
+        implicit val adtCodec = deriveCodec[CaseObjectAdt]
+
+        val values: List[CaseObjectAdt] = List(Err("foo"), Ok)
+        val encoded                     = encode(values)
+        decode[Element](encoded) ==> mapBasedCaseObjectAdtDom
+        decode[List[CaseObjectAdt]](encoded) ==> values
       }
     }
   }

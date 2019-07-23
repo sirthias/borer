@@ -69,7 +69,7 @@ abstract private[derivation] class Deriver[C <: blackbox.Context](val c: C) {
     val typeSymbol = tpe.typeSymbol
     val classType  = if (typeSymbol.isClass) Some(typeSymbol.asClass) else None
     val result = classType match {
-      case Some(x) if x.isModuleClass => deriveForCaseObject(tpe, typeSymbol.asModule)
+      case Some(x) if x.isModuleClass => deriveForCaseObject(tpe, x.module.asModule)
       case Some(x) if x.isCaseClass   => forCaseClass(tpe, x)
       case Some(x) if x.isSealed      => forSealedTrait(tpe, x)
       case None                       => error(s"`$classType` is not a case class or sealed abstract data type")

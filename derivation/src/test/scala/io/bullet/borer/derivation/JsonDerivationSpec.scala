@@ -172,14 +172,17 @@ object JsonDerivationSpec extends DerivationSpec(Json) {
       ArrayElem.Unsized(StringElem("Dog"), ArrayElem.Unsized(IntElem(4), StringElem("Lolle"))),
       ArrayElem.Unsized(IntElem(42), BooleanElem.True))
 
-  def mapBasedAnimalsDom =
+  def mapBasedAnimalsDom = ???
+
+  def arrayBasedCaseObjectAdtDom =
     ArrayElem.Unsized(
-      MapElem.Sized("Dog" -> MapElem.Sized("age" -> IntElem(12), "name" -> StringElem("Fred"))),
-      MapElem.Sized(
-        "TheCAT" -> MapElem
-          .Sized("weight" -> Float16Elem(1.0f), "color" -> StringElem("none"), "home" -> StringElem("there"))),
-      MapElem.Sized("Dog"       -> MapElem.Sized("age"  -> IntElem(4), "name" -> StringElem("Lolle"))),
-      MapElem.Sized(IntElem(42) -> MapElem.Sized("tail" -> BooleanElem.True)))
+      ArrayElem.Unsized(StringElem("Err"), StringElem("foo")),
+      ArrayElem.Unsized(StringElem("Ok"), IntElem(0)))
+
+  def mapBasedCaseObjectAdtDom =
+    ArrayElem.Unsized(
+      MapElem.Unsized("Err" -> MapElem.Unsized("reason" -> StringElem("foo"))),
+      MapElem.Unsized("Ok"  -> IntElem(0)))
 
   def recursiveBoxEncoded = """{"x":{"x":{}}}"""
 }

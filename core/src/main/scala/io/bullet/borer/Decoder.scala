@@ -76,6 +76,10 @@ object Decoder extends LowPrioDecoders {
   implicit val forDouble: Decoder[Double]   = Decoder(_.readDouble())
   implicit val forString: Decoder[String]   = Decoder(_.readString())
 
+  implicit val forUnit: Decoder[Unit] = Decoder { r =>
+    if (r.readInt() != 0) r.unexpectedDataItem(expected = "integer value zero")
+  }
+
   implicit val forByteArrayDefault: Decoder[Array[Byte]] = forByteArray(BaseEncoding.base64)
 
   def forByteArray(jsonBaseEncoding: BaseEncoding): Decoder[Array[Byte]] =

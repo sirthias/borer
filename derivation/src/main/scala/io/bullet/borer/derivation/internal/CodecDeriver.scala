@@ -20,11 +20,6 @@ abstract private[derivation] class CodecDeriver[C <: blackbox.Context](ctx: C) e
 
   val borerPkg = c.mirror.staticPackage("_root_.io.bullet.borer")
 
-  def deriveForCaseObject(tpe: Type, module: ModuleSymbol) =
-    error(
-      s"Cannot derive Encoder for case object `$tpe`. " +
-        "You'll have to implement a custom encoding strategy or turn the case object into a nullary case class.")
-
   def adtSubtypeWritingCases(tpe: Type, subTypes: List[SubType]) = {
     val typeIds = getTypeIds(tpe, subTypes)
     val cases   = new ListBuffer[Tree]

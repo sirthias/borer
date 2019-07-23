@@ -123,6 +123,8 @@ object Encoder extends LowPrioEncoders {
   implicit def forBoxedFloat: Encoder[JFloat]     = forFloat.asInstanceOf[Encoder[JFloat]]
   implicit def forBoxedDouble: Encoder[JDouble]   = forDouble.asInstanceOf[Encoder[JDouble]]
 
+  implicit val forUnit: Encoder[Unit] = Encoder((w, _) => w.writeInt(0))
+
   implicit val forByteArrayDefault: Encoder[Array[Byte]] = forByteArray(BaseEncoding.base64)
 
   def forByteArray(jsonBaseEncoding: BaseEncoding): Encoder[Array[Byte]] =
