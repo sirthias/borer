@@ -91,7 +91,7 @@ Type to start searching
 </div>
 <div class="md-flex__cell md-flex__cell--shrink">
 <div class="md-header-nav__source">
-<a href="https://github.com/sirthias/borer"
+<a href="https://github.com/sirthias/borer/"
 title="Go to repository"
 class="md-source"
 data-md-source="github">
@@ -99,7 +99,7 @@ data-md-source="github">
 <i class="fa fa-github"></i>
 </div>
 <div class="md-source__repository">
-sirthias/borer
+sirthias/borer/
 </div>
 </a>
 
@@ -126,7 +126,7 @@ borer
 </a>
 </label>
 <div class="md-nav__source">
-<a href="https://github.com/sirthias/borer"
+<a href="https://github.com/sirthias/borer/"
 title="Go to repository"
 class="md-source"
 data-md-source="github">
@@ -134,7 +134,7 @@ data-md-source="github">
 <i class="fa fa-github"></i>
 </div>
 <div class="md-source__repository">
-sirthias/borer
+sirthias/borer/
 </div>
 </a>
 
@@ -309,7 +309,7 @@ Json
 <p>Also, <code>Encoder</code>/<code>Decoder</code> type classes can implement the <code>Encoder.DefaultValueAware</code> / <code>Decoder.DefaultValueAware</code> trait in order to alter their behavior in the presence of a default value.</p>
 <p>This is used, for example, by the pre-defined encoder and decoder for <code>Option[T]</code>, which change their encoding/decoding strategy, if a <code>None</code> default value is defined for a case class member. In this case the optional value will only be written if it&rsquo;s defined (and then without any wrapping structure). If the option is undefined nothing is written at all.</p>
 <p>Here is the actual implementation of <em>borer</em>&rsquo;s <code>Encoder</code> for <code>Option</code>:</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Encoder.scala#L172-L192" target="_blank" title="Go to snippet source"></a><code class="language-scala">implicit def forOption[T: Encoder]: Encoder.DefaultValueAware[Option[T]] =
+<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Encoder.scala#L190-L210" target="_blank" title="Go to snippet source"></a><code class="language-scala">implicit def forOption[T: Encoder]: Encoder.DefaultValueAware[Option[T]] =
   new Encoder.DefaultValueAware[Option[T]] {
 
     def write(w: Writer, value: Option[T]) =

@@ -3,6 +3,9 @@ dt { font-weight: bold }
 .md-typeset pre { margin-bottom: 3em }
 .md-typeset .admonition, .md-typeset details { font-size: 1.6rem }
 
+.md-nav__button img { height: 100% }
+span.md-logo { left: -1rem !important; }
+
 dl.mdc-tab-bar dt.mdc-tab { font-size: inherit; background-color: #f7f7f7; border-right: 4px solid white }
 .mdc-tab-bar:not(.mdc-tab-bar-upgraded) .mdc-tab::after { width: 100% }
 
