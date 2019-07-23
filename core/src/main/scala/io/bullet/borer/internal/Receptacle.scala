@@ -69,6 +69,8 @@ final private[borer] class Receptacle extends Receiver with java.lang.Cloneable 
 
   def onString(value: String): Unit = _obj = value
 
+  def onChars(buffer: Array[Char]): Unit = onChars(buffer, buffer.length)
+
   def onChars(buffer: Array[Char], length: Int): Unit = {
     _obj = buffer
     _int = length

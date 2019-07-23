@@ -261,15 +261,11 @@ final class InputReader[Config <: Reader.Config](
 
   /**
     * Tests the next data item for equality with the given [[String]].
-    * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to string data items!
+    * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to Chars data items!
     */
   @inline def hasString(value: String): Boolean =
     dataItem match {
-      case DI.Chars =>
-        val len = receptacle.intValue
-        @tailrec def rec(buf: Array[Char], ix: Int): Boolean =
-          ix == len || buf(ix) == value.charAt(ix) && rec(buf, ix + 1)
-        len == value.length && rec(receptacle.charBufValue, 0)
+      case DI.Chars               => Util.charsStringCompare(receptacle.charBufValue, receptacle.intValue, value) == 0
       case DI.String              => receptacle.stringValue == value
       case DI.Text | DI.TextStart => decodeTextBytes().hasString(value)
       case _                      => false
@@ -277,7 +273,7 @@ final class InputReader[Config <: Reader.Config](
 
   /**
     * Tests the next data item for equality with the given [[String]] and advances the cursor if so.
-    * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to string data items!
+    * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to Chars data items!
     */
   @inline def tryReadString(value: String): Boolean = clearIfTrue(hasString(value))
 
@@ -288,18 +284,11 @@ final class InputReader[Config <: Reader.Config](
     * - zero if the next data item is a string that compares as '==' to `value`
     * - a positive value if the next data item is a string that compares as '>' to `value`
     *
-    * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to string data items!
+    * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to Chars data items!
     */
   def stringCompare(value: String): Int =
     dataItem match {
-      case DI.Chars =>
-        val limit = math.min(value.length, receptacle.intValue)
-        @tailrec def rec(buf: Array[Char], ix: Int): Int =
-          if (ix < limit) {
-            val diff = buf(ix).toInt - value.charAt(ix).toInt
-            if (diff != 0) diff else rec(buf, ix + 1)
-          } else receptacle.intValue - value.length
-        rec(receptacle.charBufValue, 0)
+      case DI.Chars               => Util.charsStringCompare(receptacle.charBufValue, receptacle.intValue, value)
       case DI.String              => receptacle.stringValue.compareTo(value)
       case DI.Text | DI.TextStart => decodeTextBytes().stringCompare(value)
       case _                      => Int.MinValue
@@ -314,10 +303,76 @@ final class InputReader[Config <: Reader.Config](
     *
     * Advanced the cursor if the return value is zero.
     *
-    * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to string data items!
+    * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to Chars data items!
     */
   def tryReadStringCompare(value: String): Int = {
     val result = stringCompare(value)
+    if (result == 0) clearDataItem()
+    result
+  }
+
+  def readChars(): Array[Char] =
+    dataItem match {
+      case DI.Chars     => ret(java.util.Arrays.copyOf(receptacle.charBufValue, receptacle.intValue))
+      case DI.String    => ret(receptacle.stringValue.toCharArray)
+      case DI.Text      => Utf8.decode(readSizedTextBytes[Array[Byte]]())
+      case DI.TextStart => Utf8.decode(readUnsizedTextBytes[Array[Byte]]())
+      case _            => unexpectedDataItem(expected = "String or Text Bytes")
+    }
+
+  def readChars(chars: Array[Char]): this.type =
+    if (tryReadChars(chars)) this
+    else unexpectedDataItem(expected = s""""${new String(chars)}"""")
+  @inline def hasChars: Boolean = hasString
+
+  /**
+    * Tests the next data item for equality with the given `Array[Char]`.
+    * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to Chars data items!
+    */
+  @inline def hasChars(value: Array[Char]): Boolean =
+    dataItem match {
+      case DI.Chars               => Util.charsCharsCompare(receptacle.charBufValue, receptacle.intValue, value) == 0
+      case DI.String              => Util.charsStringCompare(value, value.length, receptacle.stringValue) == 0
+      case DI.Text | DI.TextStart => decodeTextBytes().hasChars(value)
+      case _                      => false
+    }
+
+  /**
+    * Tests the next data item for equality with the given `Array[Char]` and advances the cursor if so.
+    * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to Chars data items!
+    */
+  @inline def tryReadChars(value: Array[Char]): Boolean = clearIfTrue(hasChars(value))
+
+  /**
+    * Returns one of the following 4 values:
+    * - Int.MinValue if the next data item is not a string
+    * - a negative value (!= Int.MinValue) a if the next data item is a string that compares as '<' to `value`
+    * - zero if the next data item is a string that compares as '==' to `value`
+    * - a positive value if the next data item is a string that compares as '>' to `value`
+    *
+    * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to Chars data items!
+    */
+  def charsCompare(value: Array[Char]): Int =
+    dataItem match {
+      case DI.Chars               => Util.charsCharsCompare(receptacle.charBufValue, receptacle.intValue, value)
+      case DI.String              => -Util.charsStringCompare(value, value.length, receptacle.stringValue)
+      case DI.Text | DI.TextStart => decodeTextBytes().charsCompare(value)
+      case _                      => Int.MinValue
+    }
+
+  /**
+    * Returns one of the following 4 values:
+    * - Int.MinValue if the next data item is not a string
+    * - a negative value (!= Int.MinValue) a if the next data item is a string that compares as '<' to `value`
+    * - zero if the next data item is a string that compares as '==' to `value`
+    * - a positive value if the next data item is a string that compares as '>' to `value`
+    *
+    * Advanced the cursor if the return value is zero.
+    *
+    * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to Chars data items!
+    */
+  def tryReadCharsCompare(value: Array[Char]): Int = {
+    val result = charsCompare(value)
     if (result == 0) clearDataItem()
     result
   }
@@ -359,13 +414,13 @@ final class InputReader[Config <: Reader.Config](
   }
 
   /**
-    * If the current data item is a sized or unsized Text item it'll be buffered and decoded into a string data item.
+    * If the current data item is a sized or unsized Text item it'll be buffered and decoded into a Chars data item.
     */
   def decodeTextBytes(): this.type =
     dataItem match {
       case DI.Text =>
-        receptacle.onString(stringOf(receptacle.getBytes[Array[Byte]]))
-        _dataItem = DI.String
+        receptacle.onChars(Utf8.decode(receptacle.getBytes[Array[Byte]]))
+        _dataItem = DI.Chars
         this
       case DI.TextStart => bufferUnsizedTextBytes[Array[Byte]]().decodeTextBytes()
       case _            => this

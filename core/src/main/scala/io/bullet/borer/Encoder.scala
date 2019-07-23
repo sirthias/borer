@@ -127,7 +127,7 @@ object Encoder extends LowPrioEncoders {
 
   def forByteArray(jsonBaseEncoding: BaseEncoding): Encoder[Array[Byte]] =
     Encoder { (w, x) =>
-      if (w.writingJson) w.writeString(new String(jsonBaseEncoding.encode(x)))
+      if (w.writingJson) w.writeChars(jsonBaseEncoding.encode(x))
       else w.writeBytes(x)
     }
 

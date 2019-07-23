@@ -59,7 +59,7 @@ final private[borer] class CborRenderer(var out: Output) extends Receiver.Render
     onText(value getBytes UTF_8)
 
   def onChars(buffer: Array[Char], length: Int): Unit =
-    onString(new String(buffer, 0, length))
+    onText(Utf8.encode(if (length == buffer.length) buffer else java.util.Arrays.copyOfRange(buffer, 0, length)))
 
   def onText[Bytes](value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Unit =
     out = writeInteger(byteAccess.sizeOf(value), 0x60).writeBytes(value)

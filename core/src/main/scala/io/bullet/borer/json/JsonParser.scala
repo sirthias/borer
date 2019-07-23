@@ -185,35 +185,37 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       }
     }
 
-    // Parses a JSON number and dispatches it to the [[Receiver]] either as
-    // - Int
-    // - Long
-    // - Double
-    // - or NumberString,
-    //
-    // whatever is the most efficient form that the number can be easily and losslessly represented in.
-    // Since [[Int]] is just the smaller variant of [[Long]] the core task is finding out, without much overhead,
-    // whether the number fits losslessly in a [[Long]] or a [[Double]].
-    // If neither is possible the fallback is always the NumberString, which
-    // transports the number in exactly the format that is present in the JSON source.
-    //
-    // A side-task is to determine whether the number violates the JSON spec and produce the
-    // respective error if that should be the case.
-    //
-    // @param negValue the initial value to start parsing with (as the negative of the actual number)
-    // @param strLen the number of already parsed characters belonging to the number string
-    // @param negative true if the JSON number is negative
-    // @return DataItem code for the value the Receiver received
+    /**
+      * Parses a JSON number and dispatches it to the [[Receiver]] either as
+      * - Int
+      * - Long
+      * - Double
+      * - or NumberString,
+      *
+      * whatever is the most efficient form that the number can be easily and losslessly represented in.
+      * Since [[Int]] is just the smaller variant of [[Long]] the core task is finding out, without much overhead,
+      * whether the number fits losslessly in a [[Long]] or a [[Double]].
+      * If neither is possible the fallback is always the NumberString, which
+      * transports the number in exactly the format that is present in the JSON source.
+      *
+      * A side-task is to determine whether the number violates the JSON spec and produce the
+      * respective error if that should be the case.
+      *
+      * @param negValue the initial value to start parsing with (as the negative of the actual number)
+      * @param strLen the number of already parsed characters belonging to the number string
+      * @param negative true if the JSON number is negative
+      * @return DataItem code for the value the Receiver received
+      */
     def parseNumber(negValue: Long, strLen: Int, negative: Boolean): Int = {
-      @inline def dispatchNumberString(len: Int) = {
+      def dispatchNumberString(len: Int) = {
         receiver.onNumberString(antePrecedingBytesAsAsciiString(len))
         DataItem.NumberString
       }
-      @inline def dispatchDouble(d: Double) = {
+      def dispatchDouble(d: Double) = {
         receiver.onDouble(if (negative || d == 0.0) d else -d)
         DataItem.Double
       }
-      @inline def dispatchIntOrLong(len: Int, negValue: Long) = {
+      def dispatchIntOrLong(len: Int, negValue: Long) = {
         var long = negValue
         if (negative || negValue != Long.MinValue && { long = -negValue; true }) {
           if (Util.isInt(long)) {
@@ -225,7 +227,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
           }
         } else dispatchNumberString(len)
       }
-      @inline def parseNumberStringExponentPartOrDispatchNumberString(len: Int, stopChar: Int) =
+      def parseNumberStringExponentPartOrDispatchNumberString(len: Int, stopChar: Int) =
         if ((stopChar | 0x20) != 'e') {
           val result = dispatchNumberString(len)
           nextChar = nextCharAfterWhitespace(stopChar)
@@ -409,13 +411,13 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       // the special chars '"', '\', 8-bit (> 127) and ctrl chars become 0x80, all normal chars zero
       mask = (octa | qMask | bMask | mask) & 0X8080808080808080L
 
-      val nlz       = java.lang.Long.numberOfLeadingZeros(mask)
-      val charCount = nlz >> 3 // the number of "good" normal chars before a special char [0..8]
+      val nlz       = java.lang.Long.numberOfLeadingZeros(mask) // JVM intrinsic compiling to an LZCNT instr. on x86
+      val charCount = nlz >> 3                                  // the number of "good" normal chars before a special char [0..8]
 
       // in order to decrease instruction dependencies we always speculatively write all 8 chars to the char buffer,
       // independently of how many are actually "good" chars, this keeps CPU pipelines maximally busy
       ensureCharsLen(charCursor + 8)
-      chars(charCursor) = (octa >>> 56).toChar           // here it would be nice
+      chars(charCursor + 0) = (octa << 0 >>> 56).toChar  // here it would be nice
       chars(charCursor + 1) = (octa << 8 >>> 56).toChar  // to have access
       chars(charCursor + 2) = (octa << 16 >>> 56).toChar // to a JVM intrinsic for the
       chars(charCursor + 3) = (octa << 24 >>> 56).toChar // x86 PDEP instruction

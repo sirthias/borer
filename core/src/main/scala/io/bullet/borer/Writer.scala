@@ -61,7 +61,9 @@ final class Writer(receiver: Receiver, val target: Target, config: Writer.Config
 
   def writeNumberString(value: String): this.type = { receiver.onNumberString(value); this }
 
-  @inline def writeString(value: String): this.type          = { receiver.onString(value); this }
+  @inline def writeString(value: String): this.type     = { receiver.onString(value); this }
+  @inline def writeChars(value: Array[Char]): this.type = { receiver.onChars(value, value.length); this }
+
   def writeBytes[Bytes: ByteAccess](value: Bytes): this.type = { receiver.onBytes(value); this }
   def writeText[Bytes: ByteAccess](value: Bytes): this.type  = { receiver.onText(value); this }
   def writeTag(value: Tag): this.type                        = { receiver.onTag(value); this }

@@ -104,7 +104,7 @@ object Decoder extends LowPrioDecoders {
             r.readUntilBreak(new mutable.ArrayBuilder.ofByte)(_ += r.readByte()).result()
           } else Array.emptyByteArray
         } else r.unexpectedDataItem(expected = "ByteString or Array of bytes")
-      } else jsonBaseEncoding.decode(r.readString().toCharArray)
+      } else jsonBaseEncoding.decode(r.readChars())
     }
 
   implicit val forChar: Decoder[Char] = forInt.mapWithReader { (r, int) =>

@@ -127,12 +127,11 @@ final private[borer] class JsonRenderer(var out: Output) extends Receiver.Render
   def onString(value: String): Unit = {
     @tailrec def rec(out: Output, ix: Int): Output =
       if (ix < value.length) {
-        @inline def escaped(c: Char) = out.writeAsBytes('\\', c)
-        var index                    = ix
+        var index = ix
         val newOut =
           value.charAt(ix) match {
-            case '"'  => escaped('"')
-            case '\\' => escaped('\\')
+            case '"'  => writeEscaped(out, '"')
+            case '\\' => writeEscaped(out, '\\')
             case c if c >= 0x20 => // we re-encode the character (or surrogate pair) from UTF-16 to UTF-8 right here
               if (c > 0x7F) {
                 var codePoint = c.toInt
@@ -144,22 +143,19 @@ final private[borer] class JsonRenderer(var out: Output) extends Receiver.Render
                           codePoint = Character.toCodePoint(c, value.charAt(index))
                           out.writeBytes((0xF0 | (codePoint >> 18)).toByte, (0x80 | ((codePoint >> 12) & 0x3F)).toByte)
                         } else failValidation("Truncated UTF-16 surrogate pair at end of string")
-                      } else failValidation(s"Invalid UTF-16 surrogate pair at string index $index")
+                      } else failInvalidSurrogatePair(ix)
                     } else out.writeAsByte(0xE0 | (codePoint >> 12))) // 3-byte UTF-8 codepoint
                      .writeAsByte(0x80 | ((codePoint >> 6) & 0x3F))
                  } else out.writeAsByte(0xC0 | (codePoint >> 6))) // 2-byte UTF-8 codepoint
                   .writeAsByte(0x80 | (codePoint & 0x3F))
               } else out.writeAsByte(c)
 
-            case '\b' => escaped('b')
-            case '\f' => escaped('f')
-            case '\n' => escaped('n')
-            case '\r' => escaped('r')
-            case '\t' => escaped('t')
-            case c =>
-              out
-                .writeAsBytes('\\', 'u', '0', '0')
-                .writeBytes(lowerHexDigit(c.toInt >> 4).toByte, lowerHexDigit(c.toInt).toByte)
+            case '\b' => writeEscaped(out, 'b')
+            case '\f' => writeEscaped(out, 'f')
+            case '\n' => writeEscaped(out, 'n')
+            case '\r' => writeEscaped(out, 'r')
+            case '\t' => writeEscaped(out, 't')
+            case c    => writeUnicodeLiteral(out, c)
           }
         rec(newOut, index + 1)
       } else out
@@ -167,8 +163,51 @@ final private[borer] class JsonRenderer(var out: Output) extends Receiver.Render
     out = count(rec(if (sepRequired) out.writeAsBytes(separator, '"') else out.writeAsByte('"'), 0).writeAsByte('"'))
   }
 
-  def onChars(buffer: Array[Char], length: Int): Unit =
-    onString(new String(buffer, 0, length))
+  def onChars(buffer: Array[Char], length: Int): Unit = {
+    @tailrec def rec(out: Output, ix: Int): Output =
+      if (ix < length) {
+        var index = ix
+        val newOut =
+          buffer(ix) match {
+            case '"'  => writeEscaped(out, '"')
+            case '\\' => writeEscaped(out, '\\')
+            case c if c >= 0x20 => // we re-encode the character (or surrogate pair) from UTF-16 to UTF-8 right here
+              if (c > 0x7F) {
+                var codePoint = c.toInt
+                (if (codePoint > 0x7FF) {
+                   (if (0xD800 <= codePoint && codePoint < 0xE000) { // UTF-16 high surrogate (i.e. first of pair)
+                      if (codePoint < 0xDC00) {
+                        index += 1
+                        if (index < length) {
+                          codePoint = Character.toCodePoint(c, buffer(index))
+                          out.writeBytes((0xF0 | (codePoint >> 18)).toByte, (0x80 | ((codePoint >> 12) & 0x3F)).toByte)
+                        } else failValidation("Truncated UTF-16 surrogate pair at end of string")
+                      } else failInvalidSurrogatePair(ix)
+                    } else out.writeAsByte(0xE0 | (codePoint >> 12))) // 3-byte UTF-8 codepoint
+                     .writeAsByte(0x80 | ((codePoint >> 6) & 0x3F))
+                 } else out.writeAsByte(0xC0 | (codePoint >> 6))) // 2-byte UTF-8 codepoint
+                  .writeAsByte(0x80 | (codePoint & 0x3F))
+              } else out.writeAsByte(c)
+
+            case '\b' => writeEscaped(out, 'b')
+            case '\f' => writeEscaped(out, 'f')
+            case '\n' => writeEscaped(out, 'n')
+            case '\r' => writeEscaped(out, 'r')
+            case '\t' => writeEscaped(out, 't')
+            case c    => writeUnicodeLiteral(out, c)
+          }
+        rec(newOut, index + 1)
+      } else out
+
+    out = count(rec(if (sepRequired) out.writeAsBytes(separator, '"') else out.writeAsByte('"'), 0).writeAsByte('"'))
+  }
+
+  private def writeEscaped(out: Output, c: Char): Output = out.writeAsBytes('\\', c)
+
+  private def writeUnicodeLiteral(out: Output, c: Char): Output =
+    out
+      .writeAsBytes('\\', 'u', '0', '0')
+      .writeBytes(lowerHexDigit(c.toInt >> 4).toByte, lowerHexDigit(c.toInt).toByte)
 
   def onText[Bytes](value: Bytes)(implicit ba: ByteAccess[Bytes]): Unit =
     failUnsupported(out, "text byte strings")
@@ -276,6 +315,8 @@ final private[borer] class JsonRenderer(var out: Output) extends Receiver.Render
 
   private def failCannotBeMapKey(what: String) =
     throw new Borer.Error.ValidationFailure(out, s"JSON does not support $what as a map key")
+
+  private def failInvalidSurrogatePair(ix: Int) = failValidation(s"Invalid UTF-16 surrogate pair at string index $ix")
 
   private def failValidation(msg: String) =
     throw new Borer.Error.ValidationFailure(out, msg)

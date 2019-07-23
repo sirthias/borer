@@ -108,6 +108,34 @@ object Util {
     rec(0)
   }
 
+  /**
+    * Returns a positive number if the first `charsLen` characters of `chars` compare greater than `string`,
+    * zero if equal, and a negative number if less.
+    */
+  def charsStringCompare(chars: Array[Char], charsLen: Int, string: String): Int = {
+    val limit = math.min(charsLen, string.length)
+    @tailrec def rec(ix: Int): Int =
+      if (ix < limit) {
+        val diff = chars(ix).toInt - string.charAt(ix).toInt
+        if (diff != 0) diff else rec(ix + 1)
+      } else charsLen - string.length
+    rec(0)
+  }
+
+  /**
+    * Returns a positive number if the first `aLen` characters of `a` compare greater than `b`,
+    * zero if equal, and a negative number if less.
+    */
+  def charsCharsCompare(a: Array[Char], aLen: Int, b: Array[Char]): Int = {
+    val limit = math.min(aLen, b.length)
+    @tailrec def rec(ix: Int): Int =
+      if (ix < limit) {
+        val diff = a(ix).toInt - b(ix).toInt
+        if (diff != 0) diff else rec(ix + 1)
+      } else aLen - b.length
+    rec(0)
+  }
+
   implicit final class RichIterator[T](val underlying: Iterator[T]) extends AnyVal {
 
     def +:(element: T): Iterator[T] =
