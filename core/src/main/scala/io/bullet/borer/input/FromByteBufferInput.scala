@@ -26,7 +26,7 @@ trait FromByteBufferInput {
     def cursor: Long = buffer.position().toLong
 
     def unread(numberOfBytes: Int): this.type = {
-      buffer.position(buffer.position - numberOfBytes)
+      buffer.position(buffer.position() - numberOfBytes)
       this
     }
 
