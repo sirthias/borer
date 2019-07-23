@@ -38,7 +38,7 @@ Operating System
 : Ubuntu 18.04.2 LTS
 
 CPU
-: 2 x Intel Xeon E5-2665 2.4-3.1 GHz (Octa-core)
+: 2 x Intel Xeon E5-2665 2.4 - 3.1 GHz (Octa-core)
 
 The `benchmarks` SBT sub project contains everything you need to run the benchmarks yourself.
 This SBT command will produce a JSON file holding all results:

@@ -23,7 +23,7 @@ Lightweight
 Fast
 : _borer_ features DOM-less pull-parsers with one-element look-ahead and is designed for a good tradeoff between
   performance and usability. It supports stream parsing (in constant memory, even for very large files) and consistently
-  @ref:[outperforms](borer-core/07-JSON-performance.md) outperforms most other serialization libraries targeting [CBOR] or
+  @ref:[outperforms](borer-core/07-JSON-performance.md) most other serialization libraries targeting [CBOR] or
   [JSON] that are available to [Scala] developers.
  
 Flexible
