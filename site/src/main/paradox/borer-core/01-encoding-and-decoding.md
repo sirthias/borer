@@ -36,5 +36,6 @@ JSON
 
 
 Additionally _borer_ offers even more top-level API calls that give you the respective `Output` or `Input` instances
-either directly or wrapped in `Try` or `Either`. Check the sources of the central
-@github[_borer_ API entry point](/core/src/main/scala/io/bullet/borer/Borer.scala) for more info.
+either directly or wrapped in `Try` or `Either`.<br>
+Check the sources of the central @github[_borer_ API entry point](/core/src/main/scala/io/bullet/borer/Borer.scala) for
+more info.

@@ -10,15 +10,15 @@ structure, filtering or augmenting nodes, or the like.
 
 Also, it doesn't rely on reflection in any way. All information about the types to encode and decode must be statically
 available at the encoding/decoding point. With the exception of `sealed` ADT hierarchies (which are supported out of
-the box with the `borer-derivation` module) this means that you need to define yourself how to represent type
-information of abstract types on the wire!
+the box with the @ref:[`borer-derivation`](04-borer-derivation.md) module) this means that you need to define yourself
+how to represent type information of abstract types on the wire!
 
 Another design principle has been to implement _borer_'s core module without relying on Scala macros or depending on any
 external libraries. This should make _borer_ easily maintainable for the foreseeable future and reduces its weight as
 a dependency of your applications (which can be especially important with [scala.js]).
 
-(Note: The `borer-derivation` module _does_ rely on macros for deriving encoder/decoder type classes, but its use is
-completely optional.
+(Note: The @ref:[`borer-derivation`](04-borer-derivation.md) module _does_ rely on macros for deriving codec type
+classes, but its use is completely optional.)
 
   [Scala]: https://www.scala-lang.org/
   [scala.js]: https://www.scala-js.org/

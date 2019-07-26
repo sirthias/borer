@@ -32,3 +32,6 @@ import io.bullet.borer.NullOptions._
 Here is how `NullOptions` are implemented:
 
 @@snip [-]($core$/NullOptions.scala) { #docs-quote-delimiter }
+
+  [CBOR]: http://cbor.io/
+  [JSON]: http://json.org/
