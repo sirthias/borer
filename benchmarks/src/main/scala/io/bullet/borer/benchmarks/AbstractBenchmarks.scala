@@ -27,8 +27,6 @@ import scala.util.Random
 @State(Scope.Thread)
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
-@Warmup(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS)
-@Measurement(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS)
 @Fork(
   value = 1,
   jvmArgs = Array(
@@ -37,6 +35,7 @@ import scala.util.Random
     "-Xmx2g",
     "-XX:NewSize=1g",
     "-XX:MaxNewSize=1g",
+    "-XX:MaxInlineLevel=18",
     "-XX:InitialCodeCacheSize=512m",
     "-XX:ReservedCodeCacheSize=512m",
     "-XX:+UseParallelGC",
@@ -54,8 +53,6 @@ abstract class EncodingBenchmark extends EncodingDecodingExampleData
 @State(Scope.Thread)
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
-@Warmup(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS)
-@Measurement(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS)
 @Fork(
   value = 1,
   jvmArgs = Array(
@@ -64,6 +61,7 @@ abstract class EncodingBenchmark extends EncodingDecodingExampleData
     "-Xmx2g",
     "-XX:NewSize=1g",
     "-XX:MaxNewSize=1g",
+    "-XX:MaxInlineLevel=18",
     "-XX:InitialCodeCacheSize=512m",
     "-XX:ReservedCodeCacheSize=512m",
     "-XX:+UseParallelGC",
@@ -81,8 +79,6 @@ abstract class DecodingBenchmark extends EncodingDecodingExampleData
 @State(Scope.Thread)
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
-@Warmup(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS)
-@Measurement(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS)
 @Fork(
   value = 1,
   jvmArgs = Array(
@@ -91,6 +87,7 @@ abstract class DecodingBenchmark extends EncodingDecodingExampleData
     "-Xmx2g",
     "-XX:NewSize=1g",
     "-XX:MaxNewSize=1g",
+    "-XX:MaxInlineLevel=18",
     "-XX:InitialCodeCacheSize=512m",
     "-XX:ReservedCodeCacheSize=512m",
     "-XX:+UseParallelGC",
