@@ -563,12 +563,20 @@ final class InputReader[Config <: Reader.Config](
     }
   }
 
-  def skipTwoElements(): this.type = skipElement().skipElement()
+  @inline def skipTwoElements(): this.type = skipElement().skipElement()
 
-  def readArrayOpen(arity: Int): Boolean =
+  @inline def readArrayOpen(arity: Long): Boolean =
     tryReadArrayStart() || { readArrayHeader(arity); false }
 
-  def readArrayClose[T](unbounded: Boolean, value: T): T = {
+  @inline def readArrayClose[T](unbounded: Boolean, value: T): T = {
+    if (unbounded) readBreak()
+    value
+  }
+
+  @inline def readMapOpen(arity: Long): Boolean =
+    tryReadMapStart() || { readMapHeader(arity); false }
+
+  @inline def readMapClose[T](unbounded: Boolean, value: T): T = {
     if (unbounded) readBreak()
     value
   }

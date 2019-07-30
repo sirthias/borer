@@ -143,23 +143,24 @@ final class Writer(receiver: Receiver, val target: Target, config: Writer.Config
     writeBreak()
   }
 
-  def writeMap[A: Encoder, B: Encoder](x: Map[A, B]): this.type = {
-    val iterator = x.iterator
-    def writeEntries(): Unit =
-      while (iterator.hasNext) {
-        val (k, v) = iterator.next()
-        write(k).write(v)
+  def writeMap[A: Encoder, B: Encoder](x: Map[A, B]): this.type =
+    if (x.nonEmpty) {
+      val iterator = x.iterator
+      def writeEntries(): Unit =
+        while (iterator.hasNext) {
+          val (k, v) = iterator.next()
+          write(k).write(v)
+        }
+      if (writingJson) {
+        writeMapStart()
+        writeEntries()
+        writeBreak()
+      } else {
+        writeMapHeader(x.size)
+        writeEntries()
+        this
       }
-    if (writingJson) {
-      writeMapStart()
-      writeEntries()
-      writeBreak()
-    } else {
-      writeMapHeader(x.size)
-      writeEntries()
-      this
-    }
-  }
+    } else writeEmptyMap()
 
   def writeArrayOpen(size: Int): this.type =
     if (target eq Json) writeArrayStart() else writeArrayHeader(size)

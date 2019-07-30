@@ -75,7 +75,7 @@ object ArrayBasedCodecs {
         import c.universe._
 
         def deriveForCaseObject(tpe: Type, module: ModuleSymbol) =
-          q"$borerPkg.Encoder.forUnit.contramap[${module.typeSignature}](_ => ())"
+          q"$borerPkg.Encoder[${module.typeSignature}]((w, _) => w.writeEmptyArray())"
 
         def deriveForCaseClass(
             tpe: Type,
@@ -109,7 +109,7 @@ object ArrayBasedCodecs {
         import c.universe._
 
         def deriveForCaseObject(tpe: Type, module: ModuleSymbol) =
-          q"$borerPkg.Decoder.forUnit.map(_ => $module)"
+          q"$borerPkg.Decoder(r => r.readArrayClose(r.readArrayOpen(0), $module))"
 
         def deriveForCaseClass(
             tpe: Type,
