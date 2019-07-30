@@ -396,20 +396,19 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
 
     @tailrec def parseUtf8String(charCursor: Int): Int = {
       // fetch 8 bytes (chars) at the same time with the first becoming the (left-most) MSB of the `octa` long
-      val octa     = input.readOctaByteBigEndianPadded(this)
-      val octa7bit = octa & 0X7F7F7F7F7F7F7F7FL
+      val octa = input.readOctaByteBigEndianPadded(this)
 
-      // mask '"' characters: only '"' and 0xA2 become 0x80, all others become < 0x80
-      val qMask = (octa7bit ^ 0X5D5D5D5D5D5D5D5DL) + 0X0101010101010101L
+      // mask '"' characters: of all 7-bit chars only '"' gets its high-bit set
+      val qMask = (octa ^ 0X5D5D5D5D5D5D5D5DL) + 0X0101010101010101L
 
-      // mask '\' characters: only '\' and 0xAF become 0x80, all others become < 0x80
-      val bMask = (octa7bit ^ 0X2323232323232323L) + 0X0101010101010101L
+      // mask '\' characters: of all 7-bit chars only '\' gets its high-bit set
+      val bMask = (octa ^ 0X2323232323232323L) + 0X0101010101010101L
 
-      // mask ctrl characters (0 - 0x1F): only ctrl chars and 0xA0 - 0xFF get their high-bit set
-      var mask = (octa | 0X1F1F1F1F1F1F1F1FL) - 0X2020202020202020L
+      // mask ctrl characters (0 - 0x1F): of all 7-bit chars only ctrl chars get their high-bit set
+      val cMask = (octa | 0X1F1F1F1F1F1F1F1FL) - 0X2020202020202020L
 
       // the special chars '"', '\', 8-bit (> 127) and ctrl chars become 0x80, all normal chars zero
-      mask = (octa | qMask | bMask | mask) & 0X8080808080808080L
+      val mask = (qMask | bMask | octa | cMask) & 0X8080808080808080L
 
       val nlz       = java.lang.Long.numberOfLeadingZeros(mask) // JVM intrinsic compiling to an LZCNT instr. on x86
       val charCount = nlz >> 3                                  // the number of "good" normal chars before a special char [0..8]
@@ -625,12 +624,14 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
     if (nextChar <= 0x20) skip1() else nextChar
   }
 
-  @inline private def ensureCharsLen(len: Int): Unit =
-    if (len > chars.length) {
+  @inline private def ensureCharsLen(len: Int): Unit = {
+    def grow(): Unit = {
       if (len > config.maxStringLength) failStringTooLong(-len)
       val newLen = math.max(chars.length << 1, len)
       chars = util.Arrays.copyOf(chars, newLen)
     }
+    if (len > chars.length) grow()
+  }
 
   @inline private def unread(count: Int): Unit = {
     def unreadWithExtra(): Unit = {
