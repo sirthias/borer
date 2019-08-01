@@ -12,7 +12,7 @@ import scala.annotation.tailrec
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
 
-object Util {
+private[borer] object Util {
 
   val isJS  = 1.0.toString == "1"
   val isJVM = !isJS

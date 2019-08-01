@@ -11,7 +11,7 @@ package io.bullet.borer.cbor
 import java.lang.{Double => JDouble, Float => JFloat}
 
 import io.bullet.borer.{Borer, _}
-import io.bullet.borer.internal.Util
+import io.bullet.borer.internal.{Parser, Util}
 
 import scala.annotation.switch
 
@@ -19,7 +19,7 @@ import scala.annotation.switch
   * Encapsulates the basic CBOR decoding logic.
   */
 final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes], config: CborParser.Config)
-    extends Receiver.Parser[Bytes] {
+    extends Parser[Bytes] {
 
   private[this] var _valueIndex: Long = _
 
@@ -221,9 +221,9 @@ object CborParser {
     def maxTextStringLength: Int
   }
 
-  private[this] val _creator: Receiver.ParserCreator[Any, CborParser.Config] =
+  private[this] val _creator: Parser.Creator[Any, CborParser.Config] =
     (input, byteAccess, config) => new CborParser(input, config)(byteAccess)
 
-  def creator[Bytes, Conf <: CborParser.Config]: Receiver.ParserCreator[Bytes, Conf] =
-    _creator.asInstanceOf[Receiver.ParserCreator[Bytes, Conf]]
+  def creator[Bytes, Conf <: CborParser.Config]: Parser.Creator[Bytes, Conf] =
+    _creator.asInstanceOf[Parser.Creator[Bytes, Conf]]
 }

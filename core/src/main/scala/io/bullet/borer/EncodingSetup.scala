@@ -12,6 +12,8 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.lang.{StringBuilder => JStringBuilder}
 import java.nio.ByteBuffer
 
+import io.bullet.borer.internal.Renderer
+
 import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 
@@ -106,7 +108,7 @@ object EncodingSetup {
       target: Target,
       defaultConfig: Config,
       defaultWrapper: Receiver.Wrapper[Config],
-      rendererCreator: Output => Receiver.Renderer)
+      rendererCreator: Output => Renderer)
       extends Borer.AbstractSetup[Config](defaultConfig, defaultWrapper) with JsonApi[T, Config]
       with Sealed[Output, AnyRef] {
 
@@ -184,8 +186,8 @@ object EncodingSetup {
       }
     }
 
-    private def render(renderer: Receiver.Renderer): Receiver.Renderer = {
-      val writer = new Writer(receiverWrapper(renderer, config), target, config)
+    private def render(renderer: Renderer): Renderer = {
+      val writer = new Writer(_output, receiverWrapper(renderer, config), target, config)
       writer
         .write(value)
         .writeEndOfInput() // doesn't actually write anything but triggers certain validation checks (if configured)

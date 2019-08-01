@@ -10,7 +10,7 @@ package io.bullet.borer
 
 import java.nio.charset.StandardCharsets
 
-import io.bullet.borer.internal.{Receptacle, Util}
+import io.bullet.borer.internal.{ElementDeque, Parser, Receptacle, Util}
 
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -20,7 +20,7 @@ import scala.collection.compat._
   * Stateful, mutable abstraction for reading a stream of CBOR or JSON data from the given `input`.
   */
 final class InputReader[Config <: Reader.Config](
-    parser: Receiver.Parser[_],
+    parser: Parser[_],
     receiverWrapper: Receiver.Wrapper[Config],
     config: Config,
     val target: Target) {
@@ -29,13 +29,28 @@ final class InputReader[Config <: Reader.Config](
 
   private[this] val configReadIntegersAlsoAsFloatingPoint = config.readIntegersAlsoAsFloatingPoint
   private[this] val configReadDoubleAlsoAsFloat           = config.readDoubleAlsoAsFloat
-  private[this] val receiver: Receiver                    = receiverWrapper(new Receptacle, config)
-  private[this] val receptacle: Receptacle                = receiver.finalTarget.asInstanceOf[Receptacle]
+  private[this] val receptacle: Receptacle                = new Receptacle
+  private[this] val receiver: Receiver                    = receiverWrapper(receptacle, config)
   private[this] var _dataItem: Int                        = _
 
-  @inline def dataItem: Int = {
-    if (_dataItem == DataItem.None) _dataItem = parser.pull(receiver)
+  private[borer] var stash: ElementDeque = _
+
+  @inline def dataItem(): Int = {
+    if (_dataItem == DI.None) _dataItem = pullInto(receiver, stash)
     _dataItem
+  }
+
+  private[borer] def pullInto(rcv: Receiver, stash: ElementDeque): Int = {
+    def maybePullFromStash(): Int =
+      if (stash.isEmpty) {
+        if (stash.next ne null) {
+          this.stash = stash.next // collapse this unused stash level
+          pullInto(rcv, this.stash)
+        } else parser.pull(rcv)
+      } else stash.pull(rcv)
+
+    if (stash ne null) maybePullFromStash()
+    else parser.pull(rcv)
   }
 
   @inline def readingJson: Boolean = target eq Json
@@ -50,14 +65,14 @@ final class InputReader[Config <: Reader.Config](
     *
     * Example: reader.has(DataItem.Int)
     */
-  @inline def has(item: Int): Boolean = dataItem == item
+  @inline def has(item: Int): Boolean = dataItem() == item
 
   /**
     * Checks whether the next data item type is masked in the given bit mask.
     *
     * Example: reader.hasAnyOf(DataItem.Int | DataItem.Float)
     */
-  @inline def hasAnyOf(mask: Int): Boolean = (dataItem & mask) != 0
+  @inline def hasAnyOf(mask: Int): Boolean = (dataItem() & mask) != 0
 
   @inline def apply[T: Decoder]: T = read[T]()
 
@@ -168,7 +183,7 @@ final class InputReader[Config <: Reader.Config](
 
   def readFloat(): Float = {
     val result =
-      dataItem match {
+      dataItem() match {
         case DI.Float16 | DI.Float                            => receptacle.floatValue
         case DI.Double if configReadDoubleAlsoAsFloat         => receptacle.doubleValue.toFloat
         case DI.Int if configReadIntegersAlsoAsFloatingPoint  => receptacle.intValue.toFloat
@@ -188,7 +203,7 @@ final class InputReader[Config <: Reader.Config](
   @inline def tryReadFloat(value: Float): Boolean = clearIfTrue(hasFloat(value))
 
   def readDouble(): Double = {
-    val result = dataItem match {
+    val result = dataItem() match {
       case DI.Double                                        => receptacle.doubleValue
       case DI.Float16 | DI.Float                            => receptacle.floatValue.toDouble
       case DI.Int if configReadIntegersAlsoAsFloatingPoint  => receptacle.intValue.toDouble
@@ -201,7 +216,7 @@ final class InputReader[Config <: Reader.Config](
   }
 
   @inline def hasDouble: Boolean =
-    hasAnyOf(DI.Float16 | DI.Float | DI.Double | DI.NumberString) || config.readIntegersAlsoAsFloatingPoint && hasLong
+    hasAnyOf(DI.Float16 | DI.Float | DI.Double | DI.NumberString) || configReadIntegersAlsoAsFloatingPoint && hasLong
   @inline def hasDouble(value: Double): Boolean     = hasDouble && receptacle.doubleValue == value
   @inline def tryReadDouble(value: Double): Boolean = clearIfTrue(hasDouble(value))
 
@@ -216,7 +231,7 @@ final class InputReader[Config <: Reader.Config](
   @inline def hasByteArray: Boolean = hasBytes
 
   def readBytes[Bytes: ByteAccess](): Bytes =
-    dataItem match {
+    dataItem() match {
       case DI.Bytes      => readSizedBytes()
       case DI.BytesStart => readUnsizedBytes()
       case _             => unexpectedDataItem(expected = "Bytes")
@@ -249,7 +264,7 @@ final class InputReader[Config <: Reader.Config](
   }
 
   def readString(): String =
-    dataItem match {
+    dataItem() match {
       case DI.Chars     => ret(new String(receptacle.charBufValue, 0, receptacle.intValue))
       case DI.String    => ret(receptacle.stringValue)
       case DI.Text      => stringOf(readSizedTextBytes[Array[Byte]]())
@@ -264,7 +279,7 @@ final class InputReader[Config <: Reader.Config](
     * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to Chars data items!
     */
   @inline def hasString(value: String): Boolean =
-    dataItem match {
+    dataItem() match {
       case DI.Chars               => Util.charsStringCompare(receptacle.charBufValue, receptacle.intValue, value) == 0
       case DI.String              => receptacle.stringValue == value
       case DI.Text | DI.TextStart => decodeTextBytes().hasString(value)
@@ -287,7 +302,7 @@ final class InputReader[Config <: Reader.Config](
     * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to Chars data items!
     */
   def stringCompare(value: String): Int =
-    dataItem match {
+    dataItem() match {
       case DI.Chars               => Util.charsStringCompare(receptacle.charBufValue, receptacle.intValue, value)
       case DI.String              => receptacle.stringValue.compareTo(value)
       case DI.Text | DI.TextStart => decodeTextBytes().stringCompare(value)
@@ -312,7 +327,7 @@ final class InputReader[Config <: Reader.Config](
   }
 
   def readChars(): Array[Char] =
-    dataItem match {
+    dataItem() match {
       case DI.Chars     => ret(java.util.Arrays.copyOf(receptacle.charBufValue, receptacle.intValue))
       case DI.String    => ret(receptacle.stringValue.toCharArray)
       case DI.Text      => Utf8.decode(readSizedTextBytes[Array[Byte]]())
@@ -330,7 +345,7 @@ final class InputReader[Config <: Reader.Config](
     * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to Chars data items!
     */
   @inline def hasChars(value: Array[Char]): Boolean =
-    dataItem match {
+    dataItem() match {
       case DI.Chars               => Util.charsCharsCompare(receptacle.charBufValue, receptacle.intValue, value) == 0
       case DI.String              => Util.charsStringCompare(value, value.length, receptacle.stringValue) == 0
       case DI.Text | DI.TextStart => decodeTextBytes().hasChars(value)
@@ -353,7 +368,7 @@ final class InputReader[Config <: Reader.Config](
     * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to Chars data items!
     */
   def charsCompare(value: Array[Char]): Int =
-    dataItem match {
+    dataItem() match {
       case DI.Chars               => Util.charsCharsCompare(receptacle.charBufValue, receptacle.intValue, value)
       case DI.String              => -Util.charsStringCompare(value, value.length, receptacle.stringValue)
       case DI.Text | DI.TextStart => decodeTextBytes().charsCompare(value)
@@ -378,7 +393,7 @@ final class InputReader[Config <: Reader.Config](
   }
 
   def readTextBytes[Bytes: ByteAccess](): Bytes =
-    dataItem match {
+    dataItem() match {
       case DI.Text      => readSizedTextBytes()
       case DI.TextStart => readUnsizedTextBytes()
       case _            => unexpectedDataItem(expected = "Text Bytes")
@@ -417,7 +432,7 @@ final class InputReader[Config <: Reader.Config](
     * If the current data item is a sized or unsized Text item it'll be buffered and decoded into a Chars data item.
     */
   def decodeTextBytes(): this.type =
-    dataItem match {
+    dataItem() match {
       case DI.Text =>
         receptacle.onChars(Utf8.decode(receptacle.getBytes[Array[Byte]]))
         _dataItem = DI.Chars
@@ -515,8 +530,8 @@ final class InputReader[Config <: Reader.Config](
     * but only the starting data item! Use `skipElement` instead if you also want to skip complex elements!
     */
   def skipDataItem(): this.type = {
-    if (_dataItem == DataItem.None) parser.pull(receiver)
-    else clearDataItem()
+    dataItem()
+    clearDataItem()
     this
   }
 
@@ -542,7 +557,7 @@ final class InputReader[Config <: Reader.Config](
         } else this
 
       if (level < 100) {
-        dataItem match {
+        dataItem() match {
           case DI.ArrayHeader => skipN(readArrayHeader())
           case DI.MapHeader =>
             val elemsToSkip = readMapHeader() << 1
@@ -586,11 +601,11 @@ final class InputReader[Config <: Reader.Config](
   @inline def overflow(msg: String): Nothing = throw new Borer.Error.Overflow(position, msg)
 
   def unexpectedDataItem(expected: String): Nothing = {
-    val actual = dataItem match {
+    val actual = _dataItem match {
       case DI.ArrayHeader => s"Array Header (${receptacle.longValue})"
       case DI.MapHeader   => s"Map Header (${receptacle.longValue})"
       case DI.Tag         => "Tag: " + receptacle.tagValue
-      case _              => DataItem.stringify(dataItem)
+      case _              => DI.stringify(_dataItem)
     }
     unexpectedDataItem(expected, actual)
   }
@@ -601,7 +616,7 @@ final class InputReader[Config <: Reader.Config](
   @inline private def stringOf(bytes: Array[Byte]): String =
     if (bytes.length > 0) new String(bytes, StandardCharsets.UTF_8) else ""
 
-  @inline private def clearDataItem(): Unit = _dataItem = DataItem.None
+  @inline private def clearDataItem(): Unit = _dataItem = DI.None
 
   @inline private def ret[T](value: T): T = {
     clearDataItem()

@@ -6,7 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package io.bullet.borer.internal
+package io.bullet.borer.cbor
 
 import java.util
 
@@ -16,7 +16,7 @@ import io.bullet.borer.Borer.Error
 
 import scala.annotation.tailrec
 
-object CborValidation {
+private[borer] object CborValidation {
 
   trait Config {
 
@@ -46,8 +46,7 @@ object CborValidation {
     *
     * Throws [[Borer.Error]] exceptions upon detecting any problem with the input.
     */
-  final class Receiver(private var _target: borer.Receiver, config: Config)
-      extends borer.Receiver with java.lang.Cloneable {
+  final class Receiver(target: borer.Receiver, config: Config) extends borer.Receiver {
 
     import io.bullet.borer.{DataItem => DI}
 
@@ -61,109 +60,107 @@ object CborValidation {
     private var level: Int     = -1
     private var mask: Int      = DEFAULT_MASK
 
-    override def target = _target
-
     def onNull(): Unit = {
       checkAllowed(DI.Null)
       count()
-      _target.onNull()
+      target.onNull()
     }
 
     def onUndefined(): Unit = {
       checkAllowed(DI.Undefined)
       count()
-      _target.onUndefined()
+      target.onUndefined()
     }
 
     def onBoolean(value: Boolean): Unit = {
       checkAllowed(DI.Boolean)
       count()
-      _target.onBoolean(value)
+      target.onBoolean(value)
     }
 
     def onInt(value: Int): Unit = {
       checkAllowed(DI.Int)
       count()
-      _target.onInt(value)
+      target.onInt(value)
     }
 
     def onLong(value: Long): Unit = {
       checkAllowed(DI.Long)
       count()
-      _target.onLong(value)
+      target.onLong(value)
     }
 
     def onOverLong(negative: Boolean, value: Long): Unit = {
       checkAllowed(DI.OverLong)
       count()
-      _target.onOverLong(negative, value)
+      target.onOverLong(negative, value)
     }
 
     def onFloat16(value: Float): Unit = {
       checkAllowed(DI.Float16)
       count()
-      _target.onFloat16(value)
+      target.onFloat16(value)
     }
 
     def onFloat(value: Float): Unit = {
       checkAllowed(DI.Float)
       count()
-      _target.onFloat(value)
+      target.onFloat(value)
     }
 
     def onDouble(value: Double): Unit = {
       checkAllowed(DI.Double)
       count()
-      _target.onDouble(value)
+      target.onDouble(value)
     }
 
     def onNumberString(value: String): Unit = {
       checkAllowed(DI.NumberString)
       count()
-      _target.onNumberString(value)
+      target.onNumberString(value)
     }
 
     def onBytes[Bytes: ByteAccess](value: Bytes): Unit = {
       checkAllowed(DI.Bytes)
       count()
-      _target.onBytes(value)
+      target.onBytes(value)
     }
 
     def onBytesStart(): Unit = {
       checkAllowed(DI.BytesStart)
       enterLevel(0, DI.Bytes | DI.BytesStart | UNBOUNDED)
-      _target.onBytesStart()
+      target.onBytesStart()
     }
 
     def onString(value: String): Unit = {
       checkAllowed(DI.String)
       count()
-      _target.onString(value)
+      target.onString(value)
     }
 
     def onChars(buffer: Array[Char], length: Int): Unit = {
       checkAllowed(DI.Chars)
       count()
-      _target.onChars(buffer, length)
+      target.onChars(buffer, length)
     }
 
     def onText[Bytes: ByteAccess](value: Bytes): Unit = {
       checkAllowed(DI.Text)
       count()
-      _target.onText(value)
+      target.onText(value)
     }
 
     def onTextStart(): Unit = {
       checkAllowed(DI.TextStart)
       enterLevel(0, DI.String | DI.Chars | DI.Text | DI.TextStart | UNBOUNDED)
-      _target.onTextStart()
+      target.onTextStart()
     }
 
     def onArrayHeader(length: Long): Unit = {
       checkAllowed(DI.ArrayHeader)
       if (length <= config.maxArrayLength) {
         if (length > 0) enterLevel(length, DEFAULT_MASK) else count()
-        _target.onArrayHeader(length)
+        target.onArrayHeader(length)
       } else {
         val msg = s"Array length $length is greater than the configured maximum of ${config.maxArrayLength}"
         throw new Borer.Error.Unsupported(null, msg)
@@ -173,14 +170,14 @@ object CborValidation {
     def onArrayStart(): Unit = {
       checkAllowed(DI.ArrayStart)
       enterLevel(0, DEFAULT_MASK | UNBOUNDED)
-      _target.onArrayStart()
+      target.onArrayStart()
     }
 
     def onMapHeader(length: Long): Unit = {
       checkAllowed(DI.MapHeader)
       if (length <= config.maxMapLength) {
         if (length > 0) enterLevel(length << 1, DEFAULT_MASK | MAP) else count()
-        _target.onMapHeader(length)
+        target.onMapHeader(length)
       } else {
         val msg = s"Map length $length is greater than the configured maximum of ${config.maxMapLength}"
         throw new Borer.Error.Unsupported(null, msg)
@@ -190,7 +187,7 @@ object CborValidation {
     def onMapStart(): Unit = {
       checkAllowed(DI.MapStart)
       enterLevel(0, DEFAULT_MASK | MAP | UNBOUNDED)
-      _target.onMapStart()
+      target.onMapStart()
     }
 
     def onBreak(): Unit = {
@@ -207,7 +204,7 @@ object CborValidation {
       if (level >= 0 && isMasked(UNBOUNDED) && (!isMasked(MAP) || isEvenNumberedElement)) {
         exitLevel()
         count() // level-entering items are only counted when the level is exited, not when they are entered
-        _target.onBreak()
+        target.onBreak()
       } else failBreak()
     }
 
@@ -236,13 +233,13 @@ object CborValidation {
         case Tag.HintBase64url | Tag.HintBase64 | Tag.HintBase16 | Tag.MagicHeader | Tag.Other(_) =>
           checkAllowed(DI.Tag)
       }
-      _target.onTag(value)
+      target.onTag(value)
     }
 
     def onSimpleValue(value: Int): Unit = {
       checkAllowed(DI.SimpleValue)
       count()
-      _target.onSimpleValue(value)
+      target.onSimpleValue(value)
     }
 
     def onEndOfInput(): Unit =
@@ -258,7 +255,7 @@ object CborValidation {
             case (true, true, true)   => "next map entry or BREAK"
           }
         throw new Borer.Error.UnexpectedEndOfInput(null, msg)
-      } else _target.onEndOfInput()
+      } else target.onEndOfInput()
 
     private def checkAllowed(dataItem: Int): Unit =
       if (!isMasked(dataItem)) {

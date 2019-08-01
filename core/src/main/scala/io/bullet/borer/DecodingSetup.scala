@@ -10,6 +10,8 @@ package io.bullet.borer
 
 import java.lang.{StringBuilder => JStringBuilder}
 
+import io.bullet.borer.internal.Parser
+
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
@@ -76,7 +78,7 @@ object DecodingSetup {
       byteAccess: ByteAccess[Bytes],
       defaultConfig: Config,
       defaultWrapper: Receiver.Wrapper[Config],
-      parserCreator: Receiver.ParserCreator[Bytes, Config],
+      parserCreator: Parser.Creator[Bytes, Config],
       target: Target)
       extends Borer.AbstractSetup[Config](defaultConfig, defaultWrapper) with Api[In, Config] with Sealed[In, AnyRef] {
 

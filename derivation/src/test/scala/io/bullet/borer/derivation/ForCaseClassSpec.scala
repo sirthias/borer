@@ -62,13 +62,13 @@ object ForCaseClassSpec extends AbstractBorerSpec {
       roundTrip(""""foo"""", CaseClass1T("foo"))
     }
 
-    "`forUnaryCaseClass` on non-unary case class" - {
+    "`deriveUnaryCodec` on non-unary case class" - {
       Scalac
         .typecheck("ArrayBasedCodecs.deriveUnaryCodec[CaseClass3]")
         .assertErrorMsgMatches(".*not a unary case class".r)
     }
 
-    "Generic unary Case Class with 'forUnaryCaseClass' codec" - {
+    "Generic unary Case Class with 'deriveUnaryCodec' codec" - {
       implicit def codec[T: Encoder: Decoder]: Codec[CaseClass1T[T]] =
         ArrayBasedCodecs.deriveUnaryCodec[CaseClass1T[T]]
       roundTrip(""""foo"""", CaseClass1T("foo"))

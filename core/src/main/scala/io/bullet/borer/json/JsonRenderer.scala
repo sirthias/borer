@@ -9,7 +9,7 @@
 package io.bullet.borer.json
 
 import io.bullet.borer._
-import io.bullet.borer.internal.Util
+import io.bullet.borer.internal.{Renderer, Util}
 
 import scala.annotation.tailrec
 
@@ -44,7 +44,7 @@ import scala.annotation.tailrec
   *
   * @see https://tools.ietf.org/html/rfc8259
   */
-final private[borer] class JsonRenderer(var out: Output) extends Receiver.Renderer {
+final private[borer] class JsonRenderer(var out: Output) extends Renderer {
 
   private[this] var level: Int           = _ // valid range: 0 - 63
   private[this] var levelType: Long      = _ // keeps the type of each level as a bit map: 0 -> Array, 1 -> Map

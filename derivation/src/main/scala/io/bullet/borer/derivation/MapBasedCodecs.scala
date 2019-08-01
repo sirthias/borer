@@ -117,9 +117,12 @@ object MapBasedCodecs {
         def deriveForSealedTrait(tpe: Type, subTypes: List[SubType]) = {
           val cases = adtSubtypeWritingCases(tpe, subTypes)
           q"""$borerPkg.Encoder { (w, value) =>
-              def writeEntry(w: $borerPkg.Writer): w.type = value match { case ..$cases }
-              if (w.writingCbor) writeEntry(w.writeMapHeader(1))
-              else writeEntry(w.writeMapStart()).writeBreak()
+              def writeValue(): Unit = value match { case ..$cases }
+              val typeName = ${tpe.toString}
+              val strategy = implicitly[$borerPkg.AdtEncodingStrategy]
+              strategy.writeAdtEnvelopeOpen(w, typeName)
+              writeValue()
+              strategy.writeAdtEnvelopeClose(w, typeName)
            }"""
         }
       }
@@ -318,19 +321,15 @@ object MapBasedCodecs {
               } else q"if ($cmp == 0) r.read[${sub.tpe}]() else fail()"
             } else q"fail()"
 
-          def expected(s: String) = s"$s for decoding an instance of type `$tpe`"
-
           q"""$borerPkg.Decoder { r =>
                 def fail() = r.unexpectedDataItem(${s"type id key for subtype of `$tpe`"})
-                def readTypeIdAndValue(): $tpe = ${rec(0, typeIdsAndSubTypes.length)}
 
-                if (r.tryReadMapStart()) {
-                  val result = readTypeIdAndValue()
-                  if (r.tryReadBreak()) result
-                  else r.unexpectedDataItem(${expected("Single-entry Map")}, "at least one extra element")
-                } else if (r.tryReadMapHeader(1)) {
-                  readTypeIdAndValue()
-                } else r.unexpectedDataItem(${expected("Single-entry Map")})
+                val typeName = ${tpe.toString}
+                val strategy = implicitly[$borerPkg.AdtEncodingStrategy]
+                val opening = strategy.readAdtEnvelopeOpen(r, typeName)
+                val result = ${rec(0, typeIdsAndSubTypes.length)}
+                strategy.readAdtEnvelopeClose(r, opening, typeName)
+                result
               }"""
         }
       }

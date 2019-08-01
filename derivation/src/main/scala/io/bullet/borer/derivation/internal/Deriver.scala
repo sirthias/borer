@@ -72,7 +72,7 @@ abstract private[derivation] class Deriver[C <: blackbox.Context](val c: C) {
       case Some(x) if x.isModuleClass => deriveForCaseObject(tpe, x.module.asModule)
       case Some(x) if x.isCaseClass   => forCaseClass(tpe, x)
       case Some(x) if x.isSealed      => forSealedTrait(tpe, x)
-      case None                       => error(s"`$classType` is not a case class or sealed abstract data type")
+      case None                       => error(s"`$tpe` is not a case class or sealed abstract data type")
     }
 
     if (debug.isDefined && tpe.toString.contains(debug.get)) {

@@ -12,7 +12,7 @@ import java.nio.charset.StandardCharsets
 import java.util
 
 import io.bullet.borer.{Borer, _}
-import io.bullet.borer.internal.Util
+import io.bullet.borer.internal.{Parser, Util}
 
 import scala.annotation.{switch, tailrec}
 
@@ -49,7 +49,7 @@ import scala.annotation.{switch, tailrec}
   */
 final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config: JsonParser.Config)(
     implicit byteAccess: ByteAccess[Bytes])
-    extends Receiver.Parser[Bytes] {
+    extends Parser[Bytes] {
 
   import JsonParser._
 
@@ -58,7 +58,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
   private[this] var state: Int         = EXPECT_VALUE
   private[this] var cursorExtra: Int   = _
   private[this] var auxLong: Long      = _
-  private[this] var valueCursor: Long  = _
+  private[this] var _valueIndex: Long  = _
   private[this] var level: Int         = _ // valid range: 0..64
 
   // keeps the type of each level as a bit map: 0 -> Array, 1 -> Map
@@ -67,7 +67,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
 
   private[this] var nextChar: Int = nextCharAfterWhitespace()
 
-  def valueIndex: Long = valueCursor - 1
+  def valueIndex: Long = _valueIndex - 1
 
   /**
     * Reads the next data item from the input and sends it to the given [[Receiver]].
@@ -535,7 +535,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
         DataItem.EndOfInput
       } else failSyntaxError("end of input")
 
-    valueCursor = input.cursor
+    _valueIndex = input.cursor
     (state: @switch) match {
       case EXPECT_ARRAY_VALUE  => parseValue(EXPECT_ARRAY_VALUE, EXPECT_ARRAY_BREAK)
       case EXPECT_MAP_KEY      => parseMapKey()
@@ -689,11 +689,11 @@ private[borer] object JsonParser {
     def initialCharbufferSize: Int
   }
 
-  final private[this] val _creator: Receiver.ParserCreator[Any, JsonParser.Config] =
+  final private[this] val _creator: Parser.Creator[Any, JsonParser.Config] =
     (input, byteAccess, config) => new JsonParser(input, config)(byteAccess)
 
-  def creator[Bytes, Conf <: JsonParser.Config]: Receiver.ParserCreator[Bytes, Conf] =
-    _creator.asInstanceOf[Receiver.ParserCreator[Bytes, Conf]]
+  def creator[Bytes, Conf <: JsonParser.Config]: Parser.Creator[Bytes, Conf] =
+    _creator.asInstanceOf[Parser.Creator[Bytes, Conf]]
 
   final private val EXPECT_ARRAY_VALUE  = 0
   final private val EXPECT_MAP_KEY      = 1

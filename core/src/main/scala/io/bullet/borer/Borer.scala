@@ -11,7 +11,7 @@ package io.bullet.borer
 import java.lang.{StringBuilder => JStringBuilder}
 
 import io.bullet.borer.cbor._
-import io.bullet.borer.internal.{CborValidation, Util}
+import io.bullet.borer.internal.Util
 import io.bullet.borer.json._
 
 import scala.annotation.unchecked.uncheckedVariance
@@ -43,7 +43,7 @@ case object Cbor extends Target {
       output: Output,
       config: EncodingConfig = EncodingConfig.default,
       receiverWrapper: Receiver.Wrapper[EncodingConfig] = CborValidation.wrapper): Writer =
-    new Writer(receiverWrapper(CborRenderer(output), config), this, config)
+    new Writer(output, receiverWrapper(CborRenderer(output), config), this, config)
 
   /**
     * Constructs a new [[Reader]] that reads CBOR from the given [[Input]].
@@ -139,7 +139,7 @@ case object Json extends Target {
       output: Output,
       config: EncodingConfig = EncodingConfig.default,
       receiverWrapper: Receiver.Wrapper[EncodingConfig] = Receiver.nopWrapper): Writer =
-    new Writer(receiverWrapper(JsonRenderer(output), config), null, config)
+    new Writer(output, receiverWrapper(JsonRenderer(output), config), null, config)
 
   /**
     * Constructs a new [[Reader]] that reads JSON from the given [[Input]].
@@ -237,21 +237,29 @@ object Borer {
     }
 
     final def withPrintLogging(maxShownByteArrayPrefixLen: Int, maxShownStringPrefixLen: Int): this.type =
-      withWrapper(Logging(Logging.PrintLogger(maxShownByteArrayPrefixLen, maxShownStringPrefixLen)))
+      withStackedWrapper(Logging(Logging.PrintLogger(maxShownByteArrayPrefixLen, maxShownStringPrefixLen)))
 
     final def withStringLogging(
         stringBuilder: JStringBuilder,
         maxShownByteArrayPrefixLen: Int,
         maxShownStringPrefixLen: Int,
         lineSeparator: String): this.type =
-      withWrapper {
+      withStackedWrapper {
         Logging {
           Logging.ToStringLogger(stringBuilder, maxShownByteArrayPrefixLen, maxShownStringPrefixLen, lineSeparator)
         }
       }
 
-    final def withWrapper(receiverWrapper: Receiver.Wrapper[Config]): this.type = {
-      this.receiverWrapper = receiverWrapper
+    final def withWrapper(wrapper: Receiver.Wrapper[Config]): this.type = {
+      receiverWrapper = wrapper
+      this
+    }
+
+    final def withStackedWrapper(wrapper: Receiver.Wrapper[Config]): this.type = {
+      val prevWrapper = receiverWrapper
+      receiverWrapper =
+        if (prevWrapper eq Receiver.nopWrapper[Config]) wrapper
+        else (r: Receiver, conf: Config) => wrapper(prevWrapper(r, conf), conf)
       this
     }
   }

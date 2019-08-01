@@ -188,8 +188,10 @@ object Logging {
     * A [[Receiver]] which forwards all incoming data item to another [[Receiver]] and,
     * on the side, feeds a custom [[Logger]] with logging events.
     */
-  final class Receiver(private var _target: borer.Receiver, createLogger: LevelInfo => Logger)
-      extends borer.Receiver with LevelInfo with java.lang.Cloneable {
+  final class Receiver(target: borer.Receiver, createLogger: LevelInfo => Logger)
+      extends borer.Receiver with LevelInfo {
+
+    private val logger = createLogger(this)
 
     private var _level: Int = 0
 
@@ -201,10 +203,6 @@ object Logging {
     private var _levelSize = new Array[Long](4)
 
     _levelCount(0) = -1
-
-    private var logger = createLogger(this)
-
-    override def target = _target
 
     def level = _level
 
