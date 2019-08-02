@@ -63,7 +63,7 @@ object MapBasedCodecs {
             constructorIsPrivate: Boolean) = {
 
           def encName(p: CaseParam, suffix: String = "") = TermName(s"e${p.index}$suffix")
-          val nonBasicParams                             = params.filterNot(_.isBasicType)
+          val (basicParams, nonBasicParams)              = params.partition(_.isBasicType)
           val fieldEncDefs = nonBasicParams.map { p =>
             val paramType = p.paramType.tpe
             val fieldEnc =
@@ -78,7 +78,12 @@ object MapBasedCodecs {
             }
             q"private[this] val ${encName(p)} = $fieldEncWithDefault"
           }
-          val fieldOutputFlags = nonBasicParams.map { p =>
+          val basicFieldOutputFlags = basicParams.flatMap { p =>
+            p.defaultValueMethod.map { defaultValue =>
+              q"val ${encName(p, "o")} = (value.${p.name} != $defaultValue) || { count -= 1; false }"
+            }
+          }
+          val nonBasicFieldOutputFlags = nonBasicParams.map { p =>
             q"val ${encName(p, "o")} = ${encName(p)}.producesOutputFor(value.${p.name}) || { count -= 1; false }"
           }
           val writeEntries = params.map { p =>
@@ -86,8 +91,9 @@ object MapBasedCodecs {
             val writeKey      = q"w.${TermName(s"write${key.productPrefix}")}(${literal(key.value)})"
             val method        = TermName(s"write${p.basicTypeNameOrEmpty}")
             val rawWriteEntry = q"$writeKey.$method(value.${p.name})"
-            if (p.isBasicType) rawWriteEntry
-            else q"if (${encName(p, "o")}) $rawWriteEntry(${encName(p)})"
+            if (p.isBasicType) {
+              if (p.defaultValueMethod.isDefined) q"if (${encName(p, "o")}) $rawWriteEntry" else rawWriteEntry
+            } else q"if (${encName(p, "o")}) $rawWriteEntry(${encName(p)})"
           }
           val encoderName = TypeName(s"${tpe.typeSymbol.name.decodedName}Encoder")
 
@@ -95,7 +101,8 @@ object MapBasedCodecs {
                 ..$fieldEncDefs
                 def write(w: $borerPkg.Writer, value: $tpe): w.type = {
                   var count = ${params.size}
-                  ..$fieldOutputFlags
+                  ..$basicFieldOutputFlags
+                  ..$nonBasicFieldOutputFlags
                   def writeEntries(w: $borerPkg.Writer): w.type = {
                     ..$writeEntries
                     w

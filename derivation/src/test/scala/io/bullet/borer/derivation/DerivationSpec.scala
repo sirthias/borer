@@ -146,7 +146,10 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
   def arrayBasedMissingElemErrorMsg: String
 
   def mapBasedFooDom: MapElem
+  def mapBasedFooDomNoDefaults: MapElem
+
   def mapBased100Dom: MapElem
+  def mapBased100DomNoDefaults: MapElem
 
   def arrayBasedAnimalsDom: Element
   def mapBasedAnimalsDom: Element
@@ -250,10 +253,9 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
       implicit val fooCodec     = deriveCodec[Foo]
       implicit val hundredCodec = deriveCodec[Hundred]
 
-      def sizeMatch[T: Encoder: Decoder](value: T, dom: MapElem): Unit = {
-        val encoded = encode(value)
-        decode[Element](encoded) ==> dom
-        decode[T](encoded) ==> value
+      def sizeMatch[T: Encoder: Decoder](value: T, domNoDefaults: MapElem, dom: MapElem): Unit = {
+        encode(value) ==> encode(domNoDefaults)
+        decode[T](encode(dom)) ==> value
       }
 
       def sizeMatchUnordered[T: Encoder: Decoder](value: T, dom: MapElem): Unit = {
@@ -331,7 +333,7 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
       }
 
       "Foo" - {
-        "size match" - sizeMatch(foo, mapBasedFooDom)
+        "size match" - sizeMatch(foo, mapBasedFooDomNoDefaults, mapBasedFooDom)
         "size match unordered" - sizeMatchUnordered(foo, mapBasedFooDom)
         "missing member w/ default value" - missingMembersWithDefaultValue(foo, mapBasedFooDom)
         "missing member w/o default value" - missingMembersWithoutDefaultValue[Foo](mapBasedFooDom, "long")
@@ -344,7 +346,7 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
       }
 
       "Hundred" - {
-        "size match" - sizeMatch(hundred, mapBased100Dom)
+        "size match" - sizeMatch(hundred, mapBased100DomNoDefaults, mapBased100Dom)
         "size match unordered" - sizeMatchUnordered(hundred, mapBased100Dom)
         "missing member w/ default value" - missingMembersWithDefaultValue(hundred, mapBased100Dom)
         "missing lo member w/o default value" - missingMembersWithoutDefaultValue[Hundred](mapBased100Dom, "x47")
