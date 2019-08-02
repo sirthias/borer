@@ -58,15 +58,7 @@ object JsonDerivationSpec extends DerivationSpec(Json) {
         MapElem.Unsized("red" -> IntElem(0), "green"   -> IntElem(0), "blue"   -> IntElem(255), "alpha" -> IntElem(255))
       ))
 
-  def mapBasedFooDomNoDefaults =
-    MapElem.Unsized(
-      "long"  -> IntElem(-1),
-      "empty" -> MapElem.Unsized(),
-      "colors" -> ArrayElem.Unsized(
-        MapElem.Unsized("red"   -> IntElem(255)),
-        MapElem.Unsized("green" -> IntElem(255)),
-        MapElem.Unsized("blue"  -> IntElem(255))
-      ))
+  def mapBasedFooDomNoDefaults = MapElem.Unsized("long" -> IntElem(-1))
 
   // format: OFF
   def mapBased100Dom =
@@ -172,23 +164,9 @@ object JsonDerivationSpec extends DerivationSpec(Json) {
       "x98" -> StringElem("borer"),
       "x99" -> MapElem.Unsized("red" -> IntElem(0), "green" -> IntElem(0), "blue" -> IntElem(0), "alpha" -> IntElem(255)),
     )
-
-  def mapBased100DomNoDefaults =
-    MapElem.Unsized(
-      "x09" -> MapElem.Unsized(),
-      "x19" -> MapElem.Unsized(),
-      "x29" -> MapElem.Unsized(),
-      "x39" -> MapElem.Unsized(),
-      "x47" -> DoubleElem(26.8),
-      "x49" -> MapElem.Unsized(),
-      "x59" -> MapElem.Unsized(),
-      "x69" -> MapElem.Unsized(),
-      "x79" -> MapElem.Unsized(),
-      "x89" -> MapElem.Unsized(),
-      "x91" -> IntElem(120),
-      "x99" -> MapElem.Unsized()
-    )
   // format: ON
+
+  def mapBased100DomNoDefaults = MapElem.Unsized("x47" -> DoubleElem(26.8), "x91" -> IntElem(120))
 
   def arrayBasedAnimalsDom =
     ArrayElem.Unsized(

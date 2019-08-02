@@ -91,12 +91,6 @@ object Encoder extends LowPrioEncoders {
         case x: Encoder.DefaultValueAware[A] => x withDefaultValue defaultValue
         case x                               => x
       }
-
-    def producesOutputFor(value: A): Boolean =
-      underlying match {
-        case x: Encoder.PossiblyWithoutOutput[A] => x producesOutputFor value
-        case _                                   => true
-      }
   }
 
   implicit def fromCodec[T](implicit codec: Codec[T]): Encoder[T] = codec.encoder

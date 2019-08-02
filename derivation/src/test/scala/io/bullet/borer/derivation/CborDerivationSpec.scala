@@ -57,15 +57,7 @@ object CborDerivationSpec extends DerivationSpec(Cbor) {
         MapElem.Sized("red" -> IntElem(0), "green"   -> IntElem(0), "blue"   -> IntElem(255), "alpha" -> IntElem(255))
       ))
 
-  def mapBasedFooDomNoDefaults =
-    MapElem.Sized(
-      "long"  -> IntElem(-1),
-      "empty" -> MapElem.Sized(),
-      "colors" -> ArrayElem.Unsized(
-        MapElem.Sized("red"   -> IntElem(255)),
-        MapElem.Sized("green" -> IntElem(255)),
-        MapElem.Sized("blue"  -> IntElem(255))
-      ))
+  def mapBasedFooDomNoDefaults = MapElem.Sized("long" -> IntElem(-1))
 
   def mapBased100Dom =
     MapElem.Sized(
@@ -171,21 +163,7 @@ object CborDerivationSpec extends DerivationSpec(Cbor) {
       "x99" -> MapElem.Sized("red" -> IntElem(0), "green" -> IntElem(0), "blue" -> IntElem(0), "alpha" -> IntElem(255)),
     )
 
-  def mapBased100DomNoDefaults =
-    MapElem.Sized(
-      "x09" -> MapElem.Sized(),
-      "x19" -> MapElem.Sized(),
-      "x29" -> MapElem.Sized(),
-      "x39" -> MapElem.Sized(),
-      "x47" -> DoubleElem(26.8),
-      "x49" -> MapElem.Sized(),
-      "x59" -> MapElem.Sized(),
-      "x69" -> MapElem.Sized(),
-      "x79" -> MapElem.Sized(),
-      "x89" -> MapElem.Sized(),
-      "x91" -> IntElem(120),
-      "x99" -> MapElem.Sized()
-    )
+  def mapBased100DomNoDefaults = MapElem.Sized("x47" -> DoubleElem(26.8), "x91" -> IntElem(120))
 
   def arrayBasedAnimalsDom =
     ArrayElem.Unsized(

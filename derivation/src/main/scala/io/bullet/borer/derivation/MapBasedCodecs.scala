@@ -78,13 +78,25 @@ object MapBasedCodecs {
             }
             q"private[this] val ${encName(p)} = $fieldEncWithDefault"
           }
+          val nonBasicDefaultValues = nonBasicParams.flatMap { p =>
+            p.defaultValueMethod.map(defaultValue => q"val ${encName(p, "d")} = $defaultValue")
+          }
           val basicFieldOutputFlags = basicParams.flatMap { p =>
             p.defaultValueMethod.map { defaultValue =>
               q"val ${encName(p, "o")} = (value.${p.name} != $defaultValue) || { count -= 1; false }"
             }
           }
           val nonBasicFieldOutputFlags = nonBasicParams.map { p =>
-            q"val ${encName(p, "o")} = ${encName(p)}.producesOutputFor(value.${p.name}) || { count -= 1; false }"
+            val tail = p.defaultValueMethod match {
+              case Some(_) => q"value.${p.name} != ${encName(p, "d")}"
+              case None    => q"true"
+            }
+            val pt = tq"$borerPkg.Encoder.PossiblyWithoutOutput[${p.paramType.tpe}]"
+            q"""val ${encName(p, "o")} =
+                  (${encName(p)} match {
+                    case x: $pt => x producesOutputFor value.${p.name}
+                    case _      => $tail
+                  }) || { count -= 1; false }"""
           }
           val writeEntries = params.map { p =>
             val key           = p.key()
@@ -98,6 +110,7 @@ object MapBasedCodecs {
           val encoderName = TypeName(s"${tpe.typeSymbol.name.decodedName}Encoder")
 
           q"""final class $encoderName {
+                ..$nonBasicDefaultValues
                 ..$fieldEncDefs
                 def write(w: $borerPkg.Writer, value: $tpe): w.type = {
                   var count = ${params.size}
