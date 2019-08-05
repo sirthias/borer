@@ -20,7 +20,7 @@ import scala.annotation.{switch, tailrec}
   * Encapsulates the basic JSON parsing logic.
   * Also performs inline UTF-8 decoding from raw bytes.
   *
-  * This [[Receiver.Parser]] only produces data items that can be directly represented in JSON, specifically
+  * This [[Receiver]] only produces data items that can be directly represented in JSON, specifically
   * - null
   * - Boolean
   * - Int
@@ -185,27 +185,27 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       }
     }
 
-    /**
-      * Parses a JSON number and dispatches it to the [[Receiver]] either as
-      * - Int
-      * - Long
-      * - Double
-      * - or NumberString,
-      *
-      * whatever is the most efficient form that the number can be easily and losslessly represented in.
-      * Since [[Int]] is just the smaller variant of [[Long]] the core task is finding out, without much overhead,
-      * whether the number fits losslessly in a [[Long]] or a [[Double]].
-      * If neither is possible the fallback is always the NumberString, which
-      * transports the number in exactly the format that is present in the JSON source.
-      *
-      * A side-task is to determine whether the number violates the JSON spec and produce the
-      * respective error if that should be the case.
-      *
-      * @param negValue the initial value to start parsing with (as the negative of the actual number)
-      * @param strLen the number of already parsed characters belonging to the number string
-      * @param negative true if the JSON number is negative
-      * @return DataItem code for the value the Receiver received
-      */
+    /*
+     * Parses a JSON number and dispatches it to the [[Receiver]] either as
+     * - Int
+     * - Long
+     * - Double
+     * - or NumberString,
+     *
+     * whatever is the most efficient form that the number can be easily and losslessly represented in.
+     * Since [[Int]] is just the smaller variant of [[Long]] the core task is finding out, without much overhead,
+     * whether the number fits losslessly in a [[Long]] or a [[Double]].
+     * If neither is possible the fallback is always the NumberString, which
+     * transports the number in exactly the format that is present in the JSON source.
+     *
+     * A side-task is to determine whether the number violates the JSON spec and produce the
+     * respective error if that should be the case.
+     *
+     * @param negValue the initial value to start parsing with (as the negative of the actual number)
+     * @param strLen the number of already parsed characters belonging to the number string
+     * @param negative true if the JSON number is negative
+     * @return DataItem code for the value the Receiver received
+     */
     def parseNumber(negValue: Long, strLen: Int, negative: Boolean): Int = {
       def dispatchNumberString(len: Int) = {
         receiver.onNumberString(antePrecedingBytesAsAsciiString(len))
