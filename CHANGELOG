@@ -1,3 +1,16 @@
+Version 0.11.0 (2019-08-05)
+---------------------------
+
+- renamed `deriveXXXForUnaryCaseClass` to `deriveUnaryXXX`
+- added support for deriving codecs for case objects (#44)
+- added alternative "flat" encoding for ADTs (#38)
+- added selection of base encodings and default json codec for Array[Byte] (#40)
+- added helpers for target-specific codecs (#41)
+- added support for efficiently reading/writing char arrays
+- added missing `implicit` marker on `Codec.bimap`
+- made MapBased encoding skip basic members matching default value (#50)
+
+
 Version 0.10.0 (2019-07-11)
 ---------------------------
 
