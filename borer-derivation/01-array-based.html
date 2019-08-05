@@ -20,7 +20,7 @@
 
 <meta name="description" content="CBOR and JSON (de)serialization in Scala">
 <link rel="shortcut icon" href="../assets/images/favicon.ico">
-<title>Types Supported Out-of-the-Box · borer</title>
+<title>Array-Based Codecs · borer</title>
 <link rel="stylesheet" href="../assets/stylesheets/application.451f80e5.css">
 <link rel="stylesheet" href="../assets/stylesheets/application-palette.22915126.css">
 <meta name="theme-color" content="#3f51b5" />
@@ -61,7 +61,7 @@ data-md-color-accent="orange"
 borer
 </span>
 <span class="md-header-nav__topic">
-Types Supported Out-of-the-Box
+Array-Based Codecs
 </span>
 </div>
 </div>
@@ -145,7 +145,7 @@ sirthias/borer/
   <li><a href="../borer-core/index.html" class="page"><code>borer-core</code></a>
   <ul>
     <li><a href="../borer-core/01-encoding-and-decoding.html" class="page">Encoding and Decoding</a></li>
-    <li><a href="../borer-core/02-supported-types.html" class="active page">Types Supported Out-of-the-Box</a></li>
+    <li><a href="../borer-core/02-supported-types.html" class="page">Types Supported Out-of-the-Box</a></li>
     <li><a href="../borer-core/03-custom-types.html" class="page">Encoding and Decoding Custom Types</a></li>
     <li><a href="../borer-core/04-nullable-and-default.html" class="page">Nullable and Default</a></li>
     <li><a href="../borer-core/05-supporting-typeclasses.html" class="page"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a></li>
@@ -156,7 +156,7 @@ sirthias/borer/
   </ul></li>
   <li><a href="../borer-derivation/index.html" class="page"><code>borer-derivation</code></a>
   <ul>
-    <li><a href="../borer-derivation/01-array-based.html" class="page">Array-Based Codecs</a></li>
+    <li><a href="../borer-derivation/01-array-based.html" class="active page">Array-Based Codecs</a></li>
     <li><a href="../borer-derivation/02-map-based.html" class="page">Map-Based Codecs</a></li>
     <li><a href="../borer-derivation/03-type-ids.html" class="page">Type IDs</a></li>
     <li><a href="../borer-derivation/04-semi-vs-full-automatic.html" class="page">Semi- vs. Fully-automatic Derivation</a></li>
@@ -188,26 +188,45 @@ sirthias/borer/
 <div class="md-content">
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
-<h1><a href="#types-supported-out-of-the-box" name="types-supported-out-of-the-box" class="anchor"><span class="anchor-link"></span></a>Types Supported Out-of-the-Box</h1>
-<p><em>borer</em> comes with built-in encoding and decoding support for arbitrary combinations of the following types:</p>
-<ul>
-  <li><code>Boolean</code>, <code>Char</code>, <code>Byte</code>, <code>Short</code> <code>Int</code>, <code>Long</code>, <code>Float</code>, <code>Double</code> and their boxed counterparts</li>
-  <li><code>Null</code></li>
-  <li><code>String</code></li>
-  <li><code>Array[Byte]</code></li>
-  <li><code>java.math.BigInteger</code>, <code>java.math.BigDecimal</code> and their scala wrappers <code>BigInt</code> and <code>BigDecimal</code></li>
-  <li><code>Option[T]</code></li>
-  <li><code>Array[T]</code></li>
-  <li><code>M[T] &lt;: Iterable[T]</code></li>
-  <li><code>M[A, B] &lt;: Map[A, B]</code></li>
-  <li><code>Iterator[T]</code> (encoding only!)</li>
-  <li><code>Either[A, B]</code></li>
-  <li><code>Tuple1[A]</code> &hellip; <code>Tuple22[A, B, ... V]</code></li>
-</ul>
-<p>All these type are encoded to exactly one <a href="http://cbor.io/">CBOR</a> or <a href="http://json.org/">JSON</a> data item (which may of course be an array or map consisting of other, nested data items.)</p>
+<h1><a href="#array-based-codecs" name="array-based-codecs" class="anchor"><span class="anchor-link"></span></a>Array-Based Codecs</h1>
+<p>Array-Based Codec derivation is enabled with this import:</p>
+<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L11" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.derivation.ArrayBasedCodecs._</code></pre>
+<p>This brings the three methods <code>deriveEncoder[T]</code>, <code>deriveDecoder[T]</code> and <code>deriveCodec[T]</code> in scope, which you can use to derive the respective type classes for case classes and ADTs.</p>
+<p>Here is an example:</p>
+<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L28-L55" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.Json
+import io.bullet.borer.derivation.key
+import io.bullet.borer.derivation.ArrayBasedCodecs._
+
+sealed trait Animal
+case class Cat(weight: Double, color: String, home: String) extends Animal
+@key(&quot;TheDog&quot;) case class Dog(age: Int, name: String)       extends Animal
+@key(42) case class Mouse(tail: Boolean)                    extends Animal
+
+implicit val dogCodec   = deriveCodec[Dog]
+implicit val catCodec   = deriveCodec[Cat]
+implicit val mouseCodec = deriveCodec[Mouse]
+
+implicit val animalCodec = deriveCodec[Animal]
+
+val cat   = Cat(8.5, &quot;grey&quot;, &quot;sofa&quot;)
+val dog   = Dog(2, &quot;Rex&quot;)
+val mouse = Mouse(tail = true)
+
+Json.encode(cat).toUtf8String ==&gt; &quot;&quot;&quot;[8.5,&quot;grey&quot;,&quot;sofa&quot;]&quot;&quot;&quot;
+Json.encode(dog).toUtf8String ==&gt; &quot;&quot;&quot;[2,&quot;Rex&quot;]&quot;&quot;&quot;
+Json.encode(mouse).toUtf8String ==&gt; &quot;true&quot;
+
+def encodeAnimal(animal: Animal) = Json.encode(animal).toUtf8String
+
+encodeAnimal(cat) ==&gt; &quot;&quot;&quot;[&quot;Cat&quot;,[8.5,&quot;grey&quot;,&quot;sofa&quot;]]&quot;&quot;&quot;
+encodeAnimal(dog) ==&gt; &quot;&quot;&quot;[&quot;TheDog&quot;,[2,&quot;Rex&quot;]]&quot;&quot;&quot;
+encodeAnimal(mouse) ==&gt; &quot;&quot;&quot;[42,true]&quot;&quot;&quot;</code></pre>
+<p>With these codecs case classes are written to <a href="http://cbor.io/">CBOR</a>/<a href="http://json.org/">JSON</a> as simple arrays, unless the case class has arity 1. If the case class has only a single member, the derived codec directly writes the member without wrapping it in an array. </p>
+<p>An <em>Abstract Data Type</em> (ADT) is encoded as an array of length two, with the first element holding the type ID and the second holding the instance&rsquo;s encoding (i.e. an array or single element).</p>
+<p>Check out the chapter on <a href="03-type-ids.html">Type IDs</a> for more info on type IDs and how to customized them.</p>
 </div>
 <div>
-<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-core/02-supported-types.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-derivation/01-array-based.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
@@ -223,7 +242,7 @@ Edit this page
 <footer class="md-footer">
 <div class="md-footer-nav">
 <nav class="md-footer-nav__inner md-grid">
-<a href="../borer-core/01-encoding-and-decoding.html" title="Encoding and Decoding" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<a href="../borer-derivation/index.html" title="borer-derivation" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
 <div class="md-flex__cell md-flex__cell--shrink">
 <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
 </div>
@@ -232,17 +251,17 @@ Edit this page
 <span class="md-footer-nav__direction">
 Previous
 </span>
-Encoding and Decoding
+borer-derivation
 </span>
 </div>
 </a>
-<a href="../borer-core/03-custom-types.html" title="Encoding and Decoding Custom Types" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<a href="../borer-derivation/02-map-based.html" title="Map-Based Codecs" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
 <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
 <span class="md-flex__ellipsis">
 <span class="md-footer-nav__direction">
 Next
 </span>
-Encoding and Decoding Custom Types
+Map-Based Codecs
 </span>
 </div>
 <div class="md-flex__cell md-flex__cell--shrink">

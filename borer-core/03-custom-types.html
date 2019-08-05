@@ -154,7 +154,13 @@ sirthias/borer/
     <li><a href="../borer-core/08-DOM.html" class="page">Document Object Model (DOM)</a></li>
     <li><a href="../borer-core/09-debugging.html" class="page">Debugging</a></li>
   </ul></li>
-  <li><a href="../04-borer-derivation.html" class="page"><code>borer-derivation</code></a></li>
+  <li><a href="../borer-derivation/index.html" class="page"><code>borer-derivation</code></a>
+  <ul>
+    <li><a href="../borer-derivation/01-array-based.html" class="page">Array-Based Codecs</a></li>
+    <li><a href="../borer-derivation/02-map-based.html" class="page">Map-Based Codecs</a></li>
+    <li><a href="../borer-derivation/03-type-ids.html" class="page">Type IDs</a></li>
+    <li><a href="../borer-derivation/04-semi-vs-full-automatic.html" class="page">Semi- vs. Fully-automatic Derivation</a></li>
+  </ul></li>
   <li><a href="../05-borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
   <li><a href="../06-borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
   <li><a href="../project/index.html" class="page">Project Info</a>
@@ -181,7 +187,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.10.0
+<i class="md-icon" title="Version">label_outline</i> 0.11.0
 </label>
 </li>
 </ul>
@@ -235,7 +241,7 @@ implicit def forOption[T: Encoder :Decoder]: Codec[Option[T]] = ...
 implicit def forOption[T: Codec]: Codec[Option[T]] = ...
 </code></pre></div>
 <h2><a href="#case-classes" name="case-classes" class="anchor"><span class="anchor-link"></span></a>Case Classes</h2>
-<p>The best way to concisely generate codecs for case classes is <em>borer</em>&rsquo;s <a href="../04-borer-derivation.html">Derivation</a> module.</p>
+<p>The best way to concisely generate codecs for case classes is <em>borer</em>&rsquo;s <a href="../borer-derivation/index.html">Derivation</a> module.</p>
 <p>If for some reason you cannot or don&rsquo;t want to use macro-based codec derivation and array-based codecs are sufficient for you use case then there is a macro-less solution available with the <code>borer-core</code> alone:</p>
 <p>If <code>T</code> is a case class with at most 22 members then an <code>Encoder[T]</code> and/or <code>Decoder[T]</code> can be concisely provided by via the <code>unapply</code> / <code>apply</code> methods of the <code>T</code> companion object: </p>
 <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/CustomCodecsSpec.scala#L12-L23" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.{Codec, Decoder, Encoder}
@@ -251,8 +257,8 @@ implicit val codec = Codec(
   Decoder.from(Color.apply _)
 )</code></pre>
 <p>The codecs created in this way always encode a case class instance to a single <a href="http://cbor.io/">CBOR</a>/<a href="http://json.org/">JSON</a> data item: an array with the length corresponding to the case classes arity and the member encodings forming the array elements.<br> There is one exception though: In order to increase encoding efficiency unary case classes, with only one parameter, have their single member written directly, without a wrapping single-element array.</p>
-<p>The encoding strategy is thus identical to the one produced by the macro-derived <a href="../04-borer-derivation.html#array-based-codecs">ArrayBasedCodecs</a>.</p>
-<p>If you would like your case classes to be encoded in a more JSON-esque way, as maps with each member being keyed by its member name, the <a href="../04-borer-derivation.html#map-based-codecs">MapBasedCodecs</a> from the <a href="../04-borer-derivation.html"><code>borer-derivation</code></a> module are your only option, short of <a href="03-custom-types.html#construction">Manual Construction</a>. </p>
+<p>The encoding strategy is thus identical to the one produced by the macro-derived <a href="../borer-derivation/01-array-based.html">ArrayBasedCodecs</a>.</p>
+<p>If you would like your case classes to be encoded in a more JSON-esque way, as maps with each member being keyed by its member name, the <a href="../borer-derivation/02-map-based.html">MapBasedCodecs</a> from the <a href="../borer-derivation/index.html"><code>borer-derivation</code></a> module are your only option, short of <a href="03-custom-types.html#construction">Manual Construction</a>. </p>
 <h2><a href="#transforming-existing-encoders-decoders" name="transforming-existing-encoders-decoders" class="anchor"><span class="anchor-link"></span></a>Transforming Existing Encoders / Decoders</h2>
 <p>If your type can somehow be constructed from or deconstructed to another type that an Encoder or Decoder is already available for, you can rely on the <code>contramap</code> and <code>map</code> methods available on Encoders / Decoders:</p>
 <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/CustomCodecsSpec.scala#L36-L42" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.{Decoder, Encoder}
@@ -315,7 +321,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.10.0
+0.11.0
 </span>
 </div>
 </article>

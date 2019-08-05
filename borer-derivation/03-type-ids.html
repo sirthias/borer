@@ -20,7 +20,7 @@
 
 <meta name="description" content="CBOR and JSON (de)serialization in Scala">
 <link rel="shortcut icon" href="../assets/images/favicon.ico">
-<title>Types Supported Out-of-the-Box · borer</title>
+<title>Type IDs · borer</title>
 <link rel="stylesheet" href="../assets/stylesheets/application.451f80e5.css">
 <link rel="stylesheet" href="../assets/stylesheets/application-palette.22915126.css">
 <meta name="theme-color" content="#3f51b5" />
@@ -61,7 +61,7 @@ data-md-color-accent="orange"
 borer
 </span>
 <span class="md-header-nav__topic">
-Types Supported Out-of-the-Box
+Type IDs
 </span>
 </div>
 </div>
@@ -145,7 +145,7 @@ sirthias/borer/
   <li><a href="../borer-core/index.html" class="page"><code>borer-core</code></a>
   <ul>
     <li><a href="../borer-core/01-encoding-and-decoding.html" class="page">Encoding and Decoding</a></li>
-    <li><a href="../borer-core/02-supported-types.html" class="active page">Types Supported Out-of-the-Box</a></li>
+    <li><a href="../borer-core/02-supported-types.html" class="page">Types Supported Out-of-the-Box</a></li>
     <li><a href="../borer-core/03-custom-types.html" class="page">Encoding and Decoding Custom Types</a></li>
     <li><a href="../borer-core/04-nullable-and-default.html" class="page">Nullable and Default</a></li>
     <li><a href="../borer-core/05-supporting-typeclasses.html" class="page"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a></li>
@@ -158,7 +158,7 @@ sirthias/borer/
   <ul>
     <li><a href="../borer-derivation/01-array-based.html" class="page">Array-Based Codecs</a></li>
     <li><a href="../borer-derivation/02-map-based.html" class="page">Map-Based Codecs</a></li>
-    <li><a href="../borer-derivation/03-type-ids.html" class="page">Type IDs</a></li>
+    <li><a href="../borer-derivation/03-type-ids.html" class="active page">Type IDs</a></li>
     <li><a href="../borer-derivation/04-semi-vs-full-automatic.html" class="page">Semi- vs. Fully-automatic Derivation</a></li>
   </ul></li>
   <li><a href="../05-borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
@@ -188,26 +188,20 @@ sirthias/borer/
 <div class="md-content">
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
-<h1><a href="#types-supported-out-of-the-box" name="types-supported-out-of-the-box" class="anchor"><span class="anchor-link"></span></a>Types Supported Out-of-the-Box</h1>
-<p><em>borer</em> comes with built-in encoding and decoding support for arbitrary combinations of the following types:</p>
-<ul>
-  <li><code>Boolean</code>, <code>Char</code>, <code>Byte</code>, <code>Short</code> <code>Int</code>, <code>Long</code>, <code>Float</code>, <code>Double</code> and their boxed counterparts</li>
-  <li><code>Null</code></li>
-  <li><code>String</code></li>
-  <li><code>Array[Byte]</code></li>
-  <li><code>java.math.BigInteger</code>, <code>java.math.BigDecimal</code> and their scala wrappers <code>BigInt</code> and <code>BigDecimal</code></li>
-  <li><code>Option[T]</code></li>
-  <li><code>Array[T]</code></li>
-  <li><code>M[T] &lt;: Iterable[T]</code></li>
-  <li><code>M[A, B] &lt;: Map[A, B]</code></li>
-  <li><code>Iterator[T]</code> (encoding only!)</li>
-  <li><code>Either[A, B]</code></li>
-  <li><code>Tuple1[A]</code> &hellip; <code>Tuple22[A, B, ... V]</code></li>
-</ul>
-<p>All these type are encoded to exactly one <a href="http://cbor.io/">CBOR</a> or <a href="http://json.org/">JSON</a> data item (which may of course be an array or map consisting of other, nested data items.)</p>
+<h1><a href="#type-ids" name="type-ids" class="anchor"><span class="anchor-link"></span></a>Type IDs</h1>
+<p>When encoding <em>Abstract Data Types</em> (ADTs), i.e. super-types of <code>sealed</code> type hierarchies like <code>Animal</code> in this example:</p>
+<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L82-L86" target="_blank" title="Go to snippet source"></a><code class="language-scala">sealed trait Animal
+case class Dog(age: Int, name: String)                      extends Animal
+case class Cat(weight: Double, color: String, home: String) extends Animal
+case class Fish(color: String)                              extends Animal
+case object Yeti                                            extends Animal</code></pre>
+<p>the encoder needs to somehow transfer the information to the decoder, which of the defined sub-types to decode into.<br> In the context of the example ADT above, when <code>Json.decode(encoding).to[Animal]</code> is called the decoder needs to know, whether the encoding holds a <code>Dog</code>, a <code>Cat</code> or any of the other (well-defined) sub-types of <code>Animal</code>.</p>
+<p>This is done through a &ldquo;Type ID&rdquo;, which is a <code>String</code> or number that uniquely identifies each ADT sup-type.</p>
+<p>By default <em>borer</em> will use a sub-type&rsquo;s short class name as a (textual) type ID, i.e. <code>&quot;Dog&quot;</code> would be the type id of <code>Dog</code> instances and <code>&quot;Cat&quot;</code> would be the same for the <code>Cat</code> type.</p>
+<p>If you want to customize this you can use the <code>@key</code> annotation to do so. Check out the <code>@key</code> sources <a href="https://github.com/sirthias/borer/tree/master/derivation/src/main/scala/io/bullet/borer/derivation/key.scala">here</a> for more info on this. </p>
 </div>
 <div>
-<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-core/02-supported-types.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-derivation/03-type-ids.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
@@ -223,7 +217,7 @@ Edit this page
 <footer class="md-footer">
 <div class="md-footer-nav">
 <nav class="md-footer-nav__inner md-grid">
-<a href="../borer-core/01-encoding-and-decoding.html" title="Encoding and Decoding" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<a href="../borer-derivation/02-map-based.html" title="Map-Based Codecs" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
 <div class="md-flex__cell md-flex__cell--shrink">
 <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
 </div>
@@ -232,17 +226,17 @@ Edit this page
 <span class="md-footer-nav__direction">
 Previous
 </span>
-Encoding and Decoding
+Map-Based Codecs
 </span>
 </div>
 </a>
-<a href="../borer-core/03-custom-types.html" title="Encoding and Decoding Custom Types" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<a href="../borer-derivation/04-semi-vs-full-automatic.html" title="Semi- vs. Fully-automatic Derivation" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
 <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
 <span class="md-flex__ellipsis">
 <span class="md-footer-nav__direction">
 Next
 </span>
-Encoding and Decoding Custom Types
+Semi- vs. Fully-automatic Derivation
 </span>
 </div>
 <div class="md-flex__cell md-flex__cell--shrink">
