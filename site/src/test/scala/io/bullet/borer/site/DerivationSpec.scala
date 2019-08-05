@@ -1,6 +1,5 @@
 package io.bullet.borer.site
 
-import io.bullet.borer.Borer
 import utest._
 
 object DerivationSpec extends TestSuite {
@@ -61,41 +60,78 @@ object DerivationSpec extends TestSuite {
 
       //#map-based
       import io.bullet.borer.Json
-      import io.bullet.borer.derivation.key
       import io.bullet.borer.derivation.MapBasedCodecs._
 
-      sealed trait Animal
-      case class Cat(weight: Double, color: String, home: String) extends Animal
-      @key("TheDog") case class Dog(age: Int, name: String)       extends Animal
-      @key(42) case class Mouse(tail: Boolean)                    extends Animal
+      case class Foo(int: Int, string: String)
+      case class Bar(foo: Foo, d: Double)
 
-      implicit val dogCodec   = deriveCodec[Dog]
-      implicit val catCodec   = deriveCodec[Cat]
-      implicit val mouseCodec = deriveCodec[Mouse]
+      implicit val fooCodec = deriveCodec[Foo]
+      implicit val barCodec = deriveCodec[Bar]
 
-      implicit val animalCodec = deriveCodec[Animal]
+      val foo = Foo(int = 42, string = "yeah")
+      val bar = Bar(foo, d = 1.234)
 
-      val cat   = Cat(8.5, "grey", "sofa")
-      val dog   = Dog(2, "Rex")
-      val mouse = Mouse(tail = true)
-
-      Json.encode(cat).toUtf8String ==>
-      """{"weight":8.5,"color":"grey","home":"sofa"}"""
-
-      Json.encode(dog).toUtf8String ==>
-      """{"age":2,"name":"Rex"}"""
-
-      Json.encode(mouse).toUtf8String ==>
-      """{"tail":true}"""
-
-      def encodeAnimal(animal: Animal) = Json.encode(animal).toUtf8String
-
-      encodeAnimal(cat) ==> """{"Cat":{"weight":8.5,"color":"grey","home":"sofa"}}"""
-      encodeAnimal(dog) ==> """{"TheDog":{"age":2,"name":"Rex"}}"""
-
-      intercept[Borer.Error.ValidationFailure[_]] { encodeAnimal(mouse) }.getMessage ==>
-      "JSON does not support integer values as a map key (Output.ToByteArray index 1)"
+      // Json.encode(bar).toByteArray or
+      Json.encode(bar).toUtf8String ==>
+      """{"foo":{"int":42,"string":"yeah"},"d":1.234}"""
       //#map-based
+    }
+
+    "Map-based details" - {
+      //#example-adt
+      sealed trait Animal
+      case class Dog(age: Int, name: String)                      extends Animal
+      case class Cat(weight: Double, color: String, home: String) extends Animal
+      case class Fish(color: String)                              extends Animal
+      case object Yeti                                            extends Animal
+      //#example-adt
+
+      {
+        //#adt-codec-derivation
+        import io.bullet.borer.derivation.MapBasedCodecs._
+
+        implicit val animalCodec = {
+          implicit val dogCodec  = deriveCodec[Dog]
+          implicit val catCodec  = deriveCodec[Cat]
+          implicit val fishCodec = deriveCodec[Fish]
+          implicit val yetiCodec = deriveCodec[Yeti.type]
+          deriveCodec[Animal]
+        }
+        //#adt-codec-derivation
+
+        //#adt-default-encoding
+        import io.bullet.borer.Json
+
+        val animal: Animal = Dog(2, "Rex")
+
+        // Json.encode(animal).toByteArray or
+        Json.encode(animal).toUtf8String ==> """{"Dog":{"age":2,"name":"Rex"}}"""
+        //#adt-default-encoding
+      }
+
+      {
+        //#flat-adt-encoding
+        import io.bullet.borer.{AdtEncodingStrategy, Json}
+        import io.bullet.borer.derivation.MapBasedCodecs._
+
+        // this enables the flat ADT encoding
+        implicit val flatAdtEncoding =
+          AdtEncodingStrategy.flat(typeMemberName = "_type")
+
+        implicit val animalCodec = {
+          implicit val dogCodec  = deriveCodec[Dog]
+          implicit val catCodec  = deriveCodec[Cat]
+          implicit val fishCodec = deriveCodec[Fish]
+          implicit val yetiCodec = deriveCodec[Yeti.type]
+          deriveCodec[Animal]
+        }
+
+        val animal: Animal = Dog(2, "Rex")
+
+        // Json.encode(animal).toByteArray or
+        Json.encode(animal).toUtf8String ==> """{"_type":"Dog","age":2,"name":"Rex"}"""
+        //#flat-adt-encoding
+      }
     }
 
     "Default Value" - {

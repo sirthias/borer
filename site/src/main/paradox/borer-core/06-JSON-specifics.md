@@ -25,8 +25,32 @@ between [CBOR] and [JSON] yourself:
 @@snip [-]($test$/JsonSpecificsSpec.scala) { #writeArrayOpen-close } 
 
 As long as you rely on the somewhat higher-level parts of the `Reader` and `Writer` APIs or construct your
-(de)serialization purely logic from _borer_'s built-in or (and/or @ref:[derived](../04-borer-derivation.md)) Encoders and
+(de)serialization purely logic from _borer_'s built-in or (and/or @ref:[derived](../borer-derivation/index.md)) Encoders and
 Decoders, your application will support both [CBOR] and [JSON] at the same time without any special casing whatsoever.
+
+
+Base Encodings for Binary Data
+------------------------------
+
+One big drawback of [JSON] over [CBOR] is that [JSON] doesn't provide any "first-class" representation of binary data.
+This is typically worked around by mapping binary data to a "Base Encoding", e.g. the ones defined by [RFC 4648].
+
+In order to give your application an easy and flexible way to integrate with other systems _borer_ supports a number
+of base encodings out of the box, specifically:
+
+- [base16](https://tools.ietf.org/html/rfc4648#section-8)  
+- [base32](https://tools.ietf.org/html/rfc4648#section-6)
+- [base32hex](https://tools.ietf.org/html/rfc4648#section-7)
+- [base32crockford](https://en.wikipedia.org/wiki/Base32#Crockford's_Base32)
+- [z-base32](http://philzimmermann.com/docs/human-oriented-base-32-encoding.txt)
+- [base64]
+- [base64url](https://tools.ietf.org/html/rfc4648#section-5)
+
+The default [JSON] encoding for `Array[Byte]` is [base64].
+
+In order to switch to a different base encoding in a particular scope define the a pair of implicits as in this example:
+
+@@snip [-]($test$/JsonSpecificsSpec.scala) { #alternative-base-encoding }
 
 
 When (not) to use _borer_ for JSON
@@ -172,6 +196,8 @@ Comparison with other Scala JSON Libraries
 
   [CBOR]: http://cbor.io/
   [JSON]: http://json.org/
+  [RFC 4648]: https://tools.ietf.org/html/rfc4648
+  [base64]: https://tools.ietf.org/html/rfc4648#section-4
   [Circe]: https://circe.github.io/circe/
   [spray-json]: https://github.com/spray/spray-json/
   [json-benchmark-files]: https://github.com/sirthias/borer/tree/master/benchmarks/src/main/resources

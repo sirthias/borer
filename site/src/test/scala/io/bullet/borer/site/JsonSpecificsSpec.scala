@@ -49,6 +49,25 @@ object JsonSpecificsSpec extends TestSuite {
         Cbor.encode(Foo).toByteArray ==> hex"8163666F6F"
         Json.encode(Foo).toUtf8String ==> """["foo"]"""
       }
+
+      "alternative base encoding" - {
+        //#alternative-base-encoding
+        import io.bullet.borer.{Decoder, Encoder, Json}
+        import io.bullet.borer.encodings.BaseEncoding
+
+        val binaryData = hex"DEADBEEF"
+
+        // Json.encode(binaryData).toByteArray or
+        Json.encode(binaryData).toUtf8String ==> """"3q2+7w==""""
+
+        // we need to define explicitly define the encoder as well as the decoder
+        // in order to "override" the defaults for Array[Byte] on either side
+        implicit val byteArrayEncoder = Encoder.forByteArray(BaseEncoding.zbase32)
+        implicit val byteArrayDecoder = Decoder.forByteArray(BaseEncoding.zbase32)
+
+        Json.encode(binaryData).toUtf8String ==> """"54s575a""""
+        //#alternative-base-encoding
+      }
     }
   }
 }

@@ -51,7 +51,7 @@ Scala JS
 * [-](01-design-principles.md)
 * [-](02-getting-started.md)
 * [-](borer-core/index.md)
-* [-](04-borer-derivation.md)
+* [-](borer-derivation/index.md)
 * [-](05-borer-compat-akka.md)
 * [-](06-borer-compat-scodec.md)
 * [-](project/index.md)

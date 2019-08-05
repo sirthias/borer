@@ -57,7 +57,7 @@ implicit def forOption[T: Codec]: Codec[Option[T]] = ...
 Case Classes
 ------------
 
-The best way to concisely generate codecs for case classes is _borer_'s @ref:[Derivation](../04-borer-derivation.md)
+The best way to concisely generate codecs for case classes is _borer_'s @ref:[Derivation](../borer-derivation/index.md)
 module.
 
 If for some reason you cannot or don't want to use macro-based codec derivation and array-based codecs are sufficient
@@ -74,11 +74,11 @@ There is one exception though: In order to increase encoding efficiency unary ca
 have their single member written directly, without a wrapping single-element array.
 
 The encoding strategy is thus identical to the one produced by the macro-derived
-@ref:[ArrayBasedCodecs](../04-borer-derivation.md#array-based-codecs).
+@ref:[ArrayBasedCodecs](../borer-derivation/01-array-based.md).
 
 If you would like your case classes to be encoded in a more JSON-esque way, as maps with each member being keyed by its
-member name, the @ref:[MapBasedCodecs](../04-borer-derivation.md#map-based-codecs) from the
-@ref:[`borer-derivation`](../04-borer-derivation.md) module are your only option, short of
+member name, the @ref:[MapBasedCodecs](../borer-derivation/02-map-based.md) from the
+@ref:[`borer-derivation`](../borer-derivation/index.md) module are your only option, short of
 @ref:[Manual Construction](#construction).           
 
 
