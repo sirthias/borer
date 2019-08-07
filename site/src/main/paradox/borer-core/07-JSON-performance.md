@@ -23,7 +23,7 @@ Task
   generated with https://transform.now.sh/json-to-scala-case-class/
 
 JMH Parameters
-: `-wi10 -i10 -t4 -f4`  
+: `-wi 10 -i 10 -t 4 -f 4`  
 
 JVM
 : Java HotSpot(TM) 64-Bit GraalVM EE 19.1.0

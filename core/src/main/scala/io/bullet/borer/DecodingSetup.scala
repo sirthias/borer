@@ -128,7 +128,7 @@ object DecodingSetup {
     def valueAndInput: (AnyRef, In) = {
       val reader = newReader()
       try {
-        decodeFrom(reader) -> input
+        decodeFrom(reader) -> reader.input.asInstanceOf[In]
       } catch {
         case e: Borer.Error[_] => throw e.withPosOf(reader)
         case NonFatal(e)       => throw new Borer.Error.General(reader.position, e)
@@ -138,7 +138,7 @@ object DecodingSetup {
     def valueAndInputTry: Try[(AnyRef, In)] = {
       val reader = newReader()
       try {
-        Success(decodeFrom(reader) -> input)
+        Success(decodeFrom(reader) -> reader.input.asInstanceOf[In])
       } catch {
         case e: Borer.Error[_] => Failure(e.withPosOf(reader))
         case NonFatal(e)       => Failure(new Borer.Error.General(reader.position, e))
@@ -148,7 +148,7 @@ object DecodingSetup {
     def valueAndInputEither: Either[Borer.Error[Input.Position], (AnyRef, In)] = {
       val reader = newReader()
       try {
-        Right(decodeFrom(reader) -> input)
+        Right(decodeFrom(reader) -> reader.input.asInstanceOf[In])
       } catch {
         case e: Borer.Error[_] => Left(e.withPosOf(reader))
         case NonFatal(e)       => Left(new Borer.Error.General(reader.position, e))

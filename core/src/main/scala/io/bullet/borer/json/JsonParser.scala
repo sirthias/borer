@@ -47,13 +47,16 @@ import scala.annotation.{switch, tailrec}
   *
   * @see https://tools.ietf.org/html/rfc8259
   */
-final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config: JsonParser.Config)(
+final private[borer] class JsonParser[Bytes](_input: Input[Bytes], val config: JsonParser.Config)(
     implicit byteAccess: ByteAccess[Bytes])
     extends Parser[Bytes] {
 
   import JsonParser._
 
   private[this] val allowDoubleParsing = !config.readDecimalNumbersOnlyAsNumberStrings
+  private[this] val directInput =
+    if (config.allowDirectByteArrayAccess) io.bullet.borer.internal.DirectUnsafeFromByteArrayInput(_input) else null
+
   private[this] var chars: Array[Char] = new Array[Char](config.initialCharbufferSize)
   private[this] var state: Int         = EXPECT_VALUE
   private[this] var cursorExtra: Int   = _
@@ -66,6 +69,8 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
   private[this] var levelType: Long = _
 
   private[this] var nextChar: Int = nextCharAfterWhitespace()
+
+  def input: Input[Bytes] = if (directInput ne null) directInput.asInstanceOf[Input[Bytes]] else _input
 
   def valueIndex: Long = _valueIndex - 1
 
@@ -84,7 +89,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
     }
 
     @inline def parseNull(): Int = {
-      val quad = input.readQuadByteBigEndianPadded(this)
+      val quad = readQuadByteBigEndianPadded()
       if ((quad >>> 8) == 0x00756c6c) { // "ull"
         nextChar = nextCharAfterWhitespace(quad & 0xFF)
         receiver.onNull()
@@ -93,14 +98,14 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
     }
 
     @inline def parseFalse(): Int =
-      if (input.readQuadByteBigEndianPadded(this) == 0x616c7365) { // "alse"
+      if (readQuadByteBigEndianPadded() == 0x616c7365) { // "alse"
         fetchNextChar()
         receiver.onBoolean(value = false)
         DataItem.Boolean
       } else failSyntaxError(-6, "`false`")
 
     @inline def parseTrue(): Int = {
-      val quad = input.readQuadByteBigEndianPadded(this)
+      val quad = readQuadByteBigEndianPadded()
       if ((quad >>> 8) == 0x00727565) { // "rue"
         nextChar = nextCharAfterWhitespace(quad & 0xFF)
         receiver.onBoolean(value = true)
@@ -109,7 +114,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
     }
 
     def parseNumberStringExponentPart(len: Int): Int = {
-      val c      = input.readBytePadded(this).toInt
+      val c      = readBytePadded().toInt
       var newLen = len
       if (c != '-' && c != '+') unread(1) else newLen += 1
       newLen = parseDigits(0L, newLen)
@@ -126,7 +131,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
     // and in `auxLong` the negative (!) parsed value or > 0 if the parsed value cannot be represented in a Long.
     @tailrec def parseDigits(value: Long, len: Int): Int = {
       // fetch 8 bytes (chars) at the same time with the first becoming the (left-most) MSB of the `octa` long
-      val octa = input.readOctaByteBigEndianPadded(this)
+      val octa = readOctaByteBigEndianPadded()
       // bytes containing ['0'..'9'] become 0..9, all others become >= 10
       val vMask = octa ^ 0X3030303030303030L
 
@@ -239,7 +244,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       var maxMantissaEndLen = len + config.maxNumberMantissaDigits - 1
       var negMantissa =
         if (negValue == 0) {
-          stopChar = input.readBytePadded(this) & 0xFF
+          stopChar = readBytePadded() & 0xFF
           if ((stopChar ^ 0x30) < 10) {
             nextChar = stopChar
             failSyntaxError("'.', 'e' or 'E'")
@@ -267,7 +272,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
           var expDigits = 0
           val posExp =
             if ((stopChar | 0x20) == 'e') {
-              val c = input.readBytePadded(this) & 0xFF
+              val c = readBytePadded() & 0xFF
               expNeg = c == '-'
               val len0 = if (!expNeg && c != '+') {
                 unread(1)
@@ -309,7 +314,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
     }
 
     def parseNegNumber(): Int = {
-      val c = input.readBytePadded(this) & 0xFF
+      val c = readBytePadded() & 0xFF
       val x = c ^ 0X30L
       if (x > 9) {
         nextChar = c
@@ -320,7 +325,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
     def parseEscapeSeq(charCursor: Int): Int = {
       var cc = charCursor
       val c =
-        (input.readBytePadded(this): @switch) match {
+        (readBytePadded(): @switch) match {
           case '"'  => '"'
           case '/'  => '/'
           case '\\' => '\\'
@@ -329,7 +334,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
           case 'n'  => '\n'
           case 't'  => '\t'
           case 'r' =>
-            if (input.readDoubleByteBigEndianPadded(this) == 0x5c6e) { // are we immediately followed by a \n ?
+            if (readDoubleByteBigEndianPadded() == 0x5c6e) { // are we immediately followed by a \n ?
               cc = appendChar(cc, '\r')
               '\n'
             } else {    // no, not a \r\n sequence
@@ -339,13 +344,13 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
           case 'u' =>
             @inline def hd(c: Int): Int = HexDigits(c).toInt
 
-            var q = input.readQuadByteBigEndianPadded(this)
+            var q = readQuadByteBigEndianPadded()
             var x = (hd(q >>> 24) << 12) | (hd(q << 8 >>> 24) << 8) | (hd(q << 16 >>> 24) << 4) | hd(q & 0xFF)
             if (x < 0) failIllegalEscapeSeq(-4)
 
             // we immediately check whether there is another `u` sequence following and decode that as well if so
-            if (input.readDoubleByteBigEndianPadded(this) == 0x5c75) {
-              q = input.readQuadByteBigEndianPadded(this)
+            if (readDoubleByteBigEndianPadded() == 0x5c75) {
+              q = readQuadByteBigEndianPadded()
               cc = appendChar(cc, x.toChar)
               x = (hd(q >>> 24) << 12) | (hd(q << 8 >>> 24) << 8) | (hd(q << 16 >>> 24) << 4) | hd(q & 0xFF)
               if (x < 0) failIllegalEscapeSeq(-4)
@@ -358,7 +363,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
 
     @tailrec def parseMultiByteUtf8Char(b1: Int, charCursor: Int): Int = {
       val byteCount = Integer.numberOfLeadingZeros(~b1) - 25
-      val quad      = input.readQuadByteBigEndianPadded(this)
+      val quad      = readQuadByteBigEndianPadded()
       val b2        = quad >> 24
       var cc        = charCursor
       def fail()    = failIllegalUtf8(-5)
@@ -396,7 +401,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
 
     @tailrec def parseUtf8String(charCursor: Int): Int = {
       // fetch 8 bytes (chars) at the same time with the first becoming the (left-most) MSB of the `octa` long
-      val octa = input.readOctaByteBigEndianPadded(this)
+      val octa = readOctaByteBigEndianPadded()
 
       // mask '"' characters: of all 7-bit chars only '"' gets its high-bit set
       val qMask = (octa ^ 0X5D5D5D5D5D5D5D5DL) + 0X0101010101010101L
@@ -535,7 +540,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
         DataItem.EndOfInput
       } else failSyntaxError("end of input")
 
-    _valueIndex = input.cursor
+    _valueIndex = cursor
     (state: @switch) match {
       case EXPECT_ARRAY_VALUE  => parseValue(EXPECT_ARRAY_VALUE, EXPECT_ARRAY_BREAK)
       case EXPECT_MAP_KEY      => parseMapKey()
@@ -555,25 +560,26 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
 
   def padDoubleByte(remaining: Int): Char = {
     cursorExtra += 2 - remaining
-    if (remaining < 1) '\uffff' else ((input.readByte() << 8) | 0xFF).toChar
+    if (remaining < 1) '\uffff' else ((readByte() << 8) | 0xFF).toChar
   }
 
   def padQuadByte(remaining: Int): Int = {
-    import input.{readByte => byte, readDoubleByteBigEndian => doub}
     cursorExtra += 4 - remaining
     // format: OFF
     remaining match {
-      case 0 =>                                            0xFFFFFFFF
-      case 1 =>                         (byte()   << 24) | 0xFFFFFF
-      case 2 => (doub() << 16)                           | 0xFFFF
-      case 3 => (doub() << 16) | ((byte() & 0xFF) <<  8) | 0xFF
+      case 0 =>                                                                   0xFFFFFFFF
+      case 1 =>                                      (readByte()         << 24) | 0xFFFFFF
+      case 2 => (readDoubleByteBigEndian() << 16)                               | 0xFFFF
+      case 3 => (readDoubleByteBigEndian() << 16) | ((readByte() & 0xFF) <<  8) | 0xFF
       case _ => throw new IllegalStateException
     }
     // format: ON
   }
 
   def padOctaByte(remaining: Int): Long = {
-    import input.{readByte => byte, readDoubleByteBigEndian => doub, readQuadByteBigEndian => quad}
+    @inline def byte() = readByte()
+    @inline def doub() = readDoubleByteBigEndian()
+    @inline def quad() = readQuadByteBigEndian()
     cursorExtra += 8 - remaining
     // format: OFF
     remaining match {
@@ -594,12 +600,12 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
 
   @inline private def fetchNextChar(): Unit = nextChar = nextCharAfterWhitespace()
 
-  private def nextCharAfterWhitespace(): Int = nextCharAfterWhitespace(input.readBytePadded(this) & 0xFF)
+  private def nextCharAfterWhitespace(): Int = nextCharAfterWhitespace(readBytePadded() & 0xFF)
 
   private def nextCharAfterWhitespace(nextChar: Int): Int = {
     @tailrec def skip8(): Int = {
       // fetch 8 bytes (chars) at the same time with the first becoming the (left-most) MSByte of the `octa` long
-      val octa = input.readOctaByteBigEndianPadded(this)
+      val octa = readOctaByteBigEndianPadded()
 
       // bytes containing [0..0x20] or [0x80-0xA0] get their MSBit unset (< 0x80), all others have it set (>= 0x80)
       var mask = (octa & 0X7F7F7F7F7F7F7F7FL) + 0X5F5F5F5F5F5F5F5FL
@@ -615,7 +621,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
     }
 
     def skip1(): Int = {
-      val c = input.readBytePadded(this) & 0xFF
+      val c = readBytePadded() & 0xFF
       if (c <= 0x20) { // 2nd char is also whitespace,
         skip8()        // so there are probably (lots) more coming
       } else c
@@ -637,19 +643,61 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
     def unreadWithExtra(): Unit = {
       val n = count - cursorExtra
       cursorExtra = if (n > 0) {
-        input.unread(n)
+        if (directInput ne null) directInput.unread(n) else _input.unread(n)
         0
       } else -n
     }
 
-    if (cursorExtra > 0) unreadWithExtra() else input.unread(count)
+    if (cursorExtra > 0) unreadWithExtra()
+    else if (directInput ne null) directInput.unread(count)
+    else _input.unread(count)
   }
 
+  @inline private def readByte(): Byte =
+    if (directInput ne null) directInput.readByte()
+    else _input.readByte()
+
+  @inline private def readDoubleByteBigEndian(): Char =
+    if (directInput ne null) directInput.readDoubleByteBigEndian()
+    else _input.readDoubleByteBigEndian()
+
+  @inline private def readQuadByteBigEndian(): Int =
+    if (directInput ne null) directInput.readQuadByteBigEndian()
+    else _input.readQuadByteBigEndian()
+
+  @inline private def readBytePadded(): Byte =
+    if (directInput ne null) directInput.readBytePadded(this.asInstanceOf[Input.PaddingProvider[Array[Byte]]])
+    else _input.readBytePadded(this)
+
+  @inline private def readDoubleByteBigEndianPadded(): Char =
+    if (directInput ne null)
+      directInput.readDoubleByteBigEndianPadded(this.asInstanceOf[Input.PaddingProvider[Array[Byte]]])
+    else _input.readDoubleByteBigEndianPadded(this)
+
+  @inline private def readQuadByteBigEndianPadded(): Int =
+    if (directInput ne null)
+      directInput.readQuadByteBigEndianPadded(this.asInstanceOf[Input.PaddingProvider[Array[Byte]]])
+    else _input.readQuadByteBigEndianPadded(this)
+
+  @inline private def readOctaByteBigEndianPadded(): Long =
+    if (directInput ne null)
+      directInput.readOctaByteBigEndianPadded(this.asInstanceOf[Input.PaddingProvider[Array[Byte]]])
+    else _input.readOctaByteBigEndianPadded(this)
+
   private def antePrecedingBytesAsAsciiString(len: Int): String = {
+    def direct() = {
+      val bytes = directInput.readBytes(len.toLong, this.asInstanceOf[Input.PaddingProvider[Array[Byte]]])
+      directInput.readBytePadded(this.asInstanceOf[Input.PaddingProvider[Array[Byte]]]) // skip
+      new String(bytes, StandardCharsets.ISO_8859_1)
+    }
+    def nonDirect() = {
+      val bytes = _input.readBytes(len.toLong, this)
+      _input.readBytePadded(this) // skip
+      new String(byteAccess.toByteArray(bytes), StandardCharsets.ISO_8859_1)
+    }
+
     unread(len + 1)
-    val bytes = input.readBytes(len.toLong, this)
-    input.readBytePadded(this) // skip
-    new String(byteAccess.toByteArray(bytes), StandardCharsets.ISO_8859_1)
+    if (directInput ne null) direct() else nonDirect()
   }
 
   private def failStringTooLong(offset: Int) =
@@ -676,7 +724,9 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
     throw new Borer.Error.InvalidInputData(pos(-1), expected, actualChar)
   }
 
-  private def pos(offset: Int) = input.position(input.cursor + cursorExtra + offset.toLong)
+  private def pos(offset: Int) = input.position(cursor + cursorExtra + offset.toLong)
+
+  @inline private def cursor = if (directInput ne null) directInput.cursor else _input.cursor
 }
 
 private[borer] object JsonParser {
@@ -687,6 +737,7 @@ private[borer] object JsonParser {
     def maxNumberMantissaDigits: Int
     def maxNumberAbsExponent: Int
     def initialCharbufferSize: Int
+    def allowDirectByteArrayAccess: Boolean
   }
 
   final private[this] val _creator: Parser.Creator[Any, JsonParser.Config] =

@@ -94,7 +94,8 @@ case object Cbor extends Target {
       maxByteStringLength: Int = 10 * 1024 * 1024,
       maxArrayLength: Long = Int.MaxValue,
       maxMapLength: Long = Int.MaxValue,
-      maxNestingLevels: Int = 1000)
+      maxNestingLevels: Int = 1000,
+      allowDirectByteArrayAccess: Boolean = true)
       extends Borer.DecodingConfig with CborValidation.Config with CborParser.Config {
 
     Util.requireNonNegative(maxTextStringLength, "maxTextStringLength")
@@ -182,7 +183,8 @@ case object Json extends Target {
       maxNumberAbsExponent: Int = 64,
       maxStringLength: Int = 1024 * 1024,
       maxNumberMantissaDigits: Int = 34,
-      initialCharbufferSize: Int = 256)
+      initialCharbufferSize: Int = 256,
+      allowDirectByteArrayAccess: Boolean = true)
       extends Borer.DecodingConfig with JsonParser.Config {
 
     Util.requireRange(maxNumberAbsExponent, 1, 999, "maxNumberAbsExponent")

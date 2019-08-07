@@ -18,10 +18,15 @@ import scala.annotation.switch
 /**
   * Encapsulates the basic CBOR decoding logic.
   */
-final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes], config: CborParser.Config)
+final private[borer] class CborParser[Bytes: ByteAccess](_input: Input[Bytes], config: CborParser.Config)
     extends Parser[Bytes] {
 
+  private[this] val directInput =
+    if (config.allowDirectByteArrayAccess) io.bullet.borer.internal.DirectUnsafeFromByteArrayInput(_input) else null
+
   private[this] var _valueIndex: Long = _
+
+  def input: Input[Bytes] = if (directInput ne null) directInput.asInstanceOf[Input[Bytes]] else _input
 
   def valueIndex: Long = _valueIndex
 
@@ -63,7 +68,7 @@ final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes]
         receiver.onBytesStart()
         DataItem.BytesStart
       } else if (Util.isUnsignedLong(uLong)) {
-        receiver.onBytes(input.readBytes(uLong, this))
+        receiver.onBytes(readBytes(uLong))
         DataItem.Bytes
       } else failOverflow("This decoder does not support byte strings with size >= 2^63")
 
@@ -72,7 +77,7 @@ final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes]
         receiver.onTextStart()
         DataItem.TextStart
       } else if (Util.isUnsignedLong(uLong)) {
-        receiver.onText(input.readBytes(uLong, this))
+        receiver.onText(readBytes(uLong))
         DataItem.Text
       } else failOverflow("This decoder does not support text strings with size >= 2^63")
 
@@ -161,9 +166,9 @@ final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes]
       }
 
     _valueIndex = -1
-    val byte = input.readBytePadded(this)
+    val byte = readBytePadded()
     if (_valueIndex < 0) {
-      _valueIndex = input.cursor - 1
+      _valueIndex = (if (directInput ne null) directInput.cursor else _input.cursor) - 1
       val majorType = byte << 24 >>> 29
       val info      = byte & 0x1F
       val uLong =
@@ -171,10 +176,10 @@ final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes]
           case 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 |
               23 =>
             info.toLong
-          case 24 => input.readBytePadded(this) & 0XFFL
-          case 25 => input.readDoubleByteBigEndianPadded(this) & 0XFFFFL
-          case 26 => input.readQuadByteBigEndianPadded(this) & 0XFFFFFFFFL
-          case 27 => input.readOctaByteBigEndianPadded(this)
+          case 24 => readBytePadded() & 0XFFL
+          case 25 => readDoubleByteBigEndianPadded() & 0XFFFFL
+          case 26 => readQuadByteBigEndianPadded() & 0XFFFFFFFFL
+          case 27 => readOctaByteBigEndianPadded()
           case 31 if 2 <= majorType && majorType <= 5 || majorType == 7 =>
             0L // handled specially
           case 28 | 29 | 30 => failInvalidInput(s"Additional info `$info` is invalid (major type `$majorType`)")
@@ -206,6 +211,30 @@ final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes]
   def padOctaByte(remaining: Int)          = failUnexpectedEOI("64-bit integer")
   def padBytes(rest: Bytes, missing: Long) = failUnexpectedEOI(s"at least $missing more bytes")
 
+  @inline private def readBytePadded(): Byte =
+    if (directInput ne null) directInput.readBytePadded(this.asInstanceOf[Input.PaddingProvider[Array[Byte]]])
+    else _input.readBytePadded(this)
+
+  @inline private def readDoubleByteBigEndianPadded(): Char =
+    if (directInput ne null)
+      directInput.readDoubleByteBigEndianPadded(this.asInstanceOf[Input.PaddingProvider[Array[Byte]]])
+    else _input.readDoubleByteBigEndianPadded(this)
+
+  @inline private def readQuadByteBigEndianPadded(): Int =
+    if (directInput ne null)
+      directInput.readQuadByteBigEndianPadded(this.asInstanceOf[Input.PaddingProvider[Array[Byte]]])
+    else _input.readQuadByteBigEndianPadded(this)
+
+  @inline private def readOctaByteBigEndianPadded(): Long =
+    if (directInput ne null)
+      directInput.readOctaByteBigEndianPadded(this.asInstanceOf[Input.PaddingProvider[Array[Byte]]])
+    else _input.readOctaByteBigEndianPadded(this)
+
+  @inline private def readBytes(count: Long): Bytes =
+    if (directInput ne null)
+      directInput.readBytes(count, this.asInstanceOf[Input.PaddingProvider[Array[Byte]]]).asInstanceOf[Bytes]
+    else _input.readBytes(count, this)
+
   private def failUnexpectedEOI(expected: String) = throw new Borer.Error.UnexpectedEndOfInput(lastPos, expected)
   private def failInvalidInput(msg: String)       = throw new Borer.Error.InvalidInputData(lastPos, msg)
   private def failOverflow(msg: String)           = throw new Borer.Error.Overflow(lastPos, msg)
@@ -219,6 +248,7 @@ object CborParser {
   trait Config {
     def maxByteStringLength: Int
     def maxTextStringLength: Int
+    def allowDirectByteArrayAccess: Boolean
   }
 
   private[this] val _creator: Parser.Creator[Any, CborParser.Config] =

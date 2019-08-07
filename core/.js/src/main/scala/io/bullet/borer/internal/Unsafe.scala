@@ -6,9 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package io.bullet.borer
-
-import io.bullet.borer.internal.ByteArrayAccess
+package io.bullet.borer.internal
 
 object Unsafe {
 

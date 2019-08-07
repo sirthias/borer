@@ -26,7 +26,7 @@ abstract class ByteArrayAccess {
 object ByteArrayAccess {
 
   final val instance: ByteArrayAccess = {
-    val unsafe = io.bullet.borer.Unsafe.byteArrayAccess
+    val unsafe = io.bullet.borer.internal.Unsafe.byteArrayAccess
     if (unsafe ne null) unsafe else new Default
   }
 

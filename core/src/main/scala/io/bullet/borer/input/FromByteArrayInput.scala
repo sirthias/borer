@@ -15,13 +15,12 @@ trait FromByteArrayInput {
 
   implicit object FromByteArrayProvider extends Input.Provider[Array[Byte]] {
     type Bytes = Array[Byte]
-    type In    = FromByteArray
+    type In    = Input[Array[Byte]]
     def byteAccess                = ByteAccess.ForByteArray
     def apply(value: Array[Byte]) = new FromByteArray(value)
   }
 
-  final class FromByteArray(byteArray: Array[Byte]) extends Input[Array[Byte]] {
-
+  final class FromByteArray(private[borer] val byteArray: Array[Byte]) extends Input[Array[Byte]] {
     private[this] var _cursor: Int = _
 
     def cursor: Long = _cursor.toLong

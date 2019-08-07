@@ -21,7 +21,7 @@ abstract class AbstractJsonSpec extends AbstractBorerSpec {
   val tests = Tests {
 
     "Positive Ints" - {
-      roundTrip("0", 0)
+      //roundTrip("0", 0)
       roundTrip("1", 1)
       roundTrip("23", 23)
       roundTrip("345", 345)
