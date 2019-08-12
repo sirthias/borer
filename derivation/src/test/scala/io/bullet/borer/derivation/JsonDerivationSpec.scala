@@ -188,5 +188,8 @@ object JsonDerivationSpec extends DerivationSpec(Json) {
       MapElem.Unsized("Err" -> MapElem.Unsized("reason" -> StringElem("foo"))),
       MapElem.Unsized("Ok"  -> MapElem.Unsized.empty))
 
+  def arrayBasedBarDom = ArrayElem.Unsized(StringElem("42"), StringElem("bar"))
+  def mapBasedBarDom   = MapElem.Unsized("i" -> StringElem("42"), "s" -> StringElem("bar"))
+
   def recursiveBoxEncoded = """{"x":{"x":{}}}"""
 }

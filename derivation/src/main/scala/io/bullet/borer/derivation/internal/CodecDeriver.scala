@@ -9,6 +9,7 @@
 package io.bullet.borer.derivation.internal
 
 import io.bullet.borer.derivation.key
+import io.bullet.borer.{Decoder, Encoder, Reader, Writer}
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
@@ -18,7 +19,15 @@ abstract private[derivation] class CodecDeriver[C <: blackbox.Context](ctx: C) e
   import c.universe._
   import MacroSupport._
 
-  val borerPkg = c.mirror.staticPackage("_root_.io.bullet.borer")
+  val borerPkg              = c.mirror.staticPackage("_root_.io.bullet.borer")
+  lazy val encoderType      = symbolOf[Encoder[_]]
+  lazy val encoderCompanion = encoderType.companion
+  lazy val writerType       = symbolOf[Writer]
+  lazy val writerCompanion  = writerType.companion
+  lazy val decoderType      = symbolOf[Decoder[_]]
+  lazy val decoderCompanion = decoderType.companion
+  lazy val readerType       = symbolOf[Reader]
+  lazy val readerCompanion  = readerType.companion
 
   def adtSubtypeWritingCases(tpe: Type, subTypes: List[SubType]) = {
     val typeIds = getTypeIds(tpe, subTypes)
@@ -66,15 +75,23 @@ abstract private[derivation] class CodecDeriver[C <: blackbox.Context](ctx: C) e
       tpe =:= definitions.ByteTpe ||
       tpe =:= definitions.ShortTpe
 
-  def eval[T](tree: Tree): T = c.eval[T](c.Expr[T](c.untypecheck(tree.duplicate)))
-
   def literal(value: Any) = Literal(Constant(value))
 
-  def toType(typeTree: Tree): Type = c.typecheck(typeTree, c.TYPEmode).tpe
+  def isDefinedOn(tree: Tree, symbol: Symbol): Boolean =
+    tree match {
+      case Select(x, _) => x.symbol == symbol
+      case _            => false
+    }
 
   implicit class RichCaseParam(underlying: CaseParam) {
-    def isBasicType: Boolean         = CodecDeriver.this.isBasicType(underlying.paramType.tpe)
-    def basicTypeNameOrEmpty: String = if (isBasicType) underlying.paramType.tpe.toString else ""
+    def isBasicType: Boolean = CodecDeriver.this.isBasicType(underlying.paramType.tpe)
+
+    def getImplicit(typeClass: Symbol): Option[Tree] = {
+      val applied     = tq"$typeClass[${underlying.paramType.tpe}]"
+      val typeChecked = c.typecheck(applied, c.TYPEmode).tpe
+      val tree        = c.inferImplicitValue(typeChecked)
+      Option(tree).filterNot(_.isEmpty)
+    }
   }
 
   implicit class RichWithAnnotations(underlying: WithAnnotations) {

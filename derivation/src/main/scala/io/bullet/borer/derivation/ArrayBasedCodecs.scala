@@ -75,7 +75,7 @@ object ArrayBasedCodecs {
         import c.universe._
 
         def deriveForCaseObject(tpe: Type, module: ModuleSymbol) =
-          q"$borerPkg.Encoder[${module.typeSignature}]((w, _) => w.writeEmptyArray())"
+          q"$encoderCompanion[${module.typeSignature}]((w, _) => w.writeEmptyArray())"
 
         def deriveForCaseClass(
             tpe: Type,
@@ -87,15 +87,19 @@ object ArrayBasedCodecs {
           val arity     = params.size
           val writeOpen = if (arity == 1) q"w" else q"w.writeArrayOpen($arity)"
           val writeOpenAndFields = params.foldLeft(writeOpen) { (acc, field) =>
-            q"$acc.${TermName(s"write${field.basicTypeNameOrEmpty}")}(x.${field.name})"
+            val suffix =
+              if (field.isBasicType && isDefinedOn(field.getImplicit(encoderType).get, encoderType)) {
+                field.paramType.tpe.toString
+              } else ""
+            q"$acc.${TermName(s"write$suffix")}(x.${field.name})"
           }
           val writeOpenFieldsAndClose = if (arity == 1) writeOpenAndFields else q"$writeOpenAndFields.writeArrayClose()"
-          q"""$borerPkg.Encoder((w, x) => $writeOpenFieldsAndClose)"""
+          q"""$encoderCompanion((w, x) => $writeOpenFieldsAndClose)"""
         }
 
         def deriveForSealedTrait(tpe: Type, subTypes: List[SubType]) = {
           val cases = adtSubtypeWritingCases(tpe, subTypes)
-          q"""$borerPkg.Encoder { (w, value) =>
+          q"""$encoderCompanion { (w, value) =>
                 w.writeArrayOpen(2)
                 value match { case ..$cases }
                 w.writeArrayClose()
@@ -109,7 +113,7 @@ object ArrayBasedCodecs {
         import c.universe._
 
         def deriveForCaseObject(tpe: Type, module: ModuleSymbol) =
-          q"$borerPkg.Decoder(r => r.readArrayClose(r.readArrayOpen(0), $module))"
+          q"$decoderCompanion(r => r.readArrayClose(r.readArrayOpen(0), $module))"
 
         def deriveForCaseClass(
             tpe: Type,
@@ -123,7 +127,9 @@ object ArrayBasedCodecs {
 
           val readFields = params.map { p =>
             val paramType = p.paramType.tpe
-            if (isBasicType(paramType)) q"r.${TermName(s"read$paramType")}()" else q"r.read[$paramType]()"
+            if (isBasicType(paramType) && isDefinedOn(p.getImplicit(decoderType).get, decoderCompanion)) {
+              q"r.${TermName(s"read$paramType")}()"
+            } else q"r.read[$paramType]()"
           }
           val arity               = params.size
           val readObject          = q"$companion.apply(..$readFields)"
@@ -143,7 +149,7 @@ object ArrayBasedCodecs {
                     } else if (r.tryReadArrayHeader($x)) readObject()
                     else r.unexpectedDataItem(${expected(s"Array Start or Array Header ($x)")})"""
             }
-          q"$borerPkg.Decoder(r => $readObjectWithWrapping)"
+          q"$decoderCompanion(r => $readObjectWithWrapping)"
         }
 
         def deriveForSealedTrait(tpe: Type, subTypes: List[SubType]) = {
@@ -165,7 +171,7 @@ object ArrayBasedCodecs {
 
           val readTypeIdAndValue = rec(0, typeIdsAndSubTypes.length)
 
-          q"""$borerPkg.Decoder { r =>
+          q"""$decoderCompanion { r =>
                 def fail() = r.unexpectedDataItem(${s"type id key for subtype of `$tpe`"})
                 r.readArrayClose(r.readArrayOpen(2), $readTypeIdAndValue)
               }"""

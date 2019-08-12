@@ -53,7 +53,7 @@ object MapBasedCodecs {
         import c.universe._
 
         def deriveForCaseObject(tpe: Type, module: ModuleSymbol) =
-          q"$borerPkg.Encoder[${module.typeSignature}]((w, _) => w.writeEmptyMap())"
+          q"$encoderCompanion[${module.typeSignature}]((w, _) => w.writeEmptyMap())"
 
         def deriveForCaseClass(
             tpe: Type,
@@ -63,15 +63,15 @@ object MapBasedCodecs {
             constructorIsPrivate: Boolean) = {
 
           def encName(p: CaseParam, suffix: String = "") = TermName(s"e${p.index}$suffix")
-          val (basicParams, nonBasicParams)              = params.partition(_.isBasicType)
+
+          val encodersForParams = params.map(p => p -> p.getImplicit(encoderType)).toMap
+          val (basicParams, nonBasicParams) =
+            params.partition(p => p.isBasicType && isDefinedOn(encodersForParams(p).get, encoderCompanion))
           val fieldEncDefs = nonBasicParams.map { p =>
             val paramType = p.paramType.tpe
-            val fieldEnc =
-              Option(c.inferImplicitValue(toType(tq"$borerPkg.Encoder[$paramType]")))
-                .filterNot(_.isEmpty)
-                .getOrElse {
-                  error(s"Could not find implicit Encoder[$paramType] for parameter `${p.name}` of case class $tpe")
-                }
+            val fieldEnc = encodersForParams(p).getOrElse {
+              error(s"Could not find implicit Encoder[$paramType] for parameter `${p.name}` of case class $tpe")
+            }
             val fieldEncWithDefault = p.defaultValueMethod match {
               case Some(x) => q"$fieldEnc.withDefaultValue($x)"
               case None    => fieldEnc
@@ -91,7 +91,7 @@ object MapBasedCodecs {
               case Some(_) => q"value.${p.name} != ${encName(p, "d")}"
               case None    => q"true"
             }
-            val pt = tq"$borerPkg.Encoder.PossiblyWithoutOutput[${p.paramType.tpe}]"
+            val pt = tq"$encoderCompanion.PossiblyWithoutOutput[${p.paramType.tpe}]"
             q"""val ${encName(p, "o")} =
                   (${encName(p)} match {
                     case x: $pt => x producesOutputFor value.${p.name}
@@ -101,9 +101,10 @@ object MapBasedCodecs {
           val writeEntries = params.map { p =>
             val key           = p.key()
             val writeKey      = q"w.${TermName(s"write${key.productPrefix}")}(${literal(key.value)})"
-            val method        = TermName(s"write${p.basicTypeNameOrEmpty}")
+            val isBasic       = basicParams contains p
+            val method        = TermName(s"write${if (isBasic) p.paramType.tpe.toString else ""}")
             val rawWriteEntry = q"$writeKey.$method(value.${p.name})"
-            if (p.isBasicType) {
+            if (isBasic) {
               if (p.defaultValueMethod.isDefined) q"if (${encName(p, "o")}) $rawWriteEntry" else rawWriteEntry
             } else q"if (${encName(p, "o")}) $rawWriteEntry(${encName(p)})"
           }
@@ -112,11 +113,11 @@ object MapBasedCodecs {
           q"""final class $encoderName {
                 ..$nonBasicDefaultValues
                 ..$fieldEncDefs
-                def write(w: $borerPkg.Writer, value: $tpe): w.type = {
+                def write(w: $writerType, value: $tpe): w.type = {
                   var count = ${params.size}
                   ..$basicFieldOutputFlags
                   ..$nonBasicFieldOutputFlags
-                  def writeEntries(w: $borerPkg.Writer): w.type = {
+                  def writeEntries(w: $writerType): w.type = {
                     ..$writeEntries
                     w
                   }
@@ -125,18 +126,18 @@ object MapBasedCodecs {
                 }
               }
 
-              new $borerPkg.Encoder[$tpe] {
+              new $encoderType[$tpe] {
                 private[this] var inner: $encoderName = _
-                def write(w: $borerPkg.Writer, value: $tpe) = {
+                def write(w: $writerType, value: $tpe) = {
                   if (inner eq null) inner = new $encoderName
                   inner.write(w, value)
                 }
-              }: $borerPkg.Encoder[$tpe]"""
+              }: $encoderType[$tpe]"""
         }
 
         def deriveForSealedTrait(tpe: Type, subTypes: List[SubType]) = {
           val cases = adtSubtypeWritingCases(tpe, subTypes)
-          q"""$borerPkg.Encoder { (w, value) =>
+          q"""$encoderCompanion { (w, value) =>
               def writeValue(): Unit = value match { case ..$cases }
               val typeName = ${tpe.toString}
               val strategy = implicitly[$borerPkg.AdtEncodingStrategy]
@@ -153,7 +154,7 @@ object MapBasedCodecs {
         import c.universe._
 
         def deriveForCaseObject(tpe: Type, module: ModuleSymbol) =
-          q"$borerPkg.Decoder(r => r.readMapClose(r.readMapOpen(0), $module))"
+          q"$decoderCompanion(r => r.readMapClose(r.readMapOpen(0), $module))"
 
         def deriveForCaseClass(
             tpe: Type,
@@ -168,26 +169,26 @@ object MapBasedCodecs {
           def varName(p: CaseParam) = TermName(s"p${p.index}")
           def expected(s: String)   = s"$s for decoding an instance of type `$tpe`"
 
-          def readField(p: CaseParam) = {
-            val tpe = p.paramType.tpe
-            if (isBasicType(tpe)) q"r.${TermName(s"read$tpe")}()" else q"r.read[$tpe]()(${decName(p)})"
-          }
-
           val arity         = params.size
           val keysAndParams = new Array[(Key, CaseParam)](arity)
           params.foreach(p => keysAndParams(p.index) = p.key() -> p)
           val keysAndParamsSorted = keysAndParams.clone()
           java.util.Arrays.sort(keysAndParamsSorted.asInstanceOf[Array[Object]], KeyPairOrdering)
 
-          val nonBasicParams = params.filterNot(_.isBasicType)
+          val decodersForParams = params.map(p => p -> p.getImplicit(decoderType)).toMap
+          val nonBasicParams =
+            params.filterNot(p => p.isBasicType && isDefinedOn(decodersForParams(p).get, decoderCompanion))
+
+          def readField(p: CaseParam) = {
+            val tpe = p.paramType.tpe
+            if (nonBasicParams contains p) q"r.read[$tpe]()(${decName(p)})" else q"r.${TermName(s"read$tpe")}()"
+          }
+
           val fieldDecDefs = nonBasicParams.map { p =>
             val paramType = p.paramType.tpe
-            val fieldDec =
-              Option(c.inferImplicitValue(toType(tq"$borerPkg.Decoder[$paramType]")))
-                .filterNot(_.isEmpty)
-                .getOrElse {
-                  error(s"Could not find implicit Decoder[$paramType] for parameter `${p.name}` of case class $tpe")
-                }
+            val fieldDec = decodersForParams(p).getOrElse {
+              error(s"Could not find implicit Decoder[$paramType] for parameter `${p.name}` of case class $tpe")
+            }
             val fieldDecWithDefault = p.defaultValueMethod match {
               case Some(x) => q"$fieldDec.withDefaultValue($x)"
               case None    => fieldDec
@@ -289,7 +290,7 @@ object MapBasedCodecs {
 
           q"""final class $decoderName {
                 ..$fieldDecDefs
-                def read(r: $borerPkg.Reader): $tpe = {
+                def read(r: $readerType): $tpe = {
                   def failDuplicate(k: Any) =
                     throw new $borerPkg.Borer.Error.InvalidInputData(r.position,
                       StringContext("Duplicate map key `", ${expected("` encountered during")}).s(k))
@@ -315,13 +316,13 @@ object MapBasedCodecs {
                 }
               }
 
-              new $borerPkg.Decoder[$tpe] {
+              new $decoderType[$tpe] {
                 private[this] var inner: $decoderName = _
-                def read(r: $borerPkg.Reader): $tpe = {
+                def read(r: $readerType): $tpe = {
                   if (inner eq null) inner = new $decoderName
                   inner.read(r)
                 }
-              }: $borerPkg.Decoder[$tpe]"""
+              }: $decoderType[$tpe]"""
         }
 
         def deriveForSealedTrait(tpe: Type, subTypes: List[SubType]) = {
@@ -341,7 +342,7 @@ object MapBasedCodecs {
               } else q"if ($cmp == 0) r.read[${sub.tpe}]() else fail()"
             } else q"fail()"
 
-          q"""$borerPkg.Decoder { r =>
+          q"""$decoderCompanion { r =>
                 def fail() = r.unexpectedDataItem(${s"type id key for subtype of `$tpe`"})
 
                 val typeName = ${tpe.toString}

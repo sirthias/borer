@@ -157,6 +157,9 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
   def arrayBasedCaseObjectAdtDom: Element
   def mapBasedCaseObjectAdtDom: Element
 
+  def arrayBasedBarDom: Element
+  def mapBasedBarDom: Element
+
   def recursiveBoxEncoded: String
 
   val tests = Tests {
@@ -243,6 +246,19 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
         val encoded                     = encode(values)
         decode[Element](encoded) ==> arrayBasedCaseObjectAdtDom
         decode[List[CaseObjectAdt]](encoded) ==> values
+      }
+
+      "Basic Type with custom Codec" - {
+        case class Bar(i: Int, s: String)
+
+        import Encoder.StringNumbers._
+        import Decoder.StringNumbers._
+        implicit val barCodec = deriveCodec[Bar]
+
+        val bar     = Bar(42, "bar")
+        val encoded = encode(bar)
+        decode[Element](encoded) ==> arrayBasedBarDom
+        decode[Bar](encoded) ==> bar
       }
     }
 
@@ -473,6 +489,19 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
         val encoded                     = encode(values)
         decode[Element](encoded) ==> mapBasedCaseObjectAdtDom
         decode[List[CaseObjectAdt]](encoded) ==> values
+      }
+
+      "Basic Type with custom Codec" - {
+        case class Bar(i: Int, s: String)
+
+        import Encoder.StringNumbers._
+        import Decoder.StringNumbers._
+        implicit val barCodec = deriveCodec[Bar]
+
+        val bar     = Bar(42, "bar")
+        val encoded = encode(bar)
+        decode[Element](encoded) ==> mapBasedBarDom
+        decode[Bar](encoded) ==> bar
       }
     }
   }
