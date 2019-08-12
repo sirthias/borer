@@ -265,6 +265,36 @@ object Encoder extends LowPrioEncoders {
           case Right(b) => w.writeMapHeader(1).writeInt(1).write(b)
         }
     }
+
+  private val _toStringEncoder: Encoder[Any] = Encoder((w, x) => w.writeString(x.toString))
+  def toStringEncoder[T]: Encoder[T]         = _toStringEncoder.asInstanceOf[Encoder[T]]
+
+  object StringNumbers {
+    implicit def charEncoder: Encoder[Char]     = Encoder.toStringEncoder[Char]
+    implicit def byteEncoder: Encoder[Byte]     = Encoder.toStringEncoder[Byte]
+    implicit def shortEncoder: Encoder[Short]   = Encoder.toStringEncoder[Short]
+    implicit def intEncoder: Encoder[Int]       = Encoder.toStringEncoder[Int]
+    implicit def longEncoder: Encoder[Long]     = Encoder.toStringEncoder[Long]
+    implicit def floatEncoder: Encoder[Float]   = Encoder.toStringEncoder[Float]
+    implicit def doubleEncoder: Encoder[Double] = Encoder.toStringEncoder[Double]
+
+    implicit def boxedCharEncoder: Encoder[Character] = forChar.asInstanceOf[Encoder[Character]]
+    implicit def boxedByteEncoder: Encoder[JByte]     = forByte.asInstanceOf[Encoder[JByte]]
+    implicit def boxedShortEncoder: Encoder[JShort]   = forShort.asInstanceOf[Encoder[JShort]]
+    implicit def boxedIntEncoder: Encoder[Integer]    = forInt.asInstanceOf[Encoder[Integer]]
+    implicit def boxedLongEncoder: Encoder[JLong]     = forLong.asInstanceOf[Encoder[JLong]]
+    implicit def boxedFloatEncoder: Encoder[JFloat]   = forFloat.asInstanceOf[Encoder[JFloat]]
+    implicit def boxedDoubleEncoder: Encoder[JDouble] = forDouble.asInstanceOf[Encoder[JDouble]]
+  }
+
+  object StringBooleans {
+    implicit val booleanEncoder: Encoder[Boolean]       = Encoder((w, x) => w.writeString(if (x) "true" else "false"))
+    implicit def boxedBooleanEncoder: Encoder[JBoolean] = forBoolean.asInstanceOf[Encoder[JBoolean]]
+  }
+
+  object StringNulls {
+    implicit val nullEncoder: Encoder[Null] = Encoder((w, _) => w.writeString("null"))
+  }
 }
 
 sealed abstract class LowPrioEncoders extends TupleEncoders {

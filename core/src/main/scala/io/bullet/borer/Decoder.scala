@@ -111,15 +111,23 @@ object Decoder extends LowPrioDecoders {
       } else jsonBaseEncoding.decode(r.readChars())
     }
 
-  implicit val forChar: Decoder[Char] = forInt.mapWithReader { (r, int) =>
+  implicit val forChar: Decoder[Char] = forChar(forInt)
+
+  def forChar(intDecoder: Decoder[Int]): Decoder[Char] = intDecoder.mapWithReader { (r, int) =>
     if ((int >> 16) != 0) r.validationFailure(s"Cannot convert int value $int to Char")
     int.toChar
   }
-  implicit val forByte: Decoder[Byte] = forInt.mapWithReader { (r, int) =>
+
+  implicit val forByte: Decoder[Byte] = forByte(forInt)
+
+  def forByte(intDecoder: Decoder[Int]): Decoder[Byte] = intDecoder.mapWithReader { (r, int) =>
     if ((int >> 8) != (int >> 31)) r.validationFailure(s"Cannot convert int value $int to Byte")
     int.toByte
   }
-  implicit val forShort: Decoder[Short] = forInt.mapWithReader { (r, int) =>
+
+  implicit val forShort: Decoder[Short] = forShort(forInt)
+
+  def forShort(intDecoder: Decoder[Int]): Decoder[Short] = intDecoder.mapWithReader { (r, int) =>
     if ((int >> 16) != (int >> 31)) r.validationFailure(s"Cannot convert int value $int to Short")
     int.toShort
   }
@@ -142,7 +150,7 @@ object Decoder extends LowPrioDecoders {
             "ByteArray for decoding JBigInteger is longer than the configured max of " + maxCborByteArraySize + " bytes")
         } else new JBigInteger(1, byteArray)
       }
-      r.dataItem match {
+      r.dataItem() match {
         case DI.Int | DI.Long => JBigInteger.valueOf(r.readLong())
         case DI.OverLong =>
           def value = new JBigInteger(1, Util.toBigEndianBytes(r.readOverLong()))
@@ -170,7 +178,7 @@ object Decoder extends LowPrioDecoders {
     val bigIntMantissaDecoder = forJBigInteger(maxCborByteArraySize = maxCborBigIntMantissaByteArraySize)
     Decoder { r =>
       def fromBigInteger() = new JBigDecimal(_forJBigInteger.read(r))
-      r.dataItem match {
+      r.dataItem() match {
         case DI.Int | DI.Long | DI.OverLong => fromBigInteger()
         case DI.Double                      => JBigDecimal.valueOf(r.readDouble())
         case DI.NumberString =>
@@ -305,6 +313,46 @@ object Decoder extends LowPrioDecoders {
         }
       }
     }
+
+  object StringNumbers {
+    implicit val intDecoder: Decoder[Int]     = Decoder(r => if (r.hasString) r.readString().toInt else r.readInt())
+    implicit val longDecoder: Decoder[Long]   = Decoder(r => if (r.hasString) r.readString().toLong else r.readLong())
+    implicit val floatDecoder: Decoder[Float] = Decoder(r => if (r.hasString) r.readString().toFloat else r.readFloat())
+    implicit val doubleDecoder: Decoder[Double] = Decoder(
+      r => if (r.hasString) r.readString().toDouble else r.readDouble())
+    implicit val charDecoder: Decoder[Char]   = Decoder.forChar(forInt)
+    implicit val byteDecoder: Decoder[Byte]   = Decoder.forByte(forInt)
+    implicit val shortDecoder: Decoder[Short] = Decoder.forShort(forInt)
+
+    implicit def boxedCharDecoder: Decoder[Character] = forChar.asInstanceOf[Decoder[Character]]
+    implicit def boxedByteDecoder: Decoder[JByte]     = forByte.asInstanceOf[Decoder[JByte]]
+    implicit def boxedShortDecoder: Decoder[JShort]   = forShort.asInstanceOf[Decoder[JShort]]
+    implicit def boxedIntDecoder: Decoder[Integer]    = forInt.asInstanceOf[Decoder[Integer]]
+    implicit def boxedLongDecoder: Decoder[JLong]     = forLong.asInstanceOf[Decoder[JLong]]
+    implicit def boxedFloatDecoder: Decoder[JFloat]   = forFloat.asInstanceOf[Decoder[JFloat]]
+    implicit def boxedDoubleDecoder: Decoder[JDouble] = forDouble.asInstanceOf[Decoder[JDouble]]
+  }
+
+  object StringBooleans {
+    implicit val booleanDecoder: Decoder[Boolean] = Decoder { r =>
+      if (r.hasString) {
+        r.readString().toLowerCase match {
+          case "true" | "yes" | "on"  => true
+          case "false" | "no" | "off" => false
+          case _                      => r.readBoolean()
+        }
+      } else r.readBoolean()
+    }
+
+    implicit def boxedBooleanDecoder: Decoder[JBoolean] = forBoolean.asInstanceOf[Decoder[JBoolean]]
+  }
+
+  object StringNulls {
+    implicit val nullDecoder: Decoder[Null] = Decoder { r =>
+      r.readString("null")
+      null
+    }
+  }
 }
 
 sealed abstract class LowPrioDecoders extends TupleDecoders {
