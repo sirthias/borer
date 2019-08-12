@@ -2,7 +2,7 @@ import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import ReleaseTransformations._
 
 def scala213 = "2.13.0"
-def scala212 = "2.12.8"
+def scala212 = "2.12.9"
 
 lazy val commonSettings = Seq(
   organization := "io.bullet",
@@ -24,10 +24,14 @@ lazy val commonSettings = Seq(
     "-unchecked",
     "-target:jvm-1.8",
     "-Xlint:_,-missing-interpolator",
+    "-Xfatal-warnings",
     "-Ywarn-dead-code",
     "-Ywarn-numeric-widen",
-    "-Xfatal-warnings",
-  ),
+    "-Ybackend-parallelism", "8",
+    "-Ywarn-unused:imports,-patvars,-privates,-locals,-implicits,-explicits",
+    "-Ycache-macro-class-loader:last-modified",
+  ),// ++ (if (sys.props("java.version") startsWith "1." /* i.e. Java version < 9 */) Nil else Seq("-release", "8")),
+  
   scalacOptions ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, 12)) => Seq(
@@ -36,17 +40,10 @@ lazy val commonSettings = Seq(
         "-Ywarn-infer-any",
         "-Ywarn-nullary-override",
         "-Ywarn-nullary-unit",
-        "-Ywarn-unused:imports,-patvars,-privates,-locals,-implicits,-explicits",
-        "-Ycache-macro-class-loader:last-modified",
-        "-Ybackend-parallelism", "8",
         "-Xfuture",
         "-Xsource:2.13",
       )
-      case Some((2, 13)) => Seq(
-        "-Ywarn-unused:imports,-patvars,-privates,-locals,-implicits,-explicits",
-        "-Ycache-macro-class-loader:last-modified",
-        "-Ybackend-parallelism", "8",
-      )
+      case Some((2, 13)) => Nil
       case x => sys.error(s"unsupported scala version: $x")
     }
   },
