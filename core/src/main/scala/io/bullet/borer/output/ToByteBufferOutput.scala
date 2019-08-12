@@ -86,7 +86,7 @@ trait ToByteBufferOutput {
 
     def writeBytes[Bytes](bytes: Bytes)(implicit byteAccess: ByteAccess[Bytes]): this.type = {
       @tailrec def rec(rest: Bytes): this.type = {
-        val newRest = byteAccess.copyToByteBuffer(bytes, currentChunkBuffer)
+        val newRest = byteAccess.copyToByteBuffer(rest, currentChunkBuffer)
         if (!byteAccess.isEmpty(newRest)) {
           appendChunk()
           rec(newRest)
@@ -103,7 +103,7 @@ trait ToByteBufferOutput {
       }
       val buf = ByteBuffer.allocate(intSize)
 
-      @tailrec def rec(chunk: Chunk[ByteBuffer]): ByteBuffer =
+      @tailrec def rec(chunk: Chunk): ByteBuffer =
         if (chunk ne null) {
           buf.put(chunk.buffer.flip().asInstanceOf[ByteBuffer])
           rec(chunk.next)
@@ -123,5 +123,5 @@ trait ToByteBufferOutput {
     override def toString = s"Output.ToByteBuffer index $size"
   }
 
-  final private class Chunk[T <: AnyRef](val buffer: T, var next: Chunk[T])
+  final private class Chunk(val buffer: ByteBuffer, var next: Chunk)
 }

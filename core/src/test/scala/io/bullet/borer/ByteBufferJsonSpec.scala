@@ -13,8 +13,10 @@ import java.nio.ByteBuffer
 
 object ByteBufferJsonSpec extends AbstractJsonSpec {
 
-  def encode[T: Encoder](value: T): String =
-    new String(ByteAccess.ForByteBuffer.toByteArray(Json.encode(value).toByteBuffer), StandardCharsets.UTF_8)
+  def encode[T: Encoder](value: T): String = {
+    val byteBuffer = Json.encode(value).withConfig(Json.EncodingConfig(bufferSize = 8)).toByteBuffer
+    new String(ByteAccess.ForByteBuffer.toByteArray(byteBuffer), StandardCharsets.UTF_8)
+  }
 
   def decode[T: Decoder](encoded: String): T =
     Json
