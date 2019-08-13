@@ -1,3 +1,12 @@
+Version 0.11.1 (2019-08-13)
+---------------------------
+
+- fixed bug in ToByteBufferOutput (#52)
+- added encoders and decoders for "as-string" support of numbers, booleans and `null`
+- enabled custom codecs for basic types (#42)
+- further improved JSON parsing performance from byte arrays on JVM
+
+
 Version 0.11.0 (2019-08-05)
 ---------------------------
 
