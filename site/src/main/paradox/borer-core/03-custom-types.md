@@ -127,7 +127,7 @@ holding the encoding of `T`, and `None` to a zero-element (empty) array.
 While _borer_ (by default) verifies that the [CBOR]/[JSON] created by your application is indeed valid and will thus
 catch any mistakes you made in this regard eventually, debugging structural problems can be a bit tedious since the
 error will often only be recognizable at the very end of the encoding or decoding process. Check out the section on
-@ref:[Debugging](09-debugging.md) for more info how _borer_ can support you in debugging (de)serialization issues.
+@ref:[Debugging](10-debugging.md) for more info how _borer_ can support you in debugging (de)serialization issues.
 
 
 ### Reader and Writer
