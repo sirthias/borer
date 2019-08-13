@@ -34,7 +34,7 @@ object StringNumbersSpec extends TestSuite {
 
       case class Dog(age: Int, male: Boolean, name: String)
 
-      import Encoder.StringNumbers._ // enables number-as-strings encoding
+      import Encoder.StringNumbers._  // enables number-as-strings encoding
       import Encoder.StringBooleans._ // enables booleans-as-strings encoding
 
       implicit val dogCodec = deriveCodec[Dog]
