@@ -148,11 +148,12 @@ sirthias/borer/
     <li><a href="../borer-core/02-supported-types.html" class="page">Types Supported Out-of-the-Box</a></li>
     <li><a href="../borer-core/03-custom-types.html" class="active page">Encoding and Decoding Custom Types</a></li>
     <li><a href="../borer-core/04-nullable-and-default.html" class="page">Nullable and Default</a></li>
-    <li><a href="../borer-core/05-supporting-typeclasses.html" class="page"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a></li>
-    <li><a href="../borer-core/06-JSON-specifics.html" class="page">JSON Specifics</a></li>
-    <li><a href="../borer-core/07-JSON-performance.html" class="page">JSON Performance</a></li>
-    <li><a href="../borer-core/08-DOM.html" class="page">Document Object Model (DOM)</a></li>
-    <li><a href="../borer-core/09-debugging.html" class="page">Debugging</a></li>
+    <li><a href="../borer-core/05-stringnumbers.html" class="page"><code>StringNumbers</code> and <code>StringBooleans</code></a></li>
+    <li><a href="../borer-core/06-supporting-typeclasses.html" class="page"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a></li>
+    <li><a href="../borer-core/07-JSON-specifics.html" class="page">JSON Specifics</a></li>
+    <li><a href="../borer-core/08-JSON-performance.html" class="page">JSON Performance</a></li>
+    <li><a href="../borer-core/09-DOM.html" class="page">Document Object Model (DOM)</a></li>
+    <li><a href="../borer-core/10-debugging.html" class="page">Debugging</a></li>
   </ul></li>
   <li><a href="../borer-derivation/index.html" class="page"><code>borer-derivation</code></a>
   <ul>
@@ -187,7 +188,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.11.0
+<i class="md-icon" title="Version">label_outline</i> 0.11.1
 </label>
 </li>
 </ul>
@@ -295,7 +296,7 @@ implicit val decoder: Decoder[Person] = Decoder { reader =&gt;
 <p>Also, very importantly, when deciding on an encoding logic for any type (i.e. how to represent the type with the available <a href="http://cbor.io/">CBOR</a>/<a href="http://json.org/">JSON</a> primitives) make sure to always encode it to exactly <strong>one</strong> data item! (Unless you know exactly, what you are doing.) All built-in encoders and decoders, e.g. for case classes, arrays, maps, etc., always assume that any object is written to exactly data item.</p>
 <p>So, if you need to write several values, wrap them in an array or map! And rather than writing no value at all write some kind of placeholder, like <code>null</code>, <code>undefined</code> or an empty array or map!</p></div>
 <p>To illustrate the point: The default codec for <code>Option[T]</code> for example encodes <code>Some[T]</code> to a single element array holding the encoding of <code>T</code>, and <code>None</code> to a zero-element (empty) array.</p>
-<p>While <em>borer</em> (by default) verifies that the <a href="http://cbor.io/">CBOR</a>/<a href="http://json.org/">JSON</a> created by your application is indeed valid and will thus catch any mistakes you made in this regard eventually, debugging structural problems can be a bit tedious since the error will often only be recognizable at the very end of the encoding or decoding process. Check out the section on <a href="09-debugging.html">Debugging</a> for more info how <em>borer</em> can support you in debugging (de)serialization issues.</p>
+<p>While <em>borer</em> (by default) verifies that the <a href="http://cbor.io/">CBOR</a>/<a href="http://json.org/">JSON</a> created by your application is indeed valid and will thus catch any mistakes you made in this regard eventually, debugging structural problems can be a bit tedious since the error will often only be recognizable at the very end of the encoding or decoding process. Check out the section on <a href="10-debugging.html">Debugging</a> for more info how <em>borer</em> can support you in debugging (de)serialization issues.</p>
 <h3><a href="#reader-and-writer" name="reader-and-writer" class="anchor"><span class="anchor-link"></span></a>Reader and Writer</h3>
 <p>All pre-defined Encoders and Decoders, as well as the ones you might write yourself, describe how to encode or decode and object by operating on a <code>Writer</code> or <code>Reader</code>, respectively.</p>
 <p>The <code>Writer</code> (sources <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Writer.scala">here</a>) contains a largish number of methods (like <code>writeInt</code>, <code>writeString</code> or <code>writeArrayHeader</code>) that more or less directly write the respective data item to the output.<br> The <code>Reader</code> (sources <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Reader.scala">here</a>) contains the respective counterparts (like <code>readInt</code>, <code>readString</code> or <code>readArrayHeader</code>).</p>
@@ -321,7 +322,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.11.0
+0.11.1
 </span>
 </div>
 </article>

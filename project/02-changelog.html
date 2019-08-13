@@ -148,11 +148,12 @@ sirthias/borer/
     <li><a href="../borer-core/02-supported-types.html" class="page">Types Supported Out-of-the-Box</a></li>
     <li><a href="../borer-core/03-custom-types.html" class="page">Encoding and Decoding Custom Types</a></li>
     <li><a href="../borer-core/04-nullable-and-default.html" class="page">Nullable and Default</a></li>
-    <li><a href="../borer-core/05-supporting-typeclasses.html" class="page"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a></li>
-    <li><a href="../borer-core/06-JSON-specifics.html" class="page">JSON Specifics</a></li>
-    <li><a href="../borer-core/07-JSON-performance.html" class="page">JSON Performance</a></li>
-    <li><a href="../borer-core/08-DOM.html" class="page">Document Object Model (DOM)</a></li>
-    <li><a href="../borer-core/09-debugging.html" class="page">Debugging</a></li>
+    <li><a href="../borer-core/05-stringnumbers.html" class="page"><code>StringNumbers</code> and <code>StringBooleans</code></a></li>
+    <li><a href="../borer-core/06-supporting-typeclasses.html" class="page"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a></li>
+    <li><a href="../borer-core/07-JSON-specifics.html" class="page">JSON Specifics</a></li>
+    <li><a href="../borer-core/08-JSON-performance.html" class="page">JSON Performance</a></li>
+    <li><a href="../borer-core/09-DOM.html" class="page">Document Object Model (DOM)</a></li>
+    <li><a href="../borer-core/10-debugging.html" class="page">Debugging</a></li>
   </ul></li>
   <li><a href="../borer-derivation/index.html" class="page"><code>borer-derivation</code></a>
   <ul>
@@ -178,7 +179,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.11.0
+<i class="md-icon" title="Version">label_outline</i> 0.11.1
 </label>
 </li>
 </ul>
@@ -191,7 +192,16 @@ sirthias/borer/
 <h1><a href="#changelog" name="changelog" class="anchor"><span class="anchor-link"></span></a>Changelog</h1>
 <p>This is the current <em>borer</em> <a href="https://github.com/sirthias/borer/tree/master/CHANGELOG">CHANGELOG</a>:</p>
 <br>
-<pre><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/CHANGELOG" target="_blank" title="Go to snippet source"></a><code>Version 0.11.0 (2019-08-05)
+<pre><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/CHANGELOG" target="_blank" title="Go to snippet source"></a><code>Version 0.11.1 (2019-08-13)
+---------------------------
+
+- fixed bug in ToByteBufferOutput (#52)
+- added encoders and decoders for &quot;as-string&quot; support of numbers, booleans and `null`
+- enabled custom codecs for basic types (#42)
+- further improved JSON parsing performance from byte arrays on JVM
+
+
+Version 0.11.0 (2019-08-05)
 ---------------------------
 
 - renamed `deriveXXXForUnaryCaseClass` to `deriveUnaryXXX`
@@ -301,7 +311,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.11.0
+0.11.1
 </span>
 </div>
 </article>

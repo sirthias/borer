@@ -20,7 +20,7 @@
 
 <meta name="description" content="CBOR and JSON (de)serialization in Scala">
 <link rel="shortcut icon" href="../assets/images/favicon.ico">
-<title>JSON Performance · borer</title>
+<title>StringNumbers and StringBooleans · borer</title>
 <link rel="stylesheet" href="../assets/stylesheets/application.451f80e5.css">
 <link rel="stylesheet" href="../assets/stylesheets/application-palette.22915126.css">
 <meta name="theme-color" content="#3f51b5" />
@@ -61,7 +61,7 @@ data-md-color-accent="orange"
 borer
 </span>
 <span class="md-header-nav__topic">
-JSON Performance
+StringNumbers and StringBooleans
 </span>
 </div>
 </div>
@@ -148,11 +148,12 @@ sirthias/borer/
     <li><a href="../borer-core/02-supported-types.html" class="page">Types Supported Out-of-the-Box</a></li>
     <li><a href="../borer-core/03-custom-types.html" class="page">Encoding and Decoding Custom Types</a></li>
     <li><a href="../borer-core/04-nullable-and-default.html" class="page">Nullable and Default</a></li>
-    <li><a href="../borer-core/05-supporting-typeclasses.html" class="page"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a></li>
-    <li><a href="../borer-core/06-JSON-specifics.html" class="page">JSON Specifics</a></li>
-    <li><a href="../borer-core/07-JSON-performance.html" class="active page">JSON Performance</a></li>
-    <li><a href="../borer-core/08-DOM.html" class="page">Document Object Model (DOM)</a></li>
-    <li><a href="../borer-core/09-debugging.html" class="page">Debugging</a></li>
+    <li><a href="../borer-core/05-stringnumbers.html" class="active page"><code>StringNumbers</code> and <code>StringBooleans</code></a></li>
+    <li><a href="../borer-core/06-supporting-typeclasses.html" class="page"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a></li>
+    <li><a href="../borer-core/07-JSON-specifics.html" class="page">JSON Specifics</a></li>
+    <li><a href="../borer-core/08-JSON-performance.html" class="page">JSON Performance</a></li>
+    <li><a href="../borer-core/09-DOM.html" class="page">Document Object Model (DOM)</a></li>
+    <li><a href="../borer-core/10-debugging.html" class="page">Debugging</a></li>
   </ul></li>
   <li><a href="../borer-derivation/index.html" class="page"><code>borer-derivation</code></a>
   <ul>
@@ -178,7 +179,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.11.0
+<i class="md-icon" title="Version">label_outline</i> 0.11.1
 </label>
 </li>
 </ul>
@@ -188,42 +189,46 @@ sirthias/borer/
 <div class="md-content">
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
-<h1><a href="#json-performance" name="json-performance" class="anchor"><span class="anchor-link"></span></a>JSON Performance</h1>
-<p><em>borer</em> comes with a fast JSON parser optimized for modern superscalar 64-bit CPUs, which performs quite well when compared to other popular JSON libraries in the scala eco-system when it comes to transforming raw JSON-bytes into a case-class based data model.</p>
-<p>A <a href="https://github.com/sirthias/borer/tree/master/benchmarks/src/main/resources">benchmark against 18 real-world JSON data examples</a> from a diverse set of sources shows that <em>borer</em>&rsquo;s JSON parsing infrastructure outperforms <a href="https://circe.github.io/circe/">Circe</a> (for example) by almost a factor of two, on average:</p><div id="benchmark-results">
-<p><img src="../assets/images/benchmark-results.svg" alt="Benchmark Results" /></p></div>
-<p>This is the benchmark setup:</p>
-<dl>
-  <dt>Task</dt>
-  <dd>Decode 18 files from raw <a href="http://json.org/">JSON</a> bytes into a respective  <a href="https://github.com/sirthias/borer/tree/master/benchmarks/src/main/scala/io/bullet/borer/benchmarks/Model.scala">case-class based data model</a>  generated with <a href="https://transform.now.sh/json-to-scala-case-class/">https://transform.now.sh/json-to-scala-case-class/</a></dd>
-  <dt>JMH Parameters</dt>
-  <dd><code>-wi10 -i10 -t4 -f4</code></dd>
-  <dt>JVM</dt>
-  <dd>Java HotSpot(TM) 64-Bit GraalVM EE 19.1.0</dd>
-  <dt>Memory Settings</dt>
-  <dd><code>-Xms4096m -Xmx4096m</code></dd>
-  <dt>Scala Version</dt>
-  <dd>2.12.8</dd>
-  <dt>Operating System</dt>
-  <dd>Ubuntu 18.04.2 LTS</dd>
-  <dt>CPU</dt>
-  <dd>2 x Intel Xeon E5-2665 2.4 - 3.1 GHz (Octa-core)</dd>
-</dl>
-<p>The <code>benchmarks</code> SBT sub project contains everything you need to run the benchmarks yourself. This SBT command will produce a JSON file holding all results:</p>
-<pre><code>jmh:run io.bullet.borer.benchmarks.* -wi 10 -i 10 -t 4 -f 4 -foe true -rf json -rff results/my_results.json  
-</code></pre><div class="callout note "><div class="callout-title">Note</div>
-<p>This &ldquo;full&rdquo; benchmark will run for more than 4 days!</p></div>
-<p>Since interpreting the results can be a bit tedious <em>borer</em> comes with some simple analysis logic that can be invoked with the <code>benchmarkResults</code> SBT command. It will show you a synthesis of all benchmark results currently living in the <code>benchmarks/results</code> folder.</p><div class="callout warning "><div class="callout-title">Warning</div>
-<p>The <code>benchmarks/results</code> folder already contains the results of the last &ldquo;official&rdquo; benchmarking runs.<br> When you run your own benchmarks you should first remove these &ldquo;official&rdquo; <code>.json</code> files since benchmark results are not comparable when run on non-identical machines!</p></div>
+<h1><a href="#stringnumbers-and-stringbooleans" name="stringnumbers-and-stringbooleans" class="anchor"><span class="anchor-link"></span></a><code>StringNumbers</code> and <code>StringBooleans</code></h1>
+<p>Some external APIs, especially <a href="http://json.org/">JSON</a>-based ones, encode certain or all numbers, booleans and even <code>null</code> as string values, even if the respective value <em>could</em> be represented as a native <a href="http://json.org/">JSON</a> or <a href="http://cbor.io/">CBOR</a> number, boolean or <code>null</code>.</p>
+<p>In order to make integration with these kind of services easy <em>borer</em> comes with predefined encoders and decoders for numbers, booleans and <code>null</code> that you can &ldquo;enable&rdquo; with simple imports and which then take precedence over the default encoders and decoders.</p>
+<p>This is how they are enabled:</p>
+<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/StringNumbersSpec.scala#L11-L19" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.{Decoder, Encoder}
+
+import Encoder.StringNumbers._  // enables number-as-strings encoding
+import Encoder.StringBooleans._ // enables booleans-as-strings encoding
+import Encoder.StringNulls._    // enables null-as-strings encoding
+
+import Decoder.StringNumbers._  // enables number-as-strings decoding
+import Decoder.StringBooleans._ // enables booleans-as-strings decoding
+import Decoder.StringNulls._    // enables null-as-strings decoding</code></pre>
+<p>As always these imports are &ldquo;active&rdquo; throughout the complete scope in which they are visible.</p>
+<p>Here is an example demonstrating how to encode numbers and booleans as strings:</p>
+<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/StringNumbersSpec.scala#L32-L46" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.{Encoder, Json}
+import io.bullet.borer.derivation.MapBasedCodecs._
+
+case class Dog(age: Int, male: Boolean, name: String)
+
+import Encoder.StringNumbers._  // enables number-as-strings encoding
+import Encoder.StringBooleans._ // enables booleans-as-strings encoding
+
+implicit val dogCodec = deriveCodec[Dog]
+
+val dog = Dog(2, false, &quot;Lolle&quot;)
+
+// note how the Int and Boolean are rendered as JSON strings
+Json.encode(dog).toUtf8String ==&gt;
+&quot;&quot;&quot;{&quot;age&quot;:&quot;2&quot;,&quot;male&quot;:&quot;false&quot;,&quot;name&quot;:&quot;Lolle&quot;}&quot;&quot;&quot;</code></pre>
+<p>Decoding works correspondingly.</p>
 </div>
 <div>
-<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-core/07-JSON-performance.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-core/05-stringnumbers.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.11.0
+0.11.1
 </span>
 </div>
 </article>
@@ -233,7 +238,7 @@ Edit this page
 <footer class="md-footer">
 <div class="md-footer-nav">
 <nav class="md-footer-nav__inner md-grid">
-<a href="../borer-core/06-JSON-specifics.html" title="JSON Specifics" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<a href="../borer-core/04-nullable-and-default.html" title="Nullable and Default" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
 <div class="md-flex__cell md-flex__cell--shrink">
 <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
 </div>
@@ -242,17 +247,17 @@ Edit this page
 <span class="md-footer-nav__direction">
 Previous
 </span>
-JSON Specifics
+Nullable and Default
 </span>
 </div>
 </a>
-<a href="../borer-core/08-DOM.html" title="Document Object Model (DOM)" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<a href="../borer-core/06-supporting-typeclasses.html" title="Input, Output, ByteAccess" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
 <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
 <span class="md-flex__ellipsis">
 <span class="md-footer-nav__direction">
 Next
 </span>
-Document Object Model (DOM)
+Input, Output, ByteAccess
 </span>
 </div>
 <div class="md-flex__cell md-flex__cell--shrink">

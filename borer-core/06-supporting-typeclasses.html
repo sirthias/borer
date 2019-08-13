@@ -20,7 +20,7 @@
 
 <meta name="description" content="CBOR and JSON (de)serialization in Scala">
 <link rel="shortcut icon" href="../assets/images/favicon.ico">
-<title>Document Object Model (DOM) · borer</title>
+<title>Input, Output, ByteAccess · borer</title>
 <link rel="stylesheet" href="../assets/stylesheets/application.451f80e5.css">
 <link rel="stylesheet" href="../assets/stylesheets/application-palette.22915126.css">
 <meta name="theme-color" content="#3f51b5" />
@@ -61,7 +61,7 @@ data-md-color-accent="orange"
 borer
 </span>
 <span class="md-header-nav__topic">
-Document Object Model (DOM)
+Input, Output, ByteAccess
 </span>
 </div>
 </div>
@@ -148,11 +148,12 @@ sirthias/borer/
     <li><a href="../borer-core/02-supported-types.html" class="page">Types Supported Out-of-the-Box</a></li>
     <li><a href="../borer-core/03-custom-types.html" class="page">Encoding and Decoding Custom Types</a></li>
     <li><a href="../borer-core/04-nullable-and-default.html" class="page">Nullable and Default</a></li>
-    <li><a href="../borer-core/05-supporting-typeclasses.html" class="page"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a></li>
-    <li><a href="../borer-core/06-JSON-specifics.html" class="page">JSON Specifics</a></li>
-    <li><a href="../borer-core/07-JSON-performance.html" class="page">JSON Performance</a></li>
-    <li><a href="../borer-core/08-DOM.html" class="active page">Document Object Model (DOM)</a></li>
-    <li><a href="../borer-core/09-debugging.html" class="page">Debugging</a></li>
+    <li><a href="../borer-core/05-stringnumbers.html" class="page"><code>StringNumbers</code> and <code>StringBooleans</code></a></li>
+    <li><a href="../borer-core/06-supporting-typeclasses.html" class="active page"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a></li>
+    <li><a href="../borer-core/07-JSON-specifics.html" class="page">JSON Specifics</a></li>
+    <li><a href="../borer-core/08-JSON-performance.html" class="page">JSON Performance</a></li>
+    <li><a href="../borer-core/09-DOM.html" class="page">Document Object Model (DOM)</a></li>
+    <li><a href="../borer-core/10-debugging.html" class="page">Debugging</a></li>
   </ul></li>
   <li><a href="../borer-derivation/index.html" class="page"><code>borer-derivation</code></a>
   <ul>
@@ -172,86 +173,135 @@ sirthias/borer/
   </ul></li>
 </ul>
 <nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="../borer-core/06-supporting-typeclasses.html#input-output-byteaccess" class="header"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a>
+  <ul>
+    <li><a href="../borer-core/06-supporting-typeclasses.html#input" class="header">Input</a></li>
+    <li><a href="../borer-core/06-supporting-typeclasses.html#output" class="header">Output</a></li>
+    <li><a href="../borer-core/06-supporting-typeclasses.html#byteaccess" class="header">ByteAccess</a></li>
+  </ul></li>
+</ul>
 </nav>
 
 </nav>
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.11.0
+<i class="md-icon" title="Version">label_outline</i> 0.11.1
 </label>
 </li>
 </ul>
 </div>
 </div>
 </div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="../borer-core/06-supporting-typeclasses.html#input-output-byteaccess" class="header"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a>
+  <ul>
+    <li><a href="../borer-core/06-supporting-typeclasses.html#input" class="header">Input</a></li>
+    <li><a href="../borer-core/06-supporting-typeclasses.html#output" class="header">Output</a></li>
+    <li><a href="../borer-core/06-supporting-typeclasses.html#byteaccess" class="header">ByteAccess</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</div>
+</div>
+</div>
 <div class="md-content">
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
-<h1><a href="#document-object-model-dom-" name="document-object-model-dom-" class="anchor"><span class="anchor-link"></span></a>Document Object Model (DOM)</h1>
-<p>While <em>borer</em>&rsquo;s core design is DOM-less, writing directly to and reading directly from the respective stream of <a href="http://cbor.io/">CBOR</a>/<a href="http://json.org/">JSON</a> data items, it is sometimes convenient to nevertheless have access to an object structure that mirrors the structure of a <a href="http://cbor.io/">CBOR</a>/<a href="http://json.org/">JSON</a> document as closely as possible.<br> (Many <a href="http://json.org/">JSON</a>-libraries solely rely on such an intermediate &ldquo;AST&rdquo; structure for their encoding and decoding operations.)</p>
-<p>For such cases <em>borer</em> provides you with a simple &ldquo;DOM&rdquo; ADT (see the respective source file <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Dom.scala">here</a>), which you can use like this:</p>
-<dl>
-  <dt>CBOR</dt>
-  <dd>
-  <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DomSpec.scala#L13-L27" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.Cbor
-import io.bullet.borer.Dom._
+<h1><a href="#input-output-byteaccess" name="input-output-byteaccess" class="anchor"><span class="anchor-link"></span></a><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></h1>
+<p>In order to allow for seamless integration in all kinds of application environments <em>borer</em> abstracts over decoding input, encoding output as well as general &ldquo;chunks of bytes&rdquo; with three additional type classes <code>Input[T]</code>, <code>Output[T]</code> and <code>ByteAccess[T]</code>.</p>
+<h2><a href="#input" name="input" class="anchor"><span class="anchor-link"></span></a>Input</h2>
+<p>For decoding <em>borer</em> happily consumes any type for which an <code>Input.Provider[T]</code> is implicitly available, which is responsible for constructing an <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Input.scala">Input</a> from or around <code>T</code>:</p>
+<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Input.scala#L118-L127" target="_blank" title="Go to snippet source"></a><code class="language-scala">/**
+  * Responsible for converting an instance of [[T]]
+  * to a respective [[Input]] instance.
+  */
+trait Provider[T] {
+  type Bytes
+  type In &lt;: Input[Bytes]
+  def byteAccess: ByteAccess[Bytes]
+  def apply(value: T): In
+}</code></pre>
+<p>Currently <em>borer</em> comes with predefined <code>Input</code> implementations for these types:</p>
+<ul>
+  <li><code>Array[Byte]</code></li>
+  <li><code>java.nio.ByteBuffer</code></li>
+  <li><code>java.io.File</code></li>
+  <li><code>akka.util.ByteString</code> (with the <code>borer-compat-akka</code> module)</li>
+  <li><code>scodec.bits.ByteVector</code> (with the <code>borer-compat-scodec</code> module)</li>
+  <li><code>Iterator[T]</code>, provided that there is an <code>Input.Provider[T]</code> available implicitly</li>
+</ul>
+<p>The latter is a great way to consume large input in a streaming fashion, without having to load everything into memory at once. The <code>FromFileInput</code>, for example, relies on it to parse large files as an iteration of chunks.</p>
+<p>The <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Input.scala">Input</a> trait isn&rsquo;t particularly hard to implement, especially since it merely has to support single-pass access to the underlying bytes with minimal buffering and without random access.</p>
+<h2><a href="#output" name="output" class="anchor"><span class="anchor-link"></span></a>Output</h2>
+<p>On the encoding side <em>borer</em> can either produce any type <code>T</code> for which an <code>Output.ToTypeProvider[T]</code> is available, or &ldquo;push&rdquo; the output into a value of type <code>T</code> if an <code>Output.ToValueProvider[T]</code> is available:</p>
+<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Output.scala#L46-L60" target="_blank" title="Go to snippet source"></a><code class="language-scala">/**
+  * Responsible for providing an Output that produces instances of [[T]].
+  */
+trait ToTypeProvider[T] {
+  type Out &lt;: Output { type Result = T }
+  def apply(bufferSize: Int): Out
+}
 
-val dom = MapElem.Sized(
-  &quot;foo&quot; -&gt; ArrayElem.Sized(IntElem(42), StringElem(&quot;rocks&quot;)),
-  &quot;bar&quot; -&gt; DoubleElem(26.8)
-)
+/**
+  * Responsible for providing an Output that outputs into the given value [[T]].
+  */
+trait ToValueProvider[T] {
+  type Out &lt;: Output { type Result = T }
+  def apply(value: T, bufferSize: Int): Out
+}</code></pre>
+<p>Currently <em>borer</em> comes with predefined <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Output.scala">Output</a> implementations for these types:</p>
+<ul>
+  <li><code>Array[Byte]</code></li>
+  <li><code>java.nio.ByteBuffer</code></li>
+  <li><code>java.io.OutputStream</code> (to a an existing instance)</li>
+  <li><code>java.io.File</code> (to a an existing instance)</li>
+  <li><code>akka.util.ByteString</code> (with the <code>borer-compat-akka</code> module)</li>
+  <li><code>scodec.bits.ByteVector</code> (with the <code>borer-compat-scodec</code> module)</li>
+</ul>
+<p>The <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Output.scala">Output</a> trait isn&rsquo;t hard to implement as it simply writes out all bytes in a single pass.</p>
+<p>Here are a few examples to illustrate the top-level output API:</p>
+<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/OutputExamplesSpec.scala#L15-L29" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.Cbor
 
-val encoded = Cbor.encode(dom).toByteArray
+val value = List(&quot;foo&quot;, &quot;bar&quot;, &quot;baz&quot;) // example value
 
-encoded ==&gt; hex&quot;A263666F6F82182A65726F636B7363626172FB403ACCCCCCCCCCCD&quot;
+// encodes into a new byte array instance,
+// relies on the `Output.ToTypeProvider[Array[Byte]]` type class instance
+Cbor.encode(value).to[Array[Byte]].result ==&gt; hex&quot;9f63666f6f636261726362617aff&quot;
 
-val decoded = Cbor.decode(encoded).to[Element].value
+// same as above but slightly more convenient
+Cbor.encode(value).toByteArray ==&gt; hex&quot;9f63666f6f636261726362617aff&quot;
 
-decoded ==&gt; dom</code></pre></dd>
-  <dt>JSON</dt>
-  <dd>
-  <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DomSpec.scala#L34-L48" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.Dom._
-import io.bullet.borer.Json
-
-val dom = MapElem.Unsized(
-  &quot;foo&quot; -&gt; ArrayElem.Unsized(IntElem(42), StringElem(&quot;rocks&quot;)),
-  &quot;bar&quot; -&gt; DoubleElem(26.8)
-)
-
-val encoded = Json.encode(dom).toByteArray
-
-new String(encoded, &quot;UTF8&quot;) ==&gt; &quot;&quot;&quot;{&quot;foo&quot;:[42,&quot;rocks&quot;],&quot;bar&quot;:26.8}&quot;&quot;&quot;
-
-val decoded = Json.decode(encoded).to[Element].value
-
-decoded ==&gt; dom</code></pre></dd>
-</dl>
-<p>Any <a href="http://cbor.io/">CBOR</a> or <a href="http://json.org/">JSON</a> document can be deserialized into a <code>io.bullet.borer.Dom.Element</code>, which can then be queried or transformed in any way, and potentially written back to <a href="http://cbor.io/">CBOR</a> or <a href="http://json.org/">JSON</a>.<br></p>
-<p>As such, the <em>borer</em> DOM can also be used to transform <a href="http://json.org/">JSON</a> to <a href="http://cbor.io/">CBOR</a>, e.g. like this:</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DomSpec.scala#L54-L67" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.{Cbor, Json}
-import io.bullet.borer.Dom._
-
-import scala.util.Try
-
-def jsonToCbor(json: String): Try[Array[Byte]] =
-  Json
-    .decode(json getBytes &quot;UTF8&quot;)
-    .to[Element]
-    .valueTry
-    .flatMap(dom =&gt; Cbor.encode(dom).toByteArrayTry)
-
-jsonToCbor(&quot;&quot;&quot;{&quot;foo&quot;:[42,&quot;rocks&quot;],&quot;bar&quot;:26.8}&quot;&quot;&quot;).get ==&gt;
-hex&quot;BF63666F6F9F182A65726F636B73FF63626172FB403ACCCCCCCCCCCDFF&quot;</code></pre>
+// encodes into an existing file,
+// relies on the `Output.ToValueProvider[File]` type class instance
+val file = new java.io.File(filename)
+Cbor.encode(value).to(file).result ==&gt; file</code></pre>
+<h2><a href="#byteaccess" name="byteaccess" class="anchor"><span class="anchor-link"></span></a>ByteAccess</h2>
+<p>Unfortunately Scala (and the whole JVM eco-system) has no single, versatile abstraction for a &ldquo;chunk of bytes&rdquo; that fits the needs of all applications. In order to remain open to the preferences of the application <em>borer</em> also abstracts over &ldquo;chunks of bytes&rdquo; by allowing the use of any type <code>T</code>, for which a <code>ByteAccess[T]</code> is available.</p>
+<p>Currently <em>borer</em> comes with predefined <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/ByteAccess.scala">ByteAccess</a> implementations for these types:</p>
+<ul>
+  <li><code>Array[Byte]</code></li>
+  <li><code>java.nio.ByteBuffer</code></li>
+  <li><code>akka.util.ByteString</code> (with the <code>borer-compat-akka</code> module)</li>
+  <li><code>scodec.bits.ByteVector</code> (with the <code>borer-compat-scodec</code> module)</li>
+</ul>
 </div>
 <div>
-<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-core/08-DOM.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-core/06-supporting-typeclasses.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.11.0
+0.11.1
 </span>
 </div>
 </article>
@@ -261,7 +311,7 @@ Edit this page
 <footer class="md-footer">
 <div class="md-footer-nav">
 <nav class="md-footer-nav__inner md-grid">
-<a href="../borer-core/07-JSON-performance.html" title="JSON Performance" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<a href="../borer-core/05-stringnumbers.html" title="StringNumbers and StringBooleans" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
 <div class="md-flex__cell md-flex__cell--shrink">
 <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
 </div>
@@ -270,17 +320,17 @@ Edit this page
 <span class="md-footer-nav__direction">
 Previous
 </span>
-JSON Performance
+StringNumbers and StringBooleans
 </span>
 </div>
 </a>
-<a href="../borer-core/09-debugging.html" title="Debugging" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<a href="../borer-core/07-JSON-specifics.html" title="JSON Specifics" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
 <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
 <span class="md-flex__ellipsis">
 <span class="md-footer-nav__direction">
 Next
 </span>
-Debugging
+JSON Specifics
 </span>
 </div>
 <div class="md-flex__cell md-flex__cell--shrink">

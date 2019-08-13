@@ -143,11 +143,12 @@ sirthias/borer/
     <li><a href="borer-core/02-supported-types.html" class="page">Types Supported Out-of-the-Box</a></li>
     <li><a href="borer-core/03-custom-types.html" class="page">Encoding and Decoding Custom Types</a></li>
     <li><a href="borer-core/04-nullable-and-default.html" class="page">Nullable and Default</a></li>
-    <li><a href="borer-core/05-supporting-typeclasses.html" class="page"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a></li>
-    <li><a href="borer-core/06-JSON-specifics.html" class="page">JSON Specifics</a></li>
-    <li><a href="borer-core/07-JSON-performance.html" class="page">JSON Performance</a></li>
-    <li><a href="borer-core/08-DOM.html" class="page">Document Object Model (DOM)</a></li>
-    <li><a href="borer-core/09-debugging.html" class="page">Debugging</a></li>
+    <li><a href="borer-core/05-stringnumbers.html" class="page"><code>StringNumbers</code> and <code>StringBooleans</code></a></li>
+    <li><a href="borer-core/06-supporting-typeclasses.html" class="page"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a></li>
+    <li><a href="borer-core/07-JSON-specifics.html" class="page">JSON Specifics</a></li>
+    <li><a href="borer-core/08-JSON-performance.html" class="page">JSON Performance</a></li>
+    <li><a href="borer-core/09-DOM.html" class="page">Document Object Model (DOM)</a></li>
+    <li><a href="borer-core/10-debugging.html" class="page">Debugging</a></li>
   </ul></li>
   <li><a href="borer-derivation/index.html" class="page"><code>borer-derivation</code></a>
   <ul>
@@ -173,7 +174,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.11.0
+<i class="md-icon" title="Version">label_outline</i> 0.11.1
 </label>
 </li>
 </ul>
@@ -199,7 +200,7 @@ sirthias/borer/
   <dt>Lightweight</dt>
   <dd><em>borer</em> has zero external dependencies and its code is relatively compact.</dd>
   <dt>Fast</dt>
-  <dd><em>borer</em> features DOM-less pull-parsers with one-element look-ahead and is designed for a good tradeoff between  performance and usability. It supports stream parsing (in constant memory, even for very large files) and consistently  <a href="borer-core/07-JSON-performance.html">outperforms</a> most other serialization libraries targeting <a href="http://cbor.io/">CBOR</a> or  <a href="http://json.org/">JSON</a> that are available to <a href="https://www.scala-lang.org/">Scala</a> developers.</dd>
+  <dd><em>borer</em> features DOM-less pull-parsers with one-element look-ahead and is designed for a good tradeoff between  performance and usability. It supports stream parsing (in constant memory, even for very large files) and consistently  <a href="borer-core/08-JSON-performance.html">outperforms</a> most other serialization libraries targeting <a href="http://cbor.io/">CBOR</a> or  <a href="http://json.org/">JSON</a> that are available to <a href="https://www.scala-lang.org/">Scala</a> developers.</dd>
   <dt>Flexible</dt>
   <dd><em>borer</em> tries hard to make integration into your applications environment as seamless as possible.  The type-class based design makes a lot of aspects deeply and easily customizable.<br>  Also, since <em>borer</em> offers a unified API for both, <a href="http://cbor.io/">CBOR</a> and <a href="http://json.org/">JSON</a>, it&rsquo;s very easy to provide &ldquo;bilingual&rdquo; REST APIs  that can consume and produce both formats interchangibly.</dd>
   <dt>Debuggable</dt>
@@ -215,7 +216,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.11.0
+0.11.1
 </span>
 </div>
 </article>
