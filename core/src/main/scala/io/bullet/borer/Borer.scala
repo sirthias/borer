@@ -21,7 +21,7 @@ case object Cbor extends Target {
   /**
     * Entry point into the CBOR encoding mini-DSL.
     */
-  def encode[T: Encoder](value: T): EncodingSetup.Api[T, EncodingConfig] =
+  def encode[T: Encoder](value: T): EncodingSetup.Api[EncodingConfig] =
     new EncodingSetup.Impl(value, this, EncodingConfig.default, CborValidation.wrapper, CborRenderer)
 
   /**
@@ -214,7 +214,7 @@ case object Json extends Target {
   */
 sealed abstract class Target {
 
-  def encode[T: Encoder](value: T): EncodingSetup.Api[T, _]
+  def encode[T: Encoder](value: T): EncodingSetup.Api[_]
 
   def decode[T](input: T)(implicit w: Input.Provider[T]): DecodingSetup.Api[w.In, _]
 }

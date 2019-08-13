@@ -19,7 +19,7 @@ import scala.util.control.NonFatal
 
 object EncodingSetup {
 
-  sealed trait Api[T, Config <: Borer.EncodingConfig] {
+  sealed trait Api[Config <: Borer.EncodingConfig] {
 
     /**
       * Configures the [[Config]] for this encoding run.
@@ -69,12 +69,12 @@ object EncodingSetup {
     def toByteBufferTry: Try[ByteBuffer]
 
     /**
-      * Encodes an instance of [[T]] to the given type `R` type using the configured options.
+      * Encodes an instance of T to the given type `R` type using the configured options.
       */
     def to[R](implicit op: Output.ToTypeProvider[R]): Sealed[op.Out, R]
 
     /**
-      * Encodes an instance of [[T]] to the given `target` using the configured options.
+      * Encodes an instance of T to the given `target` using the configured options.
       */
     def to[R](target: R)(implicit op: Output.ToValueProvider[R]): Sealed[op.Out, R]
   }
@@ -94,7 +94,7 @@ object EncodingSetup {
     def outputEither: Either[Borer.Error[Out], Out]
   }
 
-  sealed trait JsonApi[T, Config <: Borer.EncodingConfig] extends Api[T, Config] {
+  sealed trait JsonApi[T, Config <: Borer.EncodingConfig] extends Api[Config] {
 
     /**
       * Short-cut for encoding to a plain byte array, throwing an exception in case of any failures,
