@@ -28,9 +28,8 @@ case object Cbor extends Target {
     * Entry point into the CBOR decoding mini-DSL.
     */
   def decode[T](value: T)(implicit p: Input.Provider[T]): DecodingSetup.Api[p.In, DecodingConfig] =
-    new DecodingSetup.Impl(
-      p(value),
-      p.byteAccess,
+    new DecodingSetup.Impl[T, p.Bytes, p.In, DecodingConfig](
+      value,
       DecodingConfig.default,
       CborValidation.wrapper,
       CborParser.creator[p.Bytes, DecodingConfig],
@@ -53,7 +52,7 @@ case object Cbor extends Target {
       config: DecodingConfig = DecodingConfig.default,
       receiverWrapper: Receiver.Wrapper[DecodingConfig] = CborValidation.wrapper)(
       implicit p: Input.Provider[T]): Reader =
-    new InputReader(new CborParser(p(value), config)(p.byteAccess), receiverWrapper, config, this)
+    new InputReader(new CborParser(p(value), config)(p.byteAccess), null, receiverWrapper, config, this)
 
   /**
     * @param bufferSize                  the buffer size used for configuring the respective [[Output]]
@@ -94,8 +93,7 @@ case object Cbor extends Target {
       maxByteStringLength: Int = 10 * 1024 * 1024,
       maxArrayLength: Long = Int.MaxValue,
       maxMapLength: Long = Int.MaxValue,
-      maxNestingLevels: Int = 1000,
-      allowDirectByteArrayAccess: Boolean = true)
+      maxNestingLevels: Int = 1000)
       extends Borer.DecodingConfig with CborValidation.Config with CborParser.Config {
 
     Util.requireNonNegative(maxTextStringLength, "maxTextStringLength")
@@ -125,13 +123,12 @@ case object Json extends Target {
     * Entry point into the JSON decoding mini-DSL.
     */
   def decode[T](value: T)(implicit p: Input.Provider[T]): DecodingSetup.Api[p.In, DecodingConfig] =
-    new DecodingSetup.Impl[p.Bytes, p.In, DecodingConfig](
-      p(value),
-      p.byteAccess,
+    new DecodingSetup.Impl[T, p.Bytes, p.In, DecodingConfig](
+      value,
       DecodingConfig.default,
       Receiver.nopWrapper,
       JsonParser.creator[p.Bytes, DecodingConfig],
-      null)
+      this)
 
   /**
     * Constructs a new [[Writer]] that writes JSON to the given [[Output]].
@@ -148,8 +145,12 @@ case object Json extends Target {
   def reader[T](
       value: T,
       config: DecodingConfig = DecodingConfig.default,
-      receiverWrapper: Receiver.Wrapper[DecodingConfig] = Receiver.nopWrapper)(implicit p: Input.Provider[T]): Reader =
-    new InputReader(new JsonParser(p(value), config)(p.byteAccess), receiverWrapper, config, Json)
+      receiverWrapper: Receiver.Wrapper[DecodingConfig] = Receiver.nopWrapper)(
+      implicit p: Input.Provider[T]): Reader = {
+    val directParser = io.bullet.borer.json.DirectParser(value, config)
+    val parser       = if (directParser ne null) null else new JsonParser(p(value), config)(p.byteAccess)
+    new InputReader(parser, directParser, receiverWrapper, config, Json)
+  }
 
   final case class EncodingConfig(bufferSize: Int = 1024) extends Borer.EncodingConfig {
     def compressFloatingPointValues = false
@@ -184,7 +185,7 @@ case object Json extends Target {
       maxStringLength: Int = 1024 * 1024,
       maxNumberMantissaDigits: Int = 34,
       initialCharbufferSize: Int = 256,
-      allowDirectByteArrayAccess: Boolean = true)
+      allowDirectParsing: Boolean = true)
       extends Borer.DecodingConfig with JsonParser.Config {
 
     Util.requireRange(maxNumberAbsExponent, 1, 999, "maxNumberAbsExponent")

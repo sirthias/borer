@@ -73,13 +73,12 @@ object DecodingSetup {
     def valueAndInputEither: Either[Borer.Error[Input.Position], (T, In)]
   }
 
-  final private[borer] class Impl[Bytes, In <: Input[Bytes], Config <: Borer.DecodingConfig](
-      input: In,
-      byteAccess: ByteAccess[Bytes],
+  final private[borer] class Impl[V, Bytes, In <: Input[Bytes], Config <: Borer.DecodingConfig](
+      inputValue: V,
       defaultConfig: Config,
       defaultWrapper: Receiver.Wrapper[Config],
       parserCreator: Parser.Creator[Bytes, Config],
-      target: Target)
+      target: Target)(implicit p: Input.Provider[V])
       extends Borer.AbstractSetup[Config](defaultConfig, defaultWrapper) with Api[In, Config] with Sealed[In, AnyRef] {
 
     private[this] var prefixOnly: Boolean      = _
@@ -155,8 +154,16 @@ object DecodingSetup {
       }
     }
 
-    private def newReader(): Reader =
-      new InputReader(parserCreator(input, byteAccess, config), receiverWrapper, config, target)
+    private def newReader(): Reader = {
+      val directParser = config match {
+        case x: Json.DecodingConfig => io.bullet.borer.json.DirectParser(inputValue, x)
+        case _                      => null
+      }
+      val parser =
+        if (directParser ne null) null
+        else parserCreator(p(inputValue).asInstanceOf[In], p.byteAccess.asInstanceOf[ByteAccess[Bytes]], config)
+      new InputReader(parser, directParser, receiverWrapper, config, target)
+    }
 
     private def decodeFrom(reader: Reader): AnyRef = {
       val value = decoder.read(reader)

@@ -159,7 +159,7 @@ lazy val borer = project.in(file("."))
   .settings(releaseSettings)
   .settings(publish / skip := true)
 
-lazy val coreJVM = core.jvm
+lazy val coreJVM = core.jvm.enablePlugins(SpecializeJsonParserPlugin)
 lazy val coreJS  = core.js
 lazy val core = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
@@ -174,8 +174,13 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
     libraryDependencies ++= Seq(`collection-compat`.value, `scala-reflect`.value, utest.value),
 
     // point sbt-boilerplate to the common "project"
-    boilerplateSource in Compile := baseDirectory.value.getParentFile / "src" / "main" / "boilerplate",
-    sourceManaged in Compile := baseDirectory.value.getParentFile / "target" / "scala" / "src_managed" / "main"
+    Compile / boilerplateSource := baseDirectory.value.getParentFile / "src" / "main" / "boilerplate",
+    Compile / sourceManaged := baseDirectory.value.getParentFile / "target" / "scala" / "src_managed" / "main"
+  )
+  .jvmSettings(
+    Compile / specializeJsonParser / sourceDirectory := baseDirectory.value.getParentFile / "src" / "main",
+    Compile / specializeJsonParser / sourceManaged := baseDirectory.value / "target" / "scala" / "src_managed" / "main",
+    Compile / managedSourceDirectories += (Compile / specializeJsonParser / sourceManaged).value
   )
   .jsSettings(scalajsSettings: _*)
 

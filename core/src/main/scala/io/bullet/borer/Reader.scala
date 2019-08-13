@@ -21,6 +21,7 @@ import scala.collection.compat._
   */
 final class InputReader[Config <: Reader.Config](
     parser: Parser[_],
+    directParser: io.bullet.borer.json.DirectJsonParser,
     receiverWrapper: Receiver.Wrapper[Config],
     config: Config,
     val target: Target) {
@@ -46,18 +47,20 @@ final class InputReader[Config <: Reader.Config](
         if (stash.next ne null) {
           this.stash = stash.next // collapse this unused stash level
           pullInto(rcv, this.stash)
-        } else parser.pull(rcv)
+        } else if (directParser ne null) directParser.pull(rcv)
+        else parser.pull(rcv)
       } else stash.pull(rcv)
 
     if (stash ne null) maybePullFromStash()
+    else if (directParser ne null) directParser.pull(rcv)
     else parser.pull(rcv)
   }
 
   @inline def readingJson: Boolean = target eq Json
   @inline def readingCbor: Boolean = target eq Cbor
 
-  @inline def input: Input[_]          = parser.input
-  @inline def cursor: Long             = parser.valueIndex
+  @inline def input: Input[_]          = if (directParser ne null) directParser.input else parser.input
+  @inline def cursor: Long             = if (directParser ne null) directParser.valueIndex else parser.valueIndex
   @inline def position: Input.Position = input.position(cursor)
 
   /**
