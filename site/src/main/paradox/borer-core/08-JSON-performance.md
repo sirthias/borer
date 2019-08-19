@@ -6,7 +6,7 @@ compared to other popular JSON libraries in the scala eco-system when it comes t
 case-class based data model.
 
 A @github[benchmark against 18 real-world JSON data examples](/benchmarks/src/main/resources/) from a diverse set of
-sources shows that _borer_'s JSON parsing infrastructure outperforms [Circe] (for example) by almost a factor of two,
+sources shows that _borer_'s JSON parsing infrastructure outperforms [Circe] (for example) by more than a factor of two,
 on average:
 
 @@@ div { #benchmark-results }
@@ -57,7 +57,8 @@ with the `benchmarkResults` SBT command. It will show you a synthesis of all ben
 
 @@@ warning
 
-The `benchmarks/results` folder already contains the results of the last "official" benchmarking runs.<br>
+The `benchmarks/results` folder already contains the results of the last "official" benchmarking runs.
+(@github[here](/benchmarks/results/))<br>
 When you run your own benchmarks you should first remove these "official" `.json` files since benchmark results are
 not comparable when run on non-identical machines!
 
