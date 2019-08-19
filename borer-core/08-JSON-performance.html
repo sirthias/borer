@@ -191,7 +191,7 @@ sirthias/borer/
 <div class="md-content__searchable">
 <h1><a href="#json-performance" name="json-performance" class="anchor"><span class="anchor-link"></span></a>JSON Performance</h1>
 <p><em>borer</em> comes with a fast JSON parser optimized for modern superscalar 64-bit CPUs, which performs quite well when compared to other popular JSON libraries in the scala eco-system when it comes to transforming raw JSON-bytes into a case-class based data model.</p>
-<p>A <a href="https://github.com/sirthias/borer/tree/master/benchmarks/src/main/resources">benchmark against 18 real-world JSON data examples</a> from a diverse set of sources shows that <em>borer</em>&rsquo;s JSON parsing infrastructure outperforms <a href="https://circe.github.io/circe/">Circe</a> (for example) by almost a factor of two, on average:</p><div id="benchmark-results">
+<p>A <a href="https://github.com/sirthias/borer/tree/master/benchmarks/src/main/resources">benchmark against 18 real-world JSON data examples</a> from a diverse set of sources shows that <em>borer</em>&rsquo;s JSON parsing infrastructure outperforms <a href="https://circe.github.io/circe/">Circe</a> (for example) by more than a factor of two, on average:</p><div id="benchmark-results">
 <p><img src="../assets/images/benchmark-results.svg" alt="Benchmark Results" /></p></div>
 <p>This is the benchmark setup:</p>
 <dl>
@@ -215,7 +215,7 @@ sirthias/borer/
 </code></pre><div class="callout note "><div class="callout-title">Note</div>
 <p>This &ldquo;full&rdquo; benchmark will run for more than 4 days!</p></div>
 <p>Since interpreting the results can be a bit tedious <em>borer</em> comes with some simple analysis logic that can be invoked with the <code>benchmarkResults</code> SBT command. It will show you a synthesis of all benchmark results currently living in the <code>benchmarks/results</code> folder.</p><div class="callout warning "><div class="callout-title">Warning</div>
-<p>The <code>benchmarks/results</code> folder already contains the results of the last &ldquo;official&rdquo; benchmarking runs.<br> When you run your own benchmarks you should first remove these &ldquo;official&rdquo; <code>.json</code> files since benchmark results are not comparable when run on non-identical machines!</p></div>
+<p>The <code>benchmarks/results</code> folder already contains the results of the last &ldquo;official&rdquo; benchmarking runs. (<a href="https://github.com/sirthias/borer/tree/master/benchmarks/results">here</a>)<br> When you run your own benchmarks you should first remove these &ldquo;official&rdquo; <code>.json</code> files since benchmark results are not comparable when run on non-identical machines!</p></div>
 </div>
 <div>
 <a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-core/08-JSON-performance.md" title="Edit this page" class="md-source-file md-edit">
