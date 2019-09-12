@@ -92,7 +92,7 @@ Version 0.6.0 (2019-03-06)
 --------------------------
 
 borer-core:
--Refactor main entry-point DSL for clarity and convenience
+- refactor main entry-point DSL for clarity and convenience
 
 borer-core & borer-derivation:
 - Remove array-wrapping of derived codecs for `Product1` types
