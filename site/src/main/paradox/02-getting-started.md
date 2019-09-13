@@ -7,9 +7,9 @@ Modules
 _borer_ consists of these modules:
 
 - @ref:[`borer-core`](borer-core/index.md), the actual core logic (no dependencies)
-- @ref:[`borer-derivation`](borer-derivation/index.md), (semi-)automatic codec derivation for case classes and ADTs (no dependencies, relies on macros)
-- @ref:[`borer-compat-akka`](05-borer-compat-akka.md), support for `akka.util.ByteString` (depends on [akka-actor])
-- @ref:[`borer-compat-scodec`](06-borer-compat-scodec.md), support for `scodec.bits.ByteVector` (depends on [scodec])
+- @ref:[`borer-derivation`](borer-derivation/index.md), (semi-)automatic codec derivation for case classes and ADTs<br>(no dependencies, relies on macros)
+- @ref:[`borer-compat-akka`](05-borer-compat-akka.md), support for `akka.util.ByteString` and `akka-http` (un)marshalling<br>(has a `provided` dependency on [akka-actor], [akka-stream] and [akka-http])
+- @ref:[`borer-compat-scodec`](06-borer-compat-scodec.md), support for `scodec.bits.ByteVector`<br>(has a `provided` dependency on [scodec])
 
 Installation
 ------------
@@ -28,4 +28,6 @@ _borer_ is available for [Scala] 2.12 and 2.13 as well as [scala.js].
   [Scala]: https://www.scala-lang.org/
   [scala.js]: https://www.scala-js.org/
   [akka-actor]: https://doc.akka.io/docs/akka/2.5/actors.html#dependency
+  [akka-stream]: https://doc.akka.io/docs/akka/current/stream/index.html
+  [akka-http]: https://doc.akka.io/docs/akka-http/current/index.html
   [scodec]: http://scodec.org/

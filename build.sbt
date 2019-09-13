@@ -140,9 +140,11 @@ lazy val macroParadise =
 /////////////////////// DEPENDENCIES /////////////////////////
 
 val `collection-compat` = Def.setting("org.scala-lang.modules" %%% "scala-collection-compat" % "2.1.2")
-val `akka-actor`        = Def.setting("com.typesafe.akka"      %%% "akka-actor"              % "2.5.25")
-val `scodec-bits`       = Def.setting("org.scodec"             %%% "scodec-bits"             % "1.1.12")
-val utest               = Def.setting("com.lihaoyi"            %%% "utest"                   % "0.7.1"            % "test")
+val `akka-actor`        = Def.setting("com.typesafe.akka"      %%  "akka-actor"              % "2.5.25" % "provided")
+val `akka-stream`       = Def.setting("com.typesafe.akka"      %%  "akka-stream"             % "2.5.25" % "provided")
+val `akka-http`         = Def.setting("com.typesafe.akka"      %%  "akka-http"               % "10.1.9" % "provided")
+val `scodec-bits`       = Def.setting("org.scodec"             %%% "scodec-bits"             % "1.1.12" % "provided")
+val utest               = Def.setting("com.lihaoyi"            %%% "utest"                   % "0.7.1"  % "test")
 val `scala-compiler`    = Def.setting("org.scala-lang"         %  "scala-compiler"           % scalaVersion.value % "provided")
 val `scala-reflect`     = Def.setting("org.scala-lang"         %  "scala-reflect"            % scalaVersion.value % "provided")
 
@@ -192,7 +194,7 @@ lazy val akka = project
   .settings(releaseSettings)
   .settings(
     moduleName := "borer-compat-akka",
-    libraryDependencies ++= Seq(`akka-actor`.value, utest.value)
+    libraryDependencies ++= Seq(`akka-actor`.value, `akka-stream`.value, `akka-http`.value, utest.value)
   )
 
 lazy val scodecJVM = scodec.jvm
@@ -259,7 +261,7 @@ lazy val site = project
   .settings(commonSettings)
   .settings(
     publish / skip := true,
-    libraryDependencies ++= Seq(utest.value),
+    libraryDependencies ++= Seq(`akka-actor`.value, `akka-stream`.value, `akka-http`.value, utest.value),
 
     com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo := scmInfo.value.get.connection.drop("scm:git:".length),
     ghpagesNoJekyll := true,
