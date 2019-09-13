@@ -98,4 +98,32 @@ final private[borer] class Receptacle extends Receiver with java.lang.Cloneable 
   def onSimpleValue(value: Int): Unit = _int = value
 
   def onEndOfInput(): Unit = ()
+
+  def pushInto(receiver: Receiver, dataItem: Int): Unit =
+    Integer.numberOfTrailingZeros(dataItem) match {
+      case DataItem.Shifts.Null         => receiver.onNull()
+      case DataItem.Shifts.Undefined    => receiver.onUndefined()
+      case DataItem.Shifts.Boolean      => receiver.onBoolean(_bool)
+      case DataItem.Shifts.Int          => receiver.onInt(_int)
+      case DataItem.Shifts.Long         => receiver.onLong(_long)
+      case DataItem.Shifts.OverLong     => receiver.onOverLong(_bool, _long)
+      case DataItem.Shifts.Float16      => receiver.onFloat16(_float)
+      case DataItem.Shifts.Float        => receiver.onFloat(_float)
+      case DataItem.Shifts.Double       => receiver.onDouble(_double)
+      case DataItem.Shifts.NumberString => receiver.onNumberString(_obj.asInstanceOf[String])
+      case DataItem.Shifts.String       => receiver.onString(_obj.asInstanceOf[String])
+      case DataItem.Shifts.Chars        => receiver.onChars(_obj.asInstanceOf[Array[Char]], _int)
+      case DataItem.Shifts.Text         => receiver.onText[Any](_obj)(_byteAccess)
+      case DataItem.Shifts.TextStart    => receiver.onTextStart()
+      case DataItem.Shifts.Bytes        => receiver.onBytes[Any](_obj)(_byteAccess)
+      case DataItem.Shifts.BytesStart   => receiver.onBytesStart()
+      case DataItem.Shifts.ArrayHeader  => receiver.onArrayHeader(_long)
+      case DataItem.Shifts.ArrayStart   => receiver.onArrayStart()
+      case DataItem.Shifts.MapHeader    => receiver.onMapHeader(_long)
+      case DataItem.Shifts.MapStart     => receiver.onMapStart()
+      case DataItem.Shifts.Break        => receiver.onBreak()
+      case DataItem.Shifts.Tag          => receiver.onTag(_obj.asInstanceOf[Tag])
+      case DataItem.Shifts.SimpleValue  => receiver.onSimpleValue(_int)
+      case DataItem.Shifts.EndOfInput   => receiver.onEndOfInput()
+    }
 }

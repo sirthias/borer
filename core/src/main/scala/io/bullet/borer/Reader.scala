@@ -41,6 +41,14 @@ final class InputReader[Config <: Reader.Config](
     _dataItem
   }
 
+  private[borer] def receiveInto(rcv: Receiver, stash: ElementDeque): Int =
+    if (_dataItem != DI.None) {
+      val result = _dataItem
+      receptacle.pushInto(rcv, result)
+      _dataItem = DI.None
+      result
+    } else pullInto(rcv, stash)
+
   private[borer] def pullInto(rcv: Receiver, stash: ElementDeque): Int = {
     def maybePullFromStash(): Int =
       if (stash.isEmpty) {

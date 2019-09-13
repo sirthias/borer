@@ -196,7 +196,7 @@ object AdtEncodingStrategy {
             def finish(): Unit = {
               if (mapSize < 0) stash.prependReceiver.onMapStart() // inject artificial map-start data item
               else stash.prependReceiver.onMapHeader(mapSize - 1) // inject artificial map-header data item
-              r.pullInto(stash.prependReceiver, prevStash)        // member value, i.e. type id
+              r.receiveInto(stash.prependReceiver, prevStash)     // member value, i.e. type id
             }
 
             stash.appendElementFrom(r, prevStash) match {
@@ -216,7 +216,7 @@ object AdtEncodingStrategy {
             }
           } else failNoTypeId()
 
-        r.pullInto(stash.appendReceiver, prevStash) match {
+        r.receiveInto(stash.appendReceiver, prevStash) match {
           case DataItem.MapStart =>
             stash.clear()
             stash.appendReceiver.onMapHeader(1L)

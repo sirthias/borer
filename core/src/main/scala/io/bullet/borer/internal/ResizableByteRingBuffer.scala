@@ -68,7 +68,7 @@ final private[borer] class ResizableByteRingBuffer(initialCapacity: Int, val max
       val ix = readIx - 1
       readIx = ix
       write1(value, ix)
-    } else grow() && append1(value)
+    } else grow() && prepend1(value)
 
   def append2(a: Byte, b: Byte): Boolean =
     if (count <= currentCapacity - 2) {

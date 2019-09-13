@@ -178,7 +178,7 @@ final private[borer] class ElementDeque(maxBufferSize: Int, val next: ElementDeq
       } else sys.error("Structures with more than 100 nesting levels are not supported") // TODO: make configurable
     }
 
-    val first = r.pullInto(appendReceiver, prevStash)
+    val first = r.receiveInto(appendReceiver, prevStash)
     if ((first & DataItem.Complex) != 0) pullComplex(first, 0)
     first
   }

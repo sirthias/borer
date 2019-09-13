@@ -76,8 +76,12 @@ object JsonFlatAdtEncodingSpec extends AbstractBorerSpec {
         val goodDog = Good(Dog(2, "Lolle"))
         roundTrip("""{"value":{"age":2,"name":"Lolle"}}""", goodDog)
         roundTrip("""{"_type":"Good","value":{"_type":"Dog","age":2,"name":"Lolle"}}""", goodDog: Result[Animal])
+        verifyDecoding("""{"value":{"age":2,"_type":"Dog","name":"Lolle"}, "_type":"Good"}""", goodDog: Result[Animal])
 
-        verifyDecoding("""{"value":{"age":2,"name":"Lolle","_type":"Dog"}, "_type":"Good"}""", goodDog: Result[Animal])
+        val dogs = Good(List(Dog(2, "LL")))
+        roundTrip("""{"value":[{"age":2,"name":"LL"}]}""", dogs)
+        roundTrip("""{"_type":"Good","value":[{"_type":"Dog","age":2,"name":"LL"}]}""", dogs: Result[List[Animal]])
+        verifyDecoding("""{"value":[{"age":2,"_type":"Dog","name":"LL"}],"_type":"Good"}""", dogs: Result[List[Animal]])
       }
     }
 
