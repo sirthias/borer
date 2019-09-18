@@ -14,6 +14,8 @@ import _root_.akka.http.scaladsl.model._
 import _root_.akka.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException
 import _root_.akka.http.scaladsl.unmarshalling.{Unmarshal, Unmarshaller}
 import _root_.akka.stream.ActorMaterializer
+import _root_.akka.stream.scaladsl.{Sink, Source}
+import _root_.akka.NotUsed
 import io.bullet.borer.Codec
 import utest._
 import MediaTypes.{`application/cbor`, `application/json`}
@@ -32,13 +34,20 @@ object AkkaHttpSupportSpec extends TestSuite {
     require(bar == "bar", "bar must be 'bar'!")
   }
 
+  final case class Num(x: Int)
+
   implicit private val system: ActorSystem    = ActorSystem()
   implicit private val mat: ActorMaterializer = ActorMaterializer()
   import system.dispatcher
 
-  implicit private val codec: Codec[Foo] = {
+  implicit private val fooCodec: Codec[Foo] = {
     import io.bullet.borer.derivation.MapBasedCodecs._
     deriveCodec[Foo]
+  }
+
+  implicit private val numCodec: Codec[Num] = {
+    import io.bullet.borer.derivation.MapBasedCodecs._
+    deriveCodec[Num]
   }
 
   val tests = Tests {
@@ -93,6 +102,26 @@ object AkkaHttpSupportSpec extends TestSuite {
         .to[Foo]
         .failed
         .map(_ ==> UnsupportedContentTypeException(ContentType(`application/cbor`), ContentTypes.`application/json`))
+    }
+
+    "stream unmarshalling (JSON)" - {
+      val entity = HttpEntity(`application/json`, """[{"x":1},{"x":2},{"x":3}]""")
+      Unmarshal(entity)
+        .to[Source[Num, NotUsed]]
+        .flatMap(_.runWith(Sink.seq))
+        .map(_ ==> List(Num(1), Num(2), Num(3)))
+    }
+
+    "stream marshalling (JSON)" - {
+      val nums         = List(Num(1), Num(2), Num(3))
+      val acceptHeader = _root_.akka.http.scaladsl.model.headers.Accept(MediaRange.One(`application/json`, 1.0f))
+      Marshal(nums)
+        .toResponseFor(HttpRequest(headers = acceptHeader :: Nil))
+        .flatMap(_.entity.toStrict(1.second))
+        .map { entity =>
+          entity.contentType ==> ContentTypes.`application/json`
+          entity.data.utf8String ==> """[{"x":1},{"x":2},{"x":3}]"""
+        }
     }
   }
 

@@ -8,11 +8,18 @@
 
 package io.bullet.borer.compat
 
+import scala.concurrent.Future
+import scala.reflect.ClassTag
 import _root_.akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
-import _root_.akka.http.scaladsl.model._
 import _root_.akka.http.scaladsl.unmarshalling.{FromEntityUnmarshaller, Unmarshaller}
+import _root_.akka.http.scaladsl.common.EntityStreamingSupport
+import _root_.akka.http.scaladsl.marshalling.{Marshalling, NoStrictlyCompatibleElementMarshallingAvailableException}
+import _root_.akka.http.scaladsl.model._
 import _root_.akka.http.scaladsl.util.FastFuture
 import _root_.akka.http.scaladsl.util.FastFuture._
+import _root_.akka.stream.scaladsl.{Flow, Keep, Source}
+import _root_.akka.util.ByteString
+import _root_.akka.NotUsed
 import io.bullet.borer._
 
 /**
@@ -30,7 +37,7 @@ object akkaHttp {
   implicit def defaultBorerUnmarshaller[T: Decoder]: FromEntityUnmarshaller[T] = borerUnmarshaller()
 
   /**
-    * Provides an [[FromEntityUnmarshaller]] for [[T]] given an implicit borer Decoder for [[T]].
+    * Provides a [[FromEntityUnmarshaller]] for [[T]] given an implicit borer Decoder for [[T]].
     * Supports both CBOR and JSON with the given MediaTypes.
     */
   def borerUnmarshaller[T: Decoder](
@@ -45,18 +52,14 @@ object akkaHttp {
           httpEntity.contentType.mediaType match {
             case `cborMediaType` => FastFuture(configureCbor(Cbor.decode(bytes)).to[T].valueTry)
             case `jsonMediaType` => FastFuture(configureJson(Json.decode(bytes)).to[T].valueTry)
-            case _ =>
-              FastFuture.failed(
-                Unmarshaller
-                  .UnsupportedContentTypeException(MediaTypes.`application/cbor`, MediaTypes.`application/json`)
-              )
+            case _               => FastFuture.failed(Unmarshaller.UnsupportedContentTypeException(cborMediaType, jsonMediaType))
           }
         } else FastFuture.failed(Unmarshaller.NoContentException)
       }
     }
 
   /**
-    * Provides an [[FromEntityUnmarshaller]] for [[T]] given an implicit borer Decoder for [[T]].
+    * Provides a [[FromEntityUnmarshaller]] for [[T]] given an implicit borer Decoder for [[T]].
     * Supports only CBOR with the given MediaType.
     */
   def borerCborUnmarshaller[T: Decoder](
@@ -67,15 +70,15 @@ object akkaHttp {
         if (bytes.length > 0) {
           httpEntity.contentType.mediaType match {
             case `cborMediaType` => FastFuture(configureCbor(Cbor.decode(bytes)).to[T].valueTry)
-            case _               => FastFuture.failed(Unmarshaller.UnsupportedContentTypeException(MediaTypes.`application/cbor`))
+            case _               => FastFuture.failed(Unmarshaller.UnsupportedContentTypeException(cborMediaType))
           }
         } else FastFuture.failed(Unmarshaller.NoContentException)
       }
     }
 
   /**
-    * Provides an [[FromEntityUnmarshaller]] for [[T]] given an implicit borer Decoder for [[T]].
-    * Supports only CBOR with the given MediaType.
+    * Provides a [[FromEntityUnmarshaller]] for [[T]] given an implicit borer Decoder for [[T]].
+    * Supports only JSON with the given MediaType.
     */
   def borerJsonUnmarshaller[T: Decoder](
       jsonMediaType: MediaType = MediaTypes.`application/json`,
@@ -86,7 +89,7 @@ object akkaHttp {
         if (bytes.length > 0) {
           httpEntity.contentType.mediaType match {
             case `jsonMediaType` => FastFuture(configureJson(Json.decode(bytes)).to[T].valueTry)
-            case _               => FastFuture.failed(Unmarshaller.UnsupportedContentTypeException(MediaTypes.`application/json`))
+            case _               => FastFuture.failed(Unmarshaller.UnsupportedContentTypeException(jsonMediaType))
           }
         } else FastFuture.failed(Unmarshaller.NoContentException)
       }
@@ -137,4 +140,78 @@ object akkaHttp {
     Marshaller.byteArrayMarshaller(jsonContentType).compose[T] { value =>
       configureJson(Json.encode(value)).toByteArray
     }
+
+  implicit def defaultBorerJsonStreamUnmarshaller[T: Decoder]: FromEntityUnmarshaller[Source[T, NotUsed]] =
+    borerStreamUnmarshaller(EntityStreamingSupport.json())
+
+  /**
+    * Provides a [[FromEntityUnmarshaller]] which produces streams of [[T]] given an implicit borer Decoder
+    * for [[T]]. Supports JSON or CSV, depending on the given [[EntityStreamingSupport]].
+    *
+    * @see https://doc.akka.io/api/akka-http/10.1.9/akka/http/scaladsl/common/EntityStreamingSupport.html
+    */
+  def borerStreamUnmarshaller[T: Decoder](ess: EntityStreamingSupport): FromEntityUnmarshaller[Source[T, NotUsed]] =
+    Unmarshaller.withMaterializer { implicit ec => implicit mat =>
+      val unmarshalSync = (byteString: ByteString) => Json.decode(byteString.toArray[Byte]).to[T].value
+      val unmarshallingFlow =
+        if (ess.parallelism > 1) {
+          val unmarshalAsync = (byteString: ByteString) => Future(unmarshalSync(byteString))
+          if (ess.unordered) Flow[ByteString].mapAsyncUnordered(ess.parallelism)(unmarshalAsync)
+          else Flow[ByteString].mapAsync(ess.parallelism)(unmarshalAsync)
+        } else Flow[ByteString].map(unmarshalSync)
+
+      httpEntity => {
+        if (ess.supported matches httpEntity.contentType) {
+          val frames = httpEntity.dataBytes.via(ess.framingDecoder)
+          FastFuture.successful(frames.viaMat(unmarshallingFlow)(Keep.right))
+        } else FastFuture.failed(Unmarshaller.UnsupportedContentTypeException(ess.supported))
+      }
+    }
+
+  implicit def defaultBorerJsonStreamMarshaller[T: ToEntityMarshaller: ClassTag]
+      : ToEntityMarshaller[Source[T, NotUsed]] =
+    borerStreamMarshaller[T](EntityStreamingSupport.json())
+
+  /**
+    * Provides a [[ToEntityMarshaller]] for streams of [[T]] given an implicit borer Encoder for [[T]].
+    * Supports JSON or CSV, depending on the given [[EntityStreamingSupport]].
+    */
+  def borerStreamMarshaller[T](ess: EntityStreamingSupport)(
+      implicit
+      marshaller: ToEntityMarshaller[T],
+      classTag: ClassTag[T]): ToEntityMarshaller[Source[T, NotUsed]] = {
+
+    type Marshallings = List[Marshalling[MessageEntity]]
+    val contentType = ess.contentType
+    val selectMarshalling: Marshallings => Option[() => MessageEntity] =
+      contentType match {
+        case _: ContentType.Binary | _: ContentType.WithFixedCharset | _: ContentType.WithMissingCharset =>
+          (_: Marshallings).collectFirst { case Marshalling.WithFixedContentType(`contentType`, marshal) => marshal }
+        case ContentType.WithCharset(mediaType, charset) =>
+          (_: Marshallings).collectFirst {
+            case Marshalling.WithFixedContentType(`contentType`, marshal) => marshal
+            case Marshalling.WithOpenCharset(`mediaType`, marshal)        => () => marshal(charset)
+          }
+      }
+
+    Marshaller[Source[T, NotUsed], MessageEntity] { implicit ec => source =>
+      FastFuture successful {
+        Marshalling.WithFixedContentType(contentType, () => {
+          val byteStream =
+            source
+              .mapAsync(1)(value => marshaller(value)(ec))
+              .map { marshallings =>
+                selectMarshalling(marshallings)
+                  .orElse(marshallings collectFirst { case Marshalling.Opaque(x) => x })
+                  .getOrElse(
+                    throw new NoStrictlyCompatibleElementMarshallingAvailableException[T](contentType, marshallings))
+              }
+              .flatMapConcat(_.apply().dataBytes) // marshal!
+              .via(ess.framingRenderer)
+
+          HttpEntity(contentType, byteStream)
+        }) :: Nil
+      }
+    }
+  }
 }
