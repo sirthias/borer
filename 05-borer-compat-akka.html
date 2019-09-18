@@ -173,16 +173,41 @@ sirthias/borer/
   </ul></li>
 </ul>
 <nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="05-borer-compat-akka.html#borer-compat-akka" class="header"><code>borer-compat-akka</code></a>
+  <ul>
+    <li><a href="05-borer-compat-akka.html#bytestring-support" class="header"><code>ByteString</code> support</a></li>
+    <li><a href="05-borer-compat-akka.html#akka-http-un-marshalling" class="header">Akka Http (Un)Marshalling</a></li>
+  </ul></li>
+</ul>
 </nav>
 
 </nav>
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.11.1
+<i class="md-icon" title="Version">label_outline</i> 1.0.0
 </label>
 </li>
 </ul>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="05-borer-compat-akka.html#borer-compat-akka" class="header"><code>borer-compat-akka</code></a>
+  <ul>
+    <li><a href="05-borer-compat-akka.html#bytestring-support" class="header"><code>ByteString</code> support</a></li>
+    <li><a href="05-borer-compat-akka.html#akka-http-un-marshalling" class="header">Akka Http (Un)Marshalling</a></li>
+  </ul></li>
+</ul>
+</nav>
+
 </div>
 </div>
 </div>
@@ -190,11 +215,47 @@ sirthias/borer/
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
 <h1><a href="#borer-compat-akka" name="borer-compat-akka" class="anchor"><span class="anchor-link"></span></a><code>borer-compat-akka</code></h1>
-<p>The <a href="borer-core/index.html"><code>borer-core</code></a> module by itself only knows how to encode to and decode from plain byte arrays (<code>Array[Byte]</code>).</p>
+<h2><a href="#bytestring-support" name="bytestring-support" class="anchor"><span class="anchor-link"></span></a><code>ByteString</code> support</h2>
+<p>The <a href="borer-core/index.html"><code>borer-core</code></a> module by itself only knows how to encode to and decode from plain byte arrays (<code>Array[Byte]</code>) and a few other types (like <code>java.nio.ByteBuffer</code>, see the chapter on <a href="borer-core/06-supporting-typeclasses.html">Input, Output, ByteAccess</a> for full details).</p>
 <p>When you include the <code>borer-compat-akka</code> module as a dependency (see the <a href="02-getting-started.html">Getting Started</a> chapter for details) and</p>
 <pre class="prettyprint"><code class="language-scala">import io.bullet.borer.compat.akka._
 </code></pre>
 <p>you also get full &ldquo;zero-copy&rdquo; support for encoding to and decoding from <code>akka.util.ByteString</code> as well as an implicit <code>Encoder[ByteString]</code> and <code>Decoder[ByteString]</code>.</p>
+<h2><a href="#akka-http-un-marshalling" name="akka-http-un-marshalling" class="anchor"><span class="anchor-link"></span></a>Akka Http (Un)Marshalling</h2>
+<p>In addition to <code>ByteString</code> support the <code>borer-compat-akka</code> also provides convenient marshallers and unmarshallers for HTTP entities.</p>
+<p>When you include the <code>borer-compat-akka</code> module as a dependency (see the <a href="02-getting-started.html">Getting Started</a> chapter for details) and</p>
+<pre class="prettyprint"><code class="language-scala">import io.bullet.borer.compat.akkaHttp._
+</code></pre>
+<p><code>akka-http</code> will transparently marshal to and from your custom domain model types:</p>
+<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/AkkaHttpSupportSpec.scala#L12-L38" target="_blank" title="Go to snippet source"></a><code class="language-scala">import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.Directives._
+
+// custom model for request and response content
+final case class MyRequest(foo: String)
+final case class MyResponse(importantValue: Int)
+
+// borer encoders/decoders for the custom model above
+import io.bullet.borer.derivation.MapBasedCodecs._
+
+implicit val myRequestDecoder  = deriveCodec[MyRequest]
+implicit val myResponseEncoder = deriveCodec[MyResponse]
+
+// bring automatic (un) marshaller construction in scope
+import io.bullet.borer.compat.akkaHttp._
+
+// route that unmarshalls to `MyRequest` and marshals to `MyResponse`
+val route: Route =
+  pathSingleSlash {
+    post {
+      entity(as[MyRequest]) { myRequest =&gt;
+        complete {
+          MyResponse(myRequest.foo.length)
+        }
+      }
+    }
+  }</code></pre>
+<p>By default the <code>Unmarshaller</code> constructed by <code>borer-compat-akka</code> understand both <a href="http://cbor.io/">CBOR</a> and <a href="http://json.org/">JSON</a> with Content-Type <code>application/cbor</code> and <code>application/json</code>, respectively.<br> The <code>Marshaller</code> also supports both formats and lets the client determine via HTTP content negotiation (i.e. the <code>Accept</code> header) , which one it prefers. If the client has no preference <a href="http://cbor.io/">CBOR</a> is chosen.</p>
+<p>Also, (Un)marshaller construction can be customized in various ways, e.g. with custom media types, and is also available for streams, i.e. to and from <code>akka.stream.scaladsl.Source[T, _]</code> rather than simply <code>T</code>.<br> Check out the <a href="https://github.com/sirthias/borer/tree/master/akka/src/main/scala/io/bullet/borer/compat/akkaHttp.scala">sources</a> for full details.</p>
 </div>
 <div>
 <a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/05-borer-compat-akka.md" title="Edit this page" class="md-source-file md-edit">
@@ -203,7 +264,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.11.1
+1.0.0
 </span>
 </div>
 </article>
