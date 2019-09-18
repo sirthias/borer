@@ -1,7 +1,7 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import ReleaseTransformations._
 
-def scala213 = "2.13.0"
+def scala213 = "2.13.1"
 def scala212 = "2.12.10"
 
 lazy val commonSettings = Seq(
@@ -68,7 +68,7 @@ lazy val commonSettings = Seq(
   pomIncludeRepository := { _ ⇒
     false
   },
-  publishTo := sonatypePublishTo.value,
+  publishTo := sonatypePublishToBundle.value,
   developers := List(
     Developer("sirthias", "Mathias Doenitz", "devnull@bullet.io", url("https://github.com/sirthias/"))
   ),
@@ -243,7 +243,7 @@ lazy val benchmarks = project
       "com.fasterxml.jackson.module"          %% "jackson-module-scala"  % "2.9.9",
       "com.lihaoyi"                           %% "upickle"               % "0.7.5",
       "io.circe"                              %% "circe-core"            % "0.12.1",
-      "io.circe"                              %% "circe-derivation"      % "0.12.0-M6",
+      "io.circe"                              %% "circe-derivation"      % "0.12.0-M7",
       "io.circe"                              %% "circe-jawn"            % "0.12.1",
       "io.spray"                              %% "spray-json"            % "1.3.5",
     )

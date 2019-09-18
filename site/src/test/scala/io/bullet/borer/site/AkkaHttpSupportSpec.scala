@@ -18,7 +18,7 @@ object AkkaHttpSupportSpec extends TestSuite {
 
       // borer encoders/decoders for the custom model above
       import io.bullet.borer.derivation.MapBasedCodecs._
-      
+
       implicit val myRequestDecoder  = deriveCodec[MyRequest]
       implicit val myResponseEncoder = deriveCodec[MyResponse]
 
