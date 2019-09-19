@@ -1,0 +1,26 @@
+sudo: false
+
+dist: xenial
+
+language: scala
+
+jdk:
+  - openjdk8
+
+before_install:
+  - git fetch --tags
+
+before_cache:
+  - find $HOME/.ivy2/cache -name "ivydata-*.properties" -type f -delete
+  - find $HOME/.sbt -name "*.lock" -type f -delete
+
+cache:
+  directories:
+    - $HOME/.cache/coursier
+    - $HOME/.ivy2/cache
+    - $HOME/.sbt
+
+script: sbt validate
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

@@ -75,7 +75,6 @@ lazy val commonSettings = Seq(
   // test coverage
   coverageMinimum := 90,
   coverageFailOnMinimum := false,
-  coverageExcludedPackages := """ui\.bullet\.borer\.benchmarks\..*""",
 
   commands += Command.command("openCoverageReport") { state =>
     val uri = s"file://${Project.extract(state).get(crossTarget)}/scoverage-report/index.html"
@@ -135,6 +134,40 @@ lazy val macroParadise =
       case _ => Nil
     }
   }
+
+def addCommandsAlias(name: String, cmds: Seq[String]) = addCommandAlias(name, cmds.mkString(";", ";", ""))
+
+addCommandsAlias(
+  "validate",
+  Seq(
+    "clean",
+    "headerCheck",
+    "scalafmtCheck",
+    "test:scalafmtCheck",
+
+    // Scala 2.13
+    s"++$scala213",
+    "test:compile",
+    "test",
+
+    // Scala 2.12
+    s"++$scala212",
+    "test:compile",
+    "test",
+
+    // establish test coverage (only on JVM projects)
+    "coverage",
+    "core/test",
+    "derivation/test",
+    "akka/test",
+    "scodec/test",
+    "core/coverageReport",
+    "derivation/coverageReport",
+    "akka/coverageReport",
+    "scodec/coverageReport",
+    "coverageOff",
+  )
+)
 
 /////////////////////// DEPENDENCIES /////////////////////////
 
