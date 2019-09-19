@@ -65,10 +65,9 @@ lazy val commonSettings = Seq(
   // publishing
   publishMavenStyle := true,
   publishArtifact in Test := false,
-  pomIncludeRepository := { _ ⇒
-    false
-  },
+  pomIncludeRepository := (_ ⇒ false),
   publishTo := sonatypePublishToBundle.value,
+
   developers := List(
     Developer("sirthias", "Mathias Doenitz", "devnull@bullet.io", url("https://github.com/sirthias/"))
   ),
@@ -121,9 +120,9 @@ lazy val releaseSettings = {
       commitReleaseVersion,
       tagRelease,
       publishArtifacts,
+      releaseStepCommand("sonatypeBundleRelease"),
       setNextVersion,
       commitNextVersion,
-      releaseStepCommand("sonatypeReleaseAll"),
       pushChanges
     )
   )
