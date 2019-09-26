@@ -60,7 +60,7 @@ object JsonSpecificsSpec extends TestSuite {
         // Json.encode(binaryData).toByteArray or
         Json.encode(binaryData).toUtf8String ==> """"3q2+7w==""""
 
-        // we need to define explicitly define the encoder as well as the decoder
+        // we need to explicitly define the encoder as well as the decoder
         // in order to "override" the defaults for Array[Byte] on either side
         implicit val byteArrayEncoder = Encoder.forByteArray(BaseEncoding.zbase32)
         implicit val byteArrayDecoder = Decoder.forByteArray(BaseEncoding.zbase32)
