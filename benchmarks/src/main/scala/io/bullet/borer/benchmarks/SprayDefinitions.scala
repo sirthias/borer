@@ -632,11 +632,11 @@ class SprayModelBenchmark extends DomBenchmark {
             )
           }
         }
-        implicit val q = jsonFormat1(GithubEvents.ForkEvent)
-        implicit val r = jsonFormat5(GithubEvents.Head)
+        implicit val q = jsonFormat1(GithubEvents.ForkEvent[GithubEvents.Forkee])
+        implicit val r = jsonFormat5(GithubEvents.Head[GithubEvents.Repo1])
         implicit val s = jsonFormat4(GithubEvents.PullRequest)
-        implicit val t = new JsonFormat[GithubEvents.PullRequest1] {
-          def write(obj: GithubEvents.PullRequest1) =
+        implicit val t = new JsonFormat[GithubEvents.PullRequest1[GithubEvents.Head[GithubEvents.Repo1]]] {
+          def write(obj: GithubEvents.PullRequest1[GithubEvents.Head[GithubEvents.Repo1]]) =
             JsObject(
               TreeMap(
                 "url" -> obj.url.toJson,
@@ -718,8 +718,8 @@ class SprayModelBenchmark extends DomBenchmark {
               x.fields("review_comment_url").convertTo[String],
               x.fields("comments_url").convertTo[String],
               x.fields("statuses_url").convertTo[String],
-              x.fields("head").convertTo[GithubEvents.Head],
-              x.fields("base").convertTo[GithubEvents.Head],
+              x.fields("head").convertTo[GithubEvents.Head[GithubEvents.Repo1]],
+              x.fields("base").convertTo[GithubEvents.Head[GithubEvents.Repo1]],
               x.fields("_links").convertTo[GithubEvents.Links],
               x.fields("author_association").convertTo[String],
               x.fields("merged").convertTo[Boolean],
@@ -737,8 +737,8 @@ class SprayModelBenchmark extends DomBenchmark {
             )
           }
         }
-        implicit val u = new JsonFormat[GithubEvents.PullRequest2] {
-          def write(obj: GithubEvents.PullRequest2) =
+        implicit val u = new JsonFormat[GithubEvents.PullRequest2[GithubEvents.Head[GithubEvents.Repo1]]] {
+          def write(obj: GithubEvents.PullRequest2[GithubEvents.Head[GithubEvents.Repo1]]) =
             JsObject(
               TreeMap(
                 "url" -> obj.url.toJson,
@@ -808,15 +808,15 @@ class SprayModelBenchmark extends DomBenchmark {
               x.fields("review_comment_url").convertTo[String],
               x.fields("comments_url").convertTo[String],
               x.fields("statuses_url").convertTo[String],
-              x.fields("head").convertTo[GithubEvents.Head],
-              x.fields("base").convertTo[GithubEvents.Head],
+              x.fields("head").convertTo[GithubEvents.Head[GithubEvents.Repo1]],
+              x.fields("base").convertTo[GithubEvents.Head[GithubEvents.Repo1]],
               x.fields("_links").convertTo[GithubEvents.Links],
               x.fields("author_association").convertTo[String],
             )
           }
         }
-        implicit val v = jsonFormat3(GithubEvents.PullRequestEvent)
-        implicit val w = jsonFormat3(GithubEvents.PullRequestReviewCommentEvent)
+        implicit val v = jsonFormat3(GithubEvents.PullRequestEvent[GithubEvents.Head[GithubEvents.Repo1]])
+        implicit val w = jsonFormat3(GithubEvents.PullRequestReviewCommentEvent[GithubEvents.Head[GithubEvents.Repo1]])
         implicit val x = new JsonFormat[GithubEvents.Issue] {
           def write(obj: GithubEvents.Issue) =
             JsObject(
@@ -939,8 +939,8 @@ class SprayModelBenchmark extends DomBenchmark {
         implicit val A = jsonFormat2(GithubEvents.IssuesEvent)
         implicit val B = jsonFormat7(GithubEvents.PushEvent)
         implicit val C = jsonFormat1(GithubEvents.WatchEvent)
-        implicit val D = jsonFormat15(GithubEvents.RootInterface)
-        implicitly[RootJsonFormat[List[GithubEvents.RootInterface]]]
+        implicit val D = jsonFormat15(GithubEvents.RootInterface[GithubEvents.Head[GithubEvents.Repo1], GithubEvents.Forkee])
+        implicitly[RootJsonFormat[List[GithubEvents.RootInterface[GithubEvents.Head[GithubEvents.Repo1], GithubEvents.Forkee]]]]
 
       case "github-gists.json" =>
         implicit val a = jsonFormat18(GithubGists.Owner)
@@ -1162,9 +1162,9 @@ class SprayModelBenchmark extends DomBenchmark {
             )
           }
         }
-        implicit val f = jsonFormat2(Reddit.Child)
-        implicit val g = jsonFormat5(Reddit.Data0)
-        jsonFormat2(Reddit.RootInterface)
+        implicit val f = jsonFormat2(Reddit.Child[Reddit.Data])
+        implicit val g = jsonFormat5(Reddit.Data0[Reddit.Data])
+        jsonFormat2(Reddit.RootInterface[Reddit.Data])
 
       case "rick-morty.json" =>
         implicit val a = jsonFormat1(RickMorty.Rating)

@@ -102,16 +102,19 @@ class JsoniterScalaModelBenchmark extends DomBenchmark {
       case "eu-lobby-country.json"   => JsonCodecMaker.make[EuLobbyCountry.RootInterface](CodecMakerConfig())
       case "eu-lobby-financial.json" => JsonCodecMaker.make[EuLobbyFinancial.RootInterface](CodecMakerConfig())
       case "eu-lobby-repr.json"      => JsonCodecMaker.make[EuLobbyRepr.RootInterface](CodecMakerConfig())
-      case "github-events.json"      => JsonCodecMaker.make[List[GithubEvents.RootInterface]](CodecMakerConfig())
-      case "github-gists.json"       => JsonCodecMaker.make[List[GithubGists.RootInterface]](CodecMakerConfig())
-      case "json-generator.json"     => JsonCodecMaker.make[List[JsonGenerator.RootInterface]](CodecMakerConfig())
-      case "meteorites.json"         => JsonCodecMaker.make[List[Meteorites.RootInterface]](CodecMakerConfig())
-      case "movies.json"             => JsonCodecMaker.make[List[Movies.RootInterface]](CodecMakerConfig())
-      case "reddit-scala.json"       => JsonCodecMaker.make[Reddit.RootInterface](CodecMakerConfig())
-      case "rick-morty.json"         => JsonCodecMaker.make[RickMorty.RootInterface](CodecMakerConfig())
-      case "temp-anomaly.json"       => JsonCodecMaker.make[TempAnomaly.RootInterface](CodecMakerConfig())
-      case "thai-cinemas.json"       => JsonCodecMaker.make[ThaiCinemas.RootInterface](CodecMakerConfig())
-      case "turkish.json"            => JsonCodecMaker.make[Turkish.RootInterface](CodecMakerConfig())
+      case "github-events.json" =>
+        JsonCodecMaker
+          .make[List[GithubEvents.RootInterface[GithubEvents.Head[GithubEvents.Repo1], GithubEvents.Forkee]]](
+            CodecMakerConfig())
+      case "github-gists.json"   => JsonCodecMaker.make[List[GithubGists.RootInterface]](CodecMakerConfig())
+      case "json-generator.json" => JsonCodecMaker.make[List[JsonGenerator.RootInterface]](CodecMakerConfig())
+      case "meteorites.json"     => JsonCodecMaker.make[List[Meteorites.RootInterface]](CodecMakerConfig())
+      case "movies.json"         => JsonCodecMaker.make[List[Movies.RootInterface]](CodecMakerConfig())
+      case "reddit-scala.json"   => JsonCodecMaker.make[Reddit.RootInterface[Reddit.Data]](CodecMakerConfig())
+      case "rick-morty.json"     => JsonCodecMaker.make[RickMorty.RootInterface](CodecMakerConfig())
+      case "temp-anomaly.json"   => JsonCodecMaker.make[TempAnomaly.RootInterface](CodecMakerConfig())
+      case "thai-cinemas.json"   => JsonCodecMaker.make[ThaiCinemas.RootInterface](CodecMakerConfig())
+      case "turkish.json"        => JsonCodecMaker.make[Turkish.RootInterface](CodecMakerConfig())
       case "twitter_api_compact_response.json" | "twitter_api_response.json" =>
         JsonCodecMaker.make[List[TwitterApiResponse.RootInterface]](CodecMakerConfig())
     }).asInstanceOf[JsonValueCodec[Product]]

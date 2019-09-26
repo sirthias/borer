@@ -71,16 +71,18 @@ class JacksonModelBenchmark extends DomBenchmark {
       case "eu-lobby-country.json"   => new TypeReference[EuLobbyCountry.RootInterface]      {}
       case "eu-lobby-financial.json" => new TypeReference[EuLobbyFinancial.RootInterface]    {}
       case "eu-lobby-repr.json"      => new TypeReference[EuLobbyRepr.RootInterface]         {}
-      case "github-events.json"      => new TypeReference[List[GithubEvents.RootInterface]]  {}
       case "github-gists.json"       => new TypeReference[List[GithubGists.RootInterface]]   {}
       case "json-generator.json"     => new TypeReference[List[JsonGenerator.RootInterface]] {}
       case "meteorites.json"         => new TypeReference[List[Meteorites.RootInterface]]    {}
       case "movies.json"             => new TypeReference[List[Movies.RootInterface]]        {}
-      case "reddit-scala.json"       => new TypeReference[Reddit.RootInterface]              {}
+      case "reddit-scala.json"       => new TypeReference[Reddit.RootInterface[Reddit.Data]] {}
       case "rick-morty.json"         => new TypeReference[RickMorty.RootInterface]           {}
       case "temp-anomaly.json"       => new TypeReference[TempAnomaly.RootInterface]         {}
       case "thai-cinemas.json"       => new TypeReference[ThaiCinemas.RootInterface]         {}
       case "turkish.json"            => new TypeReference[Turkish.RootInterface]             {}
+
+      case "github-events.json" =>
+        new TypeReference[List[GithubEvents.RootInterface[GithubEvents.Head[GithubEvents.Repo1], GithubEvents.Forkee]]] {}
 
       case "twitter_api_compact_response.json" | "twitter_api_response.json" =>
         new TypeReference[List[TwitterApiResponse.RootInterface]] {}

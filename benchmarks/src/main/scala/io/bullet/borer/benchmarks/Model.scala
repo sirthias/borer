@@ -373,8 +373,8 @@ object GithubEvents {
       pusher_type: String
   )
 
-  case class ForkEvent(
-      forkee: Forkee
+  case class ForkEvent[TForkee](
+      forkee: TForkee
   )
 
   case class Forkee(
@@ -453,12 +453,80 @@ object GithubEvents {
       public: Boolean
   )
 
-  case class Head(
+  // "reduced" copy of `Repo1` with only 64 fields, needed in order to get at _some_ measurement of uPickle
+  case class Forkee_64(
+      id: Long,
+      node_id: String,
+      name: String,
+      full_name: String,
+      `private`: Boolean,
+      owner: Owner,
+      html_url: String,
+      description: Nullable[String],
+      fork: Boolean,
+      url: String,
+      forks_url: String,
+      keys_url: String,
+      collaborators_url: String,
+      teams_url: String,
+      hooks_url: String,
+      issue_events_url: String,
+      events_url: String,
+      assignees_url: String,
+      branches_url: String,
+      tags_url: String,
+      blobs_url: String,
+      git_tags_url: String,
+      git_refs_url: String,
+      trees_url: String,
+      statuses_url: String,
+      languages_url: String,
+      stargazers_url: String,
+      contributors_url: String,
+      subscribers_url: String,
+      subscription_url: String,
+      commits_url: String,
+      git_commits_url: String,
+      comments_url: String,
+      issue_comment_url: String,
+      contents_url: String,
+      compare_url: String,
+      merges_url: String,
+      archive_url: String,
+      downloads_url: String,
+      issues_url: String,
+      pulls_url: String,
+      milestones_url: String,
+      notifications_url: String,
+      labels_url: String,
+      releases_url: String,
+      created_at: String,
+      updated_at: String,
+      pushed_at: String,
+      git_url: String,
+      ssh_url: String,
+      clone_url: String,
+      size: Int,
+      stargazers_count: Int,
+      watchers_count: Int,
+      has_issues: Boolean,
+      has_projects: Boolean,
+      has_downloads: Boolean,
+      has_wiki: Boolean,
+      has_pages: Boolean,
+      open_issues_count: Int,
+      open_issues: Int,
+      watchers: Int,
+      default_branch: String,
+      public: Boolean
+  )
+
+  case class Head[TRepo1](
       label: String,
       ref: String,
       sha: String,
       user: Owner,
-      repo: Repo1
+      repo: TRepo1
   )
 
   case class Issue(
@@ -595,7 +663,7 @@ object GithubEvents {
       patch_url: String
   )
 
-  case class PullRequest1(
+  case class PullRequest1[THead](
       url: String,
       id: Long,
       node_id: String,
@@ -625,8 +693,8 @@ object GithubEvents {
       review_comment_url: String,
       comments_url: String,
       statuses_url: String,
-      head: Head,
-      base: Head,
+      head: THead,
+      base: THead,
       _links: Links,
       author_association: String,
       merged: Boolean,
@@ -643,7 +711,7 @@ object GithubEvents {
       changed_files: Int
   )
 
-  case class PullRequest2(
+  case class PullRequest2[THead](
       url: String,
       id: Long,
       node_id: String,
@@ -673,22 +741,22 @@ object GithubEvents {
       review_comment_url: String,
       comments_url: String,
       statuses_url: String,
-      head: Head,
-      base: Head,
+      head: THead,
+      base: THead,
       _links: Links,
       author_association: String
   )
 
-  case class PullRequestEvent(
+  case class PullRequestEvent[THead](
       action: String,
       number: Int,
-      pull_request: PullRequest1
+      pull_request: PullRequest1[THead]
   )
 
-  case class PullRequestReviewCommentEvent(
+  case class PullRequestReviewCommentEvent[THead](
       action: String,
       comment: Comment1,
-      pull_request: PullRequest2
+      pull_request: PullRequest2[THead]
   )
 
   case class PushEvent(
@@ -782,7 +850,75 @@ object GithubEvents {
       default_branch: String
   )
 
-  case class RootInterface(
+  // "reduced" copy of `Repo1` with only 64 fields, needed in order to get at _some_ measurement of uPickle
+  case class Repo1_64(
+      id: Long,
+      node_id: String,
+      name: String,
+      full_name: String,
+      `private`: Boolean,
+      owner: Owner,
+      html_url: String,
+      description: Nullable[String],
+      fork: Boolean,
+      url: String,
+      forks_url: String,
+      keys_url: String,
+      collaborators_url: String,
+      teams_url: String,
+      hooks_url: String,
+      issue_events_url: String,
+      events_url: String,
+      assignees_url: String,
+      branches_url: String,
+      tags_url: String,
+      git_tags_url: String,
+      trees_url: String,
+      statuses_url: String,
+      languages_url: String,
+      stargazers_url: String,
+      contributors_url: String,
+      subscribers_url: String,
+      subscription_url: String,
+      commits_url: String,
+      git_commits_url: String,
+      comments_url: String,
+      issue_comment_url: String,
+      contents_url: String,
+      compare_url: String,
+      merges_url: String,
+      archive_url: String,
+      issues_url: String,
+      pulls_url: String,
+      notifications_url: String,
+      labels_url: String,
+      releases_url: String,
+      created_at: String,
+      updated_at: String,
+      pushed_at: String,
+      git_url: String,
+      ssh_url: String,
+      clone_url: String,
+      size: Int,
+      stargazers_count: Int,
+      watchers_count: Int,
+      language: String,
+      has_issues: Boolean,
+      has_projects: Boolean,
+      has_downloads: Boolean,
+      has_wiki: Boolean,
+      has_pages: Boolean,
+      forks_count: Int,
+      archived: Boolean,
+      open_issues_count: Int,
+      license: License,
+      forks: Int,
+      open_issues: Int,
+      watchers: Int,
+      default_branch: String
+  )
+
+  case class RootInterface[THead, TForkee](
       id: String,
       `type`: String,
       actor: Actor,
@@ -791,13 +927,13 @@ object GithubEvents {
       created_at: String,
       org: Option[Org] = None,
       PushEvent: Option[PushEvent] = None,
-      ForkEvent: Option[ForkEvent] = None,
+      ForkEvent: Option[ForkEvent[TForkee]] = None,
       CreateEvent: Option[CreateEvent] = None,
       IssueCommentEvent: Option[IssueCommentEvent] = None,
-      PullRequestEvent: Option[PullRequestEvent] = None,
+      PullRequestEvent: Option[PullRequestEvent[THead]] = None,
       WatchEvent: Option[WatchEvent] = None,
       IssuesEvent: Option[IssuesEvent] = None,
-      PullRequestReviewCommentEvent: Option[PullRequestReviewCommentEvent] = None,
+      PullRequestReviewCommentEvent: Option[PullRequestReviewCommentEvent[THead]] = None,
   )
 
   case class Self(
@@ -1063,22 +1199,89 @@ object Reddit {
       is_video: Boolean
   )
 
-  case class Child(
-      kind: String,
-      data: Data
+  case class Data_64(
+      approved_at_utc: Nullable[String],
+      subreddit: String,
+      selftext: String,
+      author_fullname: String,
+      saved: Boolean,
+      mod_reason_title: Nullable[String],
+      gilded: Int,
+      clicked: Boolean,
+      title: String,
+      link_flair_richtext: Seq[String],
+      subreddit_name_prefixed: String,
+      hidden: Boolean,
+      pwls: Int,
+      link_flair_css_class: Nullable[String],
+      downs: Int,
+      parent_whitelist_status: String,
+      hide_score: Boolean,
+      name: Option[String] = None,
+      quarantine: Option[Boolean] = None,
+      link_flair_text_color: String,
+      author_flair_background_color: Nullable[String],
+      subreddit_type: String,
+      ups: Int,
+      domain: String,
+      media_embed: List[MediaEmbed],
+      author_flair_template_id: Nullable[String],
+      is_original_content: Boolean,
+      user_reports: Seq[String],
+      secure_media: Nullable[Option[SecureMedia]],
+      is_reddit_media_domain: Boolean,
+      is_meta: Boolean,
+      category: Nullable[String],
+      secure_media_embed: Nullable[Option[MediaEmbed]],
+      link_flair_text: Nullable[String],
+      can_mod_post: Boolean,
+      score: Int,
+      approved_by: Nullable[String],
+      thumbnail: String,
+      edited: Boolean,
+      author_flair_css_class: Nullable[String],
+      author_flair_richtext: Seq[String],
+      gildings: Gildings,
+      content_categories: Nullable[String],
+      is_self: Boolean,
+      mod_note: Nullable[String],
+      created: Double,
+      link_flair_type: String,
+      wls: Int,
+      banned_by: Nullable[String],
+      author_flair_type: String,
+      contest_mode: Boolean,
+      selftext_html: Nullable[String],
+      likes: Nullable[String],
+      suggested_sort: Nullable[String],
+      author_patreon_flair: Boolean,
+      author_flair_text_color: Nullable[String],
+      permalink: String,
+      whitelist_status: String,
+      stickied: Boolean,
+      url: String,
+      subreddit_subscribers: Int,
+      created_utc: Double,
+      media: Option[SecureMedia] = None,
+      is_video: Boolean
   )
 
-  case class Data0(
+  case class Child[TData](
+      kind: String,
+      data: TData
+  )
+
+  case class Data0[TData](
       modhash: String,
       dist: Int,
-      children: Seq[Child],
+      children: Seq[Child[TData]],
       after: String,
       before: Nullable[String]
   )
 
-  case class RootInterface(
+  case class RootInterface[TData](
       kind: String,
-      data: Data0
+      data: Data0[TData]
   )
 }
 

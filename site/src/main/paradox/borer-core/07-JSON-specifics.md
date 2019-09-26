@@ -120,7 +120,7 @@ Comparison with other Scala JSON Libraries
 
 - pre-historic, clunky type class design
 - essentially unmaintained
-- no support for case classes w/ more than 22 members
+- no direct support for case classes w/ more than 22 members
 - no type class derivation for ADTs
 - _borer_ is about 2.5 times as fast
 - not compatible with [scala.js]    
@@ -144,6 +144,8 @@ Comparison with other Scala JSON Libraries
 
 @@@ div { .cons }
 
+- no support for case classes w/ more than 64 members
+- no support for manual (no-macro) codec construction
 - _borer_ is about 3 times as fast
 - no [CBOR] support
     
