@@ -10,12 +10,12 @@ package io.bullet.borer.benchmarks
 
 import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
+import com.fasterxml.jackson.module.afterburner.AfterburnerModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.openjdk.jmh.annotations._
 
 object JacksonCodecs {
-  val mapper: ObjectMapper = new ObjectMapper()
-  mapper.registerModule(DefaultScalaModule)
+  val mapper: ObjectMapper = new ObjectMapper().registerModule(DefaultScalaModule).registerModule(new AfterburnerModule)
 
   val foosTypeRef = new TypeReference[Map[String, Foo]] {}
   val intsTypeRef = new TypeReference[List[Int]]        {}
