@@ -1,5 +1,5 @@
 -Xmx4g
--Xms4m
+-Xss2M
 -XX:MaxMetaspaceSize=1g
 -XX:ReservedCodeCacheSize=256m
 -XX:+UseParallelGC
