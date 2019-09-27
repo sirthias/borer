@@ -1,8 +1,13 @@
+import com.typesafe.tools.mima.core._
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import ReleaseTransformations._
+import sbt._
+import scala.sys.process._
 
 def scala213 = "2.13.1"
 def scala212 = "2.12.10"
+
+lazy val oldVersion = "git describe --abbrev=0".!!.trim.replaceAll("^v", "")
 
 lazy val commonSettings = Seq(
   organization := "io.bullet",
@@ -67,6 +72,7 @@ lazy val commonSettings = Seq(
   publishArtifact in Test := false,
   pomIncludeRepository := (_ ⇒ false),
   publishTo := sonatypePublishToBundle.value,
+  mimaFailOnNoPrevious := false,
 
   developers := List(
     Developer("sirthias", "Mathias Doenitz", "devnull@bullet.io", url("https://github.com/sirthias/"))
@@ -87,6 +93,43 @@ lazy val commonSettings = Seq(
     val cmds = List("clean", "coverage", "test", "coverageReport", "openCoverageReport").map(Exec(_, None))
     state.copy(remainingCommands = cmds ::: state.remainingCommands)
   }
+)
+
+lazy val mimaSettings = Seq(
+  resolvers += "Sonatype OSS Staging" at "https://oss.sonatype.org/content/repositories/staging",
+  mimaCheckDirection := {
+    def isPatch: Boolean = {
+      val Array(newMajor, newMinor, _) = version.value.split('.')
+      val Array(oldMajor, oldMinor, _) = oldVersion.split('.')
+      newMajor == oldMajor && newMinor == oldMinor
+    }
+
+    if (isPatch) "both" else "backward"
+  },
+  mimaPreviousArtifacts := {
+    def isCheckingRequired: Boolean = {
+      val Array(newMajor, newMinor, _) = version.value.split('.')
+      val Array(oldMajor, oldMinor, _) = oldVersion.split('.')
+      newMajor == oldMajor && (newMajor != "0" || newMinor == oldMinor)
+    }
+
+    if (isCheckingRequired) Set(organization.value %% moduleName.value % oldVersion)
+    else Set()
+  },
+  mimaBinaryIssueFilters := Seq( // Known binary compatibility issues or internal API to ignore
+    ProblemFilters.exclude[MissingClassProblem]("io.bullet.borer.input.DirectFromByteArrayInput"),
+    ProblemFilters.exclude[MissingClassProblem]("io.bullet.borer.internal.Unsafe$BigEndianByteArrayAccess"),
+    ProblemFilters.exclude[MissingClassProblem]("io.bullet.borer.internal.Unsafe$LittleEndianByteArrayAccess"),
+    ProblemFilters.exclude[IncompatibleResultTypeProblem]("io.bullet.borer.json.DirectJsonParser.input"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("io.bullet.borer.json.DirectJsonParser.config"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("io.bullet.borer.json.DirectJsonParser.this"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("io.bullet.borer.json.DirectJsonParser.valueIndex"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("io.bullet.borer.json.DirectJsonParser.pull"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("io.bullet.borer.json.DirectJsonParser.padByte"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("io.bullet.borer.json.DirectJsonParser.padDoubleByte"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("io.bullet.borer.json.DirectJsonParser.padQuadByte"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("io.bullet.borer.json.DirectJsonParser.padOctaByte")
+  )
 )
 
 lazy val crossSettings = Seq(
@@ -149,11 +192,13 @@ addCommandsAlias(
     s"++$scala213",
     "test:compile",
     "test",
+    "mimaReportBinaryIssues",
 
     // Scala 2.12
     s"++$scala212",
     "test:compile",
     "test",
+    "mimaReportBinaryIssues",
 
     // establish test coverage (only on JVM projects)
     "coverage",
@@ -202,6 +247,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .settings(crossSettings)
   .settings(commonSettings)
   .settings(releaseSettings)
+  .settings(mimaSettings)
   .settings(
     moduleName := "borer-core",
     macroParadise,
@@ -224,6 +270,7 @@ lazy val akka = project
   .dependsOn(derivationJVM % "test->compile")
   .settings(commonSettings)
   .settings(releaseSettings)
+  .settings(mimaSettings)
   .settings(
     moduleName := "borer-compat-akka",
     libraryDependencies ++= Seq(`akka-actor`.value, `akka-stream`.value, `akka-http`.value, utest.value)
@@ -242,6 +289,7 @@ lazy val scodec = crossProject(JSPlatform, JVMPlatform)
   .settings(crossSettings)
   .settings(commonSettings)
   .settings(releaseSettings)
+  .settings(mimaSettings)
   .settings(
     moduleName := "borer-compat-scodec",
     libraryDependencies ++= Seq(`scodec-bits`.value, utest.value)
@@ -257,6 +305,7 @@ lazy val derivation = crossProject(JSPlatform, JVMPlatform)
   .settings(crossSettings)
   .settings(commonSettings)
   .settings(releaseSettings)
+  .settings(mimaSettings)
   .settings(
     moduleName := "borer-derivation",
     libraryDependencies ++= Seq(`scala-compiler`.value, `scala-reflect`.value, utest.value),
