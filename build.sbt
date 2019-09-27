@@ -1,13 +1,8 @@
-import com.typesafe.tools.mima.core._
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
-import ReleaseTransformations._
 import sbt._
-import scala.sys.process._
 
 def scala213 = "2.13.1"
 def scala212 = "2.12.10"
-
-lazy val oldVersion = "git describe --abbrev=0".!!.trim.replaceAll("^v", "")
 
 lazy val commonSettings = Seq(
   organization := "io.bullet",
@@ -87,50 +82,44 @@ lazy val commonSettings = Seq(
     state.log.info(s"Opening browser at $uri ...")
     java.awt.Desktop.getDesktop.browse(new java.net.URI(uri))
     state
-  },
-
-  commands += Command.command("testCoverage") { state =>
-    val cmds = List("clean", "coverage", "test", "coverageReport", "openCoverageReport").map(Exec(_, None))
-    state.copy(remainingCommands = cmds ::: state.remainingCommands)
   }
 )
 
-lazy val mimaSettings = Seq(
-  resolvers += "Sonatype OSS Staging" at "https://oss.sonatype.org/content/repositories/staging",
-  mimaCheckDirection := {
-    def isPatch: Boolean = {
-      val Array(newMajor, newMinor, _) = version.value.split('.')
-      val Array(oldMajor, oldMinor, _) = oldVersion.split('.')
-      newMajor == oldMajor && newMinor == oldMinor
-    }
+lazy val mimaSettings = {
+  import com.typesafe.tools.mima.core._
 
-    if (isPatch) "both" else "backward"
-  },
-  mimaPreviousArtifacts := {
-    def isCheckingRequired: Boolean = {
-      val Array(newMajor, newMinor, _) = version.value.split('.')
-      val Array(oldMajor, oldMinor, _) = oldVersion.split('.')
-      newMajor == oldMajor && (newMajor != "0" || newMinor == oldMinor)
-    }
+  lazy val oldVersionString = scala.sys.process.Process("git describe --abbrev=0").!!.trim.dropWhile(_ == 'v')
+  lazy val oldVersion = oldVersionString.split('.').toList
+  val newVersion = Def.setting(version.value.split('.').toList)
 
-    if (isCheckingRequired) Set(organization.value %% moduleName.value % oldVersion)
-    else Set()
-  },
-  mimaBinaryIssueFilters := Seq( // Known binary compatibility issues or internal API to ignore
-    ProblemFilters.exclude[MissingClassProblem]("io.bullet.borer.input.DirectFromByteArrayInput"),
-    ProblemFilters.exclude[MissingClassProblem]("io.bullet.borer.internal.Unsafe$BigEndianByteArrayAccess"),
-    ProblemFilters.exclude[MissingClassProblem]("io.bullet.borer.internal.Unsafe$LittleEndianByteArrayAccess"),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem]("io.bullet.borer.json.DirectJsonParser.input"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("io.bullet.borer.json.DirectJsonParser.config"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("io.bullet.borer.json.DirectJsonParser.this"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("io.bullet.borer.json.DirectJsonParser.valueIndex"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("io.bullet.borer.json.DirectJsonParser.pull"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("io.bullet.borer.json.DirectJsonParser.padByte"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("io.bullet.borer.json.DirectJsonParser.padDoubleByte"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("io.bullet.borer.json.DirectJsonParser.padQuadByte"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("io.bullet.borer.json.DirectJsonParser.padOctaByte")
+  Seq(
+    // we need this resolver to let Travis CI find new release artifacts before they are available from Maven Central
+    resolvers += Resolver.sonatypeRepo("staging"),
+    mimaCheckDirection := {
+      val isPatch = newVersion.value.take(2) == oldVersion.take(2)
+      if (isPatch) "both" else "backward"
+    },
+    mimaPreviousArtifacts := {
+      val isMajorVersionBump = newVersion.value.head != oldVersion.head
+      if (isMajorVersionBump) Set.empty // no mima-checking required
+      else Set(organization.value %% moduleName.value % oldVersionString)
+    },
+    mimaBinaryIssueFilters := Seq( // known binary compatibility issues or internal API to ignore
+      ProblemFilters.exclude[MissingClassProblem]("io.bullet.borer.input.DirectFromByteArrayInput"),
+      ProblemFilters.exclude[MissingClassProblem]("io.bullet.borer.internal.Unsafe$BigEndianByteArrayAccess"),
+      ProblemFilters.exclude[MissingClassProblem]("io.bullet.borer.internal.Unsafe$LittleEndianByteArrayAccess"),
+      ProblemFilters.exclude[IncompatibleResultTypeProblem]("io.bullet.borer.json.DirectJsonParser.input"),
+      ProblemFilters.exclude[DirectMissingMethodProblem]("io.bullet.borer.json.DirectJsonParser.config"),
+      ProblemFilters.exclude[DirectMissingMethodProblem]("io.bullet.borer.json.DirectJsonParser.this"),
+      ProblemFilters.exclude[DirectMissingMethodProblem]("io.bullet.borer.json.DirectJsonParser.valueIndex"),
+      ProblemFilters.exclude[DirectMissingMethodProblem]("io.bullet.borer.json.DirectJsonParser.pull"),
+      ProblemFilters.exclude[DirectMissingMethodProblem]("io.bullet.borer.json.DirectJsonParser.padByte"),
+      ProblemFilters.exclude[DirectMissingMethodProblem]("io.bullet.borer.json.DirectJsonParser.padDoubleByte"),
+      ProblemFilters.exclude[DirectMissingMethodProblem]("io.bullet.borer.json.DirectJsonParser.padQuadByte"),
+      ProblemFilters.exclude[DirectMissingMethodProblem]("io.bullet.borer.json.DirectJsonParser.padOctaByte")
+    )
   )
-)
+}
 
 lazy val crossSettings = Seq(
   sourceDirectories in (Compile, scalafmt) := (unmanagedSourceDirectories in Compile).value,
@@ -144,6 +133,8 @@ lazy val scalajsSettings = Seq(
 )
 
 lazy val releaseSettings = {
+  import ReleaseTransformations._
+
   val runCompile = ReleaseStep(action = { st: State ⇒
     val extracted = Project.extract(st)
     val ref       = extracted.get(thisProjectRef)
@@ -180,6 +171,18 @@ lazy val macroParadise =
 
 def addCommandsAlias(name: String, cmds: Seq[String]) = addCommandAlias(name, cmds.mkString(";", ";", ""))
 
+addCommandsAlias(
+  "testCoverage",
+  Seq(
+    "clean",
+    "coverage",
+    "test",
+    "coverageReport",
+    "openCoverageReport"
+  )
+)
+
+// used by Travis CI
 addCommandsAlias(
   "validate",
   Seq(
