@@ -11,7 +11,7 @@ package io.bullet.borer
 import java.nio.ByteOrder
 import io.bullet.borer.internal.ByteArrayAccess
 
-final class ByteStringArrayCodecs(byteOrder: ByteOrder) {
+final class ByteStringArrayCodecs private (byteOrder: ByteOrder) {
 
   implicit def shortArrayAsByteArrayEncoder(implicit enc: Encoder[Array[Byte]]): Encoder[Array[Short]] =
     Encoder((w, x) => enc.write(w, ByteArrayAccess.instance.shortArrayToByteArray(x, byteOrder)))

@@ -240,6 +240,8 @@ object ByteArrayAccess {
 
     def byteArrayToShortArray(source: Array[Byte], byteOrder: ByteOrder): Array[Short] =
       if (source.length > 0) {
+        if ((source.length & 1) != 0)
+          throw new IllegalArgumentException(s"source Array[Byte] has illegal length: ${source.length}")
         val target = new Array[Short](source.length >> 1)
 
         @tailrec def recBigEndian(sourceIx: Int, targetIx: Int): Array[Short] =
@@ -259,6 +261,8 @@ object ByteArrayAccess {
 
     def byteArrayToIntArray(source: Array[Byte], byteOrder: ByteOrder): Array[Int] =
       if (source.length > 0) {
+        if ((source.length & 3) != 0)
+          throw new IllegalArgumentException(s"source Array[Byte] has illegal length: ${source.length}")
         val target = new Array[Int](source.length >> 2)
 
         @tailrec def recBigEndian(sourceIx: Int, targetIx: Int): Array[Int] =
@@ -286,6 +290,8 @@ object ByteArrayAccess {
 
     def byteArrayToLongArray(source: Array[Byte], byteOrder: ByteOrder): Array[Long] =
       if (source.length > 0) {
+        if ((source.length & 7) != 0)
+          throw new IllegalArgumentException(s"source Array[Byte] has illegal length: ${source.length}")
         val target = new Array[Long](source.length >> 3)
 
         @tailrec def recBigEndian(sourceIx: Int, targetIx: Int): Array[Long] =
@@ -321,6 +327,8 @@ object ByteArrayAccess {
 
     def byteArrayToFloatArray(source: Array[Byte], byteOrder: ByteOrder): Array[Float] =
       if (source.length > 0) {
+        if ((source.length & 3) != 0)
+          throw new IllegalArgumentException(s"source Array[Byte] has illegal length: ${source.length}")
         val target = new Array[Float](source.length >> 2)
 
         @tailrec def recBigEndian(sourceIx: Int, targetIx: Int): Array[Float] =
@@ -350,6 +358,8 @@ object ByteArrayAccess {
 
     def byteArrayToDoubleArray(source: Array[Byte], byteOrder: ByteOrder): Array[Double] =
       if (source.length > 0) {
+        if ((source.length & 7) != 0)
+          throw new IllegalArgumentException(s"source Array[Byte] has illegal length: ${source.length}")
         val target = new Array[Double](source.length >> 3)
 
         @tailrec def recBigEndian(sourceIx: Int, targetIx: Int): Array[Double] =
