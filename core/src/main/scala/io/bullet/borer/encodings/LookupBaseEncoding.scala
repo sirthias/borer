@@ -12,6 +12,7 @@ abstract class LookupBaseEncoding(_name: String, _bitsPerChar: Int, alphabet: St
     extends BaseEncoding(_name, _bitsPerChar) {
 
   protected val alphabetChars = alphabet.toCharArray
+
   protected val lookup = {
     val array = new Array[Byte](128)
     java.util.Arrays.fill(array, -1: Byte)

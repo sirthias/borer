@@ -55,6 +55,7 @@ object Australia {
 }
 
 object Bitcoin {
+
   case class Inputs(
       sequence: Long,
       witness: String,
@@ -111,6 +112,7 @@ object Bitcoin {
 }
 
 object DojBlog {
+
   case class Component(
       uuid: String,
       name: String
@@ -156,6 +158,7 @@ object DojBlog {
 }
 
 object EuLobbyCountry {
+
   case class Facets(
       )
 
@@ -308,6 +311,7 @@ object EuLobbyRepr {
 }
 
 object GithubEvents {
+
   case class Actor(
       id: Long,
       login: String,
@@ -999,6 +1003,7 @@ object GithubGists {
 }
 
 object JsonGenerator {
+
   case class Friends(
       id: Int,
       name: String
@@ -1036,6 +1041,7 @@ object JsonGenerator {
 }
 
 object Meteorites {
+
   case class Geolocation(
       `type`: String,
       coordinates: List[Double]
@@ -1058,6 +1064,7 @@ object Meteorites {
 }
 
 object Movies {
+
   case class RootInterface(
       title: String,
       year: Int,
@@ -1286,6 +1293,7 @@ object Reddit {
 }
 
 object RickMorty {
+
   case class Country(
       name: String,
       code: String,
@@ -1428,6 +1436,7 @@ object ThaiCinemas {
 }
 
 object Turkish {
+
   case class Event(
       date: String,
       description: String,

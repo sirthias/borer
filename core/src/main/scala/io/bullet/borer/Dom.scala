@@ -48,6 +48,7 @@ object Dom {
 
   final case class ByteArrayElem(value: Array[Byte]) extends AbstractBytesElem(DIS.Bytes) {
     override def hashCode() = util.Arrays.hashCode(value)
+
     override def equals(obj: Any) = obj match {
       case ByteArrayElem(x) => util.Arrays.equals(value, x)
       case _                => false
@@ -68,6 +69,7 @@ object Dom {
   }
 
   object ArrayElem {
+
     final case class Sized(elements: Vector[Element]) extends ArrayElem(DIS.ArrayHeader) {
       override def toString = elements.mkString("[", ", ", "]")
     }

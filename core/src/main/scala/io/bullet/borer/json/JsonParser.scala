@@ -654,20 +654,27 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
 
   private def failStringTooLong(offset: Int) =
     failOverflow(offset, s"JSON String longer than configured maximum of ${config.maxStringLength} characters")
+
   private def failNumberMantissaTooLong(offset: Int) =
     failOverflow(
       offset,
       s"JSON number mantissa longer than configured maximum of ${config.maxNumberMantissaDigits} digits")
+
   private def failNumberExponentTooLarge(offset: Int) =
     failOverflow(offset, s"absolute JSON number exponent larger than configured maximum ${config.maxNumberAbsExponent}")
+
   private def failOverflow(offset: Int, msg: String) =
     throw new Borer.Error.Overflow(pos(offset), msg)
+
   private def failIllegalUtf8(offset: Int) =
     throw new Borer.Error.InvalidInputData(pos(offset), "Illegal UTF-8 character encoding")
+
   private def failIllegalEscapeSeq(offset: Int) =
     throw new Borer.Error.InvalidInputData(pos(offset), "Illegal JSON escape sequence")
+
   private def failSyntaxError(offset: Int, expected: String) =
     throw new Borer.Error.InvalidInputData(pos(offset), s"Invalid JSON syntax, expected $expected")
+
   private def failSyntaxError(expected: String) = {
     val actualChar =
       if (nextChar == EOI) "end of input"
@@ -690,7 +697,7 @@ private[borer] object JsonParser {
   }
 
   final private[this] val _creator: Parser.Creator[Any, JsonParser.Config] =
-    (input, byteAccess, config) => new JsonParser(input, config)(byteAccess)
+    (input, byteAccess, config) => new JsonParser(input, config) (byteAccess)
 
   def creator[Bytes, Conf <: JsonParser.Config]: Parser.Creator[Bytes, Conf] =
     _creator.asInstanceOf[Parser.Creator[Bytes, Conf]]

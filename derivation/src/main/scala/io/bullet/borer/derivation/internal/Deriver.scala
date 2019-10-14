@@ -35,6 +35,7 @@ abstract private[derivation] class Deriver[C <: blackbox.Context](val c: C) {
     def annotations: List[Tree]
     def name: Name
   }
+
   case class CaseParam(
       symbol: MethodSymbol,
       index: Int,

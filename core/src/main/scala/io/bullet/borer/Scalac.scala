@@ -20,15 +20,18 @@ object Scalac {
   }
 
   object TypeCheck {
+
     final case class Result(code: String, tpe: String) extends TypeCheck {
       def assertErrorMsgMatches(string: String): Unit = assertErrorMsgMatches(null: Regex)
 
       def assertErrorMsgMatches(regex: Regex): Unit =
         sys.error(s"Code Fragment compiled without error to an expression of type `$tpe`:\n\n$code")
     }
+
     final case class Error(msg: String) extends TypeCheck {
       def assertErrorMsgMatches(string: String): Unit = assert(msg == string, string)
       def assertErrorMsgMatches(regex: Regex): Unit   = assert(regex.findAllIn(msg).hasNext, regex)
+
       private def assert(value: Boolean, expected: Any): Unit =
         if (!value) sys.error(s"Expected compiler error matching [$expected] but got [$msg]")
     }

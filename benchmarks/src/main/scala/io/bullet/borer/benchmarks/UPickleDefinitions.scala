@@ -67,6 +67,7 @@ class UPickleModelBenchmark extends DomBenchmark {
   private var root: Product = _
 
   implicit def nullableWriter[T: Writer]: Writer[Nullable[T]] = implicitly[Writer[T]].comap(_.value)
+
   implicit def nullableReader[T: Reader: Default]: Reader[Nullable[T]] =
     implicitly[Reader[T]].map(x => Nullable(if (x == null) Default.get[T] else x))
 

@@ -57,6 +57,7 @@ object Nullable extends LowPrioNullable {
 }
 
 sealed abstract class LowPrioNullable {
+
   implicit def encoder[T: Encoder]: Encoder[Nullable[T]] =
     Encoder((w, x) => w.write(x.value))
 

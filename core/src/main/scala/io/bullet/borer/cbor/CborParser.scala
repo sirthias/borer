@@ -222,7 +222,7 @@ object CborParser {
   }
 
   private[this] val _creator: Parser.Creator[Any, CborParser.Config] =
-    (input, byteAccess, config) => new CborParser(input, config)(byteAccess)
+    (input, byteAccess, config) => new CborParser(input, config) (byteAccess)
 
   def creator[Bytes, Conf <: CborParser.Config]: Parser.Creator[Bytes, Conf] =
     _creator.asInstanceOf[Parser.Creator[Bytes, Conf]]

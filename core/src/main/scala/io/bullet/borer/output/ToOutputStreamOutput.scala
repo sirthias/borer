@@ -30,6 +30,7 @@ trait ToOutputStreamOutput {
 
     final def writeBytes(a: Byte, b: Byte): Self          = writeByte(a).writeByte(b)
     final def writeBytes(a: Byte, b: Byte, c: Byte): Self = writeByte(a).writeByte(b).writeByte(c)
+
     final def writeBytes(a: Byte, b: Byte, c: Byte, d: Byte): Self =
       writeByte(a).writeByte(b).writeByte(c).writeByte(d)
 

@@ -318,6 +318,7 @@ object Decoder extends LowPrioDecoders {
     implicit val intDecoder: Decoder[Int]     = Decoder(r => if (r.hasString) r.readString().toInt else r.readInt())
     implicit val longDecoder: Decoder[Long]   = Decoder(r => if (r.hasString) r.readString().toLong else r.readLong())
     implicit val floatDecoder: Decoder[Float] = Decoder(r => if (r.hasString) r.readString().toFloat else r.readFloat())
+
     implicit val doubleDecoder: Decoder[Double] = Decoder(
       r => if (r.hasString) r.readString().toDouble else r.readDouble())
     implicit val charDecoder: Decoder[Char]   = Decoder.forChar(forInt)
@@ -334,6 +335,7 @@ object Decoder extends LowPrioDecoders {
   }
 
   object StringBooleans {
+
     implicit val booleanDecoder: Decoder[Boolean] = Decoder { r =>
       if (r.hasString) {
         r.readString().toLowerCase match {
@@ -348,6 +350,7 @@ object Decoder extends LowPrioDecoders {
   }
 
   object StringNulls {
+
     implicit val nullDecoder: Decoder[Null] = Decoder { r =>
       r.readString("null")
       null

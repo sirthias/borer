@@ -24,6 +24,7 @@ object BorerCodecs {
   }
 
   object Manual {
+
     implicit val fooCodec = Codec[Foo](
       encoder = (w, x) => {
         w.writeMapStart()

@@ -50,10 +50,13 @@ object Unsafe {
   // the offset to the first element in a byte array.
   final private val BYTE_ARRAY_BASE_OFFSET =
     if (UNSAFE ne null) UNSAFE.arrayBaseOffset(classOf[Array[Byte]]).toLong else 0L
+
   final private val SHORT_ARRAY_BASE_OFFSET =
     if (UNSAFE ne null) UNSAFE.arrayBaseOffset(classOf[Array[Short]]).toLong else 0L
+
   final private val INT_ARRAY_BASE_OFFSET =
     if (UNSAFE ne null) UNSAFE.arrayBaseOffset(classOf[Array[Int]]).toLong else 0L
+
   final private val LONG_ARRAY_BASE_OFFSET =
     if (UNSAFE ne null) UNSAFE.arrayBaseOffset(classOf[Array[Long]]).toLong else 0L
 
