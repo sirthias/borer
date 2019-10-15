@@ -184,13 +184,13 @@ addCommandsAlias(
     s"++$scala213",
     "test:compile",
     "test",
-    "mimaReportBinaryIssues",
+    //"mimaReportBinaryIssues",
 
     // Scala 2.12
     s"++$scala212",
     "test:compile",
     "test",
-    "mimaReportBinaryIssues",
+    //"mimaReportBinaryIssues",
 
     // establish test coverage (only on JVM projects)
     "coverage",
