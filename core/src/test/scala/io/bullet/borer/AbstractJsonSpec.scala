@@ -260,6 +260,8 @@ abstract class AbstractJsonSpec extends AbstractBorerSpec {
     }
 
     "Maps" - {
+      import Codec.ForEither.default
+
       roundTrip("{}", Map.empty[Int, String])
       intercept[Borer.Error.ValidationFailure[_ <: AnyRef]](encode(ListMap(1 -> 2)))
       roundTrip("""{"":2,"foo":4}""", ListMap(""                   -> 2, "foo"     -> 4))

@@ -290,29 +290,36 @@ object Decoder extends LowPrioDecoders {
   implicit def forHashMap[A: Decoder, B: Decoder]: Decoder[HashMap[A, B]] =
     constructForMap[A, B, HashMap[A, B]](HashMap.empty)
 
-  implicit def forEither[A: Decoder, B: Decoder]: Decoder[Either[A, B]] =
-    Decoder { r =>
-      if (r.tryReadArrayStart()) {
-        if (r.readArrayStart().tryReadBreak()) {
-          val x = r.readArrayStart().read[B]()
-          r.readBreak().readBreak()
-          Right(x)
+  /**
+    * The default [[Decoder]] for [[Either]] is not automatically in scope,
+    * because there is no clear "standard" way of encoding instances of [[Either]].
+    */
+  object ForEither {
+
+    implicit def default[A: Decoder, B: Decoder]: Decoder[Either[A, B]] =
+      Decoder { r =>
+        if (r.tryReadArrayStart()) {
+          if (r.readArrayStart().tryReadBreak()) {
+            val x = r.readArrayStart().read[B]()
+            r.readBreak().readBreak()
+            Right(x)
+          } else {
+            val x = r.read[A]()
+            r.readBreak().readArrayStart().readBreak().readBreak()
+            Left(x)
+          }
         } else {
-          val x = r.read[A]()
-          r.readBreak().readArrayStart().readBreak().readBreak()
-          Left(x)
-        }
-      } else {
-        r.readMapHeader(1).readInt() match {
-          case 0 => Left(r[A])
-          case 1 => Right(r[B])
-          case x =>
-            r.unexpectedDataItem(
-              expected = "Map entry with key 0 or 1 for decoding an `Either`",
-              actual = s"Map entry with key $x")
+          r.readMapHeader(1).readInt() match {
+            case 0 => Left(r[A])
+            case 1 => Right(r[B])
+            case x =>
+              r.unexpectedDataItem(
+                expected = "Map entry with key 0 or 1 for decoding an `Either`",
+                actual = s"Map entry with key $x")
+          }
         }
       }
-    }
+  }
 
   object StringNumbers {
     implicit val intDecoder: Decoder[Int]     = Decoder(r => if (r.hasString) r.readString().toInt else r.readInt())

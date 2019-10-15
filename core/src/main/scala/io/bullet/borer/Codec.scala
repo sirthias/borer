@@ -45,4 +45,14 @@ object Codec {
     */
   @inline def targetSpecific[T](cbor: Codec[T], json: Codec[T]): Codec[T] =
     Codec(Encoder.targetSpecific(cbor.encoder, json.encoder), Decoder.targetSpecific(cbor.decoder, json.decoder))
+
+  /**
+    * The default [[Codec]] for [[Either]] is not automatically in scope,
+    * because there is no clear "standard" way of encoding instances of [[Either]].
+    */
+  object ForEither {
+
+    implicit def default[A: Encoder: Decoder, B: Encoder: Decoder]: Codec[Either[A, B]] =
+      Codec(Encoder.ForEither.default, Decoder.ForEither.default)
+  }
 }

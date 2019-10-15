@@ -250,21 +250,28 @@ object Encoder extends LowPrioEncoders {
       else rec(w.writeArrayHeader(x.length), 0)
     }
 
-  implicit def forEither[A: Encoder, B: Encoder]: Encoder[Either[A, B]] =
-    Encoder { (w, x) =>
-      if (w.writingJson) {
-        w.writeArrayStart()
-        x match {
-          case Left(a)  => w.writeToArray(a).writeEmptyArray()
-          case Right(b) => w.writeEmptyArray().writeToArray(b)
-        }
-        w.writeBreak()
-      } else
-        x match {
-          case Left(a)  => w.writeMapHeader(1).writeInt(0).write(a)
-          case Right(b) => w.writeMapHeader(1).writeInt(1).write(b)
-        }
-    }
+  /**
+    * The default [[Encoder]] for [[Either]] is not automatically in scope,
+    * because there is no clear "standard" way of encoding instances of [[Either]].
+    */
+  object ForEither {
+
+    implicit def default[A: Encoder, B: Encoder]: Encoder[Either[A, B]] =
+      Encoder { (w, x) =>
+        if (w.writingJson) {
+          w.writeArrayStart()
+          x match {
+            case Left(a)  => w.writeToArray(a).writeEmptyArray()
+            case Right(b) => w.writeEmptyArray().writeToArray(b)
+          }
+          w.writeBreak()
+        } else
+          x match {
+            case Left(a)  => w.writeMapHeader(1).writeInt(0).write(a)
+            case Right(b) => w.writeMapHeader(1).writeInt(1).write(b)
+          }
+      }
+  }
 
   private val _toStringEncoder: Encoder[Any] = Encoder((w, x) => w.writeString(x.toString))
   def toStringEncoder[T]: Encoder[T]         = _toStringEncoder.asInstanceOf[Encoder[T]]

@@ -10,6 +10,7 @@ object LoggingSpec extends TestSuite {
       def `only compiled, not actually run`() = {
         //#example
         import io.bullet.borer.Cbor
+        import io.bullet.borer.Codec.ForEither.default
 
         val value = Map(
           "foo" -> Left(42),
