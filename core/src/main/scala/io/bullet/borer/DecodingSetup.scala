@@ -34,7 +34,11 @@ object DecodingSetup {
       * Each data item that is consumed from the underlying CBOR stream is pretty printed to the console
       * on its own line.
       */
-    def withPrintLogging(maxShownByteArrayPrefixLen: Int = 20, maxShownStringPrefixLen: Int = 50): this.type
+    def withPrintLogging(
+        maxShownByteArrayPrefixLen: Int = 20,
+        maxShownStringPrefixLen: Int = 50,
+        maxShownArrayElems: Int = 20,
+        maxShownMapEntries: Int = 20): this.type
 
     /**
       * Enables logging of this decoding run to the given [[JStringBuilder]].
@@ -44,6 +48,8 @@ object DecodingSetup {
         stringBuilder: JStringBuilder,
         maxShownByteArrayPrefixLen: Int = 20,
         maxShownStringPrefixLen: Int = 50,
+        maxShownArrayElems: Int = 20,
+        maxShownMapEntries: Int = 20,
         lineSeparator: String = System.lineSeparator()): this.type
 
     /**

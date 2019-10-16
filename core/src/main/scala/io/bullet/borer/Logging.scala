@@ -132,34 +132,58 @@ object Logging {
       } else "\"" + value + '"'
 
     def show(item: String): Unit = {
-      val sb = new java.lang.StringBuilder
-      for (_ <- 0 until info.level) sb.append("    ")
-      val levelCount = info.levelCount.toString
-      val levelSize  = info.levelSize
-      if (levelSize >= 0) {
-        val s = levelSize.toString
-        for (_ <- 0 until (s.length - levelCount.length)) sb.append(' ')
-        sb.append(levelCount).append('/').append(s)
-      } else sb.append(levelCount)
-      sb.append(": ")
-      if (info.levelType == LevelType.MapValue && item != "]" && item != "}") sb.append("-> ")
-      sb.append(item)
-      showLine(sb.toString)
+      val inf             = info
+      val levelType       = inf.levelType
+      val sze             = inf.levelSize
+      val cnt             = inf.levelCount
+      val maxShownInLevel = if (levelType.isInstanceOf[LevelType.MapEntry]) maxShownMapEntries else maxShownArrayElems
+      val shownHalf       = maxShownInLevel >> 1
+      val ellipsisCount   = sze - shownHalf
+      if (sze <= maxShownInLevel || cnt <= shownHalf + (maxShownInLevel & 1) || cnt > ellipsisCount) {
+        val sb = new java.lang.StringBuilder
+        for (_ <- 0 until inf.level) sb.append("    ")
+        val levelCount = cnt.toString
+        if (sze >= 0) {
+          val s = sze.toString
+          for (_ <- 0 until (s.length - levelCount.length)) sb.append(' ')
+          sb.append(levelCount).append('/').append(s)
+        } else sb.append(levelCount)
+        sb.append(": ")
+        if (levelType == LevelType.MapValue && item != "]" && item != "}") sb.append("-> ")
+        sb.append(item)
+        showLine(sb.toString)
+      } else if (cnt == ellipsisCount && levelType != LevelType.MapKey) {
+        val sb = new java.lang.StringBuilder
+        for (_ <- 0 until inf.level) sb.append("    ")
+        sb.append("...")
+        showLine(sb.toString)
+      }
     }
 
     def info: LevelInfo
     def maxShownByteArrayPrefixLen: Int
     def maxShownStringPrefixLen: Int
+    def maxShownArrayElems: Int
+    def maxShownMapEntries: Int
     def showLine(line: String): Unit
   }
 
-  def PrintLogger(maxShownByteArrayPrefixLen: Int = 20, maxShownStringPrefixLen: Int = 50): LevelInfo => PrintLogger =
-    new PrintLogger(maxShownByteArrayPrefixLen, maxShownStringPrefixLen, _)
+  def PrintLogger(
+      maxShownByteArrayPrefixLen: Int = 20,
+      maxShownStringPrefixLen: Int = 50,
+      maxShownArrayElems: Int = 20,
+      maxShownMapEntries: Int = 20): LevelInfo => PrintLogger =
+    new PrintLogger(maxShownByteArrayPrefixLen, maxShownStringPrefixLen, maxShownArrayElems, maxShownMapEntries, _)
 
   /**
     * A [[LineFormatLogger]] that simply prints all lines to the console.
     */
-  final class PrintLogger(val maxShownByteArrayPrefixLen: Int, val maxShownStringPrefixLen: Int, val info: LevelInfo)
+  final class PrintLogger(
+      val maxShownByteArrayPrefixLen: Int,
+      val maxShownStringPrefixLen: Int,
+      val maxShownArrayElems: Int,
+      val maxShownMapEntries: Int,
+      val info: LevelInfo)
       extends LineFormatLogger {
     def showLine(line: String): Unit = println(line)
   }
@@ -168,8 +192,17 @@ object Logging {
       stringBuilder: JStringBuilder,
       maxShownByteArrayPrefixLen: Int = 20,
       maxShownStringPrefixLen: Int = 50,
+      maxShownArrayElems: Int = 20,
+      maxShownMapEntries: Int = 20,
       lineSeparator: String = System.lineSeparator()): LevelInfo => ToStringLogger =
-    new ToStringLogger(stringBuilder, maxShownByteArrayPrefixLen, maxShownStringPrefixLen, lineSeparator, _)
+    new ToStringLogger(
+      stringBuilder,
+      maxShownByteArrayPrefixLen,
+      maxShownStringPrefixLen,
+      maxShownArrayElems,
+      maxShownMapEntries,
+      lineSeparator,
+      _)
 
   /**
     * A [[LineFormatLogger]] that appends all lines to a given [[JStringBuilder]].
@@ -178,6 +211,8 @@ object Logging {
       val stringBuilder: JStringBuilder,
       val maxShownByteArrayPrefixLen: Int,
       val maxShownStringPrefixLen: Int,
+      val maxShownArrayElems: Int,
+      val maxShownMapEntries: Int,
       val lineSeparator: String,
       val info: LevelInfo)
       extends LineFormatLogger {

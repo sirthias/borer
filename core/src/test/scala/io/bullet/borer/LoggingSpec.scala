@@ -142,6 +142,66 @@ object LoggingSpec extends TestSuite {
         |2: END
         |""".stripMargin
     }
+
+    "long arrays and maps" - roundTripLogEquals {
+      ArrayElem.Sized(
+        ArrayElem.Sized((0 to 20).map(IntElem): _*),
+        MapElem.Sized((0 to 20).map(IntElem).zip(('A' to 'Z').map(x => StringElem(x.toString))): _*)
+      )
+    } {
+      """1: [
+        |    1/2: [
+        |         1/21: 0
+        |         2/21: 1
+        |         3/21: 2
+        |         4/21: 3
+        |         5/21: 4
+        |         6/21: 5
+        |        ...
+        |        16/21: 15
+        |        17/21: 16
+        |        18/21: 17
+        |        19/21: 18
+        |        20/21: 19
+        |        21/21: 20
+        |    1/2: ]
+        |    2/2: {
+        |         1/21: 0
+        |         1/21: -> "A"
+        |         2/21: 1
+        |         2/21: -> "B"
+        |         3/21: 2
+        |         3/21: -> "C"
+        |         4/21: 3
+        |         4/21: -> "D"
+        |         5/21: 4
+        |         5/21: -> "E"
+        |         6/21: 5
+        |         6/21: -> "F"
+        |         7/21: 6
+        |         7/21: -> "G"
+        |         8/21: 7
+        |         8/21: -> "H"
+        |        ...
+        |        15/21: 14
+        |        15/21: -> "O"
+        |        16/21: 15
+        |        16/21: -> "P"
+        |        17/21: 16
+        |        17/21: -> "Q"
+        |        18/21: 17
+        |        18/21: -> "R"
+        |        19/21: 18
+        |        19/21: -> "S"
+        |        20/21: 19
+        |        20/21: -> "T"
+        |        21/21: 20
+        |        21/21: -> "U"
+        |    2/2: }
+        |1: ]
+        |2: END
+        |""".stripMargin
+    }
   }
 
   def roundTripLogEquals(element: Element)(expectedLog: String): Unit = {
@@ -150,7 +210,12 @@ object LoggingSpec extends TestSuite {
     val encoded =
       Cbor
         .encode(element)
-        .withStringLogging(log, maxShownByteArrayPrefixLen = 8, maxShownStringPrefixLen = 8)
+        .withStringLogging(
+          log,
+          maxShownByteArrayPrefixLen = 8,
+          maxShownStringPrefixLen = 8,
+          maxShownArrayElems = 12,
+          maxShownMapEntries = 15)
         .toByteArray
 
     log.toString ==> expectedLog
@@ -158,7 +223,12 @@ object LoggingSpec extends TestSuite {
     log.setLength(0) // clear
     Cbor
       .decode(encoded)
-      .withStringLogging(log, maxShownByteArrayPrefixLen = 8, maxShownStringPrefixLen = 8)
+      .withStringLogging(
+        log,
+        maxShownByteArrayPrefixLen = 8,
+        maxShownStringPrefixLen = 8,
+        maxShownArrayElems = 12,
+        maxShownMapEntries = 15)
       .to[Element]
       .value ==> element
 

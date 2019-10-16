@@ -30,7 +30,11 @@ object EncodingSetup {
       * Enables logging of the encoding progress to the console.
       * Each data item that is written by the application is pretty printed to the console on its own line.
       */
-    def withPrintLogging(maxShownByteArrayPrefixLen: Int = 20, maxShownStringPrefixLen: Int = 50): this.type
+    def withPrintLogging(
+        maxShownByteArrayPrefixLen: Int = 20,
+        maxShownStringPrefixLen: Int = 50,
+        maxShownArrayElems: Int = 20,
+        maxShownMapEntries: Int = 20): this.type
 
     /**
       * Enables logging of the encoding progress to the given [[JStringBuilder]].
@@ -40,6 +44,8 @@ object EncodingSetup {
         stringBuilder: JStringBuilder,
         maxShownByteArrayPrefixLen: Int = 20,
         maxShownStringPrefixLen: Int = 50,
+        maxShownArrayElems: Int = 20,
+        maxShownMapEntries: Int = 20,
         lineSeparator: String = System.lineSeparator()): this.type
 
     /**

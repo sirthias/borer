@@ -239,17 +239,32 @@ object Borer {
       this
     }
 
-    final def withPrintLogging(maxShownByteArrayPrefixLen: Int, maxShownStringPrefixLen: Int): this.type =
-      withStackedWrapper(Logging(Logging.PrintLogger(maxShownByteArrayPrefixLen, maxShownStringPrefixLen)))
+    final def withPrintLogging(
+        maxShownByteArrayPrefixLen: Int,
+        maxShownStringPrefixLen: Int,
+        maxShownArrayElems: Int,
+        maxShownMapEntries: Int): this.type =
+      withStackedWrapper(
+        Logging(
+          Logging
+            .PrintLogger(maxShownByteArrayPrefixLen, maxShownStringPrefixLen, maxShownArrayElems, maxShownMapEntries)))
 
     final def withStringLogging(
         stringBuilder: JStringBuilder,
         maxShownByteArrayPrefixLen: Int,
         maxShownStringPrefixLen: Int,
+        maxShownArrayElems: Int,
+        maxShownMapEntries: Int,
         lineSeparator: String): this.type =
       withStackedWrapper {
         Logging {
-          Logging.ToStringLogger(stringBuilder, maxShownByteArrayPrefixLen, maxShownStringPrefixLen, lineSeparator)
+          Logging.ToStringLogger(
+            stringBuilder,
+            maxShownByteArrayPrefixLen,
+            maxShownStringPrefixLen,
+            maxShownArrayElems,
+            maxShownMapEntries,
+            lineSeparator)
         }
       }
 
