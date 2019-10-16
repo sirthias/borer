@@ -12,7 +12,7 @@ import io.bullet.borer._
 import utest._
 import io.bullet.borer.internal.Util._
 
-object FromInputIteratorSpec extends TestSuite with TestUtils {
+object FromIteratorInputSpec extends TestSuite with TestUtils {
 
   val inputBytes = {
     val bytes = new Array[Byte](1024)

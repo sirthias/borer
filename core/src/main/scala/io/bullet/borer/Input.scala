@@ -8,7 +8,13 @@
 
 package io.bullet.borer
 
-import io.bullet.borer.input.{FromByteArrayInput, FromByteBufferInput, FromFileInput, FromIteratorInput}
+import io.bullet.borer.input.{
+  FromByteArrayInput,
+  FromByteBufferInput,
+  FromFileInput,
+  FromInputStreamInput,
+  FromIteratorInput
+}
 
 /**
   * Mutable abstraction wrapping some source of bytes to serve as parser input.
@@ -100,7 +106,9 @@ trait Input[Bytes] {
   def readBytes(length: Long, pp: Input.PaddingProvider[Bytes]): Bytes
 }
 
-object Input extends FromByteArrayInput with FromByteBufferInput with FromFileInput with FromIteratorInput {
+object Input
+    extends FromByteArrayInput with FromByteBufferInput with FromInputStreamInput with FromFileInput
+    with FromIteratorInput {
 
   abstract class PaddingProvider[Bytes] {
     def padByte(): Byte

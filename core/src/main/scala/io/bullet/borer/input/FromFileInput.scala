@@ -12,9 +12,8 @@ import java.io.{File, FileInputStream}
 import java.nio.file.Files
 
 import io.bullet.borer.{ByteAccess, Input}
-import io.bullet.borer
 
-trait FromFileInput { this: FromByteArrayInput with FromIteratorInput =>
+trait FromFileInput { this: FromByteArrayInput with FromInputStreamInput =>
 
   implicit object FromFileProvider extends Input.Provider[File] {
     type Bytes = Array[Byte]
@@ -24,41 +23,10 @@ trait FromFileInput { this: FromByteArrayInput with FromIteratorInput =>
   }
 
   def fromFile(file: File, bufferSize: Int = 16384): Input[Array[Byte]] = {
-    if (bufferSize < 256) throw new IllegalArgumentException(s"bufferSize must be > 256 but was $bufferSize")
+    if (bufferSize < 256) throw new IllegalArgumentException(s"bufferSize must be >= 256 but was $bufferSize")
     val fileSize = file.length()
-    if (fileSize > bufferSize) {
-      val iterator: Iterator[Input.FromByteArray] =
-        new Iterator[Input.FromByteArray] {
-          private[this] val inputStream     = new FileInputStream(file)
-          private[this] val bufA            = new Array[Byte](bufferSize)
-          private[this] val bufB            = new Array[Byte](bufferSize)
-          private[this] var chunkCount: Int = 0
-          private[this] var remaining: Long = fileSize
-
-          def hasNext = remaining > 0
-
-          def next() = {
-            val chunkNr = chunkCount
-            chunkCount += 1
-
-            val buf =
-              if (remaining >= bufferSize) {
-                if ((chunkNr & 1) == 0) bufA else bufB
-              } else new Array[Byte](remaining.toInt)
-
-            val byteCount = inputStream.read(buf)
-            if (byteCount != buf.length)
-              sys.error(
-                s"Error reading chunk number $chunkNr (size: ${buf.length} bytes) " +
-                  s"of input file '$file' (size: $fileSize bytes)")
-
-            remaining -= byteCount
-
-            new borer.Input.FromByteArray(buf)
-          }
-        }
-      new FromIterator(iterator, ByteAccess.ForByteArray)
-    } else new FromByteArray(Files.readAllBytes(file.toPath))
+    if (fileSize > bufferSize) fromInputStream(new FileInputStream(file), bufferSize)
+    else new FromByteArray(Files.readAllBytes(file.toPath))
   }
 
 }
