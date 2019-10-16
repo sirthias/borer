@@ -183,28 +183,28 @@ class BorerModelBenchmark extends DomBenchmark {
         implicit val B = deriveCodec[PushEvent]
         implicit val C = deriveCodec[WatchEvent]
         implicit val D = deriveCodec[RootInterface[Head[Repo1], Forkee]]
-        Codec.implicitly[List[RootInterface[Head[Repo1], Forkee]]]
+        Codec.of[List[RootInterface[Head[Repo1], Forkee]]]
 
       case "github-gists.json" =>
         implicit val a = deriveCodec[GithubGists.Owner]
         implicit val b = deriveCodec[GithubGists.FileData]
         implicit val c = deriveCodec[GithubGists.RootInterface]
-        Codec.implicitly[List[GithubGists.RootInterface]]
+        Codec.of[List[GithubGists.RootInterface]]
 
       case "json-generator.json" =>
         implicit val a = deriveCodec[JsonGenerator.Friends]
         implicit val b = deriveCodec[JsonGenerator.Name]
         implicit val c = deriveCodec[JsonGenerator.RootInterface]
-        Codec.implicitly[List[JsonGenerator.RootInterface]]
+        Codec.of[List[JsonGenerator.RootInterface]]
 
       case "meteorites.json" =>
         implicit val a = deriveCodec[Meteorites.Geolocation]
         implicit val b = deriveCodec[Meteorites.RootInterface]
-        Codec.implicitly[List[Meteorites.RootInterface]]
+        Codec.of[List[Meteorites.RootInterface]]
 
       case "movies.json" =>
         implicit val a = deriveCodec[Movies.RootInterface]
-        Codec.implicitly[List[Movies.RootInterface]]
+        Codec.of[List[Movies.RootInterface]]
 
       case "reddit-scala.json" =>
         implicit val a = deriveCodec[Reddit.Oembed]
@@ -253,7 +253,7 @@ class BorerModelBenchmark extends DomBenchmark {
         implicit val f = deriveCodec[TwitterApiResponse.User]
         implicit val g = deriveCodec[TwitterApiResponse.RetweetedStatus]
         implicit val h = deriveCodec[TwitterApiResponse.RootInterface]
-        Codec.implicitly[List[TwitterApiResponse.RootInterface]]
+        Codec.of[List[TwitterApiResponse.RootInterface]]
     }
     c.asInstanceOf[Codec[Product]]
   }

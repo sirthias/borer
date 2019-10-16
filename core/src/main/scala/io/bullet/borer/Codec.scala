@@ -29,10 +29,10 @@ final case class Codec[A](encoder: Encoder[A], decoder: Decoder[A]) {
 object Codec {
 
   /**
-    * Wraps implicitly available [[Encoder]] and [[Decoder]] instances for [[T]] in a [[Codec]].
+    * Same as `apply` but with the parameter list marked as implicit.
     */
-  @inline def implicitly[T: Encoder: Decoder]: Codec[T] =
-    Codec(Predef.implicitly[Encoder[T]], Predef.implicitly[Decoder[T]])
+  @inline def of[A](implicit encoder: Encoder[A], decoder: Decoder[A]): Codec[A] =
+    Codec(encoder, decoder)
 
   /**
     * Constructs a `Codec[B]` from an `Encoder[A]`, a `Decoder[A]` and two functions.
