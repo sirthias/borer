@@ -129,9 +129,8 @@ object Input
     */
   trait Provider[T] {
     type Bytes
-    type In <: Input[Bytes]
     def byteAccess: ByteAccess[Bytes]
-    def apply(value: T): In
+    def apply(value: T): Input[Bytes]
   }
   //#provider
 
@@ -141,9 +140,8 @@ object Input
   implicit def provider[B: ByteAccess] =
     new Provider[Input[B]] {
       type Bytes = B
-      type In    = Input[B]
-      def byteAccess: ByteAccess[B]  = implicitly[ByteAccess[B]]
-      def apply(value: Input[B]): In = value
+      def byteAccess: ByteAccess[B]            = implicitly[ByteAccess[B]]
+      def apply(value: Input[B]): Input[Bytes] = value
     }
 
   final case class Position(input: Input[_], index: Long) {

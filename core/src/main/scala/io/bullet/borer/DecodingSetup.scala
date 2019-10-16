@@ -17,7 +17,7 @@ import scala.util.{Failure, Success, Try}
 
 object DecodingSetup {
 
-  sealed trait Api[In <: Input[_], Config <: Borer.DecodingConfig] {
+  sealed trait Api[Config <: Borer.DecodingConfig] {
 
     /**
       * Indicates that this decoding run is not expected to consume the complete [[Input]].
@@ -61,10 +61,10 @@ object DecodingSetup {
     /**
       * Decodes an instance of [[T]] from the configured [[Input]] using the configured options.
       */
-    def to[T: Decoder]: Sealed[In, T]
+    def to[T: Decoder]: Sealed[T]
   }
 
-  sealed trait Sealed[In <: Input[_], T] {
+  sealed trait Sealed[T] {
 
     def value: T
 
@@ -72,20 +72,20 @@ object DecodingSetup {
 
     def valueEither: Either[Borer.Error[Input.Position], T]
 
-    def valueAndInput: (T, In)
+    def valueAndInput: (T, Input[_])
 
-    def valueAndInputTry: Try[(T, In)]
+    def valueAndInputTry: Try[(T, Input[_])]
 
-    def valueAndInputEither: Either[Borer.Error[Input.Position], (T, In)]
+    def valueAndInputEither: Either[Borer.Error[Input.Position], (T, Input[_])]
   }
 
-  final private[borer] class Impl[V, Bytes, In <: Input[Bytes], Config <: Borer.DecodingConfig](
+  final private[borer] class Impl[V, Bytes, Config <: Borer.DecodingConfig](
       inputValue: V,
       defaultConfig: Config,
       defaultWrapper: Receiver.Wrapper[Config],
       parserCreator: Parser.Creator[Bytes, Config],
       target: Target)(implicit p: Input.Provider[V])
-      extends Borer.AbstractSetup[Config](defaultConfig, defaultWrapper) with Api[In, Config] with Sealed[In, AnyRef] {
+      extends Borer.AbstractSetup[Config](defaultConfig, defaultWrapper) with Api[Config] with Sealed[AnyRef] {
 
     private[this] var prefixOnly: Boolean      = _
     private[this] var decoder: Decoder[AnyRef] = _
@@ -95,9 +95,9 @@ object DecodingSetup {
       this
     }
 
-    def to[T](implicit decoder: Decoder[T]): Sealed[In, T] = {
+    def to[T](implicit decoder: Decoder[T]): Sealed[T] = {
       this.decoder = decoder.asInstanceOf[Decoder[AnyRef]]
-      this.asInstanceOf[Sealed[In, T]]
+      this.asInstanceOf[Sealed[T]]
     }
 
     def value: AnyRef = {
@@ -130,30 +130,30 @@ object DecodingSetup {
       }
     }
 
-    def valueAndInput: (AnyRef, In) = {
+    def valueAndInput: (AnyRef, Input[_]) = {
       val reader = newReader()
       try {
-        decodeFrom(reader) -> reader.input.asInstanceOf[In]
+        decodeFrom(reader) -> reader.input
       } catch {
         case e: Borer.Error[_] => throw e.withPosOf(reader)
         case NonFatal(e)       => throw new Borer.Error.General(reader.position, e)
       }
     }
 
-    def valueAndInputTry: Try[(AnyRef, In)] = {
+    def valueAndInputTry: Try[(AnyRef, Input[_])] = {
       val reader = newReader()
       try {
-        Success(decodeFrom(reader) -> reader.input.asInstanceOf[In])
+        Success(decodeFrom(reader) -> reader.input)
       } catch {
         case e: Borer.Error[_] => Failure(e.withPosOf(reader))
         case NonFatal(e)       => Failure(new Borer.Error.General(reader.position, e))
       }
     }
 
-    def valueAndInputEither: Either[Borer.Error[Input.Position], (AnyRef, In)] = {
+    def valueAndInputEither: Either[Borer.Error[Input.Position], (AnyRef, Input[_])] = {
       val reader = newReader()
       try {
-        Right(decodeFrom(reader) -> reader.input.asInstanceOf[In])
+        Right(decodeFrom(reader) -> reader.input)
       } catch {
         case e: Borer.Error[_] => Left(e.withPosOf(reader))
         case NonFatal(e)       => Left(new Borer.Error.General(reader.position, e))
@@ -167,7 +167,8 @@ object DecodingSetup {
       }
       val parser =
         if (directParser ne null) null
-        else parserCreator(p(inputValue).asInstanceOf[In], p.byteAccess.asInstanceOf[ByteAccess[Bytes]], config)
+        else
+          parserCreator(p(inputValue).asInstanceOf[Input[Bytes]], p.byteAccess.asInstanceOf[ByteAccess[Bytes]], config)
       new InputReader(parser, directParser, receiverWrapper, config, target)
     }
 

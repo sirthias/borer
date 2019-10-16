@@ -17,7 +17,6 @@ trait FromFileInput { this: FromByteArrayInput with FromInputStreamInput =>
 
   implicit object FromFileProvider extends Input.Provider[File] {
     type Bytes = Array[Byte]
-    type In    = Input[Array[Byte]]
     def byteAccess         = ByteAccess.ForByteArray
     def apply(value: File) = fromFile(value)
   }
@@ -26,7 +25,7 @@ trait FromFileInput { this: FromByteArrayInput with FromInputStreamInput =>
     if (bufferSize < 256) throw new IllegalArgumentException(s"bufferSize must be >= 256 but was $bufferSize")
     val fileSize = file.length()
     if (fileSize > bufferSize) fromInputStream(new FileInputStream(file), bufferSize)
-    else new FromByteArray(Files.readAllBytes(file.toPath))
+    else fromByteArray(Files.readAllBytes(file.toPath))
   }
 
 }

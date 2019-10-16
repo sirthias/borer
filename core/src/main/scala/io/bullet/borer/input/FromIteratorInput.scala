@@ -19,14 +19,15 @@ trait FromIteratorInput {
   implicit def FromIteratorProvider[T](implicit p: Input.Provider[T]): Input.Provider[Iterator[T]] =
     new Input.Provider[Iterator[T]] {
       type Bytes = p.Bytes
-      type In    = FromIterator[p.Bytes]
-      def byteAccess                = p.byteAccess
-      def apply(value: Iterator[T]) = new FromIterator[p.Bytes](value.map(p(_)), byteAccess)
+      implicit def byteAccess       = p.byteAccess
+      def apply(value: Iterator[T]) = fromIterator[p.Bytes](value.map(p(_)))
     }
 
-  final class FromIterator[Bytes](
-      private[this] var inputIterator: Iterator[Input[Bytes]],
-      byteAccess: ByteAccess[Bytes])
+  def fromIterator[Bytes: ByteAccess](value: Iterator[Input[Bytes]]): Input[Bytes] =
+    new FromIterator(value)
+
+  final private class FromIterator[Bytes](private[this] var inputIterator: Iterator[Input[Bytes]])(
+      implicit byteAccess: ByteAccess[Bytes])
       extends Input.PaddingProvider[Bytes] with Input[Bytes] {
 
     private[this] var history                                            = List.empty[Input[Bytes]]

@@ -16,12 +16,13 @@ trait FromByteBufferInput {
 
   implicit object FromByteBufferProvider extends Input.Provider[ByteBuffer] {
     type Bytes = Array[Byte]
-    type In    = FromByteBuffer
     def byteAccess               = ByteAccess.ForByteArray
-    def apply(value: ByteBuffer) = new FromByteBuffer(value)
+    def apply(value: ByteBuffer) = fromByteBuffer(value)
   }
 
-  final class FromByteBuffer(buffer: ByteBuffer) extends Input[Array[Byte]] {
+  def fromByteBuffer(value: ByteBuffer): Input[Array[Byte]] = new FromByteBuffer(value)
+
+  final private class FromByteBuffer(buffer: ByteBuffer) extends Input[Array[Byte]] {
 
     def cursor: Long = buffer.position().toLong
 

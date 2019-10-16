@@ -26,7 +26,7 @@ object FromIteratorInputSpec extends TestSuite with TestUtils {
   val tests = Tests {
 
     // verification: our "test suite" does indeed pass for a known-good Input implementation
-    "FromByteArray" - testInput(new Input.FromByteArray(inputBytes))
+    "FromByteArray" - testInput(Input.fromByteArray(inputBytes))
 
     "FromInputIterator - 100 byte chunks" - testInput(chunkIteratorInput(100))
 
@@ -110,9 +110,9 @@ object FromIteratorInputSpec extends TestSuite with TestUtils {
     input.readBytes(255, pp) ==> inputBytes.takeRight(251) ++ Array[Byte](-1, -1, -1, -1)
   }
 
-  def chunkIteratorInput(chunkSizes: Int*): Input.FromIterator[Array[Byte]] = {
+  def chunkIteratorInput(chunkSizes: Int*): Input[Array[Byte]] = {
     val iter = Iterator.continually(0).flatMap(_ => chunkSizes)
-    new Input.FromIterator(chunkIterator(inputBytes, iter).map(new Input.FromByteArray(_)), ByteAccess.ForByteArray)
+    Input.fromIterator(chunkIterator(inputBytes, iter).map(Input.fromByteArray))
   }
 
   def chunkIterator(remainingBytes: Array[Byte], chunkSizes: Iterator[Int]): Iterator[Array[Byte]] = {

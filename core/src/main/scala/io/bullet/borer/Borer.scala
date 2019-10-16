@@ -27,8 +27,8 @@ case object Cbor extends Target {
   /**
     * Entry point into the CBOR decoding mini-DSL.
     */
-  def decode[T](value: T)(implicit p: Input.Provider[T]): DecodingSetup.Api[p.In, DecodingConfig] =
-    new DecodingSetup.Impl[T, p.Bytes, p.In, DecodingConfig](
+  def decode[T](value: T)(implicit p: Input.Provider[T]): DecodingSetup.Api[DecodingConfig] =
+    new DecodingSetup.Impl[T, p.Bytes, DecodingConfig](
       value,
       DecodingConfig.default,
       CborValidation.wrapper,
@@ -123,8 +123,8 @@ case object Json extends Target {
   /**
     * Entry point into the JSON decoding mini-DSL.
     */
-  def decode[T](value: T)(implicit p: Input.Provider[T]): DecodingSetup.Api[p.In, DecodingConfig] =
-    new DecodingSetup.Impl[T, p.Bytes, p.In, DecodingConfig](
+  def decode[T](value: T)(implicit p: Input.Provider[T]): DecodingSetup.Api[DecodingConfig] =
+    new DecodingSetup.Impl[T, p.Bytes, DecodingConfig](
       value,
       DecodingConfig.default,
       Receiver.nopWrapper,
@@ -222,7 +222,7 @@ sealed abstract class Target {
 
   def encode[T: Encoder](value: T): EncodingSetup.Api[_]
 
-  def decode[T](input: T)(implicit w: Input.Provider[T]): DecodingSetup.Api[w.In, _]
+  def decode[T](input: T)(implicit w: Input.Provider[T]): DecodingSetup.Api[_]
 }
 
 /**

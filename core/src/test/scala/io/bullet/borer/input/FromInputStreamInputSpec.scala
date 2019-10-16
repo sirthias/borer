@@ -38,7 +38,7 @@ object FromInputStreamInputSpec extends TestSuite with TestUtils {
                   b(ix) = bytes.next()
                   ix
                 }
-                .max + 1
+                .foldLeft(0)(math.max) + 1
             } else 0
           } else -1
       }

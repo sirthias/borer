@@ -25,8 +25,8 @@ import io.bullet.borer._
 trait AkkaHttpCompat {
 
   // brevity aliases
-  type CborDecodingSetup = DecodingSetup.Api[Input[Array[Byte]], Cbor.DecodingConfig]
-  type JsonDecodingSetup = DecodingSetup.Api[Input[Array[Byte]], Json.DecodingConfig]
+  type CborDecodingSetup = DecodingSetup.Api[Cbor.DecodingConfig]
+  type JsonDecodingSetup = DecodingSetup.Api[Json.DecodingConfig]
 
   /**
     * Override with a parameterized call to the `borerUnmarshaller` method to apply a custom configuration.
