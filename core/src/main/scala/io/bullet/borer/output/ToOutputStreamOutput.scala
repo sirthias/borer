@@ -17,7 +17,9 @@ trait ToOutputStreamOutput {
 
   implicit object ToOutputStreamProvider extends ToValueProvider[OutputStream] {
     type Out = ToOutputStream
-    def apply(outputStream: OutputStream, bufferSize: Int) = new ToOutputStream(outputStream, bufferSize)
+
+    def apply(outputStream: OutputStream, bufferSize: Int, allowBufferCaching: Boolean) =
+      new ToOutputStream(outputStream, bufferSize)
   }
 
   abstract class ToOutputStreamBase(protected val outputStream: OutputStream, bufferSize: Int) extends Output {

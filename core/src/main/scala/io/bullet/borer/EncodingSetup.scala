@@ -131,12 +131,12 @@ object EncodingSetup {
     def toByteBufferTry: Try[ByteBuffer] = to[ByteBuffer].resultTry
 
     def to[R](implicit op: Output.ToTypeProvider[R]): Sealed[op.Out, R] = {
-      _output = op(config.bufferSize)
+      _output = op(config.bufferSize, config.allowBufferCaching)
       this.asInstanceOf[Sealed[op.Out, R]]
     }
 
     def to[R](target: R)(implicit op: Output.ToValueProvider[R]): Sealed[op.Out, R] = {
-      _output = op(target, config.bufferSize)
+      _output = op(target, config.bufferSize, config.allowBufferCaching)
       this.asInstanceOf[Sealed[op.Out, R]]
     }
 

@@ -64,6 +64,7 @@ case object Cbor extends Target {
     */
   final case class EncodingConfig(
       bufferSize: Int = 1024,
+      allowBufferCaching: Boolean = true,
       compressFloatingPointValues: Boolean = true,
       maxArrayLength: Long = Int.MaxValue,
       maxMapLength: Long = Int.MaxValue,
@@ -152,7 +153,11 @@ case object Json extends Target {
     new InputReader(parser, directParser, receiverWrapper, config, Json)
   }
 
-  final case class EncodingConfig(bufferSize: Int = 1024) extends Borer.EncodingConfig {
+  final case class EncodingConfig(
+      bufferSize: Int = 1024,
+      allowBufferCaching: Boolean = true
+  ) extends Borer.EncodingConfig {
+
     def compressFloatingPointValues = false
 
     if (bufferSize < 8) throw new IllegalArgumentException(s"bufferSize must be >= 8, but was $bufferSize")
@@ -184,7 +189,8 @@ case object Json extends Target {
       maxNumberAbsExponent: Int = 64,
       maxStringLength: Int = 1024 * 1024,
       maxNumberMantissaDigits: Int = 34,
-      initialCharbufferSize: Int = 256,
+      initialCharbufferSize: Int = 2048,
+      allowBufferCaching: Boolean = true,
       allowDirectParsing: Boolean = true)
       extends Borer.DecodingConfig with JsonParser.Config {
 
@@ -226,6 +232,7 @@ object Borer {
 
   sealed abstract class EncodingConfig extends Writer.Config {
     def bufferSize: Int
+    def allowBufferCaching: Boolean
   }
 
   sealed abstract class DecodingConfig extends Reader.Config

@@ -48,7 +48,7 @@ object Output extends ToByteArrayOutput with ToByteBufferOutput with ToFileOutpu
     */
   trait ToTypeProvider[T] {
     type Out <: Output { type Result = T }
-    def apply(bufferSize: Int): Out
+    def apply(bufferSize: Int, allowBufferCaching: Boolean): Out
   }
 
   /**
@@ -56,7 +56,7 @@ object Output extends ToByteArrayOutput with ToByteBufferOutput with ToFileOutpu
     */
   trait ToValueProvider[T] {
     type Out <: Output { type Result = T }
-    def apply(value: T, bufferSize: Int): Out
+    def apply(value: T, bufferSize: Int, allowBufferCaching: Boolean): Out
   }
   //#provider
 

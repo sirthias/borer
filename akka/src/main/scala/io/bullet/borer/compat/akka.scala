@@ -157,7 +157,7 @@ object akka {
 
   implicit object ByteStringOutputProvider extends Output.ToTypeProvider[ByteString] {
     type Out = ByteStringOutput
-    def apply(bufferSize: Int) = new ByteStringOutput
+    def apply(bufferSize: Int, allowBufferCaching: Boolean) = new ByteStringOutput
   }
 
   /**

@@ -17,7 +17,9 @@ object ImmutableOutputCborSpec extends AbstractCborSpec {
 
   implicit object SomewhatImmutableByteArrayOutputProvider extends Output.ToTypeProvider[Array[Byte]] {
     type Out = SomewhatImmutableByteArrayOutput
-    def apply(bufferSize: Int) = new SomewhatImmutableByteArrayOutput(new Array[Byte](8), 0)
+
+    def apply(bufferSize: Int, allowBufferCaching: Boolean) =
+      new SomewhatImmutableByteArrayOutput(new Array[Byte](8), 0)
   }
 
   final class SomewhatImmutableByteArrayOutput(buffer: Array[Byte], val cursor: Int) extends Output {

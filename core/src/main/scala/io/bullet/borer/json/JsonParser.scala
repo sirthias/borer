@@ -12,7 +12,7 @@ import java.nio.charset.StandardCharsets
 import java.util
 
 import io.bullet.borer.{Borer, _}
-import io.bullet.borer.internal.{Parser, Util}
+import io.bullet.borer.internal.{CharArrayCache, Parser, Util}
 
 import scala.annotation.{switch, tailrec}
 
@@ -54,12 +54,15 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
   import JsonParser._
 
   private[this] val allowDoubleParsing = !config.readDecimalNumbersOnlyAsNumberStrings
-  private[this] var chars: Array[Char] = new Array[Char](config.initialCharbufferSize)
-  private[this] var state: Int         = EXPECT_VALUE
-  private[this] var cursorExtra: Int   = _
-  private[this] var auxLong: Long      = _
-  private[this] var _valueIndex: Long  = _
-  private[this] var level: Int         = _ // valid range: 0..64
+
+  private[this] var chars: Array[Char] =
+    if (config.allowBufferCaching) CharArrayCache.getBuffer(config.initialCharbufferSize)
+    else new Array[Char](config.initialCharbufferSize)
+  private[this] var state: Int        = EXPECT_VALUE
+  private[this] var cursorExtra: Int  = _
+  private[this] var auxLong: Long     = _
+  private[this] var _valueIndex: Long = _
+  private[this] var level: Int        = _ // valid range: 0..64
 
   // keeps the type of each level as a bit map: 0 -> Array, 1 -> Map
   // the current level is always the LSB (bit 0)
@@ -694,6 +697,7 @@ private[borer] object JsonParser {
     def maxNumberMantissaDigits: Int
     def maxNumberAbsExponent: Int
     def initialCharbufferSize: Int
+    def allowBufferCaching: Boolean
   }
 
   final private[this] val _creator: Parser.Creator[Any, JsonParser.Config] =

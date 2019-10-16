@@ -154,17 +154,17 @@ object scodec {
 
   implicit object ByteVectorOutputProvider extends Output.ToTypeProvider[ByteVector] {
     type Out = ByteVectorOutput
-    def apply(bufferSize: Int) = new ByteVectorOutput(bufferSize)
+    def apply(bufferSize: Int, allowBufferCaching: Boolean) = new ByteVectorOutput(bufferSize, allowBufferCaching)
   }
 
   /**
     * Mutable [[Output]] implementation for serializing to [[ByteVector]].
     */
-  final class ByteVectorOutput(bufferSize: Int) extends Output {
+  final class ByteVectorOutput(bufferSize: Int, allowBufferCaching: Boolean) extends Output {
     // The scodec ByteVector doesn't appear to come with an efficient builder for it,
     // so rather than wrapping each incoming Byte in an extra ByteVector instance we simply
     // write into a ByteArray and only construct a ByteVector instance at the very end
-    private[this] val delegate = new Output.ToByteArray(bufferSize)
+    private[this] val delegate = new Output.ToByteArray(bufferSize, allowBufferCaching)
 
     type Self   = ByteVectorOutput
     type Result = ByteVector

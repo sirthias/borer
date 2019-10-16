@@ -12,6 +12,7 @@ import java.nio.ByteBuffer
 
 import io.bullet.borer.{Borer, ByteAccess, Output}
 import io.bullet.borer.Output.ToTypeProvider
+import io.bullet.borer.internal.ByteBufferCache
 
 import scala.annotation.tailrec
 
@@ -19,17 +20,20 @@ trait ToByteBufferOutput {
 
   implicit object ToByteBufferProvider extends ToTypeProvider[ByteBuffer] {
     type Out = ToByteBuffer
-    def apply(bufferSize: Int) = new ToByteBuffer(bufferSize)
+    def apply(bufferSize: Int, allowBufferCaching: Boolean) = new ToByteBuffer(bufferSize, allowBufferCaching)
   }
 
   /**
     * Default, mutable implementation for serializing to [[java.nio.ByteBuffer]] instances.
     */
-  final class ToByteBuffer(bufferSize: Int) extends Output {
-    private[this] var currentChunkBuffer = ByteBuffer.allocate(bufferSize)
-    private[this] val rootChunk          = new Chunk(currentChunkBuffer, next = null)
-    private[this] var currentChunk       = rootChunk
-    private[this] var fullChunksSize     = 0L
+  final class ToByteBuffer(bufferSize: Int, allowBufferCaching: Boolean) extends Output {
+
+    private[this] var currentChunkBuffer =
+      if (allowBufferCaching) ByteBufferCache.getBuffer(bufferSize) else ByteBuffer.allocate(bufferSize)
+
+    private[this] val rootChunk      = new Chunk(currentChunkBuffer, next = null)
+    private[this] var currentChunk   = rootChunk
+    private[this] var fullChunksSize = 0L
 
     type Self   = ToByteBuffer
     type Result = ByteBuffer

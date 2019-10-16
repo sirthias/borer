@@ -10,6 +10,7 @@ package io.bullet.borer.output
 
 import io.bullet.borer.{Borer, ByteAccess, Output}
 import io.bullet.borer.Output.ToTypeProvider
+import io.bullet.borer.internal.ByteArrayCache
 
 import scala.annotation.tailrec
 
@@ -17,14 +18,17 @@ trait ToByteArrayOutput {
 
   implicit object ToByteArrayProvider extends ToTypeProvider[Array[Byte]] {
     type Out = ToByteArray
-    def apply(bufferSize: Int) = new ToByteArray(bufferSize)
+    def apply(bufferSize: Int, allowBufferCaching: Boolean) = new ToByteArray(bufferSize, allowBufferCaching)
   }
 
   /**
     * Default, mutable implementation for serializing to plain byte arrays.
     */
-  final class ToByteArray(bufferSize: Int) extends Output {
-    private[this] var currentChunkBuffer            = new Array[Byte](bufferSize)
+  final class ToByteArray(bufferSize: Int, allowBufferCaching: Boolean) extends Output {
+
+    private[this] var currentChunkBuffer =
+      if (allowBufferCaching) ByteArrayCache.getBuffer(bufferSize) else new Array[Byte](bufferSize)
+
     private[this] var currentChunkBufferCursor: Int = _
     private[this] val rootChunk                     = new Chunk(currentChunkBuffer, next = null)
     private[this] var currentChunk                  = rootChunk

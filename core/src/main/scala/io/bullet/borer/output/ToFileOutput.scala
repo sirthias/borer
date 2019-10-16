@@ -16,7 +16,7 @@ trait ToFileOutput { this: ToOutputStreamOutput =>
 
   implicit object ToFileProvider extends ToValueProvider[File] {
     type Out = ToFile
-    def apply(file: File, bufferSize: Int) = new ToFile(file, bufferSize)
+    def apply(file: File, bufferSize: Int, allowBufferCaching: Boolean) = new ToFile(file, bufferSize)
   }
 
   /**
