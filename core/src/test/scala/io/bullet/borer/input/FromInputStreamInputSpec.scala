@@ -23,23 +23,21 @@ object FromInputStreamInputSpec extends TestSuite with TestUtils {
 
     "FromInputStreamInput" - {
 
-      def newBytesIterator = Iterator.from(0).map(_.toByte).take(10000)
+      def newBytesIterator = Iterator.from(0).take(10000).map(_.toByte)
 
       val bytes = newBytesIterator
+
       val inputStream = new InputStream {
         def read() = ???
         override def read(b: Array[Byte]) =
           if (bytes.hasNext) {
-            if (random.nextInt(4) == 0) {
-              b.indices.iterator
-                .take(random.nextInt(256))
-                .takeWhile(_ => bytes.hasNext)
-                .map { ix =>
-                  b(ix) = bytes.next()
-                  ix
-                }
-                .foldLeft(0)(math.max) + 1
-            } else 0
+            val chunk = random.nextInt(4) match {
+              case 0     => Array.emptyByteArray
+              case 1 | 2 => bytes.take(b.length).toArray[Byte]
+              case 3     => bytes.take(random.nextInt(b.length) + 1).toArray[Byte]
+            }
+            System.arraycopy(chunk, 0, b, 0, chunk.length)
+            chunk.length
           } else -1
       }
 
