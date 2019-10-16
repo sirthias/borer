@@ -51,7 +51,7 @@ object Encoder extends LowPrioEncoders {
   /**
     * Creates an [[Encoder]] from the given function.
     */
-  def apply[T](encoder: Encoder[T]): Encoder[T] = encoder
+  def apply[T](implicit encoder: Encoder[T]): Encoder[T] = encoder
 
   /**
     * Allows for somewhat concise [[Encoder]] definition for case classes, without any macro magic.

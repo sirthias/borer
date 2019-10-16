@@ -44,7 +44,7 @@ object Decoder extends LowPrioDecoders {
   /**
     * Creates a [[Decoder]] from the given function.
     */
-  def apply[T](decoder: Decoder[T]): Decoder[T] = decoder
+  def apply[T](implicit decoder: Decoder[T]): Decoder[T] = decoder
 
   /**
     * Creates a "unified" [[Decoder]] from two decoders that each target only a single data format.
