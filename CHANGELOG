@@ -1,3 +1,17 @@
+Version 1.1.0 (2019-10-17)
+--------------------------
+
+- added `ByteStringArrayCodecs` for compact encoding of primitive arrays
+- added configurable ThreadLocal caching of char- and byte buffers (#78)
+- added support for reading directly from `InputStream` instances
+- enabled easy summoning of implicit Encoder/Decoder type classes (#77)
+- removed codec for `Either` from default implicit scope (#64)
+- renamed `Codec.implicitly` to `Codec.of`
+- improved akka-http compat (#62)
+- improved debug logging w/ ability to collapse long arrays/maps (#74)
+- simplified and cleaned-up top-level decoding- and `Input` API
+
+
 Version 1.0.0 (2019-09-18)
 --------------------------
 
