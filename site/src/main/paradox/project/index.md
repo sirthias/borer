@@ -3,10 +3,10 @@ Project Info
 
 @@@index
 
-* [-](01-license.md)
-* [-](02-changelog.md)
-* [-](03-references.md)
-* [-](04-sponsors.md)
+* [-](license.md)
+* [-](changelog.md)
+* [-](references.md)
+* [-](sponsors.md)
 
 @@@
 

@@ -19,7 +19,7 @@ array.
 An _Abstract Data Type_ (ADT) is encoded as an array of length two, with the first element holding the type ID and
 the second holding the instance's encoding (i.e. an array or single element).
 
-Check out the chapter on @ref[Type IDs](03-type-ids.md) for more info on type IDs and how to customized them.
+Check out the chapter on @ref[Type IDs](type-ids.md) for more info on type IDs and how to customized them.
 
   [CBOR]: http://cbor.io/
   [JSON]: http://json.org/

@@ -4,7 +4,7 @@ Nullable and Default
 One question that frequently arises when dealing with [JSON], and to a limited extend [CBOR] as well, is how to deal
 with `null` values.
 
-`null` values differ from missing members (see also @ref:[Map-Based Codecs](../borer-derivation/02-map-based.md#default-values))
+`null` values differ from missing members (see also @ref:[Map-Based Codecs](../borer-derivation/map-based.md#default-values))
 in that the value for an element is indeed present, but is `null`.
 
 _borer_ handles this case in a properly typed fashion: If your data model allows for certain members to have a `null`

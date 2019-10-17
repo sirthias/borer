@@ -74,10 +74,10 @@ There is one exception though: In order to increase encoding efficiency unary ca
 have their single member written directly, without a wrapping single-element array.
 
 The encoding strategy is thus identical to the one produced by the macro-derived
-@ref:[ArrayBasedCodecs](../borer-derivation/01-array-based.md).
+@ref:[ArrayBasedCodecs](../borer-derivation/array-based.md).
 
 If you would like your case classes to be encoded in a more JSON-esque way, as maps with each member being keyed by its
-member name, the @ref:[MapBasedCodecs](../borer-derivation/02-map-based.md) from the
+member name, the @ref:[MapBasedCodecs](../borer-derivation/map-based.md) from the
 @ref:[`borer-derivation`](../borer-derivation/index.md) module are your only option, short of
 @ref:[Manual Construction](#construction).           
 
@@ -127,7 +127,7 @@ holding the encoding of `T`, and `None` to a zero-element (empty) array.
 While _borer_ (by default) verifies that the [CBOR]/[JSON] created by your application is indeed valid and will thus
 catch any mistakes you made in this regard eventually, debugging structural problems can be a bit tedious since the
 error will often only be recognizable at the very end of the encoding or decoding process. Check out the section on
-@ref:[Debugging](10-debugging.md) for more info how _borer_ can support you in debugging (de)serialization issues.
+@ref:[Debugging](debugging.md) for more info how _borer_ can support you in debugging (de)serialization issues.
 
 
 ### Reader and Writer

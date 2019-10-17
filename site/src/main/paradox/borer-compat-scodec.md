@@ -5,7 +5,7 @@ The @ref:[`borer-core`](borer-core/index.md) module by itself only knows how to 
 arrays (`Array[Byte]`).
 
 When you include the `borer-compat-scodec` module as a dependency (see the
-@ref:[Getting Started](02-getting-started.md) chapter for details) and
+@ref:[Getting Started](getting-started.md) chapter for details) and
 
 ```scala
 import io.bullet.borer.compat.scodec._

@@ -6,10 +6,10 @@
 
 The @ref:[`borer-core`](borer-core/index.md) module by itself only knows how to encode to and decode from plain byte
 arrays (`Array[Byte]`) and a few other types (like `java.nio.ByteBuffer`, see the chapter on
-@ref:[Input, Output, ByteAccess](borer-core/06-supporting-typeclasses.md) for full details).
+@ref:[Input, Output, ByteAccess](borer-core/supporting-typeclasses.md) for full details).
 
 When you include the `borer-compat-akka` module as a dependency (see the
-@ref:[Getting Started](02-getting-started.md) chapter for details) and
+@ref:[Getting Started](getting-started.md) chapter for details) and
 
 ```scala
 import io.bullet.borer.compat.akka._
@@ -26,7 +26,7 @@ In addition to `ByteString` support the `borer-compat-akka` also provides conven
 for HTTP entities.
 
 When you include the `borer-compat-akka` module as a dependency (see the
-@ref:[Getting Started](02-getting-started.md) chapter for details) and
+@ref:[Getting Started](getting-started.md) chapter for details) and
 
 ```scala
 import io.bullet.borer.compat.akkaHttp._

@@ -15,13 +15,13 @@ Here is an example relying on map-based codecs:
 
 ### ADT Encoding
 
-Like @ref:[Array-Based Codecs](01-array-based.md) the Map-based codecs come with built-in support for Abstract Data
+Like @ref:[Array-Based Codecs](array-based.md) the Map-based codecs come with built-in support for Abstract Data
 Types (ADT), e.g.
 
 @@snip [-]($test$/DerivationSpec.scala) { #example-adt }
 
 Since, up to now, _borer_ doesn't support fully-automatic derivation (but only semi-automatic, see also
-@ref:[Semi- vs. Fully-automatic](04-semi-vs-full-automatic.md)) the current best practice for deriving codecs for ADTs
+@ref:[Semi- vs. Fully-automatic](semi-vs-full-automatic.md)) the current best practice for deriving codecs for ADTs
 looks like this:
 
 @@snip [-]($test$/DerivationSpec.scala) { #adt-codec-derivation }
@@ -126,7 +126,7 @@ This behavior should match the intution of what an `Option[T]` case class member
 ### Customized Member Keys
 
 _borer_ supports customizing the name of case class members in the encoding with the same `@key` annotation, that is
-also used for custom ADT type-ids (see @ref:[Array-Based Codec](01-array-based.md) and the `@key` sources
+also used for custom ADT type-ids (see @ref:[Array-Based Codec](array-based.md) and the `@key` sources
 @github[here](/derivation/src/main/scala/io/bullet/borer/derivation/key.scala) for more info).
 
 Simply annotate a case class member do provide a custom name:
