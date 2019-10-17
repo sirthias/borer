@@ -13,7 +13,7 @@ _borer_ comes with built-in encoding and decoding support for arbitrary combinat
 - `M[T] <: Iterable[T]` 
 - `M[A, B] <: Map[A, B]`
 - `Iterator[T]`  (encoding only!)
-- `Either[A, B]`
+- `Either[A, B]` (with `import io.bullet.borer.Codec.ForEither.default`)
 - `Tuple1[A]` ... `Tuple22[A, B, ... V]`
 
 All these type are encoded to exactly one [CBOR] or [JSON] data item (which may of course be an array or map

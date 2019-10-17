@@ -19,6 +19,7 @@ Currently _borer_ comes with predefined `Input` implementations for these types:
 
 - `Array[Byte]`
 - `java.nio.ByteBuffer`
+- `java.io.InputStream`
 - `java.io.File`
 - `akka.util.ByteString` (with the `borer-compat-akka` module)
 - `scodec.bits.ByteVector` (with the `borer-compat-scodec` module)
