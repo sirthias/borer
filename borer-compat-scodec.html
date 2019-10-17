@@ -20,7 +20,7 @@
 
 <meta name="description" content="CBOR and JSON (de)serialization in Scala">
 <link rel="shortcut icon" href="assets/images/favicon.ico">
-<title>Getting Started · borer</title>
+<title>borer-compat-scodec · borer</title>
 <link rel="stylesheet" href="assets/stylesheets/application.451f80e5.css">
 <link rel="stylesheet" href="assets/stylesheets/application-palette.22915126.css">
 <meta name="theme-color" content="#3f51b5" />
@@ -61,7 +61,7 @@ data-md-color-accent="orange"
 borer
 </span>
 <span class="md-header-nav__topic">
-Getting Started
+borer-compat-scodec
 </span>
 </div>
 </div>
@@ -140,130 +140,71 @@ sirthias/borer/
 
 </div>
 <ul>
-  <li><a href="01-design-principles.html" class="page">Basic Design Principles and Limitations</a></li>
-  <li><a href="02-getting-started.html" class="active page">Getting Started</a></li>
+  <li><a href="design-principles.html" class="page">Basic Design Principles and Limitations</a></li>
+  <li><a href="getting-started.html" class="page">Getting Started</a></li>
   <li><a href="borer-core/index.html" class="page"><code>borer-core</code></a>
   <ul>
-    <li><a href="borer-core/01-encoding-and-decoding.html" class="page">Encoding and Decoding</a></li>
-    <li><a href="borer-core/02-supported-types.html" class="page">Types Supported Out-of-the-Box</a></li>
-    <li><a href="borer-core/03-custom-types.html" class="page">Encoding and Decoding Custom Types</a></li>
-    <li><a href="borer-core/04-nullable-and-default.html" class="page">Nullable and Default</a></li>
-    <li><a href="borer-core/05-stringnumbers.html" class="page"><code>StringNumbers</code> and <code>StringBooleans</code></a></li>
-    <li><a href="borer-core/06-supporting-typeclasses.html" class="page"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a></li>
-    <li><a href="borer-core/07-JSON-specifics.html" class="page">JSON Specifics</a></li>
-    <li><a href="borer-core/08-JSON-performance.html" class="page">JSON Performance</a></li>
-    <li><a href="borer-core/09-DOM.html" class="page">Document Object Model (DOM)</a></li>
-    <li><a href="borer-core/10-debugging.html" class="page">Debugging</a></li>
+    <li><a href="borer-core/encoding-and-decoding.html" class="page">Encoding and Decoding</a></li>
+    <li><a href="borer-core/supported-types.html" class="page">Types Supported Out-of-the-Box</a></li>
+    <li><a href="borer-core/custom-types.html" class="page">Encoding and Decoding Custom Types</a></li>
+    <li><a href="borer-core/nullable-and-default.html" class="page">Nullable and Default</a></li>
+    <li><a href="borer-core/StringNumbers.html" class="page"><code>StringNumbers</code> and <code>StringBooleans</code></a></li>
+    <li><a href="borer-core/ByteStringArrayCodecs.html" class="page"><code>ByteStringArrayCodecs</code></a></li>
+    <li><a href="borer-core/supporting-typeclasses.html" class="page"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a></li>
+    <li><a href="borer-core/JSON-specifics.html" class="page">JSON Specifics</a></li>
+    <li><a href="borer-core/JSON-performance.html" class="page">JSON Performance</a></li>
+    <li><a href="borer-core/DOM.html" class="page">Document Object Model (DOM)</a></li>
+    <li><a href="borer-core/debugging.html" class="page">Debugging</a></li>
   </ul></li>
   <li><a href="borer-derivation/index.html" class="page"><code>borer-derivation</code></a>
   <ul>
-    <li><a href="borer-derivation/01-array-based.html" class="page">Array-Based Codecs</a></li>
-    <li><a href="borer-derivation/02-map-based.html" class="page">Map-Based Codecs</a></li>
-    <li><a href="borer-derivation/03-type-ids.html" class="page">Type IDs</a></li>
-    <li><a href="borer-derivation/04-semi-vs-full-automatic.html" class="page">Semi- vs. Fully-automatic Derivation</a></li>
+    <li><a href="borer-derivation/array-based.html" class="page">Array-Based Codecs</a></li>
+    <li><a href="borer-derivation/map-based.html" class="page">Map-Based Codecs</a></li>
+    <li><a href="borer-derivation/type-ids.html" class="page">Type IDs</a></li>
+    <li><a href="borer-derivation/semi-vs-full-automatic.html" class="page">Semi- vs. Fully-automatic Derivation</a></li>
   </ul></li>
-  <li><a href="05-borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
-  <li><a href="06-borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
+  <li><a href="borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
+  <li><a href="borer-compat-scodec.html" class="active page"><code>borer-compat-scodec</code></a></li>
   <li><a href="project/index.html" class="page">Project Info</a>
   <ul>
-    <li><a href="project/01-license.html" class="page">License</a></li>
-    <li><a href="project/02-changelog.html" class="page">Changelog</a></li>
-    <li><a href="project/03-references.html" class="page">References</a></li>
-    <li><a href="project/04-sponsors.html" class="page">Sponsors</a></li>
+    <li><a href="project/license.html" class="page">License</a></li>
+    <li><a href="project/changelog.html" class="page">Changelog</a></li>
+    <li><a href="project/references.html" class="page">References</a></li>
+    <li><a href="project/sponsors.html" class="page">Sponsors</a></li>
   </ul></li>
 </ul>
 <nav class="md-nav md-nav--secondary">
-<label class="md-nav__title" for="__toc">Table of contents</label>
-<ul>
-  <li><a href="02-getting-started.html#getting-started" class="header">Getting Started</a>
-  <ul>
-    <li><a href="02-getting-started.html#modules" class="header">Modules</a></li>
-    <li><a href="02-getting-started.html#installation" class="header">Installation</a></li>
-  </ul></li>
-</ul>
 </nav>
 
 </nav>
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.0.0
+<i class="md-icon" title="Version">label_outline</i> 1.1.0
 </label>
 </li>
 </ul>
 </div>
 </div>
 </div>
-<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
-<div class="md-sidebar__scrollwrap">
-<div class="md-sidebar__inner">
-<nav class="md-nav md-nav--secondary">
-<label class="md-nav__title" for="__toc">Table of contents</label>
-<ul>
-  <li><a href="02-getting-started.html#getting-started" class="header">Getting Started</a>
-  <ul>
-    <li><a href="02-getting-started.html#modules" class="header">Modules</a></li>
-    <li><a href="02-getting-started.html#installation" class="header">Installation</a></li>
-  </ul></li>
-</ul>
-</nav>
-
-</div>
-</div>
-</div>
 <div class="md-content">
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
-<h1><a href="#getting-started" name="getting-started" class="anchor"><span class="anchor-link"></span></a>Getting Started</h1>
-<h2><a href="#modules" name="modules" class="anchor"><span class="anchor-link"></span></a>Modules</h2>
-<p><em>borer</em> consists of these modules:</p>
-<ul>
-  <li><a href="borer-core/index.html"><code>borer-core</code></a>, the actual core logic (no dependencies)</li>
-  <li><a href="borer-derivation/index.html"><code>borer-derivation</code></a>, (semi-)automatic codec derivation for case classes and ADTs<br>(no dependencies, relies on macros)</li>
-  <li><a href="05-borer-compat-akka.html"><code>borer-compat-akka</code></a>, support for <code>akka.util.ByteString</code> and <code>akka-http</code> (un)marshalling<br>(has a <code>provided</code> dependency on <a href="https://doc.akka.io/docs/akka/2.5/actors.html#dependency">akka-actor</a>, <a href="https://doc.akka.io/docs/akka/current/stream/index.html">akka-stream</a> and <a href="https://doc.akka.io/docs/akka-http/current/index.html">akka-http</a>)</li>
-  <li><a href="06-borer-compat-scodec.html"><code>borer-compat-scodec</code></a>, support for <code>scodec.bits.ByteVector</code><br>(has a <code>provided</code> dependency on <a href="http://scodec.org/">scodec</a>)</li>
-</ul>
-<h2><a href="#installation" name="installation" class="anchor"><span class="anchor-link"></span></a>Installation</h2>
-<p>The artifacts for <em>borer</em> live on Maven Central and can be tied into your project like this:</p><dl class="dependency"><dt>sbt</dt><dd><pre class="prettyprint"><code class="language-scala">libraryDependencies ++= Seq(
-  "io.bullet" % "borer-core" % "1.0.0",
-  "io.bullet" % "borer-derivation" % "1.0.0",
-  "io.bullet" % "borer-compat-akka" % "1.0.0",
-  "io.bullet" % "borer-compat-scodec" % "1.0.0"
-)</code></pre></dd><dt>Maven</dt><dd><pre class="prettyprint"><code class="language-xml">&lt;dependency&gt;
-  &lt;groupId&gt;io.bullet&lt;/groupId&gt;
-  &lt;artifactId&gt;borer-core&lt;/artifactId&gt;
-  &lt;version&gt;1.0.0&lt;/version&gt;
-&lt;/dependency&gt;
-&lt;dependency&gt;
-  &lt;groupId&gt;io.bullet&lt;/groupId&gt;
-  &lt;artifactId&gt;borer-derivation&lt;/artifactId&gt;
-  &lt;version&gt;1.0.0&lt;/version&gt;
-&lt;/dependency&gt;
-&lt;dependency&gt;
-  &lt;groupId&gt;io.bullet&lt;/groupId&gt;
-  &lt;artifactId&gt;borer-compat-akka&lt;/artifactId&gt;
-  &lt;version&gt;1.0.0&lt;/version&gt;
-&lt;/dependency&gt;
-&lt;dependency&gt;
-  &lt;groupId&gt;io.bullet&lt;/groupId&gt;
-  &lt;artifactId&gt;borer-compat-scodec&lt;/artifactId&gt;
-  &lt;version&gt;1.0.0&lt;/version&gt;
-&lt;/dependency&gt;</code></pre></dd><dt>Gradle</dt><dd><pre class="prettyprint"><code class="language-gradle">dependencies {
-  compile group: 'io.bullet', name: 'borer-core', version: '1.0.0',
-  compile group: 'io.bullet', name: 'borer-derivation', version: '1.0.0',
-  compile group: 'io.bullet', name: 'borer-compat-akka', version: '1.0.0',
-  compile group: 'io.bullet', name: 'borer-compat-scodec', version: '1.0.0'
-}</code></pre></dd></dl>
-<p><em>borer</em> is available for <a href="https://www.scala-lang.org/">Scala</a> 2.12 and 2.13 as well as <a href="https://www.scala-js.org/">scala.js</a>.</p>
+<h1><a href="#borer-compat-scodec" name="borer-compat-scodec" class="anchor"><span class="anchor-link"></span></a><code>borer-compat-scodec</code></h1>
+<p>The <a href="borer-core/index.html"><code>borer-core</code></a> module by itself only knows how to encode to and decode from plain byte arrays (<code>Array[Byte]</code>).</p>
+<p>When you include the <code>borer-compat-scodec</code> module as a dependency (see the <a href="getting-started.html">Getting Started</a> chapter for details) and</p>
+<pre class="prettyprint"><code class="language-scala">import io.bullet.borer.compat.scodec._
+</code></pre>
+<p>you also get full &ldquo;zero-copy&rdquo; support for encoding to and decoding from <code>scodec.bits.ByteVector</code> as well as an implicit <code>Encoder[ByteVector]</code> and <code>Decoder[ByteVector]</code>.</p>
 </div>
 <div>
-<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/02-getting-started.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-compat-scodec.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.0.0
+1.1.0
 </span>
 </div>
 </article>
@@ -273,7 +214,7 @@ Edit this page
 <footer class="md-footer">
 <div class="md-footer-nav">
 <nav class="md-footer-nav__inner md-grid">
-<a href="01-design-principles.html" title="Basic Design Principles and Limitations" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<a href="borer-compat-akka.html" title="borer-compat-akka" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
 <div class="md-flex__cell md-flex__cell--shrink">
 <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
 </div>
@@ -282,17 +223,17 @@ Edit this page
 <span class="md-footer-nav__direction">
 Previous
 </span>
-Basic Design Principles and Limitations
+borer-compat-akka
 </span>
 </div>
 </a>
-<a href="borer-core/index.html" title="borer-core" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<a href="project/index.html" title="Project Info" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
 <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
 <span class="md-flex__ellipsis">
 <span class="md-footer-nav__direction">
 Next
 </span>
-borer-core
+Project Info
 </span>
 </div>
 <div class="md-flex__cell md-flex__cell--shrink">

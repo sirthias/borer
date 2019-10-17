@@ -140,36 +140,37 @@ sirthias/borer/
 
 </div>
 <ul>
-  <li><a href="../01-design-principles.html" class="page">Basic Design Principles and Limitations</a></li>
-  <li><a href="../02-getting-started.html" class="page">Getting Started</a></li>
+  <li><a href="../design-principles.html" class="page">Basic Design Principles and Limitations</a></li>
+  <li><a href="../getting-started.html" class="page">Getting Started</a></li>
   <li><a href="../borer-core/index.html" class="page"><code>borer-core</code></a>
   <ul>
-    <li><a href="../borer-core/01-encoding-and-decoding.html" class="page">Encoding and Decoding</a></li>
-    <li><a href="../borer-core/02-supported-types.html" class="page">Types Supported Out-of-the-Box</a></li>
-    <li><a href="../borer-core/03-custom-types.html" class="page">Encoding and Decoding Custom Types</a></li>
-    <li><a href="../borer-core/04-nullable-and-default.html" class="page">Nullable and Default</a></li>
-    <li><a href="../borer-core/05-stringnumbers.html" class="page"><code>StringNumbers</code> and <code>StringBooleans</code></a></li>
-    <li><a href="../borer-core/06-supporting-typeclasses.html" class="page"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a></li>
-    <li><a href="../borer-core/07-JSON-specifics.html" class="page">JSON Specifics</a></li>
-    <li><a href="../borer-core/08-JSON-performance.html" class="page">JSON Performance</a></li>
-    <li><a href="../borer-core/09-DOM.html" class="page">Document Object Model (DOM)</a></li>
-    <li><a href="../borer-core/10-debugging.html" class="page">Debugging</a></li>
+    <li><a href="../borer-core/encoding-and-decoding.html" class="page">Encoding and Decoding</a></li>
+    <li><a href="../borer-core/supported-types.html" class="page">Types Supported Out-of-the-Box</a></li>
+    <li><a href="../borer-core/custom-types.html" class="page">Encoding and Decoding Custom Types</a></li>
+    <li><a href="../borer-core/nullable-and-default.html" class="page">Nullable and Default</a></li>
+    <li><a href="../borer-core/StringNumbers.html" class="page"><code>StringNumbers</code> and <code>StringBooleans</code></a></li>
+    <li><a href="../borer-core/ByteStringArrayCodecs.html" class="page"><code>ByteStringArrayCodecs</code></a></li>
+    <li><a href="../borer-core/supporting-typeclasses.html" class="page"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a></li>
+    <li><a href="../borer-core/JSON-specifics.html" class="page">JSON Specifics</a></li>
+    <li><a href="../borer-core/JSON-performance.html" class="page">JSON Performance</a></li>
+    <li><a href="../borer-core/DOM.html" class="page">Document Object Model (DOM)</a></li>
+    <li><a href="../borer-core/debugging.html" class="page">Debugging</a></li>
   </ul></li>
   <li><a href="../borer-derivation/index.html" class="active page"><code>borer-derivation</code></a>
   <ul>
-    <li><a href="../borer-derivation/01-array-based.html" class="page">Array-Based Codecs</a></li>
-    <li><a href="../borer-derivation/02-map-based.html" class="page">Map-Based Codecs</a></li>
-    <li><a href="../borer-derivation/03-type-ids.html" class="page">Type IDs</a></li>
-    <li><a href="../borer-derivation/04-semi-vs-full-automatic.html" class="page">Semi- vs. Fully-automatic Derivation</a></li>
+    <li><a href="../borer-derivation/array-based.html" class="page">Array-Based Codecs</a></li>
+    <li><a href="../borer-derivation/map-based.html" class="page">Map-Based Codecs</a></li>
+    <li><a href="../borer-derivation/type-ids.html" class="page">Type IDs</a></li>
+    <li><a href="../borer-derivation/semi-vs-full-automatic.html" class="page">Semi- vs. Fully-automatic Derivation</a></li>
   </ul></li>
-  <li><a href="../05-borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
-  <li><a href="../06-borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
+  <li><a href="../borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
+  <li><a href="../borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
   <li><a href="../project/index.html" class="page">Project Info</a>
   <ul>
-    <li><a href="../project/01-license.html" class="page">License</a></li>
-    <li><a href="../project/02-changelog.html" class="page">Changelog</a></li>
-    <li><a href="../project/03-references.html" class="page">References</a></li>
-    <li><a href="../project/04-sponsors.html" class="page">Sponsors</a></li>
+    <li><a href="../project/license.html" class="page">License</a></li>
+    <li><a href="../project/changelog.html" class="page">Changelog</a></li>
+    <li><a href="../project/references.html" class="page">References</a></li>
+    <li><a href="../project/sponsors.html" class="page">Sponsors</a></li>
   </ul></li>
 </ul>
 <nav class="md-nav md-nav--secondary">
@@ -179,7 +180,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.0.0
+<i class="md-icon" title="Version">label_outline</i> 1.1.0
 </label>
 </li>
 </ul>
@@ -190,23 +191,23 @@ sirthias/borer/
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
 <h1><a href="#borer-derivation" name="borer-derivation" class="anchor"><span class="anchor-link"></span></a><code>borer-derivation</code></h1>
-<p>When you include the <code>borer-derivation</code> module as a dependency (see the <a href="../02-getting-started.html">Getting Started</a> chapter for details) <em>borer</em> can (semi-automatically) provide encoders and decoders for case classes and ADTs by deriving them with the help of a macro (which is heavily inspired by <a href="https://propensive.com/opensource/magnolia">Magnolia</a>).</p>
+<p>When you include the <code>borer-derivation</code> module as a dependency (see the <a href="../getting-started.html">Getting Started</a> chapter for details) <em>borer</em> can (semi-automatically) provide encoders and decoders for case classes and ADTs by deriving them with the help of a macro (which is heavily inspired by <a href="https://propensive.com/opensource/magnolia">Magnolia</a>).</p>
 <p>There are two basic alternatives to choose from:</p>
 <ul>
-  <li><a href="01-array-based.html">Array-Based Codecs</a> or</li>
-  <li><a href="02-map-based.html">Map-Based Codecs</a>.</li>
+  <li><a href="array-based.html">Array-Based Codecs</a> or</li>
+  <li><a href="map-based.html">Map-Based Codecs</a>.</li>
 </ul>
 <div class="toc ">
 <ul>
-  <li><a href="../borer-derivation/01-array-based.html" class="page">Array-Based Codecs</a></li>
-  <li><a href="../borer-derivation/02-map-based.html" class="page">Map-Based Codecs</a>
+  <li><a href="../borer-derivation/array-based.html" class="page">Array-Based Codecs</a></li>
+  <li><a href="../borer-derivation/map-based.html" class="page">Map-Based Codecs</a>
   <ul>
-    <li><a href="../borer-derivation/02-map-based.html#adt-encoding" class="header">ADT Encoding</a></li>
-    <li><a href="../borer-derivation/02-map-based.html#default-values" class="header">Default Values</a></li>
-    <li><a href="../borer-derivation/02-map-based.html#customized-member-keys" class="header">Customized Member Keys</a></li>
+    <li><a href="../borer-derivation/map-based.html#adt-encoding" class="header">ADT Encoding</a></li>
+    <li><a href="../borer-derivation/map-based.html#default-values" class="header">Default Values</a></li>
+    <li><a href="../borer-derivation/map-based.html#customized-member-keys" class="header">Customized Member Keys</a></li>
   </ul></li>
-  <li><a href="../borer-derivation/03-type-ids.html" class="page">Type IDs</a></li>
-  <li><a href="../borer-derivation/04-semi-vs-full-automatic.html" class="page">Semi- vs. Fully-automatic Derivation</a></li>
+  <li><a href="../borer-derivation/type-ids.html" class="page">Type IDs</a></li>
+  <li><a href="../borer-derivation/semi-vs-full-automatic.html" class="page">Semi- vs. Fully-automatic Derivation</a></li>
 </ul>
 </div>
 </div>
@@ -217,7 +218,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.0.0
+1.1.0
 </span>
 </div>
 </article>
@@ -227,7 +228,7 @@ Edit this page
 <footer class="md-footer">
 <div class="md-footer-nav">
 <nav class="md-footer-nav__inner md-grid">
-<a href="../borer-core/10-debugging.html" title="Debugging" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<a href="../borer-core/debugging.html" title="Debugging" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
 <div class="md-flex__cell md-flex__cell--shrink">
 <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
 </div>
@@ -240,7 +241,7 @@ Debugging
 </span>
 </div>
 </a>
-<a href="../borer-derivation/01-array-based.html" title="Array-Based Codecs" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<a href="../borer-derivation/array-based.html" title="Array-Based Codecs" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
 <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
 <span class="md-flex__ellipsis">
 <span class="md-footer-nav__direction">

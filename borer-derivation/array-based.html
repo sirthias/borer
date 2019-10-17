@@ -20,7 +20,7 @@
 
 <meta name="description" content="CBOR and JSON (de)serialization in Scala">
 <link rel="shortcut icon" href="../assets/images/favicon.ico">
-<title>JSON Performance · borer</title>
+<title>Array-Based Codecs · borer</title>
 <link rel="stylesheet" href="../assets/stylesheets/application.451f80e5.css">
 <link rel="stylesheet" href="../assets/stylesheets/application-palette.22915126.css">
 <meta name="theme-color" content="#3f51b5" />
@@ -61,7 +61,7 @@ data-md-color-accent="orange"
 borer
 </span>
 <span class="md-header-nav__topic">
-JSON Performance
+Array-Based Codecs
 </span>
 </div>
 </div>
@@ -140,36 +140,37 @@ sirthias/borer/
 
 </div>
 <ul>
-  <li><a href="../01-design-principles.html" class="page">Basic Design Principles and Limitations</a></li>
-  <li><a href="../02-getting-started.html" class="page">Getting Started</a></li>
+  <li><a href="../design-principles.html" class="page">Basic Design Principles and Limitations</a></li>
+  <li><a href="../getting-started.html" class="page">Getting Started</a></li>
   <li><a href="../borer-core/index.html" class="page"><code>borer-core</code></a>
   <ul>
-    <li><a href="../borer-core/01-encoding-and-decoding.html" class="page">Encoding and Decoding</a></li>
-    <li><a href="../borer-core/02-supported-types.html" class="page">Types Supported Out-of-the-Box</a></li>
-    <li><a href="../borer-core/03-custom-types.html" class="page">Encoding and Decoding Custom Types</a></li>
-    <li><a href="../borer-core/04-nullable-and-default.html" class="page">Nullable and Default</a></li>
-    <li><a href="../borer-core/05-stringnumbers.html" class="page"><code>StringNumbers</code> and <code>StringBooleans</code></a></li>
-    <li><a href="../borer-core/06-supporting-typeclasses.html" class="page"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a></li>
-    <li><a href="../borer-core/07-JSON-specifics.html" class="page">JSON Specifics</a></li>
-    <li><a href="../borer-core/08-JSON-performance.html" class="active page">JSON Performance</a></li>
-    <li><a href="../borer-core/09-DOM.html" class="page">Document Object Model (DOM)</a></li>
-    <li><a href="../borer-core/10-debugging.html" class="page">Debugging</a></li>
+    <li><a href="../borer-core/encoding-and-decoding.html" class="page">Encoding and Decoding</a></li>
+    <li><a href="../borer-core/supported-types.html" class="page">Types Supported Out-of-the-Box</a></li>
+    <li><a href="../borer-core/custom-types.html" class="page">Encoding and Decoding Custom Types</a></li>
+    <li><a href="../borer-core/nullable-and-default.html" class="page">Nullable and Default</a></li>
+    <li><a href="../borer-core/StringNumbers.html" class="page"><code>StringNumbers</code> and <code>StringBooleans</code></a></li>
+    <li><a href="../borer-core/ByteStringArrayCodecs.html" class="page"><code>ByteStringArrayCodecs</code></a></li>
+    <li><a href="../borer-core/supporting-typeclasses.html" class="page"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a></li>
+    <li><a href="../borer-core/JSON-specifics.html" class="page">JSON Specifics</a></li>
+    <li><a href="../borer-core/JSON-performance.html" class="page">JSON Performance</a></li>
+    <li><a href="../borer-core/DOM.html" class="page">Document Object Model (DOM)</a></li>
+    <li><a href="../borer-core/debugging.html" class="page">Debugging</a></li>
   </ul></li>
   <li><a href="../borer-derivation/index.html" class="page"><code>borer-derivation</code></a>
   <ul>
-    <li><a href="../borer-derivation/01-array-based.html" class="page">Array-Based Codecs</a></li>
-    <li><a href="../borer-derivation/02-map-based.html" class="page">Map-Based Codecs</a></li>
-    <li><a href="../borer-derivation/03-type-ids.html" class="page">Type IDs</a></li>
-    <li><a href="../borer-derivation/04-semi-vs-full-automatic.html" class="page">Semi- vs. Fully-automatic Derivation</a></li>
+    <li><a href="../borer-derivation/array-based.html" class="active page">Array-Based Codecs</a></li>
+    <li><a href="../borer-derivation/map-based.html" class="page">Map-Based Codecs</a></li>
+    <li><a href="../borer-derivation/type-ids.html" class="page">Type IDs</a></li>
+    <li><a href="../borer-derivation/semi-vs-full-automatic.html" class="page">Semi- vs. Fully-automatic Derivation</a></li>
   </ul></li>
-  <li><a href="../05-borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
-  <li><a href="../06-borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
+  <li><a href="../borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
+  <li><a href="../borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
   <li><a href="../project/index.html" class="page">Project Info</a>
   <ul>
-    <li><a href="../project/01-license.html" class="page">License</a></li>
-    <li><a href="../project/02-changelog.html" class="page">Changelog</a></li>
-    <li><a href="../project/03-references.html" class="page">References</a></li>
-    <li><a href="../project/04-sponsors.html" class="page">Sponsors</a></li>
+    <li><a href="../project/license.html" class="page">License</a></li>
+    <li><a href="../project/changelog.html" class="page">Changelog</a></li>
+    <li><a href="../project/references.html" class="page">References</a></li>
+    <li><a href="../project/sponsors.html" class="page">Sponsors</a></li>
   </ul></li>
 </ul>
 <nav class="md-nav md-nav--secondary">
@@ -179,7 +180,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.0.0
+<i class="md-icon" title="Version">label_outline</i> 1.1.0
 </label>
 </li>
 </ul>
@@ -189,42 +190,51 @@ sirthias/borer/
 <div class="md-content">
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
-<h1><a href="#json-performance" name="json-performance" class="anchor"><span class="anchor-link"></span></a>JSON Performance</h1>
-<p><em>borer</em> comes with a fast JSON parser optimized for modern superscalar 64-bit CPUs, which performs quite well when compared to other popular JSON libraries in the scala eco-system when it comes to transforming raw JSON-bytes into a case-class based data model.</p>
-<p>A <a href="https://github.com/sirthias/borer/tree/master/benchmarks/src/main/resources">benchmark against 18 real-world JSON data examples</a> from a diverse set of sources shows that <em>borer</em>&rsquo;s JSON parsing infrastructure outperforms <a href="https://circe.github.io/circe/">Circe</a> (for example) by more than a factor of two, on average:</p><div id="benchmark-results">
-<p><img src="../assets/images/benchmark-results.svg" alt="Benchmark Results" /></p></div>
-<p>This is the benchmark setup:</p>
-<dl>
-  <dt>Task</dt>
-  <dd>Decode 18 files from raw <a href="http://json.org/">JSON</a> bytes into a respective  <a href="https://github.com/sirthias/borer/tree/master/benchmarks/src/main/scala/io/bullet/borer/benchmarks/Model.scala">case-class based data model</a>  generated with <a href="https://transform.now.sh/json-to-scala-case-class/">https://transform.now.sh/json-to-scala-case-class/</a></dd>
-  <dt>JMH Parameters</dt>
-  <dd><code>-wi 10 -i 10 -t 4 -f 4</code></dd>
-  <dt>JVM</dt>
-  <dd>Java HotSpot(TM) 64-Bit GraalVM EE 19.1.0</dd>
-  <dt>Memory Settings</dt>
-  <dd><code>-Xms4096m -Xmx4096m</code></dd>
-  <dt>Scala Version</dt>
-  <dd>2.12.8</dd>
-  <dt>Operating System</dt>
-  <dd>Ubuntu 18.04.2 LTS</dd>
-  <dt>CPU</dt>
-  <dd>2 x Intel Xeon E5-2665 2.4 - 3.1 GHz (Octa-core)</dd>
-</dl>
-<p>The <code>benchmarks</code> SBT sub project contains everything you need to run the benchmarks yourself. This SBT command will produce a JSON file holding all results:</p>
-<pre><code>jmh:run io.bullet.borer.benchmarks.* -wi 10 -i 10 -t 4 -f 4 -foe true -rf json -rff results/my_results.json  
-</code></pre><div class="callout note "><div class="callout-title">Note</div>
-<p>This &ldquo;full&rdquo; benchmark will run for more than 4 days!</p></div>
-<p>Since interpreting the results can be a bit tedious <em>borer</em> comes with some simple analysis logic that can be invoked with the <code>benchmarkResults</code> SBT command. It will show you a synthesis of all benchmark results currently living in the <code>benchmarks/results</code> folder.</p><div class="callout warning "><div class="callout-title">Warning</div>
-<p>The <code>benchmarks/results</code> folder already contains the results of the last &ldquo;official&rdquo; benchmarking runs. (<a href="https://github.com/sirthias/borer/tree/master/benchmarks/results">here</a>)<br> When you run your own benchmarks you should first remove these &ldquo;official&rdquo; <code>.json</code> files since benchmark results are not comparable when run on non-identical machines!</p></div>
+<h1><a href="#array-based-codecs" name="array-based-codecs" class="anchor"><span class="anchor-link"></span></a>Array-Based Codecs</h1>
+<p>Array-Based Codec derivation is enabled with this import:</p>
+<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L11" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.derivation.ArrayBasedCodecs._</code></pre>
+<p>This brings the three methods <code>deriveEncoder[T]</code>, <code>deriveDecoder[T]</code> and <code>deriveCodec[T]</code> in scope, which you can use to derive the respective type classes for case classes and ADTs.</p>
+<p>Here is an example:</p>
+<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L28-L55" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.Json
+import io.bullet.borer.derivation.key
+import io.bullet.borer.derivation.ArrayBasedCodecs._
+
+sealed trait Animal
+case class Cat(weight: Double, color: String, home: String) extends Animal
+@key(&quot;TheDog&quot;) case class Dog(age: Int, name: String)       extends Animal
+@key(42) case class Mouse(tail: Boolean)                    extends Animal
+
+implicit val dogCodec   = deriveCodec[Dog]
+implicit val catCodec   = deriveCodec[Cat]
+implicit val mouseCodec = deriveCodec[Mouse]
+
+implicit val animalCodec = deriveCodec[Animal]
+
+val cat   = Cat(8.5, &quot;grey&quot;, &quot;sofa&quot;)
+val dog   = Dog(2, &quot;Rex&quot;)
+val mouse = Mouse(tail = true)
+
+Json.encode(cat).toUtf8String ==&gt; &quot;&quot;&quot;[8.5,&quot;grey&quot;,&quot;sofa&quot;]&quot;&quot;&quot;
+Json.encode(dog).toUtf8String ==&gt; &quot;&quot;&quot;[2,&quot;Rex&quot;]&quot;&quot;&quot;
+Json.encode(mouse).toUtf8String ==&gt; &quot;true&quot;
+
+def encodeAnimal(animal: Animal) = Json.encode(animal).toUtf8String
+
+encodeAnimal(cat) ==&gt; &quot;&quot;&quot;[&quot;Cat&quot;,[8.5,&quot;grey&quot;,&quot;sofa&quot;]]&quot;&quot;&quot;
+encodeAnimal(dog) ==&gt; &quot;&quot;&quot;[&quot;TheDog&quot;,[2,&quot;Rex&quot;]]&quot;&quot;&quot;
+encodeAnimal(mouse) ==&gt; &quot;&quot;&quot;[42,true]&quot;&quot;&quot;</code></pre>
+<p>With these codecs case classes are written to <a href="http://cbor.io/">CBOR</a>/<a href="http://json.org/">JSON</a> as simple arrays, unless the case class has arity 1. If the case class has only a single member, the derived codec directly writes the member without wrapping it in an array. </p>
+<p>An <em>Abstract Data Type</em> (ADT) is encoded as an array of length two, with the first element holding the type ID and the second holding the instance&rsquo;s encoding (i.e. an array or single element).</p>
+<p>Check out the chapter on <a href="type-ids.html">Type IDs</a> for more info on type IDs and how to customized them.</p>
 </div>
 <div>
-<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-core/08-JSON-performance.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-derivation/array-based.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.0.0
+1.1.0
 </span>
 </div>
 </article>
@@ -234,7 +244,7 @@ Edit this page
 <footer class="md-footer">
 <div class="md-footer-nav">
 <nav class="md-footer-nav__inner md-grid">
-<a href="../borer-core/07-JSON-specifics.html" title="JSON Specifics" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<a href="../borer-derivation/index.html" title="borer-derivation" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
 <div class="md-flex__cell md-flex__cell--shrink">
 <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
 </div>
@@ -243,17 +253,17 @@ Edit this page
 <span class="md-footer-nav__direction">
 Previous
 </span>
-JSON Specifics
+borer-derivation
 </span>
 </div>
 </a>
-<a href="../borer-core/09-DOM.html" title="Document Object Model (DOM)" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<a href="../borer-derivation/map-based.html" title="Map-Based Codecs" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
 <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
 <span class="md-flex__ellipsis">
 <span class="md-footer-nav__direction">
 Next
 </span>
-Document Object Model (DOM)
+Map-Based Codecs
 </span>
 </div>
 <div class="md-flex__cell md-flex__cell--shrink">

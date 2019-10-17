@@ -20,7 +20,7 @@
 
 <meta name="description" content="CBOR and JSON (de)serialization in Scala">
 <link rel="shortcut icon" href="../assets/images/favicon.ico">
-<title>Array-Based Codecs · borer</title>
+<title>Encoding and Decoding · borer</title>
 <link rel="stylesheet" href="../assets/stylesheets/application.451f80e5.css">
 <link rel="stylesheet" href="../assets/stylesheets/application-palette.22915126.css">
 <meta name="theme-color" content="#3f51b5" />
@@ -61,7 +61,7 @@ data-md-color-accent="orange"
 borer
 </span>
 <span class="md-header-nav__topic">
-Array-Based Codecs
+Encoding and Decoding
 </span>
 </div>
 </div>
@@ -140,36 +140,37 @@ sirthias/borer/
 
 </div>
 <ul>
-  <li><a href="../01-design-principles.html" class="page">Basic Design Principles and Limitations</a></li>
-  <li><a href="../02-getting-started.html" class="page">Getting Started</a></li>
+  <li><a href="../design-principles.html" class="page">Basic Design Principles and Limitations</a></li>
+  <li><a href="../getting-started.html" class="page">Getting Started</a></li>
   <li><a href="../borer-core/index.html" class="page"><code>borer-core</code></a>
   <ul>
-    <li><a href="../borer-core/01-encoding-and-decoding.html" class="page">Encoding and Decoding</a></li>
-    <li><a href="../borer-core/02-supported-types.html" class="page">Types Supported Out-of-the-Box</a></li>
-    <li><a href="../borer-core/03-custom-types.html" class="page">Encoding and Decoding Custom Types</a></li>
-    <li><a href="../borer-core/04-nullable-and-default.html" class="page">Nullable and Default</a></li>
-    <li><a href="../borer-core/05-stringnumbers.html" class="page"><code>StringNumbers</code> and <code>StringBooleans</code></a></li>
-    <li><a href="../borer-core/06-supporting-typeclasses.html" class="page"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a></li>
-    <li><a href="../borer-core/07-JSON-specifics.html" class="page">JSON Specifics</a></li>
-    <li><a href="../borer-core/08-JSON-performance.html" class="page">JSON Performance</a></li>
-    <li><a href="../borer-core/09-DOM.html" class="page">Document Object Model (DOM)</a></li>
-    <li><a href="../borer-core/10-debugging.html" class="page">Debugging</a></li>
+    <li><a href="../borer-core/encoding-and-decoding.html" class="active page">Encoding and Decoding</a></li>
+    <li><a href="../borer-core/supported-types.html" class="page">Types Supported Out-of-the-Box</a></li>
+    <li><a href="../borer-core/custom-types.html" class="page">Encoding and Decoding Custom Types</a></li>
+    <li><a href="../borer-core/nullable-and-default.html" class="page">Nullable and Default</a></li>
+    <li><a href="../borer-core/StringNumbers.html" class="page"><code>StringNumbers</code> and <code>StringBooleans</code></a></li>
+    <li><a href="../borer-core/ByteStringArrayCodecs.html" class="page"><code>ByteStringArrayCodecs</code></a></li>
+    <li><a href="../borer-core/supporting-typeclasses.html" class="page"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a></li>
+    <li><a href="../borer-core/JSON-specifics.html" class="page">JSON Specifics</a></li>
+    <li><a href="../borer-core/JSON-performance.html" class="page">JSON Performance</a></li>
+    <li><a href="../borer-core/DOM.html" class="page">Document Object Model (DOM)</a></li>
+    <li><a href="../borer-core/debugging.html" class="page">Debugging</a></li>
   </ul></li>
   <li><a href="../borer-derivation/index.html" class="page"><code>borer-derivation</code></a>
   <ul>
-    <li><a href="../borer-derivation/01-array-based.html" class="active page">Array-Based Codecs</a></li>
-    <li><a href="../borer-derivation/02-map-based.html" class="page">Map-Based Codecs</a></li>
-    <li><a href="../borer-derivation/03-type-ids.html" class="page">Type IDs</a></li>
-    <li><a href="../borer-derivation/04-semi-vs-full-automatic.html" class="page">Semi- vs. Fully-automatic Derivation</a></li>
+    <li><a href="../borer-derivation/array-based.html" class="page">Array-Based Codecs</a></li>
+    <li><a href="../borer-derivation/map-based.html" class="page">Map-Based Codecs</a></li>
+    <li><a href="../borer-derivation/type-ids.html" class="page">Type IDs</a></li>
+    <li><a href="../borer-derivation/semi-vs-full-automatic.html" class="page">Semi- vs. Fully-automatic Derivation</a></li>
   </ul></li>
-  <li><a href="../05-borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
-  <li><a href="../06-borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
+  <li><a href="../borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
+  <li><a href="../borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
   <li><a href="../project/index.html" class="page">Project Info</a>
   <ul>
-    <li><a href="../project/01-license.html" class="page">License</a></li>
-    <li><a href="../project/02-changelog.html" class="page">Changelog</a></li>
-    <li><a href="../project/03-references.html" class="page">References</a></li>
-    <li><a href="../project/04-sponsors.html" class="page">Sponsors</a></li>
+    <li><a href="../project/license.html" class="page">License</a></li>
+    <li><a href="../project/changelog.html" class="page">Changelog</a></li>
+    <li><a href="../project/references.html" class="page">References</a></li>
+    <li><a href="../project/sponsors.html" class="page">Sponsors</a></li>
   </ul></li>
 </ul>
 <nav class="md-nav md-nav--secondary">
@@ -179,7 +180,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.0.0
+<i class="md-icon" title="Version">label_outline</i> 1.1.0
 </label>
 </li>
 </ul>
@@ -189,51 +190,103 @@ sirthias/borer/
 <div class="md-content">
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
-<h1><a href="#array-based-codecs" name="array-based-codecs" class="anchor"><span class="anchor-link"></span></a>Array-Based Codecs</h1>
-<p>Array-Based Codec derivation is enabled with this import:</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L11" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.derivation.ArrayBasedCodecs._</code></pre>
-<p>This brings the three methods <code>deriveEncoder[T]</code>, <code>deriveDecoder[T]</code> and <code>deriveCodec[T]</code> in scope, which you can use to derive the respective type classes for case classes and ADTs.</p>
-<p>Here is an example:</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L28-L55" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.Json
-import io.bullet.borer.derivation.key
-import io.bullet.borer.derivation.ArrayBasedCodecs._
+<h1><a href="#encoding-and-decoding" name="encoding-and-decoding" class="anchor"><span class="anchor-link"></span></a>Encoding and Decoding</h1>
+<p>Encoding a value to a plain <code>Array[Byte]</code>:</p>
+<dl>
+  <dt>CBOR</dt>
+  <dd>
+  <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/EncodingDecodingSpec.scala#L16-L23" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.Cbor
 
-sealed trait Animal
-case class Cat(weight: Double, color: String, home: String) extends Animal
-@key(&quot;TheDog&quot;) case class Dog(age: Int, name: String)       extends Animal
-@key(42) case class Mouse(tail: Boolean)                    extends Animal
+val value = List(&quot;foo&quot;, &quot;bar&quot;, &quot;baz&quot;) // example value
 
-implicit val dogCodec   = deriveCodec[Dog]
-implicit val catCodec   = deriveCodec[Cat]
-implicit val mouseCodec = deriveCodec[Mouse]
+val bytes: Array[Byte] =
+  Cbor.encode(value).toByteArray // throws on error
 
-implicit val animalCodec = deriveCodec[Animal]
+bytes ==&gt; hex&quot;9f63666f6f636261726362617aff&quot;</code></pre></dd>
+  <dt>JSON</dt>
+  <dd>
+  <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/EncodingDecodingSpec.scala#L29-L42" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.Json
 
-val cat   = Cat(8.5, &quot;grey&quot;, &quot;sofa&quot;)
-val dog   = Dog(2, &quot;Rex&quot;)
-val mouse = Mouse(tail = true)
+val value = List(&quot;foo&quot;, &quot;bar&quot;, &quot;baz&quot;) // example value
 
-Json.encode(cat).toUtf8String ==&gt; &quot;&quot;&quot;[8.5,&quot;grey&quot;,&quot;sofa&quot;]&quot;&quot;&quot;
-Json.encode(dog).toUtf8String ==&gt; &quot;&quot;&quot;[2,&quot;Rex&quot;]&quot;&quot;&quot;
-Json.encode(mouse).toUtf8String ==&gt; &quot;true&quot;
+val bytes: Array[Byte] =
+  Json.encode(value).toByteArray // throws on error
 
-def encodeAnimal(animal: Animal) = Json.encode(animal).toUtf8String
+// or immediately decode the bytes into a String:
 
-encodeAnimal(cat) ==&gt; &quot;&quot;&quot;[&quot;Cat&quot;,[8.5,&quot;grey&quot;,&quot;sofa&quot;]]&quot;&quot;&quot;
-encodeAnimal(dog) ==&gt; &quot;&quot;&quot;[&quot;TheDog&quot;,[2,&quot;Rex&quot;]]&quot;&quot;&quot;
-encodeAnimal(mouse) ==&gt; &quot;&quot;&quot;[42,true]&quot;&quot;&quot;</code></pre>
-<p>With these codecs case classes are written to <a href="http://cbor.io/">CBOR</a>/<a href="http://json.org/">JSON</a> as simple arrays, unless the case class has arity 1. If the case class has only a single member, the derived codec directly writes the member without wrapping it in an array. </p>
-<p>An <em>Abstract Data Type</em> (ADT) is encoded as an array of length two, with the first element holding the type ID and the second holding the instance&rsquo;s encoding (i.e. an array or single element).</p>
-<p>Check out the chapter on <a href="03-type-ids.html">Type IDs</a> for more info on type IDs and how to customized them.</p>
+val json: String =
+  Json.encode(value).toUtf8String // throws on error
+
+json ==&gt; &quot;&quot;&quot;[&quot;foo&quot;,&quot;bar&quot;,&quot;baz&quot;]&quot;&quot;&quot;
+bytes ==&gt; json.getBytes</code></pre></dd>
+</dl>
+<p>Decoding a plain <code>Array[Byte]</code> back to a certain type:</p>
+<dl>
+  <dt>CBOR</dt>
+  <dd>
+  <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/EncodingDecodingSpec.scala#L53-L56" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.Cbor
+
+val list: List[String] =
+  Cbor.decode(bytes).to[List[String]].value // throws on error</code></pre></dd>
+  <dt>JSON</dt>
+  <dd>
+  <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/EncodingDecodingSpec.scala#L66-L69" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.Json
+
+val list: List[String] =
+  Json.decode(bytes).to[List[String]].value // throws on error</code></pre></dd>
+</dl>
+<p>If you don&rsquo;t want <em>BORER</em> to throw exceptions you can use the following variants to give you a <code>Try</code> instead:</p>
+<dl>
+  <dt>CBOR</dt>
+  <dd>
+  <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/EncodingDecodingSpec.scala#L83-L89" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.Cbor
+
+val encoded: Try[Array[Byte]] =
+  Cbor.encode(value).toByteArrayTry
+
+val decoded: Try[List[String]] =
+  Cbor.decode(bytes).to[List[String]].valueTry</code></pre></dd>
+  <dt>JSON</dt>
+  <dd>
+  <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/EncodingDecodingSpec.scala#L101-L107" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.Json
+
+val encoded: Try[Array[Byte]] =
+  Json.encode(value).toByteArrayTry
+
+val decoded: Try[List[String]] =
+  Json.decode(bytes).to[List[String]].valueTry</code></pre></dd>
+</dl>
+<p>Or, if you prefer encoding/decoding to an <code>Either</code> instance:</p>
+<dl>
+  <dt>CBOR</dt>
+  <dd>
+  <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/EncodingDecodingSpec.scala#L122-L128" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer._
+
+val encoded: Either[Borer.Error[Output], Array[Byte]] =
+  Cbor.encode(value).to[Array[Byte]].resultEither
+
+val decoded: Either[Borer.Error[Input.Position], List[String]] =
+  Cbor.decode(bytes).to[List[String]].valueEither</code></pre></dd>
+  <dt>JSON</dt>
+  <dd>
+  <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/EncodingDecodingSpec.scala#L140-L146" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer._
+
+val encoded: Either[Borer.Error[Output], Array[Byte]] =
+  Json.encode(value).to[Array[Byte]].resultEither
+
+val decoded: Either[Borer.Error[Input.Position], List[String]] =
+  Json.decode(bytes).to[List[String]].valueEither</code></pre></dd>
+</dl>
+<p>Additionally <em>borer</em> offers even more top-level API calls that give you the respective <code>Output</code> or <code>Input</code> instances either directly or wrapped in <code>Try</code> or <code>Either</code>.<br> Check the sources of the central <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Borer.scala"><em>borer</em> API entry point</a> for more info.</p>
 </div>
 <div>
-<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-derivation/01-array-based.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-core/encoding-and-decoding.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.0.0
+1.1.0
 </span>
 </div>
 </article>
@@ -243,7 +296,7 @@ Edit this page
 <footer class="md-footer">
 <div class="md-footer-nav">
 <nav class="md-footer-nav__inner md-grid">
-<a href="../borer-derivation/index.html" title="borer-derivation" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<a href="../borer-core/index.html" title="borer-core" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
 <div class="md-flex__cell md-flex__cell--shrink">
 <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
 </div>
@@ -252,17 +305,17 @@ Edit this page
 <span class="md-footer-nav__direction">
 Previous
 </span>
-borer-derivation
+borer-core
 </span>
 </div>
 </a>
-<a href="../borer-derivation/02-map-based.html" title="Map-Based Codecs" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<a href="../borer-core/supported-types.html" title="Types Supported Out-of-the-Box" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
 <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
 <span class="md-flex__ellipsis">
 <span class="md-footer-nav__direction">
 Next
 </span>
-Map-Based Codecs
+Types Supported Out-of-the-Box
 </span>
 </div>
 <div class="md-flex__cell md-flex__cell--shrink">

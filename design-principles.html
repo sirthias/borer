@@ -20,7 +20,7 @@
 
 <meta name="description" content="CBOR and JSON (de)serialization in Scala">
 <link rel="shortcut icon" href="assets/images/favicon.ico">
-<title>borer-compat-akka · borer</title>
+<title>Basic Design Principles and Limitations · borer</title>
 <link rel="stylesheet" href="assets/stylesheets/application.451f80e5.css">
 <link rel="stylesheet" href="assets/stylesheets/application-palette.22915126.css">
 <meta name="theme-color" content="#3f51b5" />
@@ -61,7 +61,7 @@ data-md-color-accent="orange"
 borer
 </span>
 <span class="md-header-nav__topic">
-borer-compat-akka
+Basic Design Principles and Limitations
 </span>
 </div>
 </div>
@@ -140,131 +140,71 @@ sirthias/borer/
 
 </div>
 <ul>
-  <li><a href="01-design-principles.html" class="page">Basic Design Principles and Limitations</a></li>
-  <li><a href="02-getting-started.html" class="page">Getting Started</a></li>
+  <li><a href="design-principles.html" class="active page">Basic Design Principles and Limitations</a></li>
+  <li><a href="getting-started.html" class="page">Getting Started</a></li>
   <li><a href="borer-core/index.html" class="page"><code>borer-core</code></a>
   <ul>
-    <li><a href="borer-core/01-encoding-and-decoding.html" class="page">Encoding and Decoding</a></li>
-    <li><a href="borer-core/02-supported-types.html" class="page">Types Supported Out-of-the-Box</a></li>
-    <li><a href="borer-core/03-custom-types.html" class="page">Encoding and Decoding Custom Types</a></li>
-    <li><a href="borer-core/04-nullable-and-default.html" class="page">Nullable and Default</a></li>
-    <li><a href="borer-core/05-stringnumbers.html" class="page"><code>StringNumbers</code> and <code>StringBooleans</code></a></li>
-    <li><a href="borer-core/06-supporting-typeclasses.html" class="page"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a></li>
-    <li><a href="borer-core/07-JSON-specifics.html" class="page">JSON Specifics</a></li>
-    <li><a href="borer-core/08-JSON-performance.html" class="page">JSON Performance</a></li>
-    <li><a href="borer-core/09-DOM.html" class="page">Document Object Model (DOM)</a></li>
-    <li><a href="borer-core/10-debugging.html" class="page">Debugging</a></li>
+    <li><a href="borer-core/encoding-and-decoding.html" class="page">Encoding and Decoding</a></li>
+    <li><a href="borer-core/supported-types.html" class="page">Types Supported Out-of-the-Box</a></li>
+    <li><a href="borer-core/custom-types.html" class="page">Encoding and Decoding Custom Types</a></li>
+    <li><a href="borer-core/nullable-and-default.html" class="page">Nullable and Default</a></li>
+    <li><a href="borer-core/StringNumbers.html" class="page"><code>StringNumbers</code> and <code>StringBooleans</code></a></li>
+    <li><a href="borer-core/ByteStringArrayCodecs.html" class="page"><code>ByteStringArrayCodecs</code></a></li>
+    <li><a href="borer-core/supporting-typeclasses.html" class="page"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a></li>
+    <li><a href="borer-core/JSON-specifics.html" class="page">JSON Specifics</a></li>
+    <li><a href="borer-core/JSON-performance.html" class="page">JSON Performance</a></li>
+    <li><a href="borer-core/DOM.html" class="page">Document Object Model (DOM)</a></li>
+    <li><a href="borer-core/debugging.html" class="page">Debugging</a></li>
   </ul></li>
   <li><a href="borer-derivation/index.html" class="page"><code>borer-derivation</code></a>
   <ul>
-    <li><a href="borer-derivation/01-array-based.html" class="page">Array-Based Codecs</a></li>
-    <li><a href="borer-derivation/02-map-based.html" class="page">Map-Based Codecs</a></li>
-    <li><a href="borer-derivation/03-type-ids.html" class="page">Type IDs</a></li>
-    <li><a href="borer-derivation/04-semi-vs-full-automatic.html" class="page">Semi- vs. Fully-automatic Derivation</a></li>
+    <li><a href="borer-derivation/array-based.html" class="page">Array-Based Codecs</a></li>
+    <li><a href="borer-derivation/map-based.html" class="page">Map-Based Codecs</a></li>
+    <li><a href="borer-derivation/type-ids.html" class="page">Type IDs</a></li>
+    <li><a href="borer-derivation/semi-vs-full-automatic.html" class="page">Semi- vs. Fully-automatic Derivation</a></li>
   </ul></li>
-  <li><a href="05-borer-compat-akka.html" class="active page"><code>borer-compat-akka</code></a></li>
-  <li><a href="06-borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
+  <li><a href="borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
+  <li><a href="borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
   <li><a href="project/index.html" class="page">Project Info</a>
   <ul>
-    <li><a href="project/01-license.html" class="page">License</a></li>
-    <li><a href="project/02-changelog.html" class="page">Changelog</a></li>
-    <li><a href="project/03-references.html" class="page">References</a></li>
-    <li><a href="project/04-sponsors.html" class="page">Sponsors</a></li>
+    <li><a href="project/license.html" class="page">License</a></li>
+    <li><a href="project/changelog.html" class="page">Changelog</a></li>
+    <li><a href="project/references.html" class="page">References</a></li>
+    <li><a href="project/sponsors.html" class="page">Sponsors</a></li>
   </ul></li>
 </ul>
 <nav class="md-nav md-nav--secondary">
-<label class="md-nav__title" for="__toc">Table of contents</label>
-<ul>
-  <li><a href="05-borer-compat-akka.html#borer-compat-akka" class="header"><code>borer-compat-akka</code></a>
-  <ul>
-    <li><a href="05-borer-compat-akka.html#bytestring-support" class="header"><code>ByteString</code> support</a></li>
-    <li><a href="05-borer-compat-akka.html#akka-http-un-marshalling" class="header">Akka Http (Un)Marshalling</a></li>
-  </ul></li>
-</ul>
 </nav>
 
 </nav>
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.0.0
+<i class="md-icon" title="Version">label_outline</i> 1.1.0
 </label>
 </li>
 </ul>
 </div>
 </div>
 </div>
-<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
-<div class="md-sidebar__scrollwrap">
-<div class="md-sidebar__inner">
-<nav class="md-nav md-nav--secondary">
-<label class="md-nav__title" for="__toc">Table of contents</label>
-<ul>
-  <li><a href="05-borer-compat-akka.html#borer-compat-akka" class="header"><code>borer-compat-akka</code></a>
-  <ul>
-    <li><a href="05-borer-compat-akka.html#bytestring-support" class="header"><code>ByteString</code> support</a></li>
-    <li><a href="05-borer-compat-akka.html#akka-http-un-marshalling" class="header">Akka Http (Un)Marshalling</a></li>
-  </ul></li>
-</ul>
-</nav>
-
-</div>
-</div>
-</div>
 <div class="md-content">
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
-<h1><a href="#borer-compat-akka" name="borer-compat-akka" class="anchor"><span class="anchor-link"></span></a><code>borer-compat-akka</code></h1>
-<h2><a href="#bytestring-support" name="bytestring-support" class="anchor"><span class="anchor-link"></span></a><code>ByteString</code> support</h2>
-<p>The <a href="borer-core/index.html"><code>borer-core</code></a> module by itself only knows how to encode to and decode from plain byte arrays (<code>Array[Byte]</code>) and a few other types (like <code>java.nio.ByteBuffer</code>, see the chapter on <a href="borer-core/06-supporting-typeclasses.html">Input, Output, ByteAccess</a> for full details).</p>
-<p>When you include the <code>borer-compat-akka</code> module as a dependency (see the <a href="02-getting-started.html">Getting Started</a> chapter for details) and</p>
-<pre class="prettyprint"><code class="language-scala">import io.bullet.borer.compat.akka._
-</code></pre>
-<p>you also get full &ldquo;zero-copy&rdquo; support for encoding to and decoding from <code>akka.util.ByteString</code> as well as an implicit <code>Encoder[ByteString]</code> and <code>Decoder[ByteString]</code>.</p>
-<h2><a href="#akka-http-un-marshalling" name="akka-http-un-marshalling" class="anchor"><span class="anchor-link"></span></a>Akka Http (Un)Marshalling</h2>
-<p>In addition to <code>ByteString</code> support the <code>borer-compat-akka</code> also provides convenient marshallers and unmarshallers for HTTP entities.</p>
-<p>When you include the <code>borer-compat-akka</code> module as a dependency (see the <a href="02-getting-started.html">Getting Started</a> chapter for details) and</p>
-<pre class="prettyprint"><code class="language-scala">import io.bullet.borer.compat.akkaHttp._
-</code></pre>
-<p><code>akka-http</code> will transparently marshal to and from your custom domain model types:</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/AkkaHttpSupportSpec.scala#L12-L38" target="_blank" title="Go to snippet source"></a><code class="language-scala">import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.Directives._
-
-// custom model for request and response content
-final case class MyRequest(foo: String)
-final case class MyResponse(importantValue: Int)
-
-// borer encoders/decoders for the custom model above
-import io.bullet.borer.derivation.MapBasedCodecs._
-
-implicit val myRequestDecoder  = deriveCodec[MyRequest]
-implicit val myResponseEncoder = deriveCodec[MyResponse]
-
-// bring automatic (un) marshaller construction in scope
-import io.bullet.borer.compat.akkaHttp._
-
-// route that unmarshalls to `MyRequest` and marshals to `MyResponse`
-val route: Route =
-  pathSingleSlash {
-    post {
-      entity(as[MyRequest]) { myRequest =&gt;
-        complete {
-          MyResponse(myRequest.foo.length)
-        }
-      }
-    }
-  }</code></pre>
-<p>By default the <code>Unmarshaller</code> constructed by <code>borer-compat-akka</code> understand both <a href="http://cbor.io/">CBOR</a> and <a href="http://json.org/">JSON</a> with Content-Type <code>application/cbor</code> and <code>application/json</code>, respectively.<br> The <code>Marshaller</code> also supports both formats and lets the client determine via HTTP content negotiation (i.e. the <code>Accept</code> header) , which one it prefers. If the client has no preference <a href="http://cbor.io/">CBOR</a> is chosen.</p>
-<p>Also, (Un)marshaller construction can be customized in various ways, e.g. with custom media types, and is also available for streams, i.e. to and from <code>akka.stream.scaladsl.Source[T, _]</code> rather than simply <code>T</code>.<br> Check out the <a href="https://github.com/sirthias/borer/tree/master/akka/src/main/scala/io/bullet/borer/compat/akkaHttp.scala">sources</a> for full details.</p>
+<h1><a href="#basic-design-principles-and-limitations" name="basic-design-principles-and-limitations" class="anchor"><span class="anchor-link"></span></a>Basic Design Principles and Limitations</h1>
+<p><em>borer</em>&rsquo;s goal is to provide a highly efficient (de)serialization layer between some data model defined in <a href="https://www.scala-lang.org/">Scala</a> and <a href="http://cbor.io/">CBOR</a> and/or <a href="http://json.org/">JSON</a> as storage/network formats. <em>borer</em> performs this task in a very direct way, without relying on some Abstract Syntax Tree (AST, also called Document Object Model (DOM)) as intermediate structure.</p>
+<p>As such it doesn&rsquo;t offer any facilities for pre- or post-processing the serialized data, like manipulating the <a href="http://json.org/">JSON</a> structure, filtering or augmenting nodes, or the like.</p>
+<p>Also, it doesn&rsquo;t rely on reflection in any way. All information about the types to encode and decode must be statically available at the encoding/decoding point. With the exception of <code>sealed</code> ADT hierarchies (which are supported out of the box with the <a href="borer-derivation/index.html"><code>borer-derivation</code></a> module) this means that you need to define yourself how to represent type information of abstract types on the wire!</p>
+<p>Another design principle has been to implement <em>borer</em>&rsquo;s core module without relying on Scala macros or depending on any external libraries. This should make <em>borer</em> easily maintainable for the foreseeable future and reduces its weight as a dependency of your applications (which can be especially important with <a href="https://www.scala-js.org/">scala.js</a>).</p>
+<p>(Note: The <a href="borer-derivation/index.html"><code>borer-derivation</code></a> module <em>does</em> rely on macros for deriving codec type classes, but its use is completely optional.)</p>
 </div>
 <div>
-<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/05-borer-compat-akka.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/design-principles.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.0.0
+1.1.0
 </span>
 </div>
 </article>
@@ -274,7 +214,7 @@ Edit this page
 <footer class="md-footer">
 <div class="md-footer-nav">
 <nav class="md-footer-nav__inner md-grid">
-<a href="borer-derivation/04-semi-vs-full-automatic.html" title="Semi- vs. Fully-automatic Derivation" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<a href="index.html" title="borer" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
 <div class="md-flex__cell md-flex__cell--shrink">
 <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
 </div>
@@ -283,17 +223,17 @@ Edit this page
 <span class="md-footer-nav__direction">
 Previous
 </span>
-Semi- vs. Fully-automatic Derivation
+borer
 </span>
 </div>
 </a>
-<a href="06-borer-compat-scodec.html" title="borer-compat-scodec" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<a href="getting-started.html" title="Getting Started" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
 <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
 <span class="md-flex__ellipsis">
 <span class="md-footer-nav__direction">
 Next
 </span>
-borer-compat-scodec
+Getting Started
 </span>
 </div>
 <div class="md-flex__cell md-flex__cell--shrink">

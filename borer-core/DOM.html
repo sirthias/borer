@@ -20,7 +20,7 @@
 
 <meta name="description" content="CBOR and JSON (de)serialization in Scala">
 <link rel="shortcut icon" href="../assets/images/favicon.ico">
-<title>Nullable and Default · borer</title>
+<title>Document Object Model (DOM) · borer</title>
 <link rel="stylesheet" href="../assets/stylesheets/application.451f80e5.css">
 <link rel="stylesheet" href="../assets/stylesheets/application-palette.22915126.css">
 <meta name="theme-color" content="#3f51b5" />
@@ -61,7 +61,7 @@ data-md-color-accent="orange"
 borer
 </span>
 <span class="md-header-nav__topic">
-Nullable and Default
+Document Object Model (DOM)
 </span>
 </div>
 </div>
@@ -140,132 +140,120 @@ sirthias/borer/
 
 </div>
 <ul>
-  <li><a href="../01-design-principles.html" class="page">Basic Design Principles and Limitations</a></li>
-  <li><a href="../02-getting-started.html" class="page">Getting Started</a></li>
+  <li><a href="../design-principles.html" class="page">Basic Design Principles and Limitations</a></li>
+  <li><a href="../getting-started.html" class="page">Getting Started</a></li>
   <li><a href="../borer-core/index.html" class="page"><code>borer-core</code></a>
   <ul>
-    <li><a href="../borer-core/01-encoding-and-decoding.html" class="page">Encoding and Decoding</a></li>
-    <li><a href="../borer-core/02-supported-types.html" class="page">Types Supported Out-of-the-Box</a></li>
-    <li><a href="../borer-core/03-custom-types.html" class="page">Encoding and Decoding Custom Types</a></li>
-    <li><a href="../borer-core/04-nullable-and-default.html" class="active page">Nullable and Default</a></li>
-    <li><a href="../borer-core/05-stringnumbers.html" class="page"><code>StringNumbers</code> and <code>StringBooleans</code></a></li>
-    <li><a href="../borer-core/06-supporting-typeclasses.html" class="page"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a></li>
-    <li><a href="../borer-core/07-JSON-specifics.html" class="page">JSON Specifics</a></li>
-    <li><a href="../borer-core/08-JSON-performance.html" class="page">JSON Performance</a></li>
-    <li><a href="../borer-core/09-DOM.html" class="page">Document Object Model (DOM)</a></li>
-    <li><a href="../borer-core/10-debugging.html" class="page">Debugging</a></li>
+    <li><a href="../borer-core/encoding-and-decoding.html" class="page">Encoding and Decoding</a></li>
+    <li><a href="../borer-core/supported-types.html" class="page">Types Supported Out-of-the-Box</a></li>
+    <li><a href="../borer-core/custom-types.html" class="page">Encoding and Decoding Custom Types</a></li>
+    <li><a href="../borer-core/nullable-and-default.html" class="page">Nullable and Default</a></li>
+    <li><a href="../borer-core/StringNumbers.html" class="page"><code>StringNumbers</code> and <code>StringBooleans</code></a></li>
+    <li><a href="../borer-core/ByteStringArrayCodecs.html" class="page"><code>ByteStringArrayCodecs</code></a></li>
+    <li><a href="../borer-core/supporting-typeclasses.html" class="page"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a></li>
+    <li><a href="../borer-core/JSON-specifics.html" class="page">JSON Specifics</a></li>
+    <li><a href="../borer-core/JSON-performance.html" class="page">JSON Performance</a></li>
+    <li><a href="../borer-core/DOM.html" class="active page">Document Object Model (DOM)</a></li>
+    <li><a href="../borer-core/debugging.html" class="page">Debugging</a></li>
   </ul></li>
   <li><a href="../borer-derivation/index.html" class="page"><code>borer-derivation</code></a>
   <ul>
-    <li><a href="../borer-derivation/01-array-based.html" class="page">Array-Based Codecs</a></li>
-    <li><a href="../borer-derivation/02-map-based.html" class="page">Map-Based Codecs</a></li>
-    <li><a href="../borer-derivation/03-type-ids.html" class="page">Type IDs</a></li>
-    <li><a href="../borer-derivation/04-semi-vs-full-automatic.html" class="page">Semi- vs. Fully-automatic Derivation</a></li>
+    <li><a href="../borer-derivation/array-based.html" class="page">Array-Based Codecs</a></li>
+    <li><a href="../borer-derivation/map-based.html" class="page">Map-Based Codecs</a></li>
+    <li><a href="../borer-derivation/type-ids.html" class="page">Type IDs</a></li>
+    <li><a href="../borer-derivation/semi-vs-full-automatic.html" class="page">Semi- vs. Fully-automatic Derivation</a></li>
   </ul></li>
-  <li><a href="../05-borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
-  <li><a href="../06-borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
+  <li><a href="../borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
+  <li><a href="../borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
   <li><a href="../project/index.html" class="page">Project Info</a>
   <ul>
-    <li><a href="../project/01-license.html" class="page">License</a></li>
-    <li><a href="../project/02-changelog.html" class="page">Changelog</a></li>
-    <li><a href="../project/03-references.html" class="page">References</a></li>
-    <li><a href="../project/04-sponsors.html" class="page">Sponsors</a></li>
+    <li><a href="../project/license.html" class="page">License</a></li>
+    <li><a href="../project/changelog.html" class="page">Changelog</a></li>
+    <li><a href="../project/references.html" class="page">References</a></li>
+    <li><a href="../project/sponsors.html" class="page">Sponsors</a></li>
   </ul></li>
 </ul>
 <nav class="md-nav md-nav--secondary">
-<label class="md-nav__title" for="__toc">Table of contents</label>
-<ul>
-  <li><a href="../borer-core/04-nullable-and-default.html#nullable-and-default" class="header">Nullable and Default</a>
-  <ul>
-    <li><a href="../borer-core/04-nullable-and-default.html#nulloptions" class="header"><code>NullOptions</code></a></li>
-  </ul></li>
-</ul>
 </nav>
 
 </nav>
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.0.0
+<i class="md-icon" title="Version">label_outline</i> 1.1.0
 </label>
 </li>
 </ul>
 </div>
 </div>
 </div>
-<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
-<div class="md-sidebar__scrollwrap">
-<div class="md-sidebar__inner">
-<nav class="md-nav md-nav--secondary">
-<label class="md-nav__title" for="__toc">Table of contents</label>
-<ul>
-  <li><a href="../borer-core/04-nullable-and-default.html#nullable-and-default" class="header">Nullable and Default</a>
-  <ul>
-    <li><a href="../borer-core/04-nullable-and-default.html#nulloptions" class="header"><code>NullOptions</code></a></li>
-  </ul></li>
-</ul>
-</nav>
-
-</div>
-</div>
-</div>
 <div class="md-content">
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
-<h1><a href="#nullable-and-default" name="nullable-and-default" class="anchor"><span class="anchor-link"></span></a>Nullable and Default</h1>
-<p>One question that frequently arises when dealing with <a href="http://json.org/">JSON</a>, and to a limited extend <a href="http://cbor.io/">CBOR</a> as well, is how to deal with <code>null</code> values.</p>
-<p><code>null</code> values differ from missing members (see also <a href="../borer-derivation/02-map-based.html#default-values">Map-Based Codecs</a>) in that the value for an element is indeed present, but is <code>null</code>.</p>
-<p><em>borer</em> handles this case in a properly typed fashion: If your data model allows for certain members to have a <code>null</code> encoding that you would like to treat specially the member&rsquo;s type should be wrapped with <code>Nullable</code>, e.g. <code>Nullable[String]</code>.<br> In combination with the simple type class <code>Default[T]</code>, which provides the capability to supply default values for a type <code>T</code>, the pre-defined Encoder and Decoder for <code>Nullable[T]</code> will be able to translate <code>null</code> values to the respective default value and back.</p>
-<p>Example:</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/NullableSpec.scala#L11-L22" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.{Json, Nullable}
-import io.bullet.borer.derivation.MapBasedCodecs._
+<h1><a href="#document-object-model-dom-" name="document-object-model-dom-" class="anchor"><span class="anchor-link"></span></a>Document Object Model (DOM)</h1>
+<p>While <em>borer</em>&rsquo;s core design is DOM-less, writing directly to and reading directly from the respective stream of <a href="http://cbor.io/">CBOR</a>/<a href="http://json.org/">JSON</a> data items, it is sometimes convenient to nevertheless have access to an object structure that mirrors the structure of a <a href="http://cbor.io/">CBOR</a>/<a href="http://json.org/">JSON</a> document as closely as possible.<br> (Many <a href="http://json.org/">JSON</a>-libraries solely rely on such an intermediate &ldquo;AST&rdquo; structure for their encoding and decoding operations.)</p>
+<p>For such cases <em>borer</em> provides you with a simple &ldquo;DOM&rdquo; ADT (see the respective source file <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Dom.scala">here</a>), which you can use like this:</p>
+<dl>
+  <dt>CBOR</dt>
+  <dd>
+  <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DomSpec.scala#L13-L27" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.Cbor
+import io.bullet.borer.Dom._
 
-case class Dog(age: Int, name: Nullable[String])
+val dom = MapElem.Sized(
+  &quot;foo&quot; -&gt; ArrayElem.Sized(IntElem(42), StringElem(&quot;rocks&quot;)),
+  &quot;bar&quot; -&gt; DoubleElem(26.8)
+)
 
-implicit val dogCodec = deriveCodec[Dog]
+val encoded = Cbor.encode(dom).toByteArray
 
-Json
-  .decode(&quot;&quot;&quot;{ &quot;age&quot;: 4, &quot;name&quot;: null }&quot;&quot;&quot; getBytes &quot;UTF8&quot;)
-  .to[Dog]
-  .value ==&gt;
-Dog(age = 4, name = &quot;&quot;) // the `Default[String]` provides an empty String</code></pre>
-<h2><a href="#nulloptions" name="nulloptions" class="anchor"><span class="anchor-link"></span></a><code>NullOptions</code></h2>
-<p>Sometimes it&rsquo;s convenient to map &ldquo;nullable&rdquo; fields to Options, i.e. <code>null</code> to <code>None</code> and non-null to <code>Some</code>. This can easily be done with this import:</p>
-<pre class="prettyprint"><code class="language-scala">import io.bullet.borer.NullOptions._
-</code></pre>
-<p>Here is how <code>NullOptions</code> are implemented:</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/NullOptions.scala#L12-L34" target="_blank" title="Go to snippet source"></a><code class="language-scala">/**
-  * In order to enable an alternative [[Option]] codec, which
-  * encodes `None` to `null` and `Some` to an unwrapped value
-  * you can import the members of this object with
-  *
-  * {{{
-  * import io.bullet.borer.NullOptions._
-  * }}}
-  */
-object NullOptions {
+encoded ==&gt; hex&quot;A263666F6F82182A65726F636B7363626172FB403ACCCCCCCCCCCD&quot;
 
-  implicit def encoder[T: Encoder]: Encoder[Option[T]] =
-    Encoder {
-      case (w, Some(x)) =&gt; w.write(x)
-      case (w, None)    =&gt; w.writeNull()
-    }
+val decoded = Cbor.decode(encoded).to[Element].value
 
-  implicit def decoder[T: Decoder]: Decoder[Option[T]] =
-    Decoder { r =&gt;
-      if (r.tryReadNull()) None
-      else Some(r.read[T]())
-    }
-}</code></pre>
+decoded ==&gt; dom</code></pre></dd>
+  <dt>JSON</dt>
+  <dd>
+  <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DomSpec.scala#L34-L48" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.Dom._
+import io.bullet.borer.Json
+
+val dom = MapElem.Unsized(
+  &quot;foo&quot; -&gt; ArrayElem.Unsized(IntElem(42), StringElem(&quot;rocks&quot;)),
+  &quot;bar&quot; -&gt; DoubleElem(26.8)
+)
+
+val encoded = Json.encode(dom).toByteArray
+
+new String(encoded, &quot;UTF8&quot;) ==&gt; &quot;&quot;&quot;{&quot;foo&quot;:[42,&quot;rocks&quot;],&quot;bar&quot;:26.8}&quot;&quot;&quot;
+
+val decoded = Json.decode(encoded).to[Element].value
+
+decoded ==&gt; dom</code></pre></dd>
+</dl>
+<p>Any <a href="http://cbor.io/">CBOR</a> or <a href="http://json.org/">JSON</a> document can be deserialized into a <code>io.bullet.borer.Dom.Element</code>, which can then be queried or transformed in any way, and potentially written back to <a href="http://cbor.io/">CBOR</a> or <a href="http://json.org/">JSON</a>.<br></p>
+<p>As such, the <em>borer</em> DOM can also be used to transform <a href="http://json.org/">JSON</a> to <a href="http://cbor.io/">CBOR</a>, e.g. like this:</p>
+<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DomSpec.scala#L54-L67" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.{Cbor, Json}
+import io.bullet.borer.Dom._
+
+import scala.util.Try
+
+def jsonToCbor(json: String): Try[Array[Byte]] =
+  Json
+    .decode(json getBytes &quot;UTF8&quot;)
+    .to[Element]
+    .valueTry
+    .flatMap(dom =&gt; Cbor.encode(dom).toByteArrayTry)
+
+jsonToCbor(&quot;&quot;&quot;{&quot;foo&quot;:[42,&quot;rocks&quot;],&quot;bar&quot;:26.8}&quot;&quot;&quot;).get ==&gt;
+hex&quot;BF63666F6F9F182A65726F636B73FF63626172FB403ACCCCCCCCCCCDFF&quot;</code></pre>
 </div>
 <div>
-<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-core/04-nullable-and-default.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-core/DOM.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.0.0
+1.1.0
 </span>
 </div>
 </article>
@@ -275,7 +263,7 @@ Edit this page
 <footer class="md-footer">
 <div class="md-footer-nav">
 <nav class="md-footer-nav__inner md-grid">
-<a href="../borer-core/03-custom-types.html" title="Encoding and Decoding Custom Types" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<a href="../borer-core/JSON-performance.html" title="JSON Performance" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
 <div class="md-flex__cell md-flex__cell--shrink">
 <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
 </div>
@@ -284,17 +272,17 @@ Edit this page
 <span class="md-footer-nav__direction">
 Previous
 </span>
-Encoding and Decoding Custom Types
+JSON Performance
 </span>
 </div>
 </a>
-<a href="../borer-core/05-stringnumbers.html" title="StringNumbers and StringBooleans" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<a href="../borer-core/debugging.html" title="Debugging" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
 <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
 <span class="md-flex__ellipsis">
 <span class="md-footer-nav__direction">
 Next
 </span>
-StringNumbers and StringBooleans
+Debugging
 </span>
 </div>
 <div class="md-flex__cell md-flex__cell--shrink">
