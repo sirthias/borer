@@ -233,7 +233,7 @@ lazy val borer = project.in(file("."))
   .settings(publish / skip := true)
 
 lazy val coreJVM = core.jvm.enablePlugins(SpecializeJsonParserPlugin)
-lazy val coreJS  = core.js
+lazy val coreJS  = core.js.disablePlugins(MimaPlugin)
 lazy val core = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
@@ -257,19 +257,6 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
     Compile / managedSourceDirectories += (Compile / specializeJsonParser / sourceManaged).value
   )
   .jsSettings(scalajsSettings: _*)
-  .jsSettings(
-    mimaBinaryIssueFilters ++= {
-      import com.typesafe.tools.mima.core._
-      Seq( // known binary compatibility issues or internal API to ignore
-        ProblemFilters.exclude[MissingClassProblem]("io.bullet.borer.input.DirectFromByteArrayInput"),
-        ProblemFilters.exclude[MissingClassProblem]("io.bullet.borer.internal.Unsafe$BigEndianByteArrayAccess"),
-        ProblemFilters.exclude[MissingClassProblem]("io.bullet.borer.internal.Unsafe$LittleEndianByteArrayAccess"),
-        ProblemFilters.exclude[IncompatibleResultTypeProblem]("io.bullet.borer.json.DirectJsonParser.input"),
-        ProblemFilters.exclude[DirectMissingMethodProblem]("io.bullet.borer.json.DirectJsonParser.config"),
-        ProblemFilters.exclude[DirectMissingMethodProblem]("io.bullet.borer.json.DirectJsonParser.this"),
-      )
-    }
-  )
 
 lazy val akka = project
   .enablePlugins(AutomateHeaderPlugin)
