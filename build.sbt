@@ -100,9 +100,10 @@ lazy val mimaSettings = {
       if (isPatch) "both" else "backward"
     },
     mimaPreviousArtifacts := {
-      val isMajorVersionBump = newVersion.value.head != oldVersion.head
-      if (isMajorVersionBump) Set.empty // no mima-checking required
-      else Set(organization.value %% moduleName.value % oldVersionString)
+      //val isMajorVersionBump = newVersion.value.head != oldVersion.head
+      val isPatch = newVersion.value.take(2) == oldVersion.take(2)
+      if (isPatch) Set(organization.value %% moduleName.value % oldVersionString)
+      else Set.empty // no mima-checking for non-patch releases
     },
     mimaBinaryIssueFilters := Seq( // known binary compatibility issues or internal API to ignore
       ProblemFilters.exclude[ReversedMissingMethodProblem]("*") // we're lenient here: adding methods is fine everywhere
@@ -184,13 +185,13 @@ addCommandsAlias(
     s"++$scala213",
     "test:compile",
     "test",
-    //"mimaReportBinaryIssues",
+    "mimaReportBinaryIssues",
 
     // Scala 2.12
     s"++$scala212",
     "test:compile",
     "test",
-    //"mimaReportBinaryIssues",
+    "mimaReportBinaryIssues",
 
     // establish test coverage (only on JVM projects)
     "coverage",
