@@ -26,13 +26,13 @@ JMH Parameters
 : `-wi 10 -i 10 -t 4 -f 4`  
 
 JVM
-: Java HotSpot(TM) 64-Bit GraalVM EE 19.1.0
+: Java HotSpot(TM) 64-Bit GraalVM EE 19.2.1
 
 Memory Settings
 : `-Xms4096m -Xmx4096m`
 
 Scala Version
-: 2.12.8
+: 2.12.10
 
 Operating System
 : Ubuntu 18.04.2 LTS

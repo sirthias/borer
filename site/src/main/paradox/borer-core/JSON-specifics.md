@@ -100,7 +100,7 @@ Comparison with other Scala JSON Libraries
 
 - depends on `cats-core`
 - type class derivation can be slow (at compile time)
-- _borer_ is about twice as fast
+- _borer_ decodes [JSON] more than twice as fast
 - no [CBOR] support
 
 @@@
@@ -122,7 +122,7 @@ Comparison with other Scala JSON Libraries
 - essentially unmaintained
 - no direct support for case classes w/ more than 22 members
 - no type class derivation for ADTs
-- _borer_ is about 2.5 times as fast
+- _borer_ decodes [JSON] more than 3 times as fast
 - not compatible with [scala.js]    
 - no [CBOR] support
 
@@ -146,7 +146,7 @@ Comparison with other Scala JSON Libraries
 
 - no support for case classes w/ more than 64 members
 - no support for manual (no-macro) codec construction
-- _borer_ is about 3 times as fast
+- _borer_ decodes [JSON] more than 4 times as fast
 - no [CBOR] support
     
 @@@
@@ -168,6 +168,7 @@ Comparison with other Scala JSON Libraries
 - no type class-based API
 - several non-Scala dependencies
 - not compatible with [scala.js]
+- _borer_ decodes [JSON] about 20% faster
 
 @@@
 
@@ -179,7 +180,7 @@ Comparison with other Scala JSON Libraries
 @@@ div { .pros }
 
 - zero dependencies
-- very high performance (about 30% faster than _borer_)
+- very high performance (about 15% faster [JSON] decoding than _borer_)
 - highly configurable
 
 @@@
