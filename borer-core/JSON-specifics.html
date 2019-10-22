@@ -283,7 +283,7 @@ Json.encode(binaryData).toUtf8String ==&gt; &quot;&quot;&quot;&quot;54s575a&quot
 <ul>
   <li>depends on <code>cats-core</code></li>
   <li>type class derivation can be slow (at compile time)</li>
-  <li><em>borer</em> is about twice as fast</li>
+  <li><em>borer</em> decodes <a href="http://json.org/">JSON</a> more than twice as fast</li>
   <li>no <a href="http://cbor.io/">CBOR</a> support</li>
 </ul></div>
 <hr/>
@@ -299,7 +299,7 @@ Json.encode(binaryData).toUtf8String ==&gt; &quot;&quot;&quot;&quot;54s575a&quot
   <li>essentially unmaintained</li>
   <li>no direct support for case classes w/ more than 22 members</li>
   <li>no type class derivation for ADTs</li>
-  <li><em>borer</em> is about 2.5 times as fast</li>
+  <li><em>borer</em> decodes <a href="http://json.org/">JSON</a> more than 3 times as fast</li>
   <li>not compatible with <a href="https://www.scala-js.org/">scala.js</a></li>
   <li>no <a href="http://cbor.io/">CBOR</a> support</li>
 </ul></div>
@@ -317,7 +317,7 @@ Json.encode(binaryData).toUtf8String ==&gt; &quot;&quot;&quot;&quot;54s575a&quot
 <ul>
   <li>no support for case classes w/ more than 64 members</li>
   <li>no support for manual (no-macro) codec construction</li>
-  <li><em>borer</em> is about 3 times as fast</li>
+  <li><em>borer</em> decodes <a href="http://json.org/">JSON</a> more than 4 times as fast</li>
   <li>no <a href="http://cbor.io/">CBOR</a> support</li>
 </ul></div>
 <hr/>
@@ -333,6 +333,7 @@ Json.encode(binaryData).toUtf8String ==&gt; &quot;&quot;&quot;&quot;54s575a&quot
   <li>no type class-based API</li>
   <li>several non-Scala dependencies</li>
   <li>not compatible with <a href="https://www.scala-js.org/">scala.js</a></li>
+  <li><em>borer</em> decodes <a href="http://json.org/">JSON</a> about 20% faster</li>
 </ul></div>
 <hr/>
 <dl>
@@ -341,7 +342,7 @@ Json.encode(binaryData).toUtf8String ==&gt; &quot;&quot;&quot;&quot;54s575a&quot
 </dl><div class="pros">
 <ul>
   <li>zero dependencies</li>
-  <li>very high performance (about 30% faster than <em>borer</em>)</li>
+  <li>very high performance (about 15% faster <a href="http://json.org/">JSON</a> decoding than <em>borer</em>)</li>
   <li>highly configurable</li>
 </ul></div><div class="cons">
 <ul>
