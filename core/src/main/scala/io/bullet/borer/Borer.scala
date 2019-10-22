@@ -52,7 +52,7 @@ case object Cbor extends Target {
       config: DecodingConfig = DecodingConfig.default,
       receiverWrapper: Receiver.Wrapper[DecodingConfig] = CborValidation.wrapper)(
       implicit p: Input.Provider[T]): Reader =
-    new InputReader(new CborParser(p(value), config) (p.byteAccess), null, receiverWrapper, config, this)
+    new InputReader(new CborParser(p(value), config)(p.byteAccess), null, receiverWrapper, config, this)
 
   /**
     * @param bufferSize                  the buffer size used for configuring the respective [[Output]]
@@ -149,7 +149,7 @@ case object Json extends Target {
       receiverWrapper: Receiver.Wrapper[DecodingConfig] = Receiver.nopWrapper)(
       implicit p: Input.Provider[T]): Reader = {
     val directParser = io.bullet.borer.json.DirectParser(value, config)
-    val parser       = if (directParser ne null) null else new JsonParser(p(value), config) (p.byteAccess)
+    val parser       = if (directParser ne null) null else new JsonParser(p(value), config)(p.byteAccess)
     new InputReader(parser, directParser, receiverWrapper, config, Json)
   }
 

@@ -701,7 +701,7 @@ private[borer] object JsonParser {
   }
 
   final private[this] val _creator: Parser.Creator[Any, JsonParser.Config] =
-    (input, byteAccess, config) => new JsonParser(input, config) (byteAccess)
+    (input, byteAccess, config) => new JsonParser(input, config)(byteAccess)
 
   def creator[Bytes, Conf <: JsonParser.Config]: Parser.Creator[Bytes, Conf] =
     _creator.asInstanceOf[Parser.Creator[Bytes, Conf]]
