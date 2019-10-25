@@ -16,8 +16,10 @@ before_cache:
 
 cache:
   directories:
-    - $HOME/.cache/coursier
-    - $HOME/.ivy2/cache
+    - $HOME/.cache
+    - $HOME/.coursier
+    - $HOME/.ivy2
+    - $HOME/.m2
     - $HOME/.sbt
 
 script: sbt validate
