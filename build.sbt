@@ -210,8 +210,8 @@ addCommandsAlias(
 /////////////////////// DEPENDENCIES /////////////////////////
 
 val `collection-compat` = Def.setting("org.scala-lang.modules" %%% "scala-collection-compat" % "2.1.2")
-val `akka-actor`        = Def.setting("com.typesafe.akka"      %%  "akka-actor"              % "2.5.26" % "provided")
-val `akka-stream`       = Def.setting("com.typesafe.akka"      %%  "akka-stream"             % "2.5.26" % "provided")
+val `akka-actor`        = Def.setting("com.typesafe.akka"      %%  "akka-actor"              % "2.6.0" % "provided")
+val `akka-stream`       = Def.setting("com.typesafe.akka"      %%  "akka-stream"             % "2.6.0" % "provided")
 val `akka-http`         = Def.setting("com.typesafe.akka"      %%  "akka-http"               % "10.1.10" % "provided")
 val `scodec-bits`       = Def.setting("org.scodec"             %%% "scodec-bits"             % "1.1.12" % "provided")
 val utest               = Def.setting("com.lihaoyi"            %%% "utest"                   % "0.7.1"  % "test")
