@@ -230,7 +230,10 @@ lazy val borer = project.in(file("."))
   .disablePlugins(MimaPlugin)
   .settings(commonSettings)
   .settings(releaseSettings)
-  .settings(publish / skip := true)
+  .settings(
+    publish / skip := true,
+    onLoadMessage := welcomeMessage.value
+  )
 
 lazy val coreJVM = core.jvm.enablePlugins(SpecializeJsonParserPlugin)
 lazy val coreJS  = core.js.disablePlugins(MimaPlugin)
@@ -377,3 +380,25 @@ lazy val site = project
       "snip.core.base_dir" -> s"${baseDirectory.value}/../core/src/main/scala/io/bullet/borer",
     )
   )
+
+// welcome message in the style of zio.dev
+def welcomeMessage = Def.setting {
+  import scala.Console
+
+  def red(text: String): String = s"${Console.RED}$text${Console.RESET}"
+  def item(text: String): String = s"${Console.GREEN}▶ ${Console.CYAN}$text${Console.RESET}"
+
+  s"""|${red(" _                            ")}
+      |${red("| |                           ")}
+      |${red("| |__   ___  _ __ ___ _ __    ")}
+      |${red("| '_ \\ / _ \\| '__/ _ \\ '__|")}
+      |${red("| |_) | (_) | | |  __/ |      ")}
+      |${red("|_.__/ \\___/|_|  \\___|_|    " + version.value)}
+      |
+      |Useful sbt tasks:
+      |${item("project core")} - Descend into the JVM core module
+      |${item("project coreJS")} - Descend into the JS core module
+      |${item("test")} - Run all tests
+      |${item("project benchmarks;benchmarkResults;project /")} - Show results of latest benchmark runs
+      """.stripMargin
+}
