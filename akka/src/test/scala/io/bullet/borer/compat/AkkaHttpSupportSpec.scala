@@ -13,7 +13,6 @@ import _root_.akka.http.scaladsl.marshalling.Marshal
 import _root_.akka.http.scaladsl.model._
 import _root_.akka.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException
 import _root_.akka.http.scaladsl.unmarshalling.{Unmarshal, Unmarshaller}
-import _root_.akka.stream.ActorMaterializer
 import _root_.akka.stream.scaladsl.{Sink, Source}
 import _root_.akka.NotUsed
 import io.bullet.borer.Codec
@@ -36,8 +35,7 @@ object AkkaHttpSupportSpec extends TestSuite {
 
   final case class Num(x: Int)
 
-  implicit private val system: ActorSystem    = ActorSystem()
-  implicit private val mat: ActorMaterializer = ActorMaterializer()
+  implicit private val system: ActorSystem = ActorSystem()
   import system.dispatcher
 
   implicit private val fooCodec: Codec[Foo] = {
