@@ -124,20 +124,12 @@ lazy val scalajsSettings = Seq(
 
 lazy val releaseSettings = {
   import ReleaseTransformations._
-
-  val runCompile = ReleaseStep(action = { st: State ⇒
-    val extracted = Project.extract(st)
-    val ref       = extracted.get(thisProjectRef)
-    extracted.runAggregated(compile in Compile in ref, st)
-  })
-
   Seq(
     releaseCrossBuild := true,
     releaseProcess := Seq[ReleaseStep](
       checkSnapshotDependencies,
       inquireVersions,
       runClean,
-      runCompile,
       runTest,
       setReleaseVersion,
       commitReleaseVersion,
