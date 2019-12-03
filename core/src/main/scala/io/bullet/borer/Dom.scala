@@ -274,7 +274,7 @@ object Dom {
     }
 
     Decoder { r =>
-      (Integer.numberOfTrailingZeros(r.dataItem): @switch) match {
+      (Integer.numberOfTrailingZeros(r.dataItem()): @switch) match {
         case DIS.Null      => r.readNull(); NullElem
         case DIS.Undefined => r.readUndefined(); UndefinedElem
         case DIS.Boolean   => if (r.readBoolean()) BooleanElem.True else BooleanElem.False

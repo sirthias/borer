@@ -169,7 +169,7 @@ object Decoder extends LowPrioDecoders {
 
   implicit val _forJBigInteger: Decoder[JBigInteger] = forJBigInteger()
 
-  implicit val forBigInteger: Decoder[BigInt] = _forJBigInteger.map(BigInt(_))
+  implicit val forBigInt: Decoder[BigInt] = _forJBigInteger.map(BigInt(_))
 
   implicit def forJBigDecimal(
       maxCborBigIntMantissaByteArraySize: Int = 64,
