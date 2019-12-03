@@ -10,6 +10,7 @@ package io.bullet.borer.json
 
 import java.nio.charset.StandardCharsets
 import java.util
+import java.lang.{Long => JLong}
 
 import io.bullet.borer.{Borer, _}
 import io.bullet.borer.internal.{CharArrayCache, Parser, Util}
@@ -139,17 +140,23 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       // bytes containing ['0'..'9'] become zero, all others 0x80
       mask = (octa | mask) & 0X8080808080808080L
 
-      val nlz        = java.lang.Long.numberOfLeadingZeros(mask)
+      val nlz        = JLong.numberOfLeadingZeros(mask)
       val digitCount = nlz >> 3
 
-      val d0 = vMask >>> 56
-      val d1 = vMask << 8 >>> 56
-      val d2 = vMask << 16 >>> 56
-      val d3 = vMask << 24 >>> 56
-      val d4 = vMask << 32 >>> 56
-      val d5 = vMask << 40 >>> 56
-      val d6 = vMask << 48 >>> 56
-      val d7 = vMask & 0XFFL
+      @inline def d0 = vMask >>> 56
+      @inline def d1 = vMask << 8 >>> 56
+      @inline def d2 = vMask << 16 >>> 56
+      @inline def d3 = vMask << 24 >>> 56
+
+      /**
+        * Awesome SWAR (SIMD within a register) technique for fast parsing of 8 character digits into a Long.
+        * Source: http://govnokod.ru/13461#comment189156
+        */
+      def fromLittleEndianCharacterOcta(oct: Long) = {
+        var res = (oct & 0x0F0F0F0F0F0F0F0FL) * 2561 >> 8
+        res = (res & 0x00FF00FF00FF00FFL) * 6553601 >> 16
+        (res & 0x0000FFFF0000FFFFL) * 42949672960001L >> 32
+      }
 
       @inline def v1 =
         value * 10 - d0
@@ -160,13 +167,13 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       @inline def v4 =
         value * 10000 - d0 * 1000 - d1 * 100 - d2 * 10 - d3
       @inline def v5 =
-        value * 100000 - d0 * 10000 - d1 * 1000 - d2 * 100 - d3 * 10 - d4
+        value * 100000 - fromLittleEndianCharacterOcta((JLong.reverseBytes(octa) << 24) | 0x303030L)
       @inline def v6 =
-        value * 1000000 - d0 * 100000 - d1 * 10000 - d2 * 1000 - d3 * 100 - d4 * 10 - d5
+        value * 1000000 - fromLittleEndianCharacterOcta((JLong.reverseBytes(octa) << 16) | 0x3030L)
       @inline def v7 =
-        value * 10000000 - d0 * 1000000 - d1 * 100000 - d2 * 10000 - d3 * 1000 - d4 * 100 - d5 * 10 - d6
+        value * 10000000 - fromLittleEndianCharacterOcta((JLong.reverseBytes(octa) << 8) | 0x30L)
       @inline def v8 =
-        value * 100000000 - d0 * 10000000 - d1 * 1000000 - d2 * 100000 - d3 * 10000 - d4 * 1000 - d5 * 100 - d6 * 10 - d7
+        value * 100000000 - fromLittleEndianCharacterOcta(JLong.reverseBytes(octa))
 
       @inline def returnWithV(value: Long, stopChar: Long): Int = {
         unread(7 - digitCount)
@@ -397,6 +404,9 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       }
     }
 
+    /**
+      * SWAR (SIMD Within A Register) implementation for fast parsing of JSON strings with minimal branching.
+      */
     @tailrec def parseUtf8String(charCursor: Int): Int = {
       // fetch 8 bytes (chars) at the same time with the first becoming the (left-most) MSB of the `octa` long
       val octa = input.readOctaByteBigEndianPadded(this)
@@ -413,8 +423,8 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       // the special chars '"', '\', 8-bit (> 127) and ctrl chars become 0x80, all normal chars zero
       val mask = (qMask | bMask | octa | cMask) & 0X8080808080808080L
 
-      val nlz       = java.lang.Long.numberOfLeadingZeros(mask) // JVM intrinsic compiling to an LZCNT instr. on x86
-      val charCount = nlz >> 3                                  // the number of "good" normal chars before a special char [0..8]
+      val nlz       = JLong.numberOfLeadingZeros(mask) // JVM intrinsic compiling to an LZCNT instr. on x86
+      val charCount = nlz >> 3                         // the number of "good" normal chars before a special char [0..8]
 
       // in order to decrease instruction dependencies we always speculatively write all 8 chars to the char buffer,
       // independently of how many are actually "good" chars, this keeps CPU pipelines maximally busy
@@ -610,7 +620,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       // bytes containing [0..0x20] become zero, all others 0x80
       mask = (octa | mask) & 0X8080808080808080L
 
-      val nlz = java.lang.Long.numberOfLeadingZeros(mask)
+      val nlz = JLong.numberOfLeadingZeros(mask)
       if (nlz < 64) {
         unread(7 - (nlz >> 3))
         (octa << nlz >>> 56).toInt // "return" the first non-whitespace char
