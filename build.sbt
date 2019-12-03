@@ -202,10 +202,13 @@ addCommandsAlias(
 /////////////////////// DEPENDENCIES /////////////////////////
 
 val `collection-compat` = Def.setting("org.scala-lang.modules" %%% "scala-collection-compat" % "2.1.2")
-val `akka-actor`        = Def.setting("com.typesafe.akka"      %%  "akka-actor"              % "2.6.0" % "provided")
-val `akka-stream`       = Def.setting("com.typesafe.akka"      %%  "akka-stream"             % "2.6.0" % "provided")
-val `akka-http`         = Def.setting("com.typesafe.akka"      %%  "akka-http"               % "10.1.11" % "provided")
-val `scodec-bits`       = Def.setting("org.scodec"             %%% "scodec-bits"             % "1.1.12" % "provided")
+val `akka-actor`        = Def.setting("com.typesafe.akka"      %%  "akka-actor"              % "2.6.0")
+val `akka-stream`       = Def.setting("com.typesafe.akka"      %%  "akka-stream"             % "2.6.0")
+val `akka-http`         = Def.setting("com.typesafe.akka"      %%  "akka-http"               % "10.1.11")
+val `circe-core`        = Def.setting("io.circe"               %%% "circe-core"               % "0.12.3")
+val `circe-parser`      = Def.setting("io.circe"               %%% "circe-parser"             % "0.12.3")
+val `circe-derivation`  = Def.setting("io.circe"               %%% "circe-derivation"         % "0.12.0-M7")
+val `scodec-bits`       = Def.setting("org.scodec"             %%% "scodec-bits"             % "1.1.12")
 val utest               = Def.setting("com.lihaoyi"            %%% "utest"                   % "0.7.1"  % "test")
 val `scala-compiler`    = Def.setting("org.scala-lang"         %  "scala-compiler"           % scalaVersion.value % "provided")
 val `scala-reflect`     = Def.setting("org.scala-lang"         %  "scala-reflect"            % scalaVersion.value % "provided")
@@ -215,6 +218,7 @@ val `scala-reflect`     = Def.setting("org.scala-lang"         %  "scala-reflect
 lazy val borer = project.in(file("."))
   .aggregate(coreJVM, coreJS)
   .aggregate(akka)
+  .aggregate(circeJVM, circeJS)
   .aggregate(scodecJVM, scodecJS)
   .aggregate(derivationJVM, derivationJS)
   .aggregate(benchmarks)
@@ -262,8 +266,37 @@ lazy val akka = project
   .settings(mimaSettings)
   .settings(
     moduleName := "borer-compat-akka",
-    libraryDependencies ++= Seq(`akka-actor`.value, `akka-stream`.value, `akka-http`.value, utest.value)
+    libraryDependencies ++= Seq(
+      `akka-actor`.value % "provided",
+      `akka-stream`.value % "provided",
+      `akka-http`.value % "provided",
+      utest.value)
   )
+
+lazy val circeJVM = circe.jvm
+  .dependsOn(coreJVM % "compile->compile;test->test")
+  .dependsOn(derivationJVM % "test->compile")
+lazy val circeJS  = circe.js
+  .dependsOn(coreJS   % "compile->compile;test->test")
+  .dependsOn(derivationJS % "test->compile")
+lazy val circe = crossProject(JSPlatform, JVMPlatform)
+  .withoutSuffixFor(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .enablePlugins(AutomateHeaderPlugin)
+  .settings(crossSettings)
+  .settings(commonSettings)
+  .settings(releaseSettings)
+  .settings(mimaSettings)
+  .settings(
+    moduleName := "borer-compat-circe",
+    libraryDependencies ++= Seq(
+      `circe-core`.value,
+      `circe-parser`.value % "test",
+      `circe-derivation`.value % "test",
+      utest.value
+    )
+  )
+  .jsSettings(scalajsSettings: _*)
 
 lazy val scodecJVM = scodec.jvm
   .dependsOn(coreJVM % "compile->compile;test->test")
@@ -281,7 +314,10 @@ lazy val scodec = crossProject(JSPlatform, JVMPlatform)
   .settings(mimaSettings)
   .settings(
     moduleName := "borer-compat-scodec",
-    libraryDependencies ++= Seq(`scodec-bits`.value, utest.value)
+    libraryDependencies ++= Seq(
+      `scodec-bits`.value % "provided",
+      utest.value
+    )
   )
   .jsSettings(scalajsSettings: _*)
 
@@ -314,10 +350,10 @@ lazy val benchmarks = project
       "com.fasterxml.jackson.module"          %% "jackson-module-scala"       % "2.10.1",
       "com.fasterxml.jackson.module"          %  "jackson-module-afterburner" % "2.10.1",
       "com.lihaoyi"                           %% "upickle"                    % "0.8.0",
-      "io.circe"                              %% "circe-core"                 % "0.12.3",
-      "io.circe"                              %% "circe-derivation"           % "0.12.0-M7",
-      "io.circe"                              %% "circe-jawn"                 % "0.12.3",
       "io.spray"                              %% "spray-json"                 % "1.3.5",
+      `circe-core`.value,
+      `circe-parser`.value,
+      `circe-derivation`.value,
     )
   )
 
