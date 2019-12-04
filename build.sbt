@@ -290,6 +290,7 @@ lazy val circe = crossProject(JSPlatform, JVMPlatform)
   .settings(
     moduleName := "borer-compat-circe",
     libraryDependencies ++= Seq(
+      `collection-compat`.value,
       `circe-core`.value,
       `circe-parser`.value % "test",
       `circe-derivation`.value % "test",

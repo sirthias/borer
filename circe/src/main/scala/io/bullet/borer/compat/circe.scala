@@ -13,7 +13,7 @@ import io.bullet.borer.encodings.BaseEncoding
 import io.circe.{Json, JsonNumber, JsonObject}
 
 import scala.annotation.switch
-import scala.collection.Factory
+import scala.collection.compat.Factory
 
 object circe {
 
