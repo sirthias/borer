@@ -146,16 +146,17 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       @inline def d0 = vMask >>> 56
       @inline def d1 = vMask << 8 >>> 56
       @inline def d2 = vMask << 16 >>> 56
-      @inline def d3 = vMask << 24 >>> 56
 
-      /**
-        * Awesome SWAR (SIMD within a register) technique for fast parsing of 8 character digits into a Long.
-        * Source: http://govnokod.ru/13461#comment189156
-        */
-      def fromLittleEndianCharacterOcta(oct: Long) = {
-        var res = (oct & 0x0F0F0F0F0F0F0F0FL) * 2561 >> 8
-        res = (res & 0x00FF00FF00FF00FFL) * 6553601 >> 16
-        (res & 0x0000FFFF0000FFFFL) * 42949672960001L >> 32
+      // SWAR (SIMD within a register) technique for fast parsing of 8 character digits into a Long.
+      // Source: https://johnnylee-sde.github.io/Fast-numeric-string-to-int/
+      // Adapted to big endian (because we already have the `octa` in big endian byte order)
+      def fromBigEndianCharacterOcta(oct: Long) = {
+        var x = oct * 266 // (x * 10) + (x << 8)
+        x = (x >> 8) & 0x00FF00FF00FF00FFL
+        x = x * 65636 // (x * 100) + (x << 16)
+        x = (x >> 16) & 0x0000FFFF0000FFFFL
+        x = x * 4294977296L // (x * 10000) + (x << 32)
+        x >> 32
       }
 
       @inline def v1 =
@@ -165,15 +166,15 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       @inline def v3 =
         value * 1000 - d0 * 100 - d1 * 10 - d2
       @inline def v4 =
-        value * 10000 - d0 * 1000 - d1 * 100 - d2 * 10 - d3
+        value * 10000 - fromBigEndianCharacterOcta(vMask >> 32)
       @inline def v5 =
-        value * 100000 - fromLittleEndianCharacterOcta((JLong.reverseBytes(octa) << 24) | 0x303030L)
+        value * 100000 - fromBigEndianCharacterOcta(vMask >> 24)
       @inline def v6 =
-        value * 1000000 - fromLittleEndianCharacterOcta((JLong.reverseBytes(octa) << 16) | 0x3030L)
+        value * 1000000 - fromBigEndianCharacterOcta(vMask >> 16)
       @inline def v7 =
-        value * 10000000 - fromLittleEndianCharacterOcta((JLong.reverseBytes(octa) << 8) | 0x30L)
+        value * 10000000 - fromBigEndianCharacterOcta(vMask >> 8)
       @inline def v8 =
-        value * 100000000 - fromLittleEndianCharacterOcta(JLong.reverseBytes(octa))
+        value * 100000000 - fromBigEndianCharacterOcta(vMask)
 
       @inline def returnWithV(value: Long, stopChar: Long): Int = {
         unread(7 - digitCount)
@@ -404,9 +405,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       }
     }
 
-    /**
-      * SWAR (SIMD Within A Register) implementation for fast parsing of JSON strings with minimal branching.
-      */
+    // SWAR (SIMD Within A Register) implementation for fast parsing of JSON strings with minimal branching.
     @tailrec def parseUtf8String(charCursor: Int): Int = {
       // fetch 8 bytes (chars) at the same time with the first becoming the (left-most) MSB of the `octa` long
       val octa = input.readOctaByteBigEndianPadded(this)
