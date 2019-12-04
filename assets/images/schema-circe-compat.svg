@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xl="http://www.w3.org/1999/xlink" viewBox="-64.5 239.5 337 161" width="337" height="161">
+  <defs>
+    <font-face font-family="Helvetica Neue" font-size="10" panose-1="2 0 5 3 0 0 0 2 0 4" units-per-em="1000" underline-position="-100" underline-thickness="50" slope="0" x-height="517" cap-height="714" ascent="951.9958" descent="-212.99744" font-weight="400">
+      <font-face-src>
+        <font-face-name name="HelveticaNeue"/>
+      </font-face-src>
+    </font-face>
+    <font-face font-family="Helvetica Neue" font-size="10" panose-1="2 0 4 3 0 0 0 2 0 4" units-per-em="1000" underline-position="-100" underline-thickness="50" slope="0" x-height="523" cap-height="721" ascent="966.9952" descent="-212.99744" font-weight="300">
+      <font-face-src>
+        <font-face-name name="HelveticaNeue-Light"/>
+      </font-face-src>
+    </font-face>
+    <marker orient="auto" overflow="visible" markerUnits="strokeWidth" id="FilledArrow_Marker" stroke-linejoin="miter" stroke-miterlimit="10" viewBox="-1 -4 10 8" markerWidth="10" markerHeight="8" color="black">
+      <g>
+        <path d="M 8 0 L 0 -3 L 0 3 Z" fill="currentColor" stroke="currentColor" stroke-width="1"/>
+      </g>
+    </marker>
+    <marker orient="auto" overflow="visible" markerUnits="strokeWidth" id="FilledArrow_Marker_2" stroke-linejoin="miter" stroke-miterlimit="10" viewBox="-9 -4 10 8" markerWidth="10" markerHeight="8" color="black">
+      <g>
+        <path d="M -8 0 L 0 3 L 0 -3 Z" fill="currentColor" stroke="currentColor" stroke-width="1"/>
+      </g>
+    </marker>
+    <font-face font-family="Helvetica Neue" font-size="10" panose-1="2 0 4 3 0 0 0 9 0 4" units-per-em="1000" underline-position="-100" underline-thickness="50" slope="-1200" x-height="523" cap-height="721" ascent="951.004" descent="-212.99744" font-style="italic" font-weight="300">
+      <font-face-src>
+        <font-face-name name="HelveticaNeue-LightItalic"/>
+      </font-face-src>
+    </font-face>
+  </defs>
+  <metadata> Produced by OmniGraffle 7.12.1 
+    <dc:date>2019-12-04 11:26:03 +0000</dc:date>
+  </metadata>
+  <g id="Canvas_1" stroke-opacity="1" fill-opacity="1" fill="none" stroke="none" stroke-dasharray="none">
+    <title>Canvas 1</title>
+    <g id="Canvas_1: Layer 1">
+      <title>Layer 1</title>
+      <g id="Graphic_40">
+        <path d="M 177 240 L 263 240 C 267.97056 240 272 244.02944 272 249 L 272 391 C 272 395.97056 267.97056 400 263 400 L 177 400 C 172.02944 400 168 395.97056 168 391 L 168 249 C 168 244.02944 172.02944 240 177 240 Z" stroke="silver" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4.0,4.0" stroke-width="1"/>
+        <text transform="translate(173 245)" fill="gray">
+          <tspan font-family="Helvetica Neue" font-size="10" font-weight="400" fill="gray" x="0" y="10">borer</tspan>
+        </text>
+      </g>
+      <g id="Graphic_38">
+        <path d="M 41 240 L 143 240 C 147.97056 240 152 244.02944 152 249 L 152 391 C 152 395.97056 147.97056 400 143 400 L 41 400 C 36.029437 400 32 395.97056 32 391 L 32 249 C 32 244.02944 36.029437 240 41 240 Z" stroke="silver" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4.0,4.0" stroke-width="1"/>
+        <text transform="translate(37 245)" fill="#929292">
+          <tspan font-family="Helvetica Neue" font-size="10" font-weight="400" fill="#929292" x="0" y="10">circe</tspan>
+        </text>
+      </g>
+      <g id="Graphic_37">
+        <path d="M 81 312 L 127 312 C 131.97056 312 136 316.02944 136 321 L 136 367 C 136 371.97056 131.97056 376 127 376 L 81 376 C 76.02944 376 72 371.97056 72 367 L 72 321 C 72 316.02944 76.02944 312 81 312 Z" fill="white"/>
+        <path d="M 81 312 L 127 312 C 131.97056 312 136 316.02944 136 321 L 136 367 C 136 371.97056 131.97056 376 127 376 L 81 376 C 76.02944 376 72 371.97056 72 367 L 72 321 C 72 316.02944 76.02944 312 81 312 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_36">
+        <path d="M 201 320 L 247 320 C 251.97056 320 256 324.02944 256 329 L 256 375 C 256 379.97056 251.97056 384 247 384 L 201 384 C 196.02944 384 192 379.97056 192 375 L 192 329 C 192 324.02944 196.02944 320 201 320 Z" fill="white"/>
+        <path d="M 201 320 L 247 320 C 251.97056 320 256 324.02944 256 329 L 256 375 C 256 379.97056 251.97056 384 247 384 L 201 384 C 196.02944 384 192 379.97056 192 375 L 192 329 C 192 324.02944 196.02944 320 201 320 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <text transform="translate(197 339.70993)" fill="black">
+          <tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="black" x="13.105" y="10">CBOR</tspan>
+          <tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="black" x="4.59" y="22.29007">Document</tspan>
+        </text>
+      </g>
+      <g id="Graphic_35">
+        <path d="M 77 316 L 123 316 C 127.97056 316 132 320.02944 132 325 L 132 371 C 132 375.97056 127.97056 380 123 380 L 77 380 C 72.02944 380 68 375.97056 68 371 L 68 325 C 68 320.02944 72.02944 316 77 316 Z" fill="white"/>
+        <path d="M 77 316 L 123 316 C 127.97056 316 132 320.02944 132 325 L 132 371 C 132 375.97056 127.97056 380 123 380 L 77 380 C 72.02944 380 68 375.97056 68 371 L 68 325 C 68 320.02944 72.02944 316 77 316 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_34">
+        <path d="M 73 320 L 119 320 C 123.97056 320 128 324.02944 128 329 L 128 375 C 128 379.97056 123.97056 384 119 384 L 73 384 C 68.02944 384 64 379.97056 64 375 L 64 329 C 64 324.02944 68.02944 320 73 320 Z" fill="white"/>
+        <path d="M 73 320 L 119 320 C 123.97056 320 128 324.02944 128 329 L 128 375 C 128 379.97056 123.97056 384 119 384 L 73 384 C 68.02944 384 64 379.97056 64 375 L 64 329 C 64 324.02944 68.02944 320 73 320 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <text transform="translate(69 333.5649)" fill="black">
+          <tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="black" x="14.125" y="10">JSON</tspan>
+          <tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="black" x="17.92" y="22.29007">AST</tspan>
+          <tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="black" x="12.83" y="34.58014">Nodes</tspan>
+        </text>
+      </g>
+      <g id="Graphic_33">
+        <path d="M -47 312 L -1 312 C 3.9705627 312 8 316.02944 8 321 L 8 367 C 8 371.97056 3.9705627 376 -1 376 L -47 376 C -51.97056 376 -56 371.97056 -56 367 L -56 321 C -56 316.02944 -51.97056 312 -47 312 Z" fill="white"/>
+        <path d="M -47 312 L -1 312 C 3.9705627 312 8 316.02944 8 321 L 8 367 C 8 371.97056 3.9705627 376 -1 376 L -47 376 C -51.97056 376 -56 371.97056 -56 367 L -56 321 C -56 316.02944 -51.97056 312 -47 312 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_32">
+        <path d="M -51 316 L -5 316 C -.02943725 316 4 320.02944 4 325 L 4 371 C 4 375.97056 -.02943725 380 -5 380 L -51 380 C -55.97056 380 -60 375.97056 -60 371 L -60 325 C -60 320.02944 -55.97056 316 -51 316 Z" fill="white"/>
+        <path d="M -51 316 L -5 316 C -.02943725 316 4 320.02944 4 325 L 4 371 C 4 375.97056 -.02943725 380 -5 380 L -51 380 C -55.97056 380 -60 375.97056 -60 371 L -60 325 C -60 320.02944 -55.97056 316 -51 316 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_31">
+        <path d="M -55 320 L -9 320 C -4.0294373 320 0 324.02944 0 329 L 0 375 C 0 379.97056 -4.0294373 384 -9 384 L -55 384 C -59.97056 384 -64 379.97056 -64 375 L -64 329 C -64 324.02944 -59.97056 320 -55 320 Z" fill="white"/>
+        <path d="M -55 320 L -9 320 C -4.0294373 320 0 324.02944 0 329 L 0 375 C 0 379.97056 -4.0294373 384 -9 384 L -55 384 C -59.97056 384 -64 379.97056 -64 375 L -64 329 C -64 324.02944 -59.97056 320 -55 320 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <text transform="translate(-59 333.5649)" fill="black">
+          <tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="black" x="10.425" y="10">Domain </tspan>
+          <tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="black" x="13.725" y="22.29007">Model </tspan>
+          <tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="black" x="10.15" y="34.58014">Classes</tspan>
+        </text>
+      </g>
+      <g id="Line_30">
+        <path d="M -3.2456374 304.60065 C 21.009173 281.13312 58.99083 281.13312 83.24564 304.60065" marker-end="url(#FilledArrow_Marker)" marker-start="url(#FilledArrow_Marker_2)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_29">
+        <clipPath id="clip_path">
+          <rect x="0" y="0" width="120" height="16"/>
+        </clipPath>
+        <text clip-path="url(#clip_path)" transform="translate(-24 273.85497)" fill="black">
+          <tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="black" x="7.565" y="10">circe </tspan>
+          <tspan font-family="Helvetica Neue" font-size="10" font-style="italic" font-weight="300" fill="black" y="10">Encoder</tspan>
+          <tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="black" y="10"> / </tspan>
+          <tspan font-family="Helvetica Neue" font-size="10" font-style="italic" font-weight="300" fill="black" y="10">Decoder</tspan>
+        </text>
+      </g>
+      <g id="Line_27">
+        <path d="M 123.02133 304.2876 C 146.3698 279.61608 183.3647 283.17653 206.21675 311.88125" marker-end="url(#FilledArrow_Marker)" marker-start="url(#FilledArrow_Marker_2)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_39">
+        <clipPath id="clip_path_2">
+          <rect x="0" y="0" width="120" height="28"/>
+        </clipPath>
+        <text clip-path="url(#clip_path_2)" transform="translate(112 261.70993)" fill="black">
+          <tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="black" x="18.59" y="10">borer-compat-circe</tspan>
+          <tspan font-family="Helvetica Neue" font-size="10" font-style="italic" font-weight="300" fill="black" x="19.15" y="22.29007">Encoder</tspan>
+          <tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="black" y="22.29007"> / </tspan>
+          <tspan font-family="Helvetica Neue" font-size="10" font-style="italic" font-weight="300" fill="black" y="22.29007">Decoder</tspan>
+        </text>
+      </g>
+    </g>
+  </g>
+</svg>

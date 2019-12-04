@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xl="http://www.w3.org/1999/xlink" viewBox="-64.5 47.5 337 161" width="337" height="161">
+  <defs>
+    <font-face font-family="Helvetica Neue" font-size="10" panose-1="2 0 5 3 0 0 0 2 0 4" units-per-em="1000" underline-position="-100" underline-thickness="50" slope="0" x-height="517" cap-height="714" ascent="951.9958" descent="-212.99744" font-weight="400">
+      <font-face-src>
+        <font-face-name name="HelveticaNeue"/>
+      </font-face-src>
+    </font-face>
+    <font-face font-family="Helvetica Neue" font-size="10" panose-1="2 0 4 3 0 0 0 2 0 4" units-per-em="1000" underline-position="-100" underline-thickness="50" slope="0" x-height="523" cap-height="721" ascent="966.9952" descent="-212.99744" font-weight="300">
+      <font-face-src>
+        <font-face-name name="HelveticaNeue-Light"/>
+      </font-face-src>
+    </font-face>
+    <marker orient="auto" overflow="visible" markerUnits="strokeWidth" id="FilledArrow_Marker" stroke-linejoin="miter" stroke-miterlimit="10" viewBox="-1 -4 10 8" markerWidth="10" markerHeight="8" color="black">
+      <g>
+        <path d="M 8 0 L 0 -3 L 0 3 Z" fill="currentColor" stroke="currentColor" stroke-width="1"/>
+      </g>
+    </marker>
+    <marker orient="auto" overflow="visible" markerUnits="strokeWidth" id="FilledArrow_Marker_2" stroke-linejoin="miter" stroke-miterlimit="10" viewBox="-9 -4 10 8" markerWidth="10" markerHeight="8" color="black">
+      <g>
+        <path d="M -8 0 L 0 3 L 0 -3 Z" fill="currentColor" stroke="currentColor" stroke-width="1"/>
+      </g>
+    </marker>
+    <font-face font-family="Helvetica Neue" font-size="10" panose-1="2 0 4 3 0 0 0 9 0 4" units-per-em="1000" underline-position="-100" underline-thickness="50" slope="-1200" x-height="523" cap-height="721" ascent="951.004" descent="-212.99744" font-style="italic" font-weight="300">
+      <font-face-src>
+        <font-face-name name="HelveticaNeue-LightItalic"/>
+      </font-face-src>
+    </font-face>
+  </defs>
+  <metadata> Produced by OmniGraffle 7.12.1 
+    <dc:date>2019-12-04 11:26:03 +0000</dc:date>
+  </metadata>
+  <g id="Canvas_1" stroke-opacity="1" fill-opacity="1" fill="none" stroke="none" stroke-dasharray="none">
+    <title>Canvas 1</title>
+    <g id="Canvas_1: Layer 1">
+      <title>Layer 1</title>
+      <g id="Graphic_26">
+        <path d="M 105 48 L 263 48 C 267.97056 48 272 52.02944 272 57 L 272 199 C 272 203.97056 267.97056 208 263 208 L 105 208 C 100.02944 208 96 203.97056 96 199 L 96 57 C 96 52.02944 100.02944 48 105 48 Z" stroke="silver" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4.0,4.0" stroke-width="1"/>
+        <text transform="translate(101 53)" fill="#929292">
+          <tspan font-family="Helvetica Neue" font-size="10" font-weight="400" fill="#929292" x="0" y="10">borer</tspan>
+        </text>
+      </g>
+      <g id="Graphic_19">
+        <path d="M -47 121 L -1 121 C 3.9705627 121 8 125.02944 8 130 L 8 176 C 8 180.97056 3.9705627 185 -1 185 L -47 185 C -51.97056 185 -56 180.97056 -56 176 L -56 130 C -56 125.02944 -51.97056 121 -47 121 Z" fill="white"/>
+        <path d="M -47 121 L -1 121 C 3.9705627 121 8 125.02944 8 130 L 8 176 C 8 180.97056 3.9705627 185 -1 185 L -47 185 C -51.97056 185 -56 180.97056 -56 176 L -56 130 C -56 125.02944 -51.97056 121 -47 121 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_20">
+        <path d="M -51 125 L -5 125 C -.02943725 125 4 129.02944 4 134 L 4 180 C 4 184.97056 -.02943725 189 -5 189 L -51 189 C -55.97056 189 -60 184.97056 -60 180 L -60 134 C -60 129.02944 -55.97056 125 -51 125 Z" fill="white"/>
+        <path d="M -51 125 L -5 125 C -.02943725 125 4 129.02944 4 134 L 4 180 C 4 184.97056 -.02943725 189 -5 189 L -51 189 C -55.97056 189 -60 184.97056 -60 180 L -60 134 C -60 129.02944 -55.97056 125 -51 125 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_21">
+        <path d="M -55 129 L -9 129 C -4.0294373 129 0 133.02944 0 138 L 0 184 C 0 188.97056 -4.0294373 193 -9 193 L -55 193 C -59.97056 193 -64 188.97056 -64 184 L -64 138 C -64 133.02944 -59.97056 129 -55 129 Z" fill="white"/>
+        <path d="M -55 129 L -9 129 C -4.0294373 129 0 133.02944 0 138 L 0 184 C 0 188.97056 -4.0294373 193 -9 193 L -55 193 C -59.97056 193 -64 188.97056 -64 184 L -64 138 C -64 133.02944 -59.97056 129 -55 129 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <text transform="translate(-59 142.5649)" fill="black">
+          <tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="black" x="10.425" y="10">Domain </tspan>
+          <tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="black" x="13.725" y="22.29007">Model </tspan>
+          <tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="black" x="10.15" y="34.58014">Classes</tspan>
+        </text>
+      </g>
+      <g id="Graphic_23">
+        <path d="M 201 128 L 247 128 C 251.97056 128 256 132.02944 256 137 L 256 183 C 256 187.97056 251.97056 192 247 192 L 201 192 C 196.02944 192 192 187.97056 192 183 L 192 137 C 192 132.02944 196.02944 128 201 128 Z" fill="white"/>
+        <path d="M 201 128 L 247 128 C 251.97056 128 256 132.02944 256 137 L 256 183 C 256 187.97056 251.97056 192 247 192 L 201 192 C 196.02944 192 192 187.97056 192 183 L 192 137 C 192 132.02944 196.02944 128 201 128 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <text transform="translate(197 141.5649)" fill="black">
+          <tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="black" x="7.36" y="10">CBOR or </tspan>
+          <tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="black" x="14.125" y="22.29007">JSON</tspan>
+          <tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="black" x="4.59" y="34.58014">Document</tspan>
+        </text>
+      </g>
+      <g id="Line_24">
+        <path d="M 15.023748 119.98382 C 66.72047 91.27159 139.68947 91.8787 188.31744 123.54047" marker-end="url(#FilledArrow_Marker)" marker-start="url(#FilledArrow_Marker_2)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_25">
+        <clipPath id="clip_path">
+          <rect x="0" y="0" width="120" height="16"/>
+        </clipPath>
+        <text clip-path="url(#clip_path)" transform="translate(40 81.85497)" fill="black">
+          <tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="black" x="6.455" y="10">borer </tspan>
+          <tspan font-family="Helvetica Neue" font-size="10" font-style="italic" font-weight="300" fill="black" y="10">Encoder</tspan>
+          <tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="black" y="10"> / </tspan>
+          <tspan font-family="Helvetica Neue" font-size="10" font-style="italic" font-weight="300" fill="black" y="10">Decoder</tspan>
+        </text>
+      </g>
+    </g>
+  </g>
+</svg>

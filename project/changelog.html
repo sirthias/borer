@@ -164,6 +164,7 @@ sirthias/borer/
     <li><a href="../borer-derivation/semi-vs-full-automatic.html" class="page">Semi- vs. Fully-automatic Derivation</a></li>
   </ul></li>
   <li><a href="../borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
+  <li><a href="../borer-compat-circe.html" class="page"><code>borer-compat-circe</code></a></li>
   <li><a href="../borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
   <li><a href="../project/index.html" class="page">Project Info</a>
   <ul>
@@ -180,7 +181,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.1.0
+<i class="md-icon" title="Version">label_outline</i> 1.2.0
 </label>
 </li>
 </ul>
@@ -193,7 +194,16 @@ sirthias/borer/
 <h1><a href="#changelog" name="changelog" class="anchor"><span class="anchor-link"></span></a>Changelog</h1>
 <p>This is the current <em>borer</em> <a href="https://github.com/sirthias/borer/tree/master/CHANGELOG">CHANGELOG</a>:</p>
 <br>
-<pre><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/CHANGELOG" target="_blank" title="Go to snippet source"></a><code>Version 1.1.0 (2019-10-17)
+<pre><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/CHANGELOG" target="_blank" title="Go to snippet source"></a><code>Version 1.2.0 (2019-12-04)
+--------------------------
+
+- added `borer-compat-circe` module (#113)
+- renamed `Decoder.forBigInteger` to `Decoder.forBigInt` for consistency
+- optimized JSON number parsing (#114, thanks to @plokhotnyuk)
+- fixed missing type bound on `Reader` type alias
+
+
+Version 1.1.0 (2019-10-17)
 --------------------------
 
 - added `ByteStringArrayCodecs` for compact encoding of primitive arrays
@@ -335,7 +345,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.1.0
+1.2.0
 </span>
 </div>
 </article>

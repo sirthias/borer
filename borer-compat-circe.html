@@ -20,7 +20,7 @@
 
 <meta name="description" content="CBOR and JSON (de)serialization in Scala">
 <link rel="shortcut icon" href="assets/images/favicon.ico">
-<title>borer-compat-akka · borer</title>
+<title>borer-compat-circe · borer</title>
 <link rel="stylesheet" href="assets/stylesheets/application.451f80e5.css">
 <link rel="stylesheet" href="assets/stylesheets/application-palette.22915126.css">
 <meta name="theme-color" content="#3f51b5" />
@@ -61,7 +61,7 @@ data-md-color-accent="orange"
 borer
 </span>
 <span class="md-header-nav__topic">
-borer-compat-akka
+borer-compat-circe
 </span>
 </div>
 </div>
@@ -163,8 +163,8 @@ sirthias/borer/
     <li><a href="borer-derivation/type-ids.html" class="page">Type IDs</a></li>
     <li><a href="borer-derivation/semi-vs-full-automatic.html" class="page">Semi- vs. Fully-automatic Derivation</a></li>
   </ul></li>
-  <li><a href="borer-compat-akka.html" class="active page"><code>borer-compat-akka</code></a></li>
-  <li><a href="borer-compat-circe.html" class="page"><code>borer-compat-circe</code></a></li>
+  <li><a href="borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
+  <li><a href="borer-compat-circe.html" class="active page"><code>borer-compat-circe</code></a></li>
   <li><a href="borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
   <li><a href="project/index.html" class="page">Project Info</a>
   <ul>
@@ -177,10 +177,11 @@ sirthias/borer/
 <nav class="md-nav md-nav--secondary">
 <label class="md-nav__title" for="__toc">Table of contents</label>
 <ul>
-  <li><a href="borer-compat-akka.html#borer-compat-akka" class="header"><code>borer-compat-akka</code></a>
+  <li><a href="borer-compat-circe.html#borer-compat-circe" class="header"><code>borer-compat-circe</code></a>
   <ul>
-    <li><a href="borer-compat-akka.html#bytestring-support" class="header"><code>ByteString</code> support</a></li>
-    <li><a href="borer-compat-akka.html#akka-http-un-marshalling" class="header">Akka Http (Un)Marshalling</a></li>
+    <li><a href="borer-compat-circe.html#background" class="header">Background</a></li>
+    <li><a href="borer-compat-circe.html#usage" class="header">Usage</a></li>
+    <li><a href="borer-compat-circe.html#limitations" class="header">Limitations</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -202,10 +203,11 @@ sirthias/borer/
 <nav class="md-nav md-nav--secondary">
 <label class="md-nav__title" for="__toc">Table of contents</label>
 <ul>
-  <li><a href="borer-compat-akka.html#borer-compat-akka" class="header"><code>borer-compat-akka</code></a>
+  <li><a href="borer-compat-circe.html#borer-compat-circe" class="header"><code>borer-compat-circe</code></a>
   <ul>
-    <li><a href="borer-compat-akka.html#bytestring-support" class="header"><code>ByteString</code> support</a></li>
-    <li><a href="borer-compat-akka.html#akka-http-un-marshalling" class="header">Akka Http (Un)Marshalling</a></li>
+    <li><a href="borer-compat-circe.html#background" class="header">Background</a></li>
+    <li><a href="borer-compat-circe.html#usage" class="header">Usage</a></li>
+    <li><a href="borer-compat-circe.html#limitations" class="header">Limitations</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -216,51 +218,69 @@ sirthias/borer/
 <div class="md-content">
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
-<h1><a href="#borer-compat-akka" name="borer-compat-akka" class="anchor"><span class="anchor-link"></span></a><code>borer-compat-akka</code></h1>
-<h2><a href="#bytestring-support" name="bytestring-support" class="anchor"><span class="anchor-link"></span></a><code>ByteString</code> support</h2>
-<p>The <a href="borer-core/index.html"><code>borer-core</code></a> module by itself only knows how to encode to and decode from plain byte arrays (<code>Array[Byte]</code>) and a few other types (like <code>java.nio.ByteBuffer</code>, see the chapter on <a href="borer-core/supporting-typeclasses.html">Input, Output, ByteAccess</a> for full details).</p>
-<p>When you include the <code>borer-compat-akka</code> module as a dependency (see the <a href="getting-started.html">Getting Started</a> chapter for details) and</p>
-<pre class="prettyprint"><code class="language-scala">import io.bullet.borer.compat.akka._
-</code></pre>
-<p>you also get full &ldquo;zero-copy&rdquo; support for encoding to and decoding from <code>akka.util.ByteString</code> as well as an implicit <code>Encoder[ByteString]</code> and <code>Decoder[ByteString]</code>.</p>
-<h2><a href="#akka-http-un-marshalling" name="akka-http-un-marshalling" class="anchor"><span class="anchor-link"></span></a>Akka Http (Un)Marshalling</h2>
-<p>In addition to <code>ByteString</code> support the <code>borer-compat-akka</code> also provides convenient marshallers and unmarshallers for HTTP entities.</p>
-<p>When you include the <code>borer-compat-akka</code> module as a dependency (see the <a href="getting-started.html">Getting Started</a> chapter for details) and</p>
-<pre class="prettyprint"><code class="language-scala">import io.bullet.borer.compat.akkaHttp._
-</code></pre>
-<p><code>akka-http</code> will transparently marshal to and from your custom domain model types:</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/AkkaHttpSupportSpec.scala#L12-L38" target="_blank" title="Go to snippet source"></a><code class="language-scala">import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.Directives._
+<h1><a href="#borer-compat-circe" name="borer-compat-circe" class="anchor"><span class="anchor-link"></span></a><code>borer-compat-circe</code></h1>
+<p>The <code>borer-compat-circe</code> module allows existing serialization code written against <a href="https://circe.github.io/circe/">circe</a> to be re-used for <a href="http://cbor.io/">CBOR</a> (de)serialization with minimal effort. </p>
+<h2><a href="#background" name="background" class="anchor"><span class="anchor-link"></span></a>Background</h2>
+<p><a href="https://circe.github.io/circe/">circe</a> is a mature <a href="http://json.org/">JSON</a> library that&rsquo;s quite popular throughout the Scala ecosystem.<br> Contrary to <em>borer</em> <a href="https://circe.github.io/circe/">circe</a> (de)serializes <a href="http://json.org/">JSON</a> not directly to/from the application-level model classes but models <a href="http://json.org/">JSON</a> documents with an intermediate-level AST (Abstract Syntax Tree) or DOM (Document Object Model).<br> As shown in Figure 1 the <code>Encoder</code> / <code>Decoder</code> logic you write (or that <a href="https://circe.github.io/circe/">circe</a> derives for you) merely translates between your own types and this JSON AST/DOM.</p>
+<figure>
+  <img src="assets/images/schema-circe.svg" alt="circe schematic">
+  <figcaption>Figure 1. <i>circe</i> schematic</figcaption>
+</figure>
 
-// custom model for request and response content
-final case class MyRequest(foo: String)
-final case class MyResponse(importantValue: Int)
+<p><em>borer</em> on the other hand translates directly between your application-level model classes and the <a href="http://json.org/">JSON</a> document, without going through an intermediate AST/DOM representation (Figure 2).</p>
 
-// borer encoders/decoders for the custom model above
-import io.bullet.borer.derivation.MapBasedCodecs._
+<figure>
+  <img src="assets/images/schema-borer.svg" alt="borer schematic">
+  <figcaption>Figure 2. <i>borer</i> schematic</figcaption>
+</figure>
 
-implicit val myRequestDecoder  = deriveCodec[MyRequest]
-implicit val myResponseEncoder = deriveCodec[MyResponse]
+<p>The <code>borer-compat-circe</code> module provides you with <em>borer</em> <code>Encoder</code> and <code>Decoder</code> type classes for <a href="https://circe.github.io/circe/">circe</a>&rsquo;s AST node types, which allows you to combine both libraries as shown in Figure 3. </p>
 
-// bring automatic (un) marshaller construction in scope
-import io.bullet.borer.compat.akkaHttp._
+<figure>
+  <img src="assets/images/schema-circe-compat.svg" alt="borer-circe-compat schematic">
+  <figcaption>Figure 3. <i>borer-circe-compat</i> schematic</figcaption>
+</figure>
 
-// route that unmarshalls to `MyRequest` and marshals to `MyResponse`
-val route: Route =
-  pathSingleSlash {
-    post {
-      entity(as[MyRequest]) { myRequest =&gt;
-        complete {
-          MyResponse(myRequest.foo.length)
-        }
-      }
-    }
-  }</code></pre>
-<p>By default the <code>Unmarshaller</code> constructed by <code>borer-compat-akka</code> understand both <a href="http://cbor.io/">CBOR</a> and <a href="http://json.org/">JSON</a> with Content-Type <code>application/cbor</code> and <code>application/json</code>, respectively.<br> The <code>Marshaller</code> also supports both formats and lets the client determine via HTTP content negotiation (i.e. the <code>Accept</code> header) , which one it prefers. If the client has no preference <a href="http://cbor.io/">CBOR</a> is chosen.</p>
-<p>Also, (Un)marshaller construction can be customized in various ways, e.g. with custom media types, and is also available for streams, i.e. to and from <code>akka.stream.scaladsl.Source[T, _]</code> rather than simply <code>T</code>.<br> Check out the <a href="https://github.com/sirthias/borer/tree/master/akka/src/main/scala/io/bullet/borer/compat/akkaHttp.scala">sources</a> for full details.</p>
+<p>The benefit of this construct is that existing encoding/decoding logic that so far has been only targeting <a href="http://json.org/">JSON</a> via <a href="https://circe.github.io/circe/">circe</a> can now also be used to target <a href="http://cbor.io/">CBOR</a> through <em>borer</em>.<br> (Theoretically you could also use <em>borer</em> to target <a href="http://json.org/">JSON</a> with this construct but there wouldn&rsquo;t be much point in doing so as <a href="https://circe.github.io/circe/">circe</a> can of course read and write its own AST nodes to and from <a href="http://json.org/">JSON</a> without <em>borer</em>&rsquo;s help. Also, due to optimal integration between the layers, <a href="https://circe.github.io/circe/">circe</a> can likely do the job more efficiently that any external library ever could.)</p>
+
+<h2><a href="#usage" name="usage" class="anchor"><span class="anchor-link"></span></a>Usage</h2>
+
+<p>When you include the <code>borer-compat-circe</code> module as a dependency (see the <a href="getting-started.html">Getting Started</a> chapter for details) you can write code such as this:</p>
+
+<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/CirceCompatSpec.scala#L12-L29" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.circe.{Decoder, Encoder} // NOTE: circe (!) Encoders / Decoders
+import io.bullet.borer.Cbor
+import io.bullet.borer.compat.circe._ // the borer codec for the circe AST
+
+// serializes a value to CBOR given that a circe `Encoder` is available
+def serializeToCbor[T: Encoder](value: T): Array[Byte] =
+  Cbor.encode(value).toByteArray
+
+// serializes a value from CBOR given that a circe `Decoder` is available
+def deserializeFromCbor[T: Decoder](bytes: Array[Byte]): T =
+  Cbor.decode(bytes).to[T].value
+
+val value = List(&quot;foo&quot;, &quot;bar&quot;, &quot;baz&quot;) // example value
+
+val bytes = serializeToCbor(value)
+bytes ==&gt; hex&quot;8363666f6f636261726362617a&quot;
+
+deserializeFromCbor[List[String]](bytes) ==&gt; value</code></pre>
+<h2><a href="#limitations" name="limitations" class="anchor"><span class="anchor-link"></span></a>Limitations</h2>
+<p>Since <a href="http://json.org/">JSON</a> is merely a subset of <a href="http://cbor.io/">CBOR</a> and, as such, there are constructs in <a href="http://cbor.io/">CBOR</a> that do not directly map onto <a href="http://json.org/">JSON</a> not all <a href="http://cbor.io/">CBOR</a> documents can be easily decoded via a <a href="http://json.org/">JSON</a> deserialization layer such as the one provided by <a href="https://circe.github.io/circe/">circe</a>. </p>
+<p>Most importantly the following <a href="http://cbor.io/">CBOR</a> constructs do not readily and easily map onto <a href="http://json.org/">JSON</a>:</p>
+<dl>
+  <dt><code>undefined</code></dt>
+  <dd>By default <code>undefined</code> values are decoded as <code>null</code> values.</dd>
+  <dt>Raw Byte Strings</dt>
+  <dd>By default raw byte strings are <a href="https://tools.ietf.org/html/rfc4648#section-4">base64</a>-encoded and passed to <a href="https://circe.github.io/circe/">circe</a> as <a href="http://json.org/">JSON</a> strings.</dd>
+  <dt>Custom Simple Values</dt>
+  <dd>By default an exception is thrown upon reading a custom <a href="http://cbor.io/">CBOR</a> &ldquo;simple value&rdquo;.</dd>
+</dl>
+<p>The behavior of the <code>borer-circe-compat</code> decoding logic can be customized, if necessary, by constructing the <em>borer</em> <code>Decoder[io.circe.Json]</code> with a custom call to <code>io.bullet.borer.compat.circe.circeJsonAstDecoder(...)</code>.</p>
+<p>See the <a href="https://github.com/sirthias/borer/tree/master/circe/src/main/scala/io/bullet/borer/compat/circe.scala#L90">module sources</a> for full details.</p>
 </div>
 <div>
-<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-compat-akka.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-compat-circe.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
@@ -276,7 +296,7 @@ Edit this page
 <footer class="md-footer">
 <div class="md-footer-nav">
 <nav class="md-footer-nav__inner md-grid">
-<a href="borer-derivation/semi-vs-full-automatic.html" title="Semi- vs. Fully-automatic Derivation" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<a href="borer-compat-akka.html" title="borer-compat-akka" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
 <div class="md-flex__cell md-flex__cell--shrink">
 <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
 </div>
@@ -285,17 +305,17 @@ Edit this page
 <span class="md-footer-nav__direction">
 Previous
 </span>
-Semi- vs. Fully-automatic Derivation
+borer-compat-akka
 </span>
 </div>
 </a>
-<a href="borer-compat-circe.html" title="borer-compat-circe" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<a href="borer-compat-scodec.html" title="borer-compat-scodec" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
 <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
 <span class="md-flex__ellipsis">
 <span class="md-footer-nav__direction">
 Next
 </span>
-borer-compat-circe
+borer-compat-scodec
 </span>
 </div>
 <div class="md-flex__cell md-flex__cell--shrink">
