@@ -18,3 +18,7 @@ div.cons::before { content: "CONs" }
 div.cons { float: right; width: 45% }
 
 hr { clear: both }
+
+figure { margin: 2em 0 }
+figure img { width: 100%; margin-bottom: 1em }
+figcaption { text-align: center; font-weight: bold }

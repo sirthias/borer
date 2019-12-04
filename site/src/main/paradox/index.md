@@ -57,6 +57,7 @@ Scala JS
 * [-](borer-core/index.md)
 * [-](borer-derivation/index.md)
 * [-](borer-compat-akka.md)
+* [-](borer-compat-circe.md)
 * [-](borer-compat-scodec.md)
 * [-](project/index.md)
 

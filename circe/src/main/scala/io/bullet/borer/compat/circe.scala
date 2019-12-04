@@ -90,7 +90,7 @@ object circe {
   def circeJsonAstDecoder(
       bigIntDecoder: Decoder[BigInt] = Decoder.forBigInt,
       bigDecimalDecoder: Decoder[BigDecimal] = Decoder.forBigDecimal,
-      decodeUndefined: Option[() => Json] = None,
+      decodeUndefined: Option[() => Json] = Some(() => Json.Null),
       decodeByteArray: Option[Array[Byte] => Json] = Some(defaultDecodeByteArray),
       decodeSimpleValue: Option[SimpleValue => Json] = None): Decoder[Json] = {
 

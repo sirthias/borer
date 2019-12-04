@@ -359,7 +359,7 @@ lazy val benchmarks = project
 
 lazy val site = project
   .in(file("site"))
-  .dependsOn(coreJVM % "compile->compile;test->test", derivationJVM, akka, scodecJVM)
+  .dependsOn(coreJVM, derivationJVM, akka, circeJVM, scodecJVM)
   .enablePlugins(
     ParadoxPlugin,
     ParadoxMaterialThemePlugin,
