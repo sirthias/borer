@@ -143,14 +143,10 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       val nlz        = JLong.numberOfLeadingZeros(mask)
       val digitCount = nlz >> 3
 
-      @inline def d0 = vMask >>> 56
-      @inline def d1 = vMask << 8 >>> 56
-      @inline def d2 = vMask << 16 >>> 56
-
-      // SWAR (SIMD within a register) technique for fast parsing of 8 character digits into a Long.
-      // Source: https://johnnylee-sde.github.io/Fast-numeric-string-to-int/
-      // Adapted to big endian (because we already have the `octa` in big endian byte order)
-      def fromBigEndianCharacterOcta(oct: Long) = {
+      // SWAR (SIMD within a register) technique for fast parsing of 8 character digits into a Long,
+      // basic logic (for little-endian byte order): https://johnnylee-sde.github.io/Fast-numeric-string-to-int/
+      // input is 0x0a0b0c0d0e0f0g0h where `abcdefgh` are the digits to be converted into a Long value
+      def longFrom8Digits(oct: Long) = {
         var x = oct * 266 // (x * 10) + (x << 8)
         x = (x >> 8) & 0x00FF00FF00FF00FFL
         x = x * 65636 // (x * 100) + (x << 16)
@@ -159,22 +155,36 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
         x >> 32
       }
 
+      // same as above but for 4 digits 0x000a000b000c000d where `abcd` are the digits to be converted into a Long value
+      @inline def longFrom4Digits(x: Long) =
+        ((x * 281517932938216L) // (x * 1000) + ((x * 100) << 16) + ((x * 10) << 32) + (x << 48)
+          >> 48)
+
       @inline def v1 =
-        value * 10 - d0
+        value * 10 - (vMask >>> 56)
       @inline def v2 =
-        value * 100 - d0 * 10 - d1
+        value * 100 - (vMask >>> 56) * 10 - (vMask << 8 >>> 56)
+
       @inline def v3 =
-        value * 1000 - d0 * 100 - d1 * 10 - d2
+        value * 1000 - longFrom4Digits {
+          (vMask >>> 56 << 32) | ((vMask & 0x00FF000000000000L) >>> 32) | (vMask << 16 >>> 56)
+        }
+
       @inline def v4 =
-        value * 10000 - fromBigEndianCharacterOcta(vMask >> 32)
+        value * 10000 - longFrom4Digits {
+          val a = (vMask >>> 48 << 32) | (vMask << 16 >>> 48) // 0x00000a0b00000c0d
+          val b = a & 0x0000FF000000FF00L                     // 0x00000a0000000c00
+          val x = (a ^ b) | (b << 8)                          // 0x000a000b000c000d
+          x
+        }
       @inline def v5 =
-        value * 100000 - fromBigEndianCharacterOcta(vMask >> 24)
+        value * 100000 - longFrom8Digits(vMask >>> 24)
       @inline def v6 =
-        value * 1000000 - fromBigEndianCharacterOcta(vMask >> 16)
+        value * 1000000 - longFrom8Digits(vMask >>> 16)
       @inline def v7 =
-        value * 10000000 - fromBigEndianCharacterOcta(vMask >> 8)
+        value * 10000000 - longFrom8Digits(vMask >>> 8)
       @inline def v8 =
-        value * 100000000 - fromBigEndianCharacterOcta(vMask)
+        value * 100000000 - longFrom8Digits(vMask)
 
       @inline def returnWithV(value: Long, stopChar: Long): Int = {
         unread(7 - digitCount)
