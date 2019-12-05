@@ -80,14 +80,14 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
     */
   def pull(receiver: Receiver): Int = {
 
-    @inline def appendChar(charCursor: Int, c: Char): Int = {
+    def appendChar(charCursor: Int, c: Char): Int = {
       val newCursor = charCursor + 1
       ensureCharsLen(newCursor)
       chars(charCursor) = c
       newCursor
     }
 
-    @inline def parseNull(): Int = {
+    def parseNull(): Int = {
       val quad = input.readQuadByteBigEndianPadded(this)
       if ((quad >>> 8) == 0x00756c6c) { // "ull"
         nextChar = nextCharAfterWhitespace(quad & 0xFF)
@@ -96,14 +96,14 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       } else failSyntaxError(-5, "`null`")
     }
 
-    @inline def parseFalse(): Int =
+    def parseFalse(): Int =
       if (input.readQuadByteBigEndianPadded(this) == 0x616c7365) { // "alse"
         fetchNextChar()
         receiver.onBoolean(value = false)
         DataItem.Boolean
       } else failSyntaxError(-6, "`false`")
 
-    @inline def parseTrue(): Int = {
+    def parseTrue(): Int = {
       val quad = input.readQuadByteBigEndianPadded(this)
       if ((quad >>> 8) == 0x00727565) { // "rue"
         nextChar = nextCharAfterWhitespace(quad & 0xFF)
@@ -144,7 +144,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       val nlz        = JLong.numberOfLeadingZeros(mask)
       val digitCount = nlz >> 3 // the number of actual digit chars before a non-digit character (stopchar) [0..8]
 
-      // use the idling ALUs to compute this value, which we are likely to need anyway
+      // use the idling ALUs to pre-compute these values, which we are likely to need anyway
       val stopChar    = (octa << nlz >>> 56).toInt
       val newLen      = len + digitCount
       val unreadCount = 7 - digitCount
@@ -210,7 +210,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       @inline def v7 = value * 10000000 - longFrom8Digits(digs >>> 8)
       @inline def v8 = value * 100000000 - longFrom8Digits(digs)
 
-      // use the idling ALUs to compute this value, which we are likely to need anyway
+      // use the idling ALUs to pre-compute these values, which we are likely to need anyway
       val stopChar    = (octa << nlz >>> 56).toInt
       val newLen      = len + digitCount
       val unreadCount = 7 - digitCount
