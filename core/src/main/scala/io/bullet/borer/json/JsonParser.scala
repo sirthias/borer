@@ -116,7 +116,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       val c      = input.readBytePadded(this).toInt
       var newLen = len
       if (c != '-' && c != '+') unread(1) else newLen += 1
-      newLen = parseDigits(0L, newLen)
+      newLen = parseInitialDigits(0L, newLen)
       if (newLen == len) failSyntaxError("DIGIT")
       val exp = -auxLong.toInt
       if (exp < 0 || config.maxNumberAbsExponent < exp) failNumberExponentTooLarge(newLen)
@@ -128,81 +128,100 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
 
     // produces the new number string length as a return value, in `nextChar` the first non-digit character (stopchar)
     // and in `auxLong` the negative (!) parsed value or > 0 if the parsed value cannot be represented in a Long.
-    @tailrec def parseDigits(value: Long, len: Int): Int = {
+    def parseInitialDigits(firstDigit: Long, len: Int): Int = {
       // fetch 8 bytes (chars) at the same time with the first becoming the (left-most) MSB of the `octa` long
       val octa = input.readOctaByteBigEndianPadded(this)
+
       // bytes containing ['0'..'9'] become 0..9, all others become >= 10
-      val vMask = octa ^ 0X3030303030303030L
+      val digs = octa ^ 0X3030303030303030L
 
       // bytes containing ['0'..'9'] or [0xB0-0xB9] get their MSBit unset (< 0x80), all others have it set (>= 0x80)
-      var mask = (vMask & 0X7F7F7F7F7F7F7F7FL) + 0X7676767676767676L
+      var mask = (digs & 0X7F7F7F7F7F7F7F7FL) + 0X7676767676767676L
 
       // bytes containing ['0'..'9'] become zero, all others 0x80
       mask = (octa | mask) & 0X8080808080808080L
 
       val nlz        = JLong.numberOfLeadingZeros(mask)
-      val digitCount = nlz >> 3
+      val digitCount = nlz >> 3 // the number of actual digit chars before a non-digit character (stopchar) [0..8]
 
-      // SWAR (SIMD within a register) technique for fast parsing of 8 character digits into a Long,
-      // basic logic (for little-endian byte order): https://johnnylee-sde.github.io/Fast-numeric-string-to-int/
-      // input is 0x0a0b0c0d0e0f0g0h where `abcdefgh` are the digits to be converted into a Long value
-      def longFrom8Digits(oct: Long) = {
-        var x = oct * 266 // (x * 10) + (x << 8)
-        x = (x >> 8) & 0x00FF00FF00FF00FFL
-        x = x * 65636 // (x * 100) + (x << 16)
-        x = (x >> 16) & 0x0000FFFF0000FFFFL
-        x = x * 4294977296L // (x * 10000) + (x << 32)
-        x >> 32
+      @inline def returnWithV(value: Long): Int = {
+        unread(7 - digitCount)
+        nextChar = (octa << nlz >>> 56).toInt
+        auxLong = -value
+        len + digitCount
       }
 
-      // same as above but for 4 digits 0x000a000b000c000d where `abcd` are the digits to be converted into a Long value
-      @inline def longFrom4Digits(x: Long) =
-        ((x * 281517932938216L) // (x * 1000) + ((x * 100) << 16) + ((x * 10) << 32) + (x << 48)
-          >> 48)
+      digitCount match {
+        case 0 => returnWithV(firstDigit)
+        case 1 => returnWithV(firstDigit * 10 + (digs >>> 56))
+        case 2 => returnWithV(longFrom4Digits((firstDigit << 32) | (digs >>> 56 << 16) | (digs << 8 >>> 56)))
+        case 3 =>
+          val m = (firstDigit << 48) | (digs >>> 56 << 32) | ((digs & 0x00FF000000000000L) >>> 32) | (digs << 16 >>> 56)
+          returnWithV(longFrom4Digits(m))
+        case 4 => returnWithV(longFrom8Digits((firstDigit << 32) | (digs >>> 32)))
+        case 5 => returnWithV(longFrom8Digits((firstDigit << 40) | (digs >>> 24)))
+        case 6 => returnWithV(longFrom8Digits((firstDigit << 48) | (digs >>> 16)))
+        case 7 => returnWithV(longFrom8Digits((firstDigit << 56) | (digs >>> 8)))
+        case 8 =>
+          parseSubsequentDigits(-longFrom8Digits((firstDigit << 56) | (digs >>> 8)) * 10 - (digs & 0xFFL), len + 8)
+      }
+    }
 
-      @inline def v1 =
-        value * 10 - (vMask >>> 56)
-      @inline def v2 =
-        value * 100 - (vMask >>> 56) * 10 - (vMask << 8 >>> 56)
+    // produces the new number string length as a return value, in `nextChar` the first non-digit character (stopchar)
+    // and in `auxLong` the negative (!) parsed value or > 0 if the parsed value cannot be represented in a Long.
+    @tailrec def parseSubsequentDigits(value: Long, len: Int): Int = {
+      // fetch 8 bytes (chars) at the same time with the first becoming the (left-most) MSB of the `octa` long
+      val octa = input.readOctaByteBigEndianPadded(this)
+
+      // bytes containing ['0'..'9'] become 0..9, all others become >= 10
+      val digs = octa ^ 0X3030303030303030L
+
+      // bytes containing ['0'..'9'] or [0xB0-0xB9] get their MSBit unset (< 0x80), all others have it set (>= 0x80)
+      var mask = (digs & 0X7F7F7F7F7F7F7F7FL) + 0X7676767676767676L
+
+      // bytes containing ['0'..'9'] become zero, all others 0x80
+      mask = (octa | mask) & 0X8080808080808080L
+
+      val nlz        = JLong.numberOfLeadingZeros(mask)
+      val digitCount = nlz >> 3 // the number of actual digit chars before a non-digit character (stopchar) [0..8]
+
+      @inline def v1 = value * 10 - (digs >>> 56)
+      @inline def v2 = value * 100 - (digs >>> 56) * 10 - (digs << 8 >>> 56)
 
       @inline def v3 =
         value * 1000 - longFrom4Digits {
-          (vMask >>> 56 << 32) | ((vMask & 0x00FF000000000000L) >>> 32) | (vMask << 16 >>> 56)
+          (digs >>> 56 << 32) | ((digs & 0x00FF000000000000L) >>> 32) | (digs << 16 >>> 56)
         }
 
       @inline def v4 =
         value * 10000 - longFrom4Digits {
-          val a = (vMask >>> 48 << 32) | (vMask << 16 >>> 48) // 0x00000a0b00000c0d
-          val b = a & 0x0000FF000000FF00L                     // 0x00000a0000000c00
-          val x = (a ^ b) | (b << 8)                          // 0x000a000b000c000d
+          val a = (digs >>> 48 << 32) | (digs << 16 >>> 48) // 0x00000a0b00000c0d
+          val b = a & 0x0000FF000000FF00L                   // 0x00000a0000000c00
+          val x = (a ^ b) | (b << 8)                        // 0x000a000b000c000d
           x
         }
-      @inline def v5 =
-        value * 100000 - longFrom8Digits(vMask >>> 24)
-      @inline def v6 =
-        value * 1000000 - longFrom8Digits(vMask >>> 16)
-      @inline def v7 =
-        value * 10000000 - longFrom8Digits(vMask >>> 8)
-      @inline def v8 =
-        value * 100000000 - longFrom8Digits(vMask)
+      @inline def v5 = value * 100000 - longFrom8Digits(digs >>> 24)
+      @inline def v6 = value * 1000000 - longFrom8Digits(digs >>> 16)
+      @inline def v7 = value * 10000000 - longFrom8Digits(digs >>> 8)
+      @inline def v8 = value * 100000000 - longFrom8Digits(digs)
 
-      @inline def returnWithV(value: Long, stopChar: Long): Int = {
+      @inline def returnWithV(value: Long): Int = {
         unread(7 - digitCount)
-        nextChar = (stopChar >>> 56).toInt
+        nextChar = (octa << nlz >>> 56).toInt
         auxLong = value
         len + digitCount
       }
 
       digitCount match {
-        case 0 => returnWithV(value, octa)
-        case 1 => returnWithV(if (0 >= value && value >= Long.MinValue / 10) v1 else 1, octa << 8)
-        case 2 => returnWithV(if (0 >= value && value >= Long.MinValue / 100) v2 else 1, octa << 16)
-        case 3 => returnWithV(if (0 >= value && value >= Long.MinValue / 1000) v3 else 1, octa << 24)
-        case 4 => returnWithV(if (0 >= value && value >= Long.MinValue / 10000) v4 else 1, octa << 32)
-        case 5 => returnWithV(if (0 >= value && value >= Long.MinValue / 100000) v5 else 1, octa << 40)
-        case 6 => returnWithV(if (0 >= value && value >= Long.MinValue / 1000000) v6 else 1, octa << 48)
-        case 7 => returnWithV(if (0 >= value && value >= Long.MinValue / 10000000) v7 else 1, octa << 56)
-        case 8 => parseDigits(if (0 >= value && value >= Long.MinValue / 100000000) v8 else 1, len + 8)
+        case 0 => returnWithV(value)
+        case 1 => returnWithV(if (0 >= value && value >= Long.MinValue / 10) v1 else 1)
+        case 2 => returnWithV(if (0 >= value && value >= Long.MinValue / 100) v2 else 1)
+        case 3 => returnWithV(if (0 >= value && value >= Long.MinValue / 1000) v3 else 1)
+        case 4 => returnWithV(if (0 >= value && value >= Long.MinValue / 10000) v4 else 1)
+        case 5 => returnWithV(if (0 >= value && value >= Long.MinValue / 100000) v5 else 1)
+        case 6 => returnWithV(if (0 >= value && value >= Long.MinValue / 1000000) v6 else 1)
+        case 7 => returnWithV(if (0 >= value && value >= Long.MinValue / 10000000) v7 else 1)
+        case 8 => parseSubsequentDigits(if (0 >= value && value >= Long.MinValue / 100000000) v8 else 1, len + 8)
       }
     }
 
@@ -227,7 +246,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
      * @param negative true if the JSON number is negative
      * @return DataItem code for the value the Receiver received
      */
-    def parseNumber(negValue: Long, strLen: Int, negative: Boolean): Int = {
+    def parseNumber(firstDigit: Long, strLen: Int, negative: Boolean): Int = {
       def dispatchNumberString(len: Int) = {
         receiver.onNumberString(antePrecedingBytesAsAsciiString(len))
         DataItem.NumberString
@@ -259,15 +278,15 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       var stopChar          = 0
       var maxMantissaEndLen = len + config.maxNumberMantissaDigits - 1
       var negMantissa =
-        if (negValue == 0) {
+        if (firstDigit == 0) {
           stopChar = input.readBytePadded(this) & 0xFF
           if ((stopChar ^ 0x30) < 10) {
             nextChar = stopChar
             failSyntaxError("'.', 'e' or 'E'")
           }
-          negValue
+          firstDigit
         } else {
-          len = parseDigits(negValue, len)
+          len = parseInitialDigits(firstDigit, len)
           stopChar = nextChar
           auxLong
         }
@@ -276,7 +295,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
         if (stopChar == '.') {
           val len0 = len + 1
           maxMantissaEndLen += 1
-          len = parseDigits(negMantissa, len0)
+          len = parseSubsequentDigits(negMantissa, len0)
           stopChar = nextChar
           negMantissa = auxLong
           negFractionDigits = len0 - len
@@ -294,7 +313,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
                 unread(1)
                 len + 1
               } else len + 2
-              len = parseDigits(0L, len0)
+              len = parseInitialDigits(0L, len0)
               stopChar = nextChar
               expDigits = len - len0
               if (expDigits == 0) failSyntaxError("DIGIT")
@@ -323,7 +342,9 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
         } else parseNumberStringExponentPartOrDispatchNumberString(len, stopChar)
       } else {
         if (len > maxMantissaEndLen) failNumberMantissaTooLong(-len)
-        if (stopChar == '.' && { len = parseDigits(1L, len + 1); stopChar = nextChar; len > maxMantissaEndLen + 1 }) {
+        if (stopChar == '.' && {
+              len = parseInitialDigits(1L, len + 1); stopChar = nextChar; len > maxMantissaEndLen + 1
+            }) {
           failNumberMantissaTooLong(-len)
         } else parseNumberStringExponentPartOrDispatchNumberString(len, stopChar)
       }
@@ -335,7 +356,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       if (x > 9) {
         nextChar = c
         failSyntaxError("DIGIT")
-      } else parseNumber(-x, strLen = 2, negative = true)
+      } else parseNumber(x, strLen = 2, negative = true)
     }
 
     def parseEscapeSeq(charCursor: Int): Int = {
@@ -522,7 +543,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
         case LOWER_F     => parseFalse()
         case LOWER_T     => parseTrue()
         case MINUS       => parseNegNumber()
-        case DIGIT       => parseNumber(0X30L - nextChar, 1, negative = false)
+        case DIGIT       => parseNumber(nextChar ^ 0X30L, 1, negative = false)
         case _           => failSyntaxError("JSON value")
       }
 
@@ -666,6 +687,23 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
 
     if (cursorExtra > 0) unreadWithExtra() else input.unread(count)
   }
+
+  // SWAR (SIMD within a register) technique for fast parsing of 8 character digits into a Long,
+  // basic logic (for little-endian byte order): https://johnnylee-sde.github.io/Fast-numeric-string-to-int/
+  // input is 0x0a0b0c0d0e0f0g0h where `abcdefgh` are the digits to be converted into a Long value
+  private def longFrom8Digits(oct: Long) = {
+    var x = oct * 266 // (x * 10) + (x << 8)
+    x = (x >> 8) & 0x00FF00FF00FF00FFL
+    x = x * 65636 // (x * 100) + (x << 16)
+    x = (x >> 16) & 0x0000FFFF0000FFFFL
+    x = x * 4294977296L // (x * 10000) + (x << 32)
+    x >> 32
+  }
+
+  // same as above but for 4 digits 0x000a000b000c000d where `abcd` are the digits to be converted into a Long value
+  @inline private def longFrom4Digits(x: Long) =
+    ((x * 281517932938216L) // (x * 1000) + ((x * 100) << 16) + ((x * 10) << 32) + (x << 48)
+      >> 48)
 
   private def antePrecedingBytesAsAsciiString(len: Int): String = {
     unread(len + 1)
