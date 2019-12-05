@@ -144,26 +144,31 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       val nlz        = JLong.numberOfLeadingZeros(mask)
       val digitCount = nlz >> 3 // the number of actual digit chars before a non-digit character (stopchar) [0..8]
 
-      @inline def returnWithV(value: Long): Int = {
-        unread(7 - digitCount)
-        nextChar = (octa << nlz >>> 56).toInt
+      // use the idling ALUs to compute this value, which we are likely to need anyway
+      val stopChar    = (octa << nlz >>> 56).toInt
+      val newLen      = len + digitCount
+      val unreadCount = 7 - digitCount
+
+      @inline def returnWith(value: Long): Int = {
+        unread(unreadCount)
+        nextChar = stopChar
         auxLong = -value
-        len + digitCount
+        newLen
       }
 
       digitCount match {
-        case 0 => returnWithV(firstDigit)
-        case 1 => returnWithV(firstDigit * 10 + (digs >>> 56))
-        case 2 => returnWithV(longFrom4Digits((firstDigit << 32) | (digs >>> 56 << 16) | (digs << 8 >>> 56)))
+        case 0 => returnWith(firstDigit)
+        case 1 => returnWith(firstDigit * 10 + (digs >>> 56))
+        case 2 => returnWith(longFrom4Digits((firstDigit << 32) | (digs >>> 56 << 16) | (digs << 8 >>> 56)))
         case 3 =>
           val m = (firstDigit << 48) | (digs >>> 56 << 32) | ((digs & 0x00FF000000000000L) >>> 32) | (digs << 16 >>> 56)
-          returnWithV(longFrom4Digits(m))
-        case 4 => returnWithV(longFrom8Digits((firstDigit << 32) | (digs >>> 32)))
-        case 5 => returnWithV(longFrom8Digits((firstDigit << 40) | (digs >>> 24)))
-        case 6 => returnWithV(longFrom8Digits((firstDigit << 48) | (digs >>> 16)))
-        case 7 => returnWithV(longFrom8Digits((firstDigit << 56) | (digs >>> 8)))
+          returnWith(longFrom4Digits(m))
+        case 4 => returnWith(longFrom8Digits((firstDigit << 32) | (digs >>> 32)))
+        case 5 => returnWith(longFrom8Digits((firstDigit << 40) | (digs >>> 24)))
+        case 6 => returnWith(longFrom8Digits((firstDigit << 48) | (digs >>> 16)))
+        case 7 => returnWith(longFrom8Digits((firstDigit << 56) | (digs >>> 8)))
         case 8 =>
-          parseSubsequentDigits(-longFrom8Digits((firstDigit << 56) | (digs >>> 8)) * 10 - (digs & 0xFFL), len + 8)
+          parseSubsequentDigits(-longFrom8Digits((firstDigit << 56) | (digs >>> 8)) * 10 - (digs & 0xFFL), newLen)
       }
     }
 
@@ -205,23 +210,28 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       @inline def v7 = value * 10000000 - longFrom8Digits(digs >>> 8)
       @inline def v8 = value * 100000000 - longFrom8Digits(digs)
 
-      @inline def returnWithV(value: Long): Int = {
-        unread(7 - digitCount)
-        nextChar = (octa << nlz >>> 56).toInt
+      // use the idling ALUs to compute this value, which we are likely to need anyway
+      val stopChar    = (octa << nlz >>> 56).toInt
+      val newLen      = len + digitCount
+      val unreadCount = 7 - digitCount
+
+      @inline def returnWith(value: Long): Int = {
+        unread(unreadCount)
+        nextChar = stopChar
         auxLong = value
-        len + digitCount
+        newLen
       }
 
       digitCount match {
-        case 0 => returnWithV(value)
-        case 1 => returnWithV(if (0 >= value && value >= Long.MinValue / 10) v1 else 1)
-        case 2 => returnWithV(if (0 >= value && value >= Long.MinValue / 100) v2 else 1)
-        case 3 => returnWithV(if (0 >= value && value >= Long.MinValue / 1000) v3 else 1)
-        case 4 => returnWithV(if (0 >= value && value >= Long.MinValue / 10000) v4 else 1)
-        case 5 => returnWithV(if (0 >= value && value >= Long.MinValue / 100000) v5 else 1)
-        case 6 => returnWithV(if (0 >= value && value >= Long.MinValue / 1000000) v6 else 1)
-        case 7 => returnWithV(if (0 >= value && value >= Long.MinValue / 10000000) v7 else 1)
-        case 8 => parseSubsequentDigits(if (0 >= value && value >= Long.MinValue / 100000000) v8 else 1, len + 8)
+        case 0 => returnWith(value)
+        case 1 => returnWith(if (0 >= value && value >= Long.MinValue / 10) v1 else 1)
+        case 2 => returnWith(if (0 >= value && value >= Long.MinValue / 100) v2 else 1)
+        case 3 => returnWith(if (0 >= value && value >= Long.MinValue / 1000) v3 else 1)
+        case 4 => returnWith(if (0 >= value && value >= Long.MinValue / 10000) v4 else 1)
+        case 5 => returnWith(if (0 >= value && value >= Long.MinValue / 100000) v5 else 1)
+        case 6 => returnWith(if (0 >= value && value >= Long.MinValue / 1000000) v6 else 1)
+        case 7 => returnWith(if (0 >= value && value >= Long.MinValue / 10000000) v7 else 1)
+        case 8 => parseSubsequentDigits(if (0 >= value && value >= Long.MinValue / 100000000) v8 else 1, newLen)
       }
     }
 
@@ -241,7 +251,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
      * A side-task is to determine whether the number violates the JSON spec and produce the
      * respective error if that should be the case.
      *
-     * @param negValue the initial value to start parsing with (as the negative of the actual number)
+     * @param firstDigit the initial value to start parsing with (as the negative of the actual number)
      * @param strLen the number of already parsed characters belonging to the number string
      * @param negative true if the JSON number is negative
      * @return DataItem code for the value the Receiver received
@@ -459,14 +469,16 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       // in order to decrease instruction dependencies we always speculatively write all 8 chars to the char buffer,
       // independently of how many are actually "good" chars, this keeps CPU pipelines maximally busy
       ensureCharsLen(charCursor + 8)
-      chars(charCursor + 0) = (octa << 0 >>> 56).toChar  // here it would be nice
-      chars(charCursor + 1) = (octa << 8 >>> 56).toChar  // to have access
-      chars(charCursor + 2) = (octa << 16 >>> 56).toChar // to a JVM intrinsic for the
-      chars(charCursor + 3) = (octa << 24 >>> 56).toChar // x86 PDEP instruction
-      chars(charCursor + 4) = (octa << 32 >>> 56).toChar // which could do this "widening"
-      chars(charCursor + 5) = (octa << 40 >>> 56).toChar // of 8 x 8-bit to 16-bit values
-      chars(charCursor + 6) = (octa << 48 >>> 56).toChar // in 2 steps à 4 conversion each in parallel
-      chars(charCursor + 7) = (octa & 0XFFL).toChar      // see: https://www.felixcloutier.com/x86/pdep
+      val x = octa & 0xFF00FF00FF00FF00L
+      val y = octa & 0x00FF00FF00FF00FFL
+      chars(charCursor + 0) = (octa >>> 56).toChar
+      chars(charCursor + 1) = (y >>> 48).toChar
+      chars(charCursor + 2) = (x >>> 40).toChar
+      chars(charCursor + 3) = (y >>> 32).toChar
+      chars(charCursor + 4) = (x >>> 24).toChar
+      chars(charCursor + 5) = (y >>> 16).toChar
+      chars(charCursor + 6) = (x >>> 8).toChar
+      chars(charCursor + 7) = y.toChar
 
       val newCursor = charCursor + charCount
       if (nlz < 64) { // do we have a special char anywhere?
