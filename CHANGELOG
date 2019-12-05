@@ -1,3 +1,9 @@
+Version 1.2.1 (2019-12-05)
+--------------------------
+
+- improved JSON parsing performance (numbers by about 20%)
+
+
 Version 1.2.0 (2019-12-04)
 --------------------------
 
