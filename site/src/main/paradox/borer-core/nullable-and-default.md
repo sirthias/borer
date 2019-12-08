@@ -33,5 +33,18 @@ Here is how `NullOptions` are implemented:
 
 @@snip [-]($core$/NullOptions.scala) { #docs-quote-delimiter }
 
+@@@ note
+
+At first glance it might seem that `NullOptions` could actually be the default way to encode a value of type
+`Option[T]` since `null` appears as the "natural" construct in [JSON] / [CBOR] to represent "no value".<br>
+However, `NullOptions` have a serious drawback which makes them unsuitable as the generally preferred representation
+strategie for `Option[T]`:<br>They are _unsound_ as in "they don't compose".
+
+Consider the type `Option[Option[T]]`. With `NullOptions` its value `Some(None)` would serialize to `null`, which would
+then deserialize to `None` rather than `Some(None)`, which is _unsound_ as it violates the basic "roundtrip requirement"
+`deserialize(serialize(x)) == x`.
+
+@@@
+
   [CBOR]: http://cbor.io/
   [JSON]: http://json.org/
