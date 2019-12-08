@@ -258,7 +258,9 @@ object NullOptions {
       if (r.tryReadNull()) None
       else Some(r.read[T]())
     }
-}</code></pre>
+}</code></pre><div class="callout note "><div class="callout-title">Note</div>
+<p>At first glance it might seem that <code>NullOptions</code> could actually be the default way to encode a value of type <code>Option[T]</code> since <code>null</code> appears as the &ldquo;natural&rdquo; construct in <a href="http://json.org/">JSON</a> / <a href="http://cbor.io/">CBOR</a> to represent &ldquo;no value&rdquo;.<br> However, <code>NullOptions</code> have a serious drawback which makes them unsuitable as the generally preferred representation strategie for <code>Option[T]</code>:<br>They are <em>unsound</em> as in &ldquo;they don&rsquo;t compose&rdquo;.</p>
+<p>Consider the type <code>Option[Option[T]]</code>. With <code>NullOptions</code> its value <code>Some(None)</code> would serialize to <code>null</code>, which would then deserialize to <code>None</code> rather than <code>Some(None)</code>, which is <em>unsound</em> as it violates the basic &ldquo;roundtrip requirement&rdquo; <code>deserialize(serialize(x)) == x</code>.</p></div>
 </div>
 <div>
 <a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-core/nullable-and-default.md" title="Edit this page" class="md-source-file md-edit">
