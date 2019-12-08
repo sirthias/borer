@@ -123,11 +123,8 @@ final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes]
 
     @inline def decodeExtra(info: Int, uLong: Long): Int =
       (info: @switch) match {
-        case 20 =>
-          receiver.onBoolean(value = false)
-          DataItem.Boolean
-        case 21 =>
-          receiver.onBoolean(value = true)
+        case 20 | 21 =>
+          receiver.onBoolean(info == 21)
           DataItem.Boolean
         case 22 =>
           receiver.onNull()
