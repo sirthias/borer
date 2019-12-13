@@ -201,7 +201,7 @@ addCommandsAlias(
 
 /////////////////////// DEPENDENCIES /////////////////////////
 
-val `collection-compat` = Def.setting("org.scala-lang.modules" %%% "scala-collection-compat" % "2.1.2")
+val `collection-compat` = Def.setting("org.scala-lang.modules" %%% "scala-collection-compat" % "2.1.3")
 val `akka-actor`        = Def.setting("com.typesafe.akka"      %%  "akka-actor"              % "2.6.1")
 val `akka-stream`       = Def.setting("com.typesafe.akka"      %%  "akka-stream"             % "2.6.1")
 val `akka-http`         = Def.setting("com.typesafe.akka"      %%  "akka-http"               % "10.1.11")
