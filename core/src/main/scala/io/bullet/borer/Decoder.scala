@@ -326,8 +326,8 @@ object Decoder extends LowPrioDecoders {
     implicit val longDecoder: Decoder[Long]   = Decoder(r => if (r.hasString) r.readString().toLong else r.readLong())
     implicit val floatDecoder: Decoder[Float] = Decoder(r => if (r.hasString) r.readString().toFloat else r.readFloat())
 
-    implicit val doubleDecoder: Decoder[Double] = Decoder(
-      r => if (r.hasString) r.readString().toDouble else r.readDouble())
+    implicit val doubleDecoder: Decoder[Double] =
+      Decoder(r => if (r.hasString) r.readString().toDouble else r.readDouble())
     implicit val charDecoder: Decoder[Char]   = Decoder.forChar(forInt)
     implicit val byteDecoder: Decoder[Byte]   = Decoder.forByte(forInt)
     implicit val shortDecoder: Decoder[Short] = Decoder.forShort(forInt)

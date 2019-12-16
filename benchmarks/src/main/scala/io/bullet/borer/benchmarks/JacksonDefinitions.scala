@@ -91,8 +91,9 @@ class JacksonModelBenchmark extends DomBenchmark {
   }
 
   def setup(): Unit =
-    root = try mapper.readValue(fileBytes, typeRef)
-    finally ()
+    root =
+      try mapper.readValue(fileBytes, typeRef)
+      finally ()
 
   @Benchmark
   def encodeModel: Array[Byte] = mapper.writeValueAsBytes(root)
