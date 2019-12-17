@@ -35,6 +35,32 @@ object ArrayBasedCodecs {
   def deriveUnaryEncoder[T]: Encoder[T] = macro Macros.unaryEncoder[T]
 
   /**
+    * Macro that creates an [[Encoder]] for [[T]] and all direct and indirect sub-types of [[T]],
+    * which are concrete, i.e. not abstract.
+    * [[T]] must be a `sealed abstract class` or `sealed trait`.
+    *
+    * It works by generating a code block such as this one:
+    *
+    * {{{
+    *   implicit val a = deriveEncoder[A]     // one such line is generated for each concrete
+    *   implicit val b = deriveEncoder[B]     // direct or indirect sub-type of T which doesn't
+    *   implicit val c = deriveEncoder[C]     // already have an implicit Encoder available
+    *   ...
+    *   deriveEncoder[T]
+    * }}}
+    *
+    * If an [[Encoder]] for a certain concrete sub-type `S <: T` is already implicitly available
+    * at the macro call-site the respective line for the sub-type is **not** generated.
+    *
+    * If an [[Encoder]] for a certain abstract sub-type `S <: T` is already implicitly available
+    * at the macro call-site the respective lines for **all** sub-types of `S` are **not** generated.
+    *
+    * This means that you can specify your own custom Encoders for concrete sub-types or whole branches
+    * of the sub-type hierarchy and they will be properly picked up rather than create conflicts.
+    */
+  def deriveAllEncoders[T]: Encoder[T] = macro Macros.allEncoders[T]
+
+  /**
     * Macro that creates a [[Decoder]] for [[T]] provided that
     * - [[T]] is a `case class`, `sealed abstract class` or `sealed trait`
     * - [[Decoder]] instances for all members of [[T]] (if [[T]] is a `case class`)
@@ -54,6 +80,32 @@ object ArrayBasedCodecs {
   def deriveUnaryDecoder[T]: Decoder[T] = macro Macros.unaryDecoder[T]
 
   /**
+    * Macro that creates a [[Decoder]] for [[T]] and all direct and indirect sub-types of [[T]],
+    * which are concrete, i.e. not abstract.
+    * [[T]] must be a `sealed abstract class` or `sealed trait`.
+    *
+    * It works by generating a code block such as this one:
+    *
+    * {{{
+    *   implicit val a = deriveDecoder[A]     // one such line is generated for each concrete
+    *   implicit val b = deriveDecoder[B]     // direct or indirect sub-type of T which doesn't
+    *   implicit val c = deriveDecoder[C]     // already have an implicit Decoder available
+    *   ...
+    *   deriveDecoder[T]
+    * }}}
+    *
+    * If a [[Decoder]] for a certain concrete sub-type `S <: T` is already implicitly available
+    * at the macro call-site the respective line for the sub-type is **not** generated.
+    *
+    * If a [[Decoder]] for a certain abstract sub-type `S <: T` is already implicitly available
+    * at the macro call-site the respective lines for **all** sub-types of `S` are **not** generated.
+    *
+    * This means that you can specify your own custom Decoders for concrete sub-types or whole branches
+    * of the sub-type hierarchy and they will be properly picked up rather than create conflicts.
+    */
+  def deriveAllDecoders[T]: Decoder[T] = macro Macros.allDecoders[T]
+
+  /**
     * Macro that creates an [[Encoder]] and [[Decoder]] pair for [[T]].
     * Convenience shortcut for `Codec(deriveEncoder[T], deriveDecoder[T])"`.
     */
@@ -65,16 +117,14 @@ object ArrayBasedCodecs {
     */
   def deriveUnaryCodec[T]: Codec[T] = macro Macros.unaryCodec[T]
 
+  /**
+    * Macro that creates an [[Encoder]] and [[Decoder]] pair for [[T]] and all direct and indirect sub-types of [[T]].
+    * Convenience shortcut for `Codec(deriveAllEncoders[T], deriveAllDecoders[T])"`.
+    */
+  def deriveAllCodecs[T]: Codec[T] = macro Macros.allCodecs[T]
+
   private object Macros {
     import MacroSupport._
-
-    def unaryEncoder[T: c.WeakTypeTag](c: blackbox.Context): c.Tree = {
-      import c.universe._
-      val tpe    = weakTypeOf[T].dealias
-      val fields = tpe.decls.collect { case m: MethodSymbol if m.isCaseAccessor => m.asMethod }.toList
-      if (fields.lengthCompare(1) == 0) encoder(c)
-      else c.abort(c.enclosingPosition, s"`$tpe` is not a unary case class")
-    }
 
     def encoder[T: ctx.WeakTypeTag](ctx: blackbox.Context): ctx.Tree = DeriveWith[T](ctx) {
       new CodecDeriver[ctx.type](ctx) {
@@ -114,13 +164,16 @@ object ArrayBasedCodecs {
       }
     }
 
-    def unaryDecoder[T: c.WeakTypeTag](c: blackbox.Context): c.Tree = {
+    def unaryEncoder[T: c.WeakTypeTag](c: blackbox.Context): c.Tree = {
       import c.universe._
       val tpe    = weakTypeOf[T].dealias
       val fields = tpe.decls.collect { case m: MethodSymbol if m.isCaseAccessor => m.asMethod }.toList
-      if (fields.lengthCompare(1) == 0) decoder(c)
+      if (fields.lengthCompare(1) == 0) encoder(c)
       else c.abort(c.enclosingPosition, s"`$tpe` is not a unary case class")
     }
+
+    def allEncoders[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
+      deriveAll(c)("Encoder", "ArrayBasedCodecs", "deriveAllEncoders", "deriveEncoder")
 
     def decoder[T: ctx.WeakTypeTag](ctx: blackbox.Context): ctx.Tree = DeriveWith[T](ctx) {
       new CodecDeriver[ctx.type](ctx) {
@@ -167,8 +220,7 @@ object ArrayBasedCodecs {
         }
 
         def deriveForSealedTrait(tpe: Type, subTypes: List[SubType]) = {
-          val typeIdsAndSubTypes: Array[(Key, SubType)] = getTypeIds(tpe, subTypes).zip(subTypes)
-          java.util.Arrays.sort(typeIdsAndSubTypes.asInstanceOf[Array[Object]], KeyPairOrdering)
+          val typeIdsAndSubTypes = typeIdsAndSubTypesSorted(tpe, subTypes)
 
           def rec(start: Int, end: Int): Tree =
             if (start < end) {
@@ -193,6 +245,20 @@ object ArrayBasedCodecs {
       }
     }
 
+    def unaryDecoder[T: c.WeakTypeTag](c: blackbox.Context): c.Tree = {
+      import c.universe._
+      val tpe    = weakTypeOf[T].dealias
+      val fields = tpe.decls.collect { case m: MethodSymbol if m.isCaseAccessor => m.asMethod }.toList
+      if (fields.lengthCompare(1) == 0) decoder(c)
+      else c.abort(c.enclosingPosition, s"`$tpe` is not a unary case class")
+    }
+
+    def codec[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
+      codecMacro(c)("ArrayBasedCodecs", "deriveEncoder", "deriveDecoder")
+
+    def allDecoders[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
+      deriveAll(c)("Decoder", "ArrayBasedCodecs", "deriveAllDecoders", "deriveDecoder")
+
     def unaryCodec[T: c.WeakTypeTag](c: blackbox.Context): c.Tree = {
       import c.universe._
       val tpe      = weakTypeOf[T]
@@ -201,6 +267,7 @@ object ArrayBasedCodecs {
       q"$borerPkg.Codec($prefix.deriveUnaryEncoder[$tpe], $prefix.deriveUnaryDecoder[$tpe])"
     }
 
-    def codec[T: c.WeakTypeTag](c: blackbox.Context): c.Tree = codecMacro(c)("ArrayBasedCodecs")
+    def allCodecs[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
+      codecMacro(c)("ArrayBasedCodecs", "deriveAllEncoders", "deriveAllDecoders")
   }
 }

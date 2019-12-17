@@ -8,6 +8,7 @@
 
 package io.bullet.borer.derivation.internal
 
+import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 import scala.reflect.macros.blackbox
 import scala.reflect.macros.contexts.Context
@@ -47,8 +48,24 @@ abstract private[derivation] class Deriver[C <: blackbox.Context](val c: C) {
     def name: TermName = symbol.asTerm.name
   }
 
-  case class SubType(tpe: Type, index: Int, annotations: List[Tree]) extends WithAnnotations {
-    def name: TypeName = tpe.typeSymbol.asType.name
+  case class SubType(tpe: Type, index: Int, annotations: List[Tree], subs: List[SubType]) extends WithAnnotations {
+    def name: TypeName      = tpe.typeSymbol.asType.name
+    def isAbstract: Boolean = tpe.typeSymbol.isAbstract
+  }
+
+  def flattenAbstracts(subs: List[SubType])(predicate: SubType => Boolean): List[SubType] = {
+    val buf = new ListBuffer[SubType]
+    @tailrec def rec(remaining: List[SubType]): List[SubType] =
+      remaining match {
+        case head :: tail =>
+          if (head.isAbstract && predicate(head)) rec(head.subs ::: tail)
+          else {
+            if (!buf.exists(_.tpe == head.tpe)) buf += head
+            rec(tail)
+          }
+        case Nil => buf.toList
+      }
+    rec(subs)
   }
 
   def deriveForCaseObject(tpe: Type, module: ModuleSymbol): Tree
@@ -131,14 +148,8 @@ abstract private[derivation] class Deriver[C <: blackbox.Context](val c: C) {
   }
 
   private def forSealedTrait(tpe: Type, typeSymbol: ClassSymbol): Tree = {
-    def knownSubclasses(sym: ClassSymbol): List[Symbol] = {
-      val children                       = sym.knownDirectSubclasses.toList
-      val (abstractTypes, concreteTypes) = children.partition(_.isAbstract)
-      abstractTypes.flatMap(x => knownSubclasses(x.asClass)) ::: concreteTypes
-    }
-    val subtypes = new ListBuffer[SubType]
-    val index    = Iterator.from(0)
-    knownSubclasses(typeSymbol).foreach { sub =>
+    val index = Iterator.from(0)
+    def toSubType(acc: List[SubType], sub: Symbol): List[SubType] = {
       val subType     = sub.asType.toType // FIXME: Broken for path dependent types
       val typeParams  = sub.asType.typeParams
       val typeArgs    = c.internal.thisType(sub).baseType(typeSymbol).typeArgs
@@ -146,14 +157,15 @@ abstract private[derivation] class Deriver[C <: blackbox.Context](val c: C) {
       val newTypeArgs = typeParams.map(mapping.withDefault(_.asType.toType))
       val applied     = appliedType(subType.typeConstructor, newTypeArgs)
       val theType     = c.internal.existentialAbstraction(typeParams, applied)
-      if (subtypes.forall(_.tpe != theType)) {
-        subtypes += SubType(theType, index.next(), annotationTrees(theType.typeSymbol))
-      }
+      if (acc.forall(_.tpe != theType)) {
+        val subs = sub.asClass.knownDirectSubclasses.foldLeft(List.empty[SubType])(toSubType).reverse
+        SubType(theType, index.next(), annotationTrees(theType.typeSymbol), subs) :: acc
+      } else acc
     }
-
+    val subtypes = typeSymbol.knownDirectSubclasses.foldLeft(List.empty[SubType])(toSubType).reverse
     if (subtypes.isEmpty) error(s"Could not find any direct subtypes of `$typeSymbol`")
 
-    deriveForSealedTrait(tpe: Type, subtypes.toList)
+    deriveForSealedTrait(tpe: Type, subtypes)
   }
 
   private def annotationTrees(symbol: Symbol) = {

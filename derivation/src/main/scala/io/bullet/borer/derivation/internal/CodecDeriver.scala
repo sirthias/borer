@@ -8,11 +8,10 @@
 
 package io.bullet.borer.derivation.internal
 
+import io.bullet.borer._
 import io.bullet.borer.derivation.key
-import io.bullet.borer.{Decoder, Encoder, Reader, Writer}
 
 import scala.annotation.tailrec
-import scala.collection.mutable.ListBuffer
 import scala.reflect.macros.blackbox
 
 abstract private[derivation] class CodecDeriver[C <: blackbox.Context](ctx: C) extends Deriver[C](ctx) {
@@ -29,17 +28,27 @@ abstract private[derivation] class CodecDeriver[C <: blackbox.Context](ctx: C) e
   lazy val readerType       = symbolOf[Reader]
   lazy val readerCompanion  = readerType.companion
 
-  def adtSubtypeWritingCases(tpe: Type, subTypes: List[SubType]) = {
-    val typeIds = getTypeIds(tpe, subTypes)
-    val cases   = new ListBuffer[Tree]
-    subTypes.zip(typeIds).foreach {
+  def adtSubtypeWritingCases(tpe: Type, subTypes: List[SubType]): List[Tree] = {
+    val exploded = flattenAbstracts(subTypes) { sub =>
+      // if we cannot find an explicit encoder for an abstract subType we also take care of that subType's sub types
+      inferImplicit(encoderType, sub.tpe).isEmpty
+    }
+    val typeIds = getTypeIds(tpe, exploded)
+    exploded.zip(typeIds).map {
       case (subType, typeId) =>
         val writeTypeId = TermName(s"write${typeId.productPrefix}")
-        cases += cq"x: ${subType.tpe} => w.$writeTypeId(${literal(typeId.value)}).write(x)"
+        cq"x: ${subType.tpe} => w.$writeTypeId(${literal(typeId.value)}).write(x)"
     }
-    val errorMsg = s"""s"The given value `$$x` is not a sub type of `$tpe`""""
-    cases += cq"""x => throw new _root_.java.lang.IllegalArgumentException($errorMsg)"""
-    cases.toList
+  }
+
+  def typeIdsAndSubTypesSorted(tpe: Type, subTypes: List[SubType]): Array[(Key, SubType)] = {
+    val exploded = flattenAbstracts(subTypes) { sub =>
+      // if we cannot find an explicit decoder for an abstract subType we also take care of that subType's sub types
+      inferImplicit(decoderType, sub.tpe).isEmpty
+    }
+    val typeIdsAndSubTypes: Array[(Key, SubType)] = getTypeIds(tpe, exploded).zip(exploded)
+    java.util.Arrays.sort(typeIdsAndSubTypes.asInstanceOf[Array[Object]], KeyPairOrdering)
+    typeIdsAndSubTypes
   }
 
   def r(methodNamePrefix: String, key: Key, methodNameSuffix: String = "") = {
@@ -83,15 +92,17 @@ abstract private[derivation] class CodecDeriver[C <: blackbox.Context](ctx: C) e
       case _            => false
     }
 
+  def inferImplicit(typeClass: Symbol, tpe: Type): Option[Tree] = {
+    val applied     = tq"$typeClass[$tpe]"
+    val typeChecked = c.typecheck(applied, c.TYPEmode).tpe
+    val tree        = c.inferImplicitValue(typeChecked)
+    Option(tree).filterNot(_.isEmpty)
+  }
+
   implicit class RichCaseParam(underlying: CaseParam) {
     def isBasicType: Boolean = CodecDeriver.this.isBasicType(underlying.paramType.tpe)
 
-    def getImplicit(typeClass: Symbol): Option[Tree] = {
-      val applied     = tq"$typeClass[${underlying.paramType.tpe}]"
-      val typeChecked = c.typecheck(applied, c.TYPEmode).tpe
-      val tree        = c.inferImplicitValue(typeChecked)
-      Option(tree).filterNot(_.isEmpty)
-    }
+    def getImplicit(typeClass: Symbol): Option[Tree] = inferImplicit(typeClass, underlying.paramType.tpe)
   }
 
   implicit class RichWithAnnotations(underlying: WithAnnotations) {

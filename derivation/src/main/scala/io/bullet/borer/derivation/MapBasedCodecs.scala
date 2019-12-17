@@ -21,11 +21,38 @@ object MapBasedCodecs {
     * - [[Encoder]] instances for all members of [[T]] (if [[T]] is a `case class`)
     *   or all sub-types of [[T]] (if [[T]] is an ADT) are implicitly available
     *
-    * Case classes are converted into a map of values, one key-value pair for each member.
-    * The key for each member is a `String` holding the member's name.
-    * This can be customized with the [[key]] annotation.
+    * Case classes are converted into an array of values, one value for each member.
+    *
+    * NOTE: If `T` is unary (i.e. only has a single member) then the member value is written in an unwrapped form,
+    * i.e. without the array container.
     */
   def deriveEncoder[T]: Encoder[T] = macro Macros.encoder[T]
+
+  /**
+    * Macro that creates an [[Encoder]] for [[T]] and all direct and indirect sub-types of [[T]],
+    * which are concrete, i.e. not abstract.
+    * [[T]] must be a `sealed abstract class` or `sealed trait`.
+    *
+    * It works by generating a code block such as this one:
+    *
+    * {{{
+    *   implicit val a = deriveEncoder[A]     // one such line is generated for each concrete
+    *   implicit val b = deriveEncoder[B]     // direct or indirect sub-type of T which doesn't
+    *   implicit val c = deriveEncoder[C]     // already have an implicit Encoder available
+    *   ...
+    *   deriveEncoder[T]
+    * }}}
+    *
+    * If an [[Encoder]] for a certain concrete sub-type `S <: T` is already implicitly available
+    * at the macro call-site the respective line for the sub-type is **not** generated.
+    *
+    * If an [[Encoder]] for a certain abstract sub-type `S <: T` is already implicitly available
+    * at the macro call-site the respective lines for **all** sub-types of `S` are **not** generated.
+    *
+    * This means that you can specify your own custom Encoders for concrete sub-types or whole branches
+    * of the sub-type hierarchy and they will be properly picked up rather than create conflicts.
+    */
+  def deriveAllEncoders[T]: Encoder[T] = macro Macros.allEncoders[T]
 
   /**
     * Macro that creates a [[Decoder]] for [[T]] provided that
@@ -40,10 +67,42 @@ object MapBasedCodecs {
   def deriveDecoder[T]: Decoder[T] = macro Macros.decoder[T]
 
   /**
+    * Macro that creates a [[Decoder]] for [[T]] and all direct and indirect sub-types of [[T]],
+    * which are concrete, i.e. not abstract.
+    * [[T]] must be a `sealed abstract class` or `sealed trait`.
+    *
+    * It works by generating a code block such as this one:
+    *
+    * {{{
+    *   implicit val a = deriveDecoder[A]     // one such line is generated for each concrete
+    *   implicit val b = deriveDecoder[B]     // direct or indirect sub-type of T which doesn't
+    *   implicit val c = deriveDecoder[C]     // already have an implicit Decoder available
+    *   ...
+    *   deriveDecoder[T]
+    * }}}
+    *
+    * If a [[Decoder]] for a certain concrete sub-type `S <: T` is already implicitly available
+    * at the macro call-site the respective line for the sub-type is **not** generated.
+    *
+    * If a [[Decoder]] for a certain abstract sub-type `S <: T` is already implicitly available
+    * at the macro call-site the respective lines for **all** sub-types of `S` are **not** generated.
+    *
+    * This means that you can specify your own custom Decoders for concrete sub-types or whole branches
+    * of the sub-type hierarchy and they will be properly picked up rather than create conflicts.
+    */
+  def deriveAllDecoders[T]: Decoder[T] = macro Macros.allDecoders[T]
+
+  /**
     * Macro that creates an [[Encoder]] and [[Decoder]] pair for [[T]].
     * Convenience shortcut for `Codec(deriveEncoder[T], deriveDecoder[T])"`.
     */
   def deriveCodec[T]: Codec[T] = macro Macros.codec[T]
+
+  /**
+    * Macro that creates an [[Encoder]] and [[Decoder]] pair for [[T]] and all direct and indirect sub-types of [[T]].
+    * Convenience shortcut for `Codec(deriveAllEncoders[T], deriveAllDecoders[T])"`.
+    */
+  def deriveAllCodecs[T]: Codec[T] = macro Macros.allCodecs[T]
 
   private object Macros {
     import MacroSupport._
@@ -148,6 +207,9 @@ object MapBasedCodecs {
         }
       }
     }
+
+    def allEncoders[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
+      deriveAll(c)("Encoder", "MapBasedCodecs", "deriveAllEncoders", "deriveEncoder")
 
     def decoder[T: ctx.WeakTypeTag](ctx: blackbox.Context): ctx.Tree = DeriveWith[T](ctx) {
       new CodecDeriver[ctx.type](ctx) {
@@ -326,8 +388,7 @@ object MapBasedCodecs {
         }
 
         def deriveForSealedTrait(tpe: Type, subTypes: List[SubType]) = {
-          val typeIdsAndSubTypes: Array[(Key, SubType)] = getTypeIds(tpe, subTypes).zip(subTypes)
-          java.util.Arrays.sort(typeIdsAndSubTypes.asInstanceOf[Array[Object]], KeyPairOrdering)
+          val typeIdsAndSubTypes = typeIdsAndSubTypesSorted(tpe, subTypes)
 
           def rec(start: Int, end: Int): Tree =
             if (start < end) {
@@ -356,6 +417,13 @@ object MapBasedCodecs {
       }
     }
 
-    def codec[T: c.WeakTypeTag](c: blackbox.Context): c.Tree = codecMacro(c)("MapBasedCodecs")
+    def allDecoders[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
+      deriveAll(c)("Decoder", "MapBasedCodecs", "deriveAllDecoders", "deriveDecoder")
+
+    def codec[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
+      codecMacro(c)("MapBasedCodecs", "deriveEncoder", "deriveDecoder")
+
+    def allCodecs[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
+      codecMacro(c)("MapBasedCodecs", "deriveAllEncoders", "deriveAllDecoders")
   }
 }

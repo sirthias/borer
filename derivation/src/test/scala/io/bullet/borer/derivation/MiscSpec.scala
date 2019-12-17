@@ -85,5 +85,66 @@ object MiscSpec extends AbstractBorerSpec {
       implicit lazy val codec: Codec[Box] = ArrayBasedCodecs.deriveCodec[Box]
       roundTrip("""[[[]]]""", Box(Some(Box(Some(Box())))))
     }
+
+    "Deep Derivation" - {
+      sealed trait AnimalX
+      case object Wolverine             extends AnimalX
+      case class Yeti(name: String)     extends AnimalX
+      sealed trait Dog                  extends AnimalX
+      case object TheHound              extends Dog
+      case class Labrador(name: String) extends Dog
+      sealed trait Cat                  extends AnimalX
+      case object TheLastTiger          extends Cat
+      case class Lion(color: String)    extends Cat
+
+      "simple" - {
+        implicit val codec = ArrayBasedCodecs.deriveAllCodecs[AnimalX]
+        roundTrip("""["Labrador","Lolle"]""", Labrador("Lolle"): AnimalX)
+        roundTrip("""["TheLastTiger",[]]""", TheLastTiger: AnimalX)
+      }
+
+      "custom leaf" - {
+        implicit val lionCodec = Codec.bimap[Int, Lion](_ => 0, _ => Lion("roar"))
+        implicit val codec     = ArrayBasedCodecs.deriveAllCodecs[AnimalX]
+        roundTrip("""["Lion",0]""", Lion("roar"): AnimalX)
+      }
+
+      "custom inner node" - {
+        implicit val catCodec = Codec.bimap[Int, Cat](_ => 0, _ => TheLastTiger)
+        implicit val codec    = ArrayBasedCodecs.deriveAllCodecs[AnimalX]
+
+        roundTrip("""["Cat",0]""", TheLastTiger: AnimalX)
+        verifyEncoding(Lion("roar"): AnimalX, """["Cat",0]""")
+        verifyDecoding("""["Cat",0]""", TheLastTiger: AnimalX)
+      }
+    }
+
+    "Deep Derivation on Recursive ADTs" - {
+      sealed trait TreeNode
+      case object Leaf                                 extends TreeNode
+      case class Node(left: TreeNode, right: TreeNode) extends TreeNode
+
+      implicit lazy val codec: Codec[TreeNode] = ArrayBasedCodecs.deriveAllCodecs[TreeNode]
+
+      roundTrip(
+        """["Node",[["Node",[["Leaf",[]],["Node",[["Leaf",[]],["Leaf",[]]]]]],["Leaf",[]]]]""",
+        Node(Node(Leaf, Node(Leaf, Leaf)), Leaf): TreeNode)
+    }
+
+    "Deep Derivation on ADTs with circular dependencies" - {
+      sealed trait Expr
+      case class Add(left: Factor, right: Factor)  extends Expr
+      sealed trait Factor                          extends Expr
+      case class Mult(left: Factor, right: Factor) extends Factor
+      case class Literal(value: Int)               extends Factor
+      case class Parens(expr: Expr)                extends Factor
+
+      implicit lazy val factorCodec: Codec[Factor] = ArrayBasedCodecs.deriveAllCodecs[Factor]
+      implicit lazy val exprCodec: Codec[Expr]     = ArrayBasedCodecs.deriveAllCodecs[Expr]
+
+      roundTrip(
+        """["Add",[["Literal",18],["Parens",["Add",[["Literal",2],["Mult",[["Literal",3],["Literal",4]]]]]]]]""",
+        Add(Literal(18), Parens(Add(Literal(2), Mult(Literal(3), Literal(4))))): Expr)
+    }
   }
 }

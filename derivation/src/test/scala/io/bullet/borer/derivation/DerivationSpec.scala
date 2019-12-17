@@ -228,8 +228,6 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
         case class D(a: Int) extends B with C
 
         implicit val d = deriveCodec[D]
-        implicit val c = deriveCodec[C]
-        implicit val b = deriveCodec[B]
         implicit val a = deriveCodec[A]
       }
 
@@ -471,8 +469,6 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
         case class D(a: Int) extends B with C
 
         implicit val d = deriveCodec[D]
-        implicit val c = deriveCodec[C]
-        implicit val b = deriveCodec[B]
         implicit val a = deriveCodec[A]
       }
 

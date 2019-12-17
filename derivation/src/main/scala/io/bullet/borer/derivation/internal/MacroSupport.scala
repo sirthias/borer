@@ -34,12 +34,59 @@ private[derivation] object MacroSupport {
     }
   }.asInstanceOf[Ordering[Object]]
 
-  def codecMacro[T: c.WeakTypeTag](c: blackbox.Context)(objectName: String): c.Tree = {
+  def codecMacro[T: c.WeakTypeTag](c: blackbox.Context)(objectName: String, de: String, dd: String): c.Tree = {
     import c.universe._
-
     val tpe      = weakTypeOf[T]
     val borerPkg = c.mirror.staticPackage("_root_.io.bullet.borer")
     val prefix   = q"$borerPkg.derivation.${TermName(objectName)}"
-    q"$borerPkg.Codec($prefix.deriveEncoder[$tpe], $prefix.deriveDecoder[$tpe])"
+    q"$borerPkg.Codec($prefix.${TermName(de)}[$tpe], $prefix.${TermName(dd)}[$tpe])"
   }
+
+  def deriveAll[T: ctx.WeakTypeTag](
+      ctx: blackbox.Context)(typeClass: String, objectName: String, macroName: String, altMacroName: String): ctx.Tree =
+    DeriveWith[T](ctx) {
+      new CodecDeriver[ctx.type](ctx) {
+        import c.universe._
+
+        def deriveForCaseObject(tpe: Type, module: ModuleSymbol) =
+          c.abort(
+            c.enclosingPosition,
+            s"The `$macroName` macro can only be used on sealed traits or sealed abstract " +
+              s"classes, not on case objects. Use `$altMacroName` instead!")
+
+        def deriveForCaseClass(
+            tpe: Type,
+            companion: ModuleSymbol,
+            params: List[CaseParam],
+            annotationTrees: List[Tree],
+            constructorIsPrivate: Boolean) =
+          c.abort(
+            c.enclosingPosition,
+            s"The `$macroName` macro can only be used on sealed traits or sealed abstract " +
+              s"classes, not on case classes. Use `$altMacroName` instead!")
+
+        def deriveForSealedTrait(tpe: Type, subTypes: List[SubType]) = {
+          val altMacro = q"$borerPkg.derivation.${TermName(objectName)}.${TermName(altMacroName)}"
+
+          val tc =
+            typeClass match {
+              case "Encoder" => encoderType
+              case "Decoder" => decoderType
+            }
+
+          def implicitSubTypeVals(subTypes: List[SubType]): List[Tree] =
+            subTypes.flatMap { st =>
+              if (inferImplicit(tc, st.tpe).isEmpty) {
+                if (st.isAbstract) implicitSubTypeVals(st.subs)
+                else Some(q"implicit val ${TermName(c.freshName())} = $altMacro[${st.tpe}]")
+              } else None
+            }
+
+          q"""{
+            ..${implicitSubTypeVals(subTypes)}
+            $altMacro[$tpe]
+          }"""
+        }
+      }
+    }
 }
