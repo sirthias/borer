@@ -13,6 +13,9 @@ import io.bullet.borer.derivation.internal._
 
 import scala.reflect.macros.blackbox
 
+/**
+  * Derivation macros for map-based encodings.
+  */
 object MapBasedCodecs {
 
   /**
@@ -21,10 +24,9 @@ object MapBasedCodecs {
     * - [[Encoder]] instances for all members of [[T]] (if [[T]] is a `case class`)
     *   or all sub-types of [[T]] (if [[T]] is an ADT) are implicitly available
     *
-    * Case classes are converted into an array of values, one value for each member.
-    *
-    * NOTE: If `T` is unary (i.e. only has a single member) then the member value is written in an unwrapped form,
-    * i.e. without the array container.
+    * Case classes are converted into a map of values, one key-value pair for each member.
+    * The key for each member is a `String` holding the member's name.
+    * This can be customized with the [[key]] annotation.
     */
   def deriveEncoder[T]: Encoder[T] = macro Macros.encoder[T]
 

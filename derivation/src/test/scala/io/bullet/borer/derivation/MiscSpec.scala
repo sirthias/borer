@@ -33,12 +33,12 @@ object MiscSpec extends AbstractBorerSpec {
   val tests = Tests {
 
     "Case Class with 3 members" - {
-      implicit val codec: Codec[CaseClass3] = ArrayBasedCodecs.deriveCodec[CaseClass3]
+      implicit val codec = ArrayBasedCodecs.deriveCodec[CaseClass3]
       roundTrip("""[42,"",true]""", CaseClass3(42, "", efghi = true))
     }
 
     "Generic Case Class with fixed codec" - {
-      implicit val codec: Codec[CaseClassT[Double]] = ArrayBasedCodecs.deriveCodec[CaseClassT[Double]]
+      implicit val codec = ArrayBasedCodecs.deriveCodec[CaseClassT[Double]]
       roundTrip("""["foo",18.1]""", CaseClassT("foo", 18.1))
     }
 
@@ -48,12 +48,7 @@ object MiscSpec extends AbstractBorerSpec {
     }
 
     "Unary Case Class with custom apply" - {
-      implicit val codec: Codec[CaseClass1] = ArrayBasedCodecs.deriveCodec[CaseClass1]
-      roundTrip("false", CaseClass1(false))
-    }
-
-    "Unary Case Class with 'forUnaryCaseClass' codec" - {
-      implicit val codec: Codec[CaseClass1] = ArrayBasedCodecs.deriveUnaryCodec[CaseClass1]
+      implicit val codec = ArrayBasedCodecs.deriveCodec[CaseClass1]
       roundTrip("false", CaseClass1(false))
     }
 
@@ -62,21 +57,9 @@ object MiscSpec extends AbstractBorerSpec {
       roundTrip(""""foo"""", CaseClass1T("foo"))
     }
 
-    "`deriveUnaryCodec` on non-unary case class" - {
-      Scalac
-        .typecheck("ArrayBasedCodecs.deriveUnaryCodec[CaseClass3]")
-        .assertErrorMsgMatches(".*not a unary case class".r)
-    }
-
-    "Generic unary Case Class with 'deriveUnaryCodec' codec" - {
-      implicit def codec[T: Encoder: Decoder]: Codec[CaseClass1T[T]] =
-        ArrayBasedCodecs.deriveUnaryCodec[CaseClass1T[T]]
-      roundTrip(""""foo"""", CaseClass1T("foo"))
-    }
-
     "Local Case Class" - {
       case class Box(id: String)
-      implicit val boxCodec: Codec[Box] = ArrayBasedCodecs.deriveCodec[Box]
+      implicit val boxCodec = ArrayBasedCodecs.deriveCodec[Box]
       roundTrip(""""abc"""", Box("abc"))
     }
 
@@ -145,6 +128,19 @@ object MiscSpec extends AbstractBorerSpec {
       roundTrip(
         """["Add",[["Literal",18],["Parens",["Add",[["Literal",2],["Mult",[["Literal",3],["Literal",4]]]]]]]]""",
         Add(Literal(18), Parens(Add(Literal(2), Mult(Literal(3), Literal(4))))): Expr)
+    }
+
+    "CompactMapBasedCodecs" - {
+
+      "unary" - {
+        implicit val codec = CompactMapBasedCodecs.deriveCodec[CaseClass1]
+        roundTrip("false", CaseClass1(false))
+      }
+
+      "non-unary" - {
+        implicit val codec = CompactMapBasedCodecs.deriveCodec[CaseClass3]
+        roundTrip("""{"abc":42,"d":"","efghi":true}""", CaseClass3(42, "", efghi = true))
+      }
     }
   }
 }

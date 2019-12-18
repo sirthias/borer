@@ -67,7 +67,6 @@ private[derivation] object MacroSupport {
 
         def deriveForSealedTrait(tpe: Type, subTypes: List[SubType]) = {
           val altMacro = q"$borerPkg.derivation.${TermName(objectName)}.${TermName(altMacroName)}"
-
           val tc =
             typeClass match {
               case "Encoder" => encoderType

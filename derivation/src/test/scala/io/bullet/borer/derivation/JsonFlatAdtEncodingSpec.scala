@@ -34,7 +34,7 @@ object JsonFlatAdtEncodingSpec extends AbstractBorerSpec {
   implicit val catCodec    = deriveCodec[Cat]
   implicit val mouseCodec  = deriveCodec[Mouse]
   implicit val yetiCodec   = deriveCodec[Yeti.type]
-  implicit val fishCodec   = ArrayBasedCodecs.deriveUnaryCodec[Fish]
+  implicit val fishCodec   = ArrayBasedCodecs.deriveCodec[Fish]
   implicit val animalCodec = deriveCodec[Animal]
 
   val tests = Tests {
