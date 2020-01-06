@@ -348,8 +348,8 @@ lazy val benchmarks = project
     libraryDependencies ++= Seq(
       "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"        % "2.1.1",
       "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros"      % "2.1.1" % Provided,
-      "com.fasterxml.jackson.module"          %% "jackson-module-scala"       % "2.10.1",
-      "com.fasterxml.jackson.module"          %  "jackson-module-afterburner" % "2.10.1",
+      "com.fasterxml.jackson.module"          %% "jackson-module-scala"       % "2.10.2",
+      "com.fasterxml.jackson.module"          %  "jackson-module-afterburner" % "2.10.2",
       "com.lihaoyi"                           %% "upickle"                    % "0.9.6",
       "io.spray"                              %% "spray-json"                 % "1.3.5",
       `circe-core`.value,
