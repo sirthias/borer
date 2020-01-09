@@ -97,6 +97,16 @@ object CborFlatAdtEncodingSpec extends AbstractBorerSpec {
               "_type" -> Dom.StringElem("Good"))),
           goodDog: Result[Animal])
       }
+
+      "in list" - {
+        val animals: List[Animal] = List(Dog(2, "Lolle"))
+
+        roundTrip(
+          encode(
+            Dom.ArrayElem.Unsized(Dom.MapElem
+              .Sized("_type" -> Dom.StringElem("Dog"), "age" -> Dom.IntElem(2), "name" -> Dom.StringElem("Lolle")))),
+          animals)
+      }
     }
 
     "delayed type id member" - {
@@ -155,7 +165,7 @@ object CborFlatAdtEncodingSpec extends AbstractBorerSpec {
 
       intercept[Borer.Error.InvalidInputData[_]] {
         verifyDecoding("63726564", fish: Animal)
-      }.getMessage ==> "Expected Map for decoding an instance of type `io.bullet.borer.derivation.CborFlatAdtEncodingSpec.Animal` but got none (input position 0)"
+      }.getMessage ==> "Expected Map for decoding an instance of type `io.bullet.borer.derivation.CborFlatAdtEncodingSpec.Animal` but got Text (input position 0)"
 
       intercept[Borer.Error.InvalidInputData[_]] {
         verifyDecoding("A0", fish: Animal)

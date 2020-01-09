@@ -83,6 +83,11 @@ object JsonFlatAdtEncodingSpec extends AbstractBorerSpec {
         roundTrip("""{"_type":"Good","value":[{"_type":"Dog","age":2,"name":"LL"}]}""", dogs: Result[List[Animal]])
         verifyDecoding("""{"value":[{"age":2,"_type":"Dog","name":"LL"}],"_type":"Good"}""", dogs: Result[List[Animal]])
       }
+
+      "in list" - {
+        val animals: List[Animal] = List(Dog(2, "Lolle"))
+        roundTrip("""[{"_type":"Dog","age":2,"name":"Lolle"}]""", animals)
+      }
     }
 
     "delayed type id member" - {
@@ -108,7 +113,7 @@ object JsonFlatAdtEncodingSpec extends AbstractBorerSpec {
 
       intercept[Borer.Error.InvalidInputData[_]] {
         verifyDecoding(""""red"""", fish: Animal)
-      }.getMessage ==> "Expected Map for decoding an instance of type `io.bullet.borer.derivation.JsonFlatAdtEncodingSpec.Animal` but got none (input position 0)"
+      }.getMessage ==> "Expected Map for decoding an instance of type `io.bullet.borer.derivation.JsonFlatAdtEncodingSpec.Animal` but got Chars (input position 0)"
 
       intercept[Borer.Error.InvalidInputData[_]] {
         verifyDecoding("{}", fish: Animal)

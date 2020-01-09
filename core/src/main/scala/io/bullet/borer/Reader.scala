@@ -34,34 +34,31 @@ final class InputReader[Config <: Reader.Config](
   private[this] val receiver: Receiver                    = receiverWrapper(receptacle, config)
   private[this] var _dataItem: Int                        = _
 
+  // a stash of elements that are injected _before_ the next element from the parser,
+  // if null or empty the next element comes from the parser
   private[borer] var stash: ElementDeque = _
 
   @inline def dataItem(): Int = {
-    if (_dataItem == DI.None) _dataItem = pullInto(receiver, stash)
+    def pullFromStash() =
+      if (stash.isEmpty) {
+        stash = stash.next
+        dataItem()
+      } else stash.pull(receptacle)
+
+    if (_dataItem == DI.None) {
+      _dataItem =
+        if (stash ne null) pullFromStash()
+        else if (directParser ne null) directParser.pull(receiver)
+        else parser.pull(receiver)
+    }
     _dataItem
   }
 
-  private[borer] def receiveInto(rcv: Receiver, stash: ElementDeque): Int =
-    if (_dataItem != DI.None) {
-      val result = _dataItem
-      receptacle.pushInto(rcv, result)
-      _dataItem = DI.None
-      result
-    } else pullInto(rcv, stash)
-
-  private[borer] def pullInto(rcv: Receiver, stash: ElementDeque): Int = {
-    def maybePullFromStash(): Int =
-      if (stash.isEmpty) {
-        if (stash.next ne null) {
-          this.stash = stash.next // collapse this unused stash level
-          pullInto(rcv, this.stash)
-        } else if (directParser ne null) directParser.pull(rcv)
-        else parser.pull(rcv)
-      } else stash.pull(rcv)
-
-    if (stash ne null) maybePullFromStash()
-    else if (directParser ne null) directParser.pull(rcv)
-    else parser.pull(rcv)
+  private[borer] def receiveInto(rcv: Receiver): Int = {
+    val result = dataItem()
+    receptacle.pushInto(rcv, result)
+    clearDataItem()
+    result
   }
 
   @inline def readingJson: Boolean = target eq Json

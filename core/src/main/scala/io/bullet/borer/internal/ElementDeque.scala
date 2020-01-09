@@ -145,7 +145,7 @@ final private[borer] class ElementDeque(maxBufferSize: Int, val next: ElementDeq
 
   def dataItemValueFromEnd(offset: Int): AnyRef = objBuffer.peekFromEnd(offset)
 
-  def appendElementFrom(r: Reader, prevStash: ElementDeque): Int = {
+  def appendElementFrom(r: Reader): Int = {
 
     // for simplicity we go for stack-based recursion here
     // if this ever becomes a problem we can upgrade to more costly heap-based recursion instead
@@ -153,13 +153,13 @@ final private[borer] class ElementDeque(maxBufferSize: Int, val next: ElementDeq
 
       @tailrec def pullN(remaining: Long): Unit =
         if (remaining > 0) {
-          val dataItem = r.pullInto(appendReceiver, prevStash)
+          val dataItem = r.receiveInto(appendReceiver)
           if ((dataItem & DataItem.Complex) != 0) pullComplex(dataItem, level + 1)
           pullN(remaining - 1)
         }
 
       @tailrec def pullUntilBreak(): Unit = {
-        val dataItem = r.pullInto(appendReceiver, prevStash)
+        val dataItem = r.receiveInto(appendReceiver)
         if ((dataItem & DataItem.Complex) != 0) pullComplex(dataItem, level + 1)
         if (dataItem != DataItem.Break) pullUntilBreak()
       }
@@ -178,7 +178,7 @@ final private[borer] class ElementDeque(maxBufferSize: Int, val next: ElementDeq
       } else sys.error("Structures with more than 100 nesting levels are not supported") // TODO: make configurable
     }
 
-    val first = r.receiveInto(appendReceiver, prevStash)
+    val first = r.receiveInto(appendReceiver)
     if ((first & DataItem.Complex) != 0) pullComplex(first, 0)
     first
   }
@@ -192,9 +192,6 @@ final private[borer] class ElementDeque(maxBufferSize: Int, val next: ElementDeq
     byteBuffer.dropLast(1)
     objBuffer.dropLast(2)
   }
-
-  def peekLastLong(): Long             = byteBuffer.peekLastOctaByte()
-  def patchLastLong(value: Long): Unit = byteBuffer.patchLastOctaByte(value)
 
   private def ret(result: Boolean): Boolean = if (result) true else throw new ElementDeque.Overflow
 }

@@ -182,24 +182,24 @@ object AdtEncodingStrategy {
           java.util.Arrays.equals(byteAccess.toByteArray(bytes), typeMemberNameBytes)
         }
 
-        var _prevStash = r.stash
-        val stash =
-          if ((_prevStash ne null) && _prevStash.isEmpty) {
-            _prevStash = null
-            r.stash                                          // the existing stash is empty and can be reused
-          } else new ElementDeque(maxBufferSize, _prevStash) // we need a new stash level for ourselves
-        r.stash = stash
-        val prevStash = _prevStash // "finalize" the var
+        val stash = new ElementDeque(maxBufferSize, r.stash)
 
-        @tailrec def rec(remaining: Long, mapSize: Long): Unit =
+        @tailrec def rec(remaining: Long, mapSize: Long): Boolean =
           if (remaining != 0) {
-            def finish(): Unit = {
-              if (mapSize < 0) stash.prependReceiver.onMapStart() // inject artificial map-start data item
-              else stash.prependReceiver.onMapHeader(mapSize - 1) // inject artificial map-header data item
-              r.receiveInto(stash.prependReceiver, prevStash)     // member value, i.e. type id
+            def finish(): Boolean = {
+              // We have just read (and dropped) the typeMemberName element, the next element coming in from the parser
+              // is the actual type id. Before letting the user code consume the stash we inject the artifical elements
+              // making up the "regular" ADT envelope at the _beginning_ of the stash, in reverse order.
+              val unsized = mapSize < 0
+              // the start of ADT value
+              if (unsized) stash.prependReceiver.onMapStart() else stash.prependReceiver.onMapHeader(mapSize - 1)
+              r.receiveInto(stash.prependReceiver) // the type id
+              r.stash = stash                      // inject all our stashed elements before the next element from the parser
+              unsized
             }
 
-            stash.appendElementFrom(r, prevStash) match {
+            // read and stash the next map entry key
+            stash.appendElementFrom(r) match {
               case DataItem.String | DataItem.Chars if stash.dataItemValueFromEnd(-1) == typeMemberName =>
                 stash.dropLastStringDataItem()
                 finish()
@@ -210,29 +210,18 @@ object AdtEncodingStrategy {
 
               case DataItem.Break | DataItem.EndOfInput => failNoTypeId()
 
-              case _ =>
-                stash.appendElementFrom(r, prevStash) // member value
-                rec(remaining - 1, mapSize)
+              case _ => // the map entry is not the type id,
+                stash.appendElementFrom(r)  // so read and stash the map entry value
+                rec(remaining - 1, mapSize) // and recurse
             }
           } else failNoTypeId()
 
-        r.receiveInto(stash.appendReceiver, prevStash) match {
-          case DataItem.MapStart =>
-            stash.clear()
-            stash.appendReceiver.onMapHeader(1L)
-            r.readMapHeader(1L) // consume the MapHeader from the stash (and make it visible to logging / validation)
-            rec(-1, -1)
-            true
-
-          case DataItem.MapHeader =>
-            val mapSize = stash.peekLastLong()
-            stash.patchLastLong(1L)
-            r.readMapHeader(1L) // consume the MapHeader from the stash (and make it visible to logging / validation)
-            rec(mapSize, mapSize)
-            false
-
-          case _ => failNoMap()
-        }
+        if (r.tryReadMapStart()) {
+          rec(-1, -1)
+        } else if (r.hasMapHeader) {
+          val mapSize = r.readMapHeader()
+          rec(mapSize, mapSize)
+        } else failNoMap()
       }
 
       def readAdtEnvelopeClose(r: Reader, openResult: Boolean, typeName: String): Unit = ()
