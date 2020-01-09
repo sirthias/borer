@@ -13,25 +13,16 @@ Here is an example relying on map-based codecs:
 @@snip [-]($test$/DerivationSpec.scala) { #map-based }
 
 
-### ADT Encoding
+### Default ADT Encoding
 
-Like @ref:[Array-Based Codecs](array-based.md) the Map-based codecs come with built-in support for Abstract Data
-Types (ADT), e.g.
+The default encoding for ADT super-types is a single-entry map, with the key being the type id and the value
+becoming the encoding of the actual ADT subtype instance.
+
+For example, a `Dog` instance of the following ADT:
 
 @@snip [-]($test$/DerivationSpec.scala) { #example-adt }
 
-Since, up to now, _borer_ doesn't support fully-automatic derivation (but only semi-automatic, see also
-@ref:[Semi- vs. Fully-automatic](semi-vs-full-automatic.md)) the current best practice for deriving codecs for ADTs
-looks like this:
-
-@@snip [-]($test$/DerivationSpec.scala) { #adt-codec-derivation }
-
-Each ADT sub-type requires its own implicit codec (or encoder/decoder) definition with a call to the `deriveCodec` (or
-`deriveEncoder` / `deriveDecoder`) macro. If the sub-type codecs are not required for anything else but the ADT codec
-derivation the best practice is to move them into a sub-block scope as shown above.
-
-The default encoding for ADT super-types is a single-entry map, with the key being the type id and the value
-becoming the encoding of the actual ADT subtype instance, e.g. like this ([JSON] example):
+would be encoded to [JSON] like this:
 
 ```
 { "Dog" :
@@ -42,19 +33,19 @@ becoming the encoding of the actual ADT subtype instance, e.g. like this ([JSON]
 }
 ```
 
-This is how you get to this encoding (Note the explicit upcast to the ADT super-type `Animal`!):
+Here is the code (Note the explicit upcast to the ADT super-type `Animal`!):
 
 @@snip [-]($test$/DerivationSpec.scala) { #adt-default-encoding }
 
 
-#### Alternative "Flat" Encoding of ADTs
+### Alternative "Flat" Encoding of ADTs
 
 The default encoding for ADTs (single-entry maps) cleanly separates the encoding of the ADT super-type from the encoding
 of the ADT sub-types by introducing a dedicated "envelope" layer holding the type ID in an efficient form. This encoding
 can be written, stored and read in a very efficient manner and is therefore recommended for all application where you
 have full control over the both ends of the encoding "channel".
 
-However, especially when interoperating with other systems it is sometimes required to support another encoding style,
+However, especially when interoperating with other systems, it is sometimes required to support another encoding style,
 which carries the type ID in a special map entry, e.g. like this:
 
 ```
@@ -75,8 +66,8 @@ respective ADT sub-type (provided that the decoder simply ignores surplus member
 of significant drawbacks:
 
 - It requires all ADT sub-types to be encoded to maps, i.e. it violates separation of concerns between the super- and
-  sub-types. This can be annoying, e.g. when unary case classes could otherwise use `ArrayBasedCodecs.deriveUnaryCodec`
-  (which encodes to the unwrapped parameter value) for more efficiency.
+  sub-types. This can be annoying, e.g. when unary case classes could otherwise be stored more efficiently in an
+  "unwrapped" form, e.g. with the @ref:[CompactMapBasedCodecs](#compactmapbasedcodecs). 
 
 - It conflates two conceptually well separated and distinct name spaces: The one of the envelope (ADT super-type) and
   the one of the sub-type. This always leads to the risk of name collisions, which gives rise to type member names like
@@ -132,6 +123,15 @@ also used for custom ADT type-ids (see @ref:[Array-Based Codec](array-based.md) 
 Simply annotate a case class member do provide a custom name:
 
 @@snip [-]($test$/DerivationSpec.scala) { #custom-member-name }
+
+
+### CompactMapBasedCodecs
+
+As a slight variant of the `MapBasedCodecs` _borer_ also provides `CompactMapBasedCodecs` which are identical except for
+the encoding of unary `case class`es, i.e. `case class`es with only a single member.
+
+The `CompactMapBasedCodecs` encode them in an unwrapped form, i.e. directly as the value of the single member.
+The name of the sole `case class` therefore doesn't appear in the encoding at all.
 
 
   [CBOR]: http://cbor.io/

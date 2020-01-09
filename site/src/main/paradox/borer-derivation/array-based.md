@@ -5,9 +5,6 @@ Array-Based Codec derivation is enabled with this import:
 
 @@snip [-]($test$/DerivationSpec.scala) { #import-array-based }
 
-This brings the three methods `deriveEncoder[T]`, `deriveDecoder[T]` and `deriveCodec[T]` in scope,
-which you can use to derive the respective type classes for case classes and ADTs.
-
 Here is an example:
 
 @@snip [-]($test$/DerivationSpec.scala) { #array-based }   

@@ -114,6 +114,19 @@ object MiscSpec extends AbstractBorerSpec {
         Node(Node(Leaf, Node(Leaf, Leaf)), Leaf): TreeNode)
     }
 
+    "Deep Derivation on generic ADTs" - {
+      sealed trait Node[+T]
+      case object Empty                                   extends Node[Nothing]
+      case class Leaf[T](value: T)                        extends Node[T]
+      case class Branch[T](left: Node[T], right: Node[T]) extends Node[T]
+
+      implicit def codec[T: Encoder: Decoder]: Codec[Node[T]] = ArrayBasedCodecs.deriveAllCodecs[Node[T]]
+
+      roundTrip(
+        """["Branch",[["Branch",[["Leaf",1],["Branch",[["Empty",[]],["Leaf",2]]]]],["Leaf",3]]]""",
+        Branch(Branch(Leaf(1), Branch(Empty, Leaf(2))), Leaf(3)): Node[Int])
+    }
+
     "Deep Derivation on ADTs with circular dependencies" - {
       sealed trait ExprX
       case class Add(left: Factor, right: Factor)  extends ExprX
