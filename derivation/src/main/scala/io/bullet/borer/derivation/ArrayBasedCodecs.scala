@@ -138,8 +138,8 @@ object ArrayBasedCodecs {
           q"""$encoderCompanion((w, x) => $writeOpenFieldsAndClose)"""
         }
 
-        def deriveForSealedTrait(tpe: Type, subTypes: List[SubType]) = {
-          val cases = adtSubtypeWritingCases(tpe, subTypes)
+        def deriveForSealedTrait(node: AdtTypeNode) = {
+          val cases = adtSubtypeWritingCases(node)
           q"""$encoderCompanion { (w, value) =>
                 w.writeArrayOpen(2)
                 value match { case ..$cases }
@@ -150,7 +150,7 @@ object ArrayBasedCodecs {
     }
 
     def allEncoders[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
-      deriveAll(c)("Encoder", "ArrayBasedCodecs", "deriveAllEncoders", "deriveEncoder")
+      deriveAll(c)(isEncoder = true, "ArrayBasedCodecs", "deriveAllEncoders", "deriveEncoder")
 
     def decoder[T: ctx.WeakTypeTag](ctx: blackbox.Context): ctx.Tree = DeriveWith[T](ctx) {
       new CodecDeriver[ctx.type](ctx) {
@@ -196,8 +196,8 @@ object ArrayBasedCodecs {
           q"$decoderCompanion(r => $readObjectWithWrapping)"
         }
 
-        def deriveForSealedTrait(tpe: Type, subTypes: List[SubType]) = {
-          val typeIdsAndSubTypes = typeIdsAndSubTypesSorted(tpe, subTypes)
+        def deriveForSealedTrait(node: AdtTypeNode) = {
+          val typeIdsAndSubTypes = typeIdsAndFlattenedSubsSorted(node, decoderType)
 
           def rec(start: Int, end: Int): Tree =
             if (start < end) {
@@ -215,7 +215,7 @@ object ArrayBasedCodecs {
           val readTypeIdAndValue = rec(0, typeIdsAndSubTypes.length)
 
           q"""$decoderCompanion { r =>
-                def fail() = r.unexpectedDataItem(${s"type id key for subtype of `$tpe`"})
+                def fail() = r.unexpectedDataItem(${s"type id key for subtype of `${node.tpe}`"})
                 r.readArrayClose(r.readArrayOpen(2), $readTypeIdAndValue)
               }"""
         }
@@ -226,7 +226,7 @@ object ArrayBasedCodecs {
       codecMacro(c)("ArrayBasedCodecs", "deriveEncoder", "deriveDecoder")
 
     def allDecoders[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
-      deriveAll(c)("Decoder", "ArrayBasedCodecs", "deriveAllDecoders", "deriveDecoder")
+      deriveAll(c)(isEncoder = false, "ArrayBasedCodecs", "deriveAllDecoders", "deriveDecoder")
 
     def allCodecs[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
       codecMacro(c)("ArrayBasedCodecs", "deriveAllEncoders", "deriveAllDecoders")

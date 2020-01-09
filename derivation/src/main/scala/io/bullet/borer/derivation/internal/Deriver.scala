@@ -8,8 +8,6 @@
 
 package io.bullet.borer.derivation.internal
 
-import scala.annotation.tailrec
-import scala.collection.mutable.ListBuffer
 import scala.reflect.macros.blackbox
 import scala.reflect.macros.contexts.Context
 
@@ -26,18 +24,18 @@ private[derivation] object DeriveWith {
 abstract private[derivation] class Deriver[C <: blackbox.Context](val c: C) {
   import c.universe._
 
-  sealed trait CaseParamType {
+  sealed protected trait CaseParamType {
     def tpe: Type
   }
-  case class SameAs(earlierParam: CaseParam) extends CaseParamType { def tpe = earlierParam.paramType.tpe }
-  case class OwnType(tpe: Type)              extends CaseParamType
+  protected case class SameAs(earlierParam: CaseParam) extends CaseParamType { def tpe = earlierParam.paramType.tpe }
+  protected case class OwnType(tpe: Type)              extends CaseParamType
 
-  sealed trait WithAnnotations {
+  sealed protected trait WithAnnotations {
     def annotations: List[Tree]
     def name: Name
   }
 
-  case class CaseParam(
+  protected case class CaseParam(
       symbol: MethodSymbol,
       index: Int,
       paramType: CaseParamType,
@@ -48,36 +46,23 @@ abstract private[derivation] class Deriver[C <: blackbox.Context](val c: C) {
     def name: TermName = symbol.asTerm.name
   }
 
-  case class SubType(tpe: Type, index: Int, annotations: List[Tree], subs: List[SubType]) extends WithAnnotations {
-    def name: TypeName      = tpe.typeSymbol.asType.name
-    def isAbstract: Boolean = tpe.typeSymbol.isAbstract
+  protected case class AdtTypeNode(tpe: Type, subs: List[AdtTypeNode]) extends WithAnnotations {
+    def name: TypeName                                = tpe.typeSymbol.asType.name
+    def isAbstract: Boolean                           = tpe.typeSymbol.isAbstract
+    def annotations: List[Tree]                       = annotationTrees(tpe.typeSymbol)
+    def containedIn(list: List[AdtTypeNode]): Boolean = list.exists(_ eq this)
   }
 
-  def flattenAbstracts(subs: List[SubType])(predicate: SubType => Boolean): List[SubType] = {
-    val buf = new ListBuffer[SubType]
-    @tailrec def rec(remaining: List[SubType]): List[SubType] =
-      remaining match {
-        case head :: tail =>
-          if (head.isAbstract && predicate(head)) rec(head.subs ::: tail)
-          else {
-            if (!buf.exists(_.tpe == head.tpe)) buf += head
-            rec(tail)
-          }
-        case Nil => buf.toList
-      }
-    rec(subs)
-  }
+  protected def deriveForCaseObject(tpe: Type, module: ModuleSymbol): Tree
 
-  def deriveForCaseObject(tpe: Type, module: ModuleSymbol): Tree
-
-  def deriveForCaseClass(
+  protected def deriveForCaseClass(
       tpe: Type,
       companion: ModuleSymbol,
       params: List[CaseParam],
       annotations: List[Tree],
       constructorIsPrivate: Boolean): Tree
 
-  def deriveForSealedTrait(tpe: Type, subTypes: List[SubType]): Tree
+  protected def deriveForSealedTrait(node: AdtTypeNode): Tree
 
   final def deriveFor(tpe: c.Type): Tree = {
     val debug = c.macroApplication.symbol.annotations
@@ -89,8 +74,11 @@ abstract private[derivation] class Deriver[C <: blackbox.Context](val c: C) {
     val result = classType match {
       case Some(x) if x.isModuleClass => deriveForCaseObject(tpe, x.module.asModule)
       case Some(x) if x.isCaseClass   => forCaseClass(tpe, x)
-      case Some(x) if x.isSealed      => forSealedTrait(tpe, x)
-      case None                       => error(s"`$tpe` is not a case class or sealed abstract data type")
+      case Some(x) if x.isSealed =>
+        val node = adtTypeNode(tpe)
+        if (node.subs.isEmpty) error(s"Could not find any direct subtypes of `$typeSymbol`")
+        deriveForSealedTrait(node)
+      case None => error(s"`$tpe` is not a case class or sealed abstract data type")
     }
 
     if (debug.isDefined && tpe.toString.contains(debug.get)) {
@@ -101,18 +89,27 @@ abstract private[derivation] class Deriver[C <: blackbox.Context](val c: C) {
     result
   }
 
+  final protected def literal(value: Any) = Literal(Constant(value))
+
+  final protected def inferImplicit(typeClass: Symbol, tpe: Type): Option[Tree] = {
+    val applied     = tq"$typeClass[$tpe]"
+    val typeChecked = c.typecheck(applied, c.TYPEmode).tpe
+    val tree        = c.inferImplicitValue(typeChecked)
+    Option(tree).filterNot(_.isEmpty)
+  }
+
   private def forCaseClass(tpe: Type, typeSymbol: ClassSymbol): Tree = {
     val companion          = findCompanion(tpe).asModule
     val primaryConstructor = typeSymbol.primaryConstructor
     val headParamList = primaryConstructor.asMethod.typeSignature.paramLists.headOption
-      .getOrElse(error(s"Could not get parameter list of primary constructor of `$tpe`"))
+      .getOrElse(error(s"Cannot get parameter list of primary constructor of `$tpe`"))
       .map(_.asTerm)
     val caseParamsReversed = {
       val repeatedParamClass = definitions.RepeatedParamClass
       val scalaSeqType       = typeOf[Seq[_]].typeConstructor
       val caseParamMethods   = tpe.decls.collect { case m: MethodSymbol if m.isCaseAccessor => m.asMethod }
       if (caseParamMethods.size != headParamList.size)
-        error(s"Could not properly determine case class parameters of `$tpe`")
+        error(s"Cannot properly determine case class parameters of `$tpe`")
       val defaults: Iterator[Option[Tree]] = {
         val companionSym         = companion.info
         val primaryFactoryMethod = companionSym.decl(TermName("apply")).alternatives.lastOption
@@ -147,26 +144,23 @@ abstract private[derivation] class Deriver[C <: blackbox.Context](val c: C) {
       constructorIsPrivate = primaryConstructor.isPrivate)
   }
 
-  private def forSealedTrait(tpe: Type, typeSymbol: ClassSymbol): Tree = {
-    val index = Iterator.from(0)
-    def toSubType(acc: List[SubType], sub: Symbol): List[SubType] = {
-      val subType     = sub.asType.toType // FIXME: Broken for path dependent types
-      val typeParams  = sub.asType.typeParams
-      val typeArgs    = c.internal.thisType(sub).baseType(typeSymbol).typeArgs
-      val mapping     = typeArgs.map(_.typeSymbol).zip(tpe.typeArgs).toMap
-      val newTypeArgs = typeParams.map(mapping.withDefault(_.asType.toType))
-      val applied     = appliedType(subType.typeConstructor, newTypeArgs)
-      val theType     = c.internal.existentialAbstraction(typeParams, applied)
-      if (acc.forall(_.tpe != theType)) {
-        val subs = sub.asClass.knownDirectSubclasses.foldLeft(List.empty[SubType])(toSubType).reverse
-        SubType(theType, index.next(), annotationTrees(theType.typeSymbol), subs) :: acc
-      } else acc
-    }
-    val subtypes = typeSymbol.knownDirectSubclasses.foldLeft(List.empty[SubType])(toSubType).reverse
-    if (subtypes.isEmpty) error(s"Could not find any direct subtypes of `$typeSymbol`")
-
-    deriveForSealedTrait(tpe: Type, subtypes)
-  }
+  private def adtTypeNode(tpe: Type): AdtTypeNode =
+    AdtTypeNode(
+      tpe = tpe,
+      subs = tpe.typeSymbol.asClass.knownDirectSubclasses
+        .map { sub =>
+          val subType     = sub.asType.toType // FIXME: Broken for path dependent types
+          val typeParams  = sub.asType.typeParams
+          val typeArgs    = c.internal.thisType(sub).baseType(tpe.typeSymbol).typeArgs
+          val mapping     = typeArgs.map(_.typeSymbol).zip(tpe.typeArgs).toMap
+          val newTypeArgs = typeParams.map(mapping.withDefault(_.asType.toType))
+          val applied     = appliedType(subType.typeConstructor, newTypeArgs)
+          c.internal.existentialAbstraction(typeParams, applied)
+        }
+        .iterator
+        .map(adtTypeNode)
+        .toList
+    )
 
   private def annotationTrees(symbol: Symbol) = {
     val javaAnnotationType                = typeOf[java.lang.annotation.Annotation]

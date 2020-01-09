@@ -119,13 +119,13 @@ object CompactMapBasedCodecs {
       forwardToArrayBasedOrMapBasedDependingOnArity[T](c)("deriveEncoder")
 
     def allEncoders[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
-      deriveAll(c)("Encoder", "CompactMapBasedCodecs", "deriveAllEncoders", "deriveEncoder")
+      deriveAll(c)(isEncoder = true, "CompactMapBasedCodecs", "deriveAllEncoders", "deriveEncoder")
 
     def decoder[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
       forwardToArrayBasedOrMapBasedDependingOnArity[T](c)("deriveDecoder")
 
     def allDecoders[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
-      deriveAll(c)("Decoder", "CompactMapBasedCodecs", "deriveAllDecoders", "deriveDecoder")
+      deriveAll(c)(isEncoder = false, "CompactMapBasedCodecs", "deriveAllDecoders", "deriveDecoder")
 
     def codec[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
       codecMacro(c)("CompactMapBasedCodecs", "deriveEncoder", "deriveDecoder")

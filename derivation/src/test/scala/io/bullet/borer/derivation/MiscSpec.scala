@@ -70,35 +70,35 @@ object MiscSpec extends AbstractBorerSpec {
     }
 
     "Deep Derivation" - {
-      sealed trait AnimalX
-      case object Wolverine             extends AnimalX
-      case class Yeti(name: String)     extends AnimalX
-      sealed trait Dog                  extends AnimalX
+      sealed trait Animal
+      case object Wolverine             extends Animal
+      case class Yeti(name: String)     extends Animal
+      sealed trait Dog                  extends Animal
       case object TheHound              extends Dog
       case class Labrador(name: String) extends Dog
-      sealed trait Cat                  extends AnimalX
+      sealed trait Cat                  extends Animal
       case object TheLastTiger          extends Cat
       case class Lion(color: String)    extends Cat
 
       "simple" - {
-        implicit val codec = ArrayBasedCodecs.deriveAllCodecs[AnimalX]
-        roundTrip("""["Labrador","Lolle"]""", Labrador("Lolle"): AnimalX)
-        roundTrip("""["TheLastTiger",[]]""", TheLastTiger: AnimalX)
+        implicit val codec = ArrayBasedCodecs.deriveAllCodecs[Animal]
+        roundTrip("""["Labrador","Lolle"]""", Labrador("Lolle"): Animal)
+        roundTrip("""["TheLastTiger",[]]""", TheLastTiger: Animal)
       }
 
       "custom leaf" - {
         implicit val lionCodec = Codec.bimap[Int, Lion](_ => 0, _ => Lion("roar"))
-        implicit val codec     = ArrayBasedCodecs.deriveAllCodecs[AnimalX]
-        roundTrip("""["Lion",0]""", Lion("roar"): AnimalX)
+        implicit val codec     = ArrayBasedCodecs.deriveAllCodecs[Animal]
+        roundTrip("""["Lion",0]""", Lion("roar"): Animal)
       }
 
       "custom inner node" - {
         implicit val catCodec = Codec.bimap[Int, Cat](_ => 0, _ => TheLastTiger)
-        implicit val codec    = ArrayBasedCodecs.deriveAllCodecs[AnimalX]
+        implicit val codec    = ArrayBasedCodecs.deriveAllCodecs[Animal]
 
-        roundTrip("""["Cat",0]""", TheLastTiger: AnimalX)
-        verifyEncoding(Lion("roar"): AnimalX, """["Cat",0]""")
-        verifyDecoding("""["Cat",0]""", TheLastTiger: AnimalX)
+        roundTrip("""["Cat",0]""", TheLastTiger: Animal)
+        verifyEncoding(Lion("roar"): Animal, """["Cat",0]""")
+        verifyDecoding("""["Cat",0]""", TheLastTiger: Animal)
       }
     }
 
@@ -115,19 +115,38 @@ object MiscSpec extends AbstractBorerSpec {
     }
 
     "Deep Derivation on ADTs with circular dependencies" - {
-      sealed trait Expr
-      case class Add(left: Factor, right: Factor)  extends Expr
-      sealed trait Factor                          extends Expr
+      sealed trait ExprX
+      case class Add(left: Factor, right: Factor)  extends ExprX
+      sealed trait Factor                          extends ExprX
       case class Mult(left: Factor, right: Factor) extends Factor
       case class Literal(value: Int)               extends Factor
-      case class Parens(expr: Expr)                extends Factor
+      case class Parens(expr: ExprX)               extends Factor
 
       implicit lazy val factorCodec: Codec[Factor] = ArrayBasedCodecs.deriveAllCodecs[Factor]
-      implicit lazy val exprCodec: Codec[Expr]     = ArrayBasedCodecs.deriveAllCodecs[Expr]
+      implicit lazy val exprCodec: Codec[ExprX]    = ArrayBasedCodecs.deriveAllCodecs[ExprX]
 
       roundTrip(
         """["Add",[["Literal",18],["Parens",["Add",[["Literal",2],["Mult",[["Literal",3],["Literal",4]]]]]]]]""",
-        Add(Literal(18), Parens(Add(Literal(2), Mult(Literal(3), Literal(4))))): Expr)
+        Add(Literal(18), Parens(Add(Literal(2), Mult(Literal(3), Literal(4))))): ExprX)
+    }
+
+    "Deep Derivation on ADTs with cross dependencies" - {
+
+      "A" - {
+        sealed trait Expr
+        case class Literal(value: Int) extends Expr
+        case class Neg(lit: Literal)   extends Expr
+
+        implicit lazy val exprCodec: Codec[Expr] = ArrayBasedCodecs.deriveAllCodecs[Expr]
+      }
+
+      "B" - {
+        sealed trait Expr
+        case class Neg(lit: Literal)   extends Expr
+        case class Literal(value: Int) extends Expr
+
+        implicit lazy val exprCodec: Codec[Expr] = ArrayBasedCodecs.deriveAllCodecs[Expr]
+      }
     }
 
     "CompactMapBasedCodecs" - {

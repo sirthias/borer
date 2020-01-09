@@ -196,11 +196,11 @@ object MapBasedCodecs {
               }: $encoderType[$tpe]"""
         }
 
-        def deriveForSealedTrait(tpe: Type, subTypes: List[SubType]) = {
-          val cases = adtSubtypeWritingCases(tpe, subTypes)
+        def deriveForSealedTrait(node: AdtTypeNode) = {
+          val cases = adtSubtypeWritingCases(node)
           q"""$encoderCompanion { (w, value) =>
               def writeValue(): Unit = value match { case ..$cases }
-              val typeName = ${tpe.toString}
+              val typeName = ${node.tpe.toString}
               val strategy = implicitly[$borerPkg.AdtEncodingStrategy]
               strategy.writeAdtEnvelopeOpen(w, typeName)
               writeValue()
@@ -211,7 +211,7 @@ object MapBasedCodecs {
     }
 
     def allEncoders[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
-      deriveAll(c)("Encoder", "MapBasedCodecs", "deriveAllEncoders", "deriveEncoder")
+      deriveAll(c)(isEncoder = true, "MapBasedCodecs", "deriveAllEncoders", "deriveEncoder")
 
     def decoder[T: ctx.WeakTypeTag](ctx: blackbox.Context): ctx.Tree = DeriveWith[T](ctx) {
       new CodecDeriver[ctx.type](ctx) {
@@ -389,8 +389,8 @@ object MapBasedCodecs {
               }: $decoderType[$tpe]"""
         }
 
-        def deriveForSealedTrait(tpe: Type, subTypes: List[SubType]) = {
-          val typeIdsAndSubTypes = typeIdsAndSubTypesSorted(tpe, subTypes)
+        def deriveForSealedTrait(node: AdtTypeNode) = {
+          val typeIdsAndSubTypes = typeIdsAndFlattenedSubsSorted(node, decoderType)
 
           def rec(start: Int, end: Int): Tree =
             if (start < end) {
@@ -406,9 +406,9 @@ object MapBasedCodecs {
             } else q"fail()"
 
           q"""$decoderCompanion { r =>
-                def fail() = r.unexpectedDataItem(${s"type id key for subtype of `$tpe`"})
+                def fail() = r.unexpectedDataItem(${s"type id key for subtype of `${node.tpe}`"})
 
-                val typeName = ${tpe.toString}
+                val typeName = ${node.tpe.toString}
                 val strategy = implicitly[$borerPkg.AdtEncodingStrategy]
                 val opening = strategy.readAdtEnvelopeOpen(r, typeName)
                 val result = ${rec(0, typeIdsAndSubTypes.length)}
@@ -420,7 +420,7 @@ object MapBasedCodecs {
     }
 
     def allDecoders[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
-      deriveAll(c)("Decoder", "MapBasedCodecs", "deriveAllDecoders", "deriveDecoder")
+      deriveAll(c)(isEncoder = false, "MapBasedCodecs", "deriveAllDecoders", "deriveDecoder")
 
     def codec[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
       codecMacro(c)("MapBasedCodecs", "deriveEncoder", "deriveDecoder")

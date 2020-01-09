@@ -12,6 +12,7 @@ import io.bullet.borer._
 import io.bullet.borer.derivation.key
 
 import scala.annotation.tailrec
+import scala.collection.mutable.ArrayBuffer
 import scala.reflect.macros.blackbox
 
 abstract private[derivation] class CodecDeriver[C <: blackbox.Context](ctx: C) extends Deriver[C](ctx) {
@@ -28,49 +29,65 @@ abstract private[derivation] class CodecDeriver[C <: blackbox.Context](ctx: C) e
   lazy val readerType       = symbolOf[Reader]
   lazy val readerCompanion  = readerType.companion
 
-  def adtSubtypeWritingCases(tpe: Type, subTypes: List[SubType]): List[Tree] = {
-    val exploded = flattenAbstracts(subTypes) { sub =>
-      // if we cannot find an explicit encoder for an abstract subType we also take care of that subType's sub types
-      inferImplicit(encoderType, sub.tpe).isEmpty
-    }
-    val typeIds = getTypeIds(tpe, exploded)
-    exploded.zip(typeIds).map {
-      case (subType, typeId) =>
-        val writeTypeId = TermName(s"write${typeId.productPrefix}")
-        cq"x: ${subType.tpe} => w.$writeTypeId(${literal(typeId.value)}).write(x)"
-    }
+  def typeIdsAndFlattenedSubsSorted(node: AdtTypeNode, typeClass: Symbol): List[(Key, AdtTypeNode)] = {
+    val result = flattenedSubs(node, typeClass).map(x => x._1.key() -> x._1)
+
+    @tailrec def verifyNoCollisions(i: Int, j: Int): Array[(Key, AdtTypeNode)] =
+      if (i < result.length) {
+        if (j < result.length) {
+          if (i != j && result(i)._1 == result(j)._1) {
+            c.abort(
+              node.tpe.typeSymbol.pos,
+              s"@key collision: sub types `${node.subs(i).tpe}` and `${node.subs(j).tpe}` " +
+                s"of ADT `${node.tpe}` share the same type id `${result(i)._1.value}`")
+          } else verifyNoCollisions(i, j + 1)
+        } else verifyNoCollisions(i + 1, 0)
+      } else result
+
+    java.util.Arrays.sort(verifyNoCollisions(0, 0).asInstanceOf[Array[Object]], KeyPairOrdering)
+    result.toList
   }
 
-  def typeIdsAndSubTypesSorted(tpe: Type, subTypes: List[SubType]): Array[(Key, SubType)] = {
-    val exploded = flattenAbstracts(subTypes) { sub =>
-      // if we cannot find an explicit decoder for an abstract subType we also take care of that subType's sub types
-      inferImplicit(decoderType, sub.tpe).isEmpty
-    }
-    val typeIdsAndSubTypes: Array[(Key, SubType)] = getTypeIds(tpe, exploded).zip(exploded)
-    java.util.Arrays.sort(typeIdsAndSubTypes.asInstanceOf[Array[Object]], KeyPairOrdering)
-    typeIdsAndSubTypes
+  // returns all (recursively reachable, i.e. descendant) sub-types of `node` along with a flag showing
+  // whether an instance of the given typeclass is implicitly available for the respective sub-type
+  // NOTE: Abstract sub-types whose flag is `true` are returned and not descended into,
+  // Abstract sub-types whose flag would be `false` are skipped (and their descendants recursed into)
+  def flattenedSubs(node: AdtTypeNode, typeClass: Symbol): Array[(AdtTypeNode, Boolean)] = {
+    val buf = new ArrayBuffer[(AdtTypeNode, Boolean)]
+    @tailrec def rec(remaining: List[AdtTypeNode]): Array[(AdtTypeNode, Boolean)] =
+      remaining match {
+        case head :: tail =>
+          val implicitAvailable = inferImplicit(typeClass, head.tpe).nonEmpty
+          def appendHead()      = if (!buf.exists(_._1.tpe =:= head.tpe)) buf += head -> implicitAvailable
+          rec {
+            if (head.isAbstract) {
+              if (implicitAvailable) {
+                appendHead()
+                tail
+              } else {
+                // if we cannot find an explicit encoder/decoder for an abstract sub we flatten that sub's subs
+                head.subs ::: tail
+              }
+            } else {
+              appendHead()
+              tail
+            }
+          }
+        case Nil => buf.toArray
+      }
+    rec(node.subs)
   }
+
+  def adtSubtypeWritingCases(node: AdtTypeNode): List[Tree] =
+    typeIdsAndFlattenedSubsSorted(node, encoderType).map {
+      case (typeId, sub) =>
+        val writeTypeId = TermName(s"write${typeId.productPrefix}")
+        cq"x: ${sub.tpe} => w.$writeTypeId(${literal(typeId.value)}).write(x)"
+    }
 
   def r(methodNamePrefix: String, key: Key, methodNameSuffix: String = "") = {
     val method = TermName(s"$methodNamePrefix${key.productPrefix}$methodNameSuffix")
     q"r.$method(${literal(key.value)})"
-  }
-
-  def getTypeIds(tpe: Type, subTypes: List[SubType]): Array[Key] = {
-    val annos: Array[Key] = subTypes.map(_.key()).toArray
-
-    @tailrec def rec(i: Int, j: Int): Array[Key] =
-      if (i < annos.length) {
-        if (j < annos.length) {
-          if (i != j && annos(i) == annos(j)) {
-            c.abort(
-              tpe.typeSymbol.pos,
-              s"@key collision: sub types `${subTypes(i).tpe}` and `${subTypes(j).tpe}` " +
-                s"of ADT `$tpe` share the same type id `${annos(i).value}`")
-          } else rec(i, j + 1)
-        } else rec(i + 1, 0)
-      } else annos
-    rec(0, 0)
   }
 
   def isBasicType(tpe: Type): Boolean =
@@ -84,20 +101,11 @@ abstract private[derivation] class CodecDeriver[C <: blackbox.Context](ctx: C) e
       tpe =:= definitions.ByteTpe ||
       tpe =:= definitions.ShortTpe
 
-  def literal(value: Any) = Literal(Constant(value))
-
   def isDefinedOn(tree: Tree, symbol: Symbol): Boolean =
     tree match {
       case Select(x, _) => x.symbol == symbol
       case _            => false
     }
-
-  def inferImplicit(typeClass: Symbol, tpe: Type): Option[Tree] = {
-    val applied     = tq"$typeClass[$tpe]"
-    val typeChecked = c.typecheck(applied, c.TYPEmode).tpe
-    val tree        = c.inferImplicitValue(typeChecked)
-    Option(tree).filterNot(_.isEmpty)
-  }
 
   implicit class RichCaseParam(underlying: CaseParam) {
     def isBasicType: Boolean = CodecDeriver.this.isBasicType(underlying.paramType.tpe)
