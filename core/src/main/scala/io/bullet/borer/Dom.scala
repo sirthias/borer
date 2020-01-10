@@ -10,6 +10,8 @@ package io.bullet.borer
 
 import java.util
 
+import io.bullet.borer.encodings.BaseEncoding
+
 import scala.annotation.{switch, tailrec}
 import scala.collection.{immutable, mutable}
 import scala.collection.compat.immutable.ArraySeq
@@ -44,9 +46,17 @@ object Dom {
   final case class DoubleElem(value: Double)                    extends Element(DIS.Double)
   final case class NumberStringElem(value: String)              extends Element(DIS.NumberString)
 
-  sealed abstract class AbstractBytesElem(dataItem: Int) extends Element(dataItem)
+  sealed abstract class AbstractBytesElem(dataItem: Int) extends Element(dataItem) {
+    def byteCount: Long
+    def bytesIterator: Iterator[Array[Byte]]
+    def compact: Array[Byte]
+  }
 
   final case class ByteArrayElem(value: Array[Byte]) extends AbstractBytesElem(DIS.Bytes) {
+    def byteCount                            = value.length.toLong
+    def bytesIterator: Iterator[Array[Byte]] = Iterator.single(value)
+    def compact                              = value
+
     override def hashCode() = util.Arrays.hashCode(value)
 
     override def equals(obj: Any) = obj match {
@@ -55,12 +65,54 @@ object Dom {
     }
   }
 
-  final case class BytesStreamElem(value: Vector[AbstractBytesElem]) extends AbstractBytesElem(DIS.BytesStart)
+  final case class BytesStreamElem(value: Vector[AbstractBytesElem]) extends AbstractBytesElem(DIS.BytesStart) {
+    def byteCount = value.foldLeft(0L)((acc, x) => acc + x.byteCount)
 
-  sealed abstract class AbstractTextElem(dataItem: Int) extends Element(dataItem)
+    def bytesIterator: Iterator[Array[Byte]] =
+      value.foldLeft(Iterator.empty[Array[Byte]])((acc, x) => acc ++ x.bytesIterator)
 
-  final case class StringElem(value: String)                       extends AbstractTextElem(DIS.String)
-  final case class TextStreamElem(value: Vector[AbstractTextElem]) extends AbstractTextElem(DIS.TextStart)
+    def compact: Array[Byte] = {
+      val longSize = byteCount
+      val len      = longSize.toInt
+      if (len.toLong != longSize) sys.error("byte stream with total size > Int.MaxValue cannot be compacted")
+      val result = new Array[Byte](len)
+      val iter   = bytesIterator
+      @tailrec def rec(ix: Int): Array[Byte] =
+        if (ix < len) {
+          val chunk = iter.next()
+          System.arraycopy(chunk, 0, result, ix, chunk.length)
+          rec(ix + chunk.length)
+        } else result
+      rec(0)
+    }
+  }
+
+  sealed abstract class AbstractTextElem(dataItem: Int) extends Element(dataItem) {
+    def charCount: Long
+    def stringIterator: Iterator[String]
+    def compact: String
+  }
+
+  final case class StringElem(value: String) extends AbstractTextElem(DIS.String) {
+    def charCount                        = value.length.toLong
+    def stringIterator: Iterator[String] = Iterator.single(value)
+    def compact                          = value
+  }
+
+  final case class TextStreamElem(value: Vector[AbstractTextElem]) extends AbstractTextElem(DIS.TextStart) {
+    def charCount                        = value.foldLeft(0L)((acc, x) => acc + x.charCount)
+    def stringIterator: Iterator[String] = value.foldLeft(Iterator.empty[String])((acc, x) => acc ++ x.stringIterator)
+
+    def compact: String = {
+      val longSize = charCount
+      val len      = longSize.toInt
+      if (len.toLong != longSize) sys.error("text stream with total size > Int.MaxValue cannot be compacted")
+      val iter = stringIterator
+      val sb   = new java.lang.StringBuilder(len)
+      while (iter.hasNext) sb.append(iter.next())
+      sb.toString
+    }
+  }
 
   final case class SimpleValueElem(value: SimpleValue) extends Element(DIS.SimpleValue)
 
@@ -89,17 +141,15 @@ object Dom {
     }
   }
 
-  sealed abstract class MapElem(val size: Int, private[Dom] val elements: Array[Element], dataItem: Int)
-      extends Element(dataItem) {
-    if (size != (elements.length >> 1)) throw new IllegalArgumentException
+  sealed abstract class MapElem(private[Dom] val elements: Array[Element], dataItem: Int) extends Element(dataItem) {
+    if ((elements.length & 1) != 0) throw new IllegalArgumentException
 
-    final def elementsInterleaved: IndexedSeq[Element] = ArraySeq.unsafeWrapArray(elements)
-
-    final def isEmpty                                          = false
-    final def get: (Int, Iterator[Element], Iterator[Element]) = (size, keys, values)
-
-    final def keys: Iterator[Element]   = new MapElem.KVIterator(elements, 0)
-    final def values: Iterator[Element] = new MapElem.KVIterator(elements, 1)
+    @inline final def size: Int                                        = elements.length >> 1
+    @inline final def elementsInterleaved: IndexedSeq[Element]         = ArraySeq.unsafeWrapArray(elements)
+    @inline final def isEmpty                                          = false
+    @inline final def get: (Int, Iterator[Element], Iterator[Element]) = (size, keys, values)
+    @inline final def keys: Iterator[Element]                          = new MapElem.KVIterator(elements, 0)
+    @inline final def values: Iterator[Element]                        = new MapElem.KVIterator(elements, 1)
 
     def apply(key: String): Option[Element] = {
       @tailrec def rec(ix: Int): Option[Element] =
@@ -140,7 +190,7 @@ object Dom {
     final override def equals(obj: Any) =
       obj match {
         case that: MapElem =>
-          this.size == that.size && this.dataItemShift == that.dataItemShift && util.Arrays
+          this.dataItemShift == that.dataItemShift && util.Arrays
             .equals(this.elements.asInstanceOf[Array[Object]], that.elements.asInstanceOf[Array[Object]])
         case _ => false
       }
@@ -148,29 +198,29 @@ object Dom {
 
   object MapElem {
 
-    final class Sized private[Dom] (size: Int, elements: Array[Element]) extends MapElem(size, elements, DIS.MapHeader)
+    final class Sized private[Dom] (elements: Array[Element]) extends MapElem(elements, DIS.MapHeader)
 
     object Sized {
-      private[this] val create                                             = new Sized(_, _)
-      val empty                                                            = new Sized(0, Array.empty)
+      private[this] val create                                             = new Sized(_)
+      val empty                                                            = new Sized(Array.empty)
       def apply(first: (String, Element), more: (String, Element)*): Sized = construct(first +: more, create)
       def apply(entries: (Element, Element)*): Sized                       = construct(entries, create)
       def apply(entries: collection.Map[Element, Element]): Sized          = construct(entries, create)
       def unapply(value: Sized): Sized                                     = value
     }
 
-    final class Unsized private[Dom] (size: Int, elements: Array[Element]) extends MapElem(size, elements, DIS.MapStart)
+    final class Unsized private[Dom] (elements: Array[Element]) extends MapElem(elements, DIS.MapStart)
 
     object Unsized {
-      private[this] val create                                               = new Unsized(_, _)
-      val empty                                                              = new Unsized(0, Array.empty)
+      private[this] val create                                               = new Unsized(_)
+      val empty                                                              = new Unsized(Array.empty)
       def apply(first: (String, Element), more: (String, Element)*): Unsized = construct(first +: more, create)
       def apply(entries: (Element, Element)*): Unsized                       = construct(entries, create)
       def apply(entries: collection.Map[Element, Element]): Unsized          = construct(entries, create)
       def unapply(value: Unsized): Unsized                                   = value
     }
 
-    private def construct[T](entries: Iterable[(AnyRef, Element)], f: (Int, Array[Element]) => T): T = {
+    private def construct[T](entries: Iterable[(AnyRef, Element)], f: Array[Element] => T): T = {
       val elements = new mutable.ArrayBuilder.ofRef[Dom.Element]
       elements.sizeHint(entries.size << 1)
       entries.foreach {
@@ -181,7 +231,7 @@ object Dom {
           }
           elements += keyElem += value
       }
-      f(entries.size, elements.result())
+      f(elements.result())
     }
 
     final private class KVIterator(elements: Array[Element], startIndex: Int) extends Iterator[Element] {
@@ -309,7 +359,7 @@ object Dom {
               if (remaining > 0) {
                 elements += r.read[Element] += r.read[Element]
                 rec(remaining - 1)
-              } else new MapElem.Sized(count, elements.result())
+              } else new MapElem.Sized(elements.result())
             rec(count)
           } else MapElem.Sized.empty
 
@@ -317,15 +367,115 @@ object Dom {
           r.skipDataItem()
           if (!r.tryReadBreak) {
             @tailrec def rec(elements: mutable.ArrayBuilder.ofRef[Dom.Element]): MapElem.Unsized =
-              if (r.tryReadBreak()) {
-                val array = elements.result()
-                new MapElem.Unsized(array.length >> 1, array)
-              } else rec(elements += r.read[Element]() += r.read[Element]())
+              if (r.tryReadBreak()) new MapElem.Unsized(elements.result())
+              else rec(elements += r.read[Element]() += r.read[Element]())
             rec(new mutable.ArrayBuilder.ofRef[Dom.Element])
           } else MapElem.Unsized.empty
 
         case DIS.Tag => TaggedElem(r.readTag(), r.read[Element]())
       }
+    }
+  }
+
+  /**
+    * A [[Dom.Transformer]] encapsulates the ability for arbitrary DOM transformations.
+    * The default implementation applies a NOP transformation, i.e. returns an identical DOM structure.
+    *
+    * Override some or all methods to customize the transformation logic.
+    */
+  trait Transformer extends (Element => Element) {
+
+    def apply(elem: Element): Element =
+      (elem.dataItemShift: @switch) match {
+        case DIS.Null         => transformNull()
+        case DIS.Undefined    => transformUndefined()
+        case DIS.Boolean      => transformBoolean(elem.asInstanceOf[BooleanElem])
+        case DIS.Int          => transformInt(elem.asInstanceOf[IntElem])
+        case DIS.Long         => transformLong(elem.asInstanceOf[LongElem])
+        case DIS.OverLong     => transformOverLong(elem.asInstanceOf[OverLongElem])
+        case DIS.Float16      => transformFloat16(elem.asInstanceOf[Float16Elem])
+        case DIS.Float        => transformFloat(elem.asInstanceOf[FloatElem])
+        case DIS.Double       => transformDouble(elem.asInstanceOf[DoubleElem])
+        case DIS.NumberString => transformNumberString(elem.asInstanceOf[NumberStringElem])
+        case DIS.String       => transformString(elem.asInstanceOf[StringElem])
+        case DIS.TextStart    => transformTextStart(elem.asInstanceOf[TextStreamElem])
+        case DIS.Bytes        => transformBytes(elem.asInstanceOf[ByteArrayElem])
+        case DIS.BytesStart   => transformBytesStart(elem.asInstanceOf[BytesStreamElem])
+        case DIS.SimpleValue  => transformSimpleValue(elem.asInstanceOf[SimpleValueElem])
+        case DIS.ArrayHeader  => transformArrayHeader(elem.asInstanceOf[ArrayElem.Sized])
+        case DIS.ArrayStart   => transformArrayStart(elem.asInstanceOf[ArrayElem.Unsized])
+        case DIS.MapHeader    => transformMapHeader(elem.asInstanceOf[MapElem.Sized])
+        case DIS.MapStart     => transformMapStart(elem.asInstanceOf[MapElem.Unsized])
+        case DIS.Tag          => transformTag(elem.asInstanceOf[TaggedElem])
+      }
+
+    def transformNull(): Element                               = NullElem
+    def transformUndefined(): Element                          = UndefinedElem
+    def transformBoolean(elem: BooleanElem): Element           = elem
+    def transformInt(elem: IntElem): Element                   = elem
+    def transformLong(elem: LongElem): Element                 = elem
+    def transformOverLong(elem: OverLongElem): Element         = elem
+    def transformFloat16(elem: Float16Elem): Element           = elem
+    def transformFloat(elem: FloatElem): Element               = elem
+    def transformDouble(elem: DoubleElem): Element             = elem
+    def transformNumberString(elem: NumberStringElem): Element = elem
+    def transformString(elem: StringElem): Element             = transformTextElem(elem)
+    def transformTextStart(elem: TextStreamElem): Element      = transformTextElem(elem)
+    def transformTextElem(elem: AbstractTextElem): Element     = elem
+    def transformBytes(elem: ByteArrayElem): Element           = transformBytesElem(elem)
+    def transformBytesStart(elem: BytesStreamElem): Element    = transformBytesElem(elem)
+    def transformBytesElem(elem: AbstractBytesElem): Element   = elem
+    def transformSimpleValue(elem: SimpleValueElem): Element   = elem
+    def transformTag(elem: TaggedElem): Element                = elem
+    def transformArrayHeader(elem: ArrayElem.Sized): Element   = ArrayElem.Sized(elem.elements.map(this))
+    def transformArrayStart(elem: ArrayElem.Unsized): Element  = ArrayElem.Unsized(elem.elements.map(this))
+    def transformMapHeader(elem: MapElem.Sized): Element       = new MapElem.Sized(elem.elements.map(this))
+    def transformMapStart(elem: MapElem.Unsized): Element      = new MapElem.Unsized(elem.elements.map(this))
+  }
+
+  object Transformer {
+
+    /**
+      * A [[Transformer]] that converts certain DOM elements of a given DOM structure that are not supported by the
+      * JSON renderer into alternative elements that can be represented in JSON.
+      *
+      * The elements that are not supported (and as such will still trigger errors during an attempted encoding to
+      * JSON) are:
+      *
+      * - Non-String Map Keys
+      * - Float.NaN, Float.PositiveInfinity, Float.NegativeInfinity
+      * - Double.NaN, Double.PositiveInfinity, Double.NegativeInfinity
+      * - Tags
+      *
+      *
+      * This transformer can be used, for example, for converting a CBOR document to JSON by first parsing the CBOR
+      * encoding into a [[Dom.Element]], then applying this transformer and then encoding the transformation result to
+      * JSON.
+      *
+      * NOTE: Since there is no single, standard way of representing the CBOR-only DOM elements in JSON this transformer
+      * provides merely one of many possible such implementations.
+      * Override the respective methods in order to customize the logic!
+      */
+    trait ToJsonSubset extends Transformer {
+      val bytesEncoding: BaseEncoding = BaseEncoding.base64
+
+      override def transformUndefined(): Element                = NullElem
+      override def transformFloat16(elem: Float16Elem): Element = FloatElem(elem.value)
+
+      override def transformBytesElem(elem: AbstractBytesElem): Element =
+        StringElem(new String(bytesEncoding.encode(elem.compact)))
+
+      override def transformTextStart(elem: TextStreamElem) =
+        StringElem(elem.compact)
+
+      override def transformSimpleValue(elem: SimpleValueElem): Element =
+        IntElem(elem.value.value)
+
+      override def transformArrayHeader(elem: ArrayElem.Sized): Element =
+        ArrayElem.Unsized(elem.elements.map(this))
+
+      override def transformMapHeader(elem: MapElem.Sized): Element =
+        new MapElem.Unsized(elem.elements.map(this))
     }
   }
 }
