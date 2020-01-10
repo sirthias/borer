@@ -396,7 +396,7 @@ lazy val site = project
       state
     },
 
-    Compile / paradox / version := "1.2.1",
+    Compile / paradox / version := "1.3.0",
 
     paradoxProperties ++= Map(
       "image.base_url" -> ".../assets/images",

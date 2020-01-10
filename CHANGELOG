@@ -1,3 +1,14 @@
+Version 1.3.0 (2020-01-10)
+--------------------------
+
+- added fully automatic codec derivation for ADT hierarchies (#36)
+- added `Dom.Transformer` and `Dom.Transformer.ToJsonSubset` (#143)
+- added `CompactMapBasedCodecs`
+- removed `ArrayBasedCodecs.deriveUnaryXXX`
+- fixed `AdtEncodingStrategy.flat` defunct within certain wrapping elements (#142)
+- fixed `AdtEncodingStrategy.flat` broken for stacked ADTs (#144)
+
+
 Version 1.2.1 (2019-12-05)
 --------------------------
 
