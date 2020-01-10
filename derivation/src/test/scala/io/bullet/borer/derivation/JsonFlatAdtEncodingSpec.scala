@@ -11,7 +11,7 @@ package io.bullet.borer.derivation
 import java.nio.charset.StandardCharsets
 
 import io.bullet.borer._
-import io.bullet.borer.derivation.MapBasedCodecs.deriveCodec
+import io.bullet.borer.derivation.MapBasedCodecs
 import utest._
 
 object JsonFlatAdtEncodingSpec extends AbstractBorerSpec {
@@ -30,12 +30,12 @@ object JsonFlatAdtEncodingSpec extends AbstractBorerSpec {
 
   implicit val flatAdtEncoding = AdtEncodingStrategy.flat()
 
-  implicit val dogCodec    = deriveCodec[Dog]
-  implicit val catCodec    = deriveCodec[Cat]
-  implicit val mouseCodec  = deriveCodec[Mouse]
-  implicit val yetiCodec   = deriveCodec[Yeti.type]
+  implicit val dogCodec    = MapBasedCodecs.deriveCodec[Dog]
+  implicit val catCodec    = MapBasedCodecs.deriveCodec[Cat]
+  implicit val mouseCodec  = MapBasedCodecs.deriveCodec[Mouse]
+  implicit val yetiCodec   = MapBasedCodecs.deriveCodec[Yeti.type]
   implicit val fishCodec   = ArrayBasedCodecs.deriveCodec[Fish]
-  implicit val animalCodec = deriveCodec[Animal]
+  implicit val animalCodec = MapBasedCodecs.deriveCodec[Animal]
 
   val tests = Tests {
 
@@ -69,9 +69,9 @@ object JsonFlatAdtEncodingSpec extends AbstractBorerSpec {
         case class Good[+T](value: T) extends Result[T]
         case object Bad               extends Result[Nothing]
 
-        implicit def goodCodec[T: Encoder: Decoder]   = deriveCodec[Good[T]]
-        implicit val badCodec                         = deriveCodec[Bad.type]
-        implicit def resultCodec[T: Encoder: Decoder] = deriveCodec[Result[T]]
+        implicit def goodCodec[T: Encoder: Decoder]   = MapBasedCodecs.deriveCodec[Good[T]]
+        implicit val badCodec                         = MapBasedCodecs.deriveCodec[Bad.type]
+        implicit def resultCodec[T: Encoder: Decoder] = MapBasedCodecs.deriveCodec[Result[T]]
 
         val goodDog = Good(Dog(2, "Lolle"))
         roundTrip("""{"value":{"age":2,"name":"Lolle"}}""", goodDog)
@@ -87,6 +87,17 @@ object JsonFlatAdtEncodingSpec extends AbstractBorerSpec {
       "in list" - {
         val animals: List[Animal] = List(Dog(2, "Lolle"))
         roundTrip("""[{"_type":"Dog","age":2,"name":"Lolle"}]""", animals)
+      }
+
+      "stacked" - {
+        sealed trait A
+        sealed trait B       extends A
+        case class C(x: Int) extends B
+
+        implicit val bCodec = MapBasedCodecs.deriveAllCodecs[B]
+        implicit val aCodec = MapBasedCodecs.deriveAllCodecs[A]
+
+        roundTrip("""{"_type":"B","_type":"C","x":42}""", C(42): A)
       }
     }
 

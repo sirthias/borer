@@ -142,24 +142,25 @@ object AdtEncodingStrategy {
             } else default("a String")
 
           override def onMapHeader(length: Long): Unit = {
-            originalReceiver.onMapHeader(length + 1)
-            writeTypeIdMemberAndResetReceiver()
+            w.receiver = originalReceiver
+            w.writeMapHeader(length + 1)
+            writeTypeIdMember()
           }
 
           override def onMapStart(): Unit = {
-            originalReceiver.onMapStart()
-            writeTypeIdMemberAndResetReceiver()
+            w.receiver = originalReceiver
+            w.writeMapStart()
+            writeTypeIdMember()
           }
 
-          private def writeTypeIdMemberAndResetReceiver(): Unit = {
-            originalReceiver.onString(typeMemberName)
+          private def writeTypeIdMember(): Unit = {
+            w.writeString(typeMemberName)
             state match {
               case 0 => throw new IllegalStateException // a `Map` type ID ?
-              case 1 => originalReceiver.onInt(longTypeId.toInt)
-              case 2 => originalReceiver.onLong(longTypeId)
-              case 3 => originalReceiver.onString(stringTypeId)
+              case 1 => w.writeInt(longTypeId.toInt)
+              case 2 => w.writeLong(longTypeId)
+              case 3 => w.writeString(stringTypeId)
             }
-            w.receiver = originalReceiver
           }
           protected def default(t: String): Unit =
             throw new Borer.Error.Unsupported(
