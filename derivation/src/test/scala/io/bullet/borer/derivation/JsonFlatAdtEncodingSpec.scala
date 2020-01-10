@@ -11,7 +11,6 @@ package io.bullet.borer.derivation
 import java.nio.charset.StandardCharsets
 
 import io.bullet.borer._
-import io.bullet.borer.derivation.MapBasedCodecs
 import utest._
 
 object JsonFlatAdtEncodingSpec extends AbstractBorerSpec {

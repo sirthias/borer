@@ -69,7 +69,7 @@ object Dom {
     def byteCount = value.foldLeft(0L)((acc, x) => acc + x.byteCount)
 
     def bytesIterator: Iterator[Array[Byte]] =
-      value.foldLeft(Iterator.empty[Array[Byte]])((acc, x) => acc ++ x.bytesIterator)
+      value.foldLeft[Iterator[Array[Byte]]](Iterator.empty)((acc, x) => acc ++ x.bytesIterator)
 
     def compact: Array[Byte] = {
       val longSize = byteCount
@@ -100,8 +100,10 @@ object Dom {
   }
 
   final case class TextStreamElem(value: Vector[AbstractTextElem]) extends AbstractTextElem(DIS.TextStart) {
-    def charCount                        = value.foldLeft(0L)((acc, x) => acc + x.charCount)
-    def stringIterator: Iterator[String] = value.foldLeft(Iterator.empty[String])((acc, x) => acc ++ x.stringIterator)
+    def charCount = value.foldLeft(0L)((acc, x) => acc + x.charCount)
+
+    def stringIterator: Iterator[String] =
+      value.foldLeft[Iterator[String]](Iterator.empty)((acc, x) => acc ++ x.stringIterator)
 
     def compact: String = {
       val longSize = charCount
