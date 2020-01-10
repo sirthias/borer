@@ -90,13 +90,13 @@ object JsonFlatAdtEncodingSpec extends AbstractBorerSpec {
 
       "stacked" - {
         sealed trait A
-        sealed trait B       extends A
-        case class C(x: Int) extends B
+        sealed trait B             extends A
+        case class C(x: Option[B]) extends B
 
-        implicit val bCodec = MapBasedCodecs.deriveAllCodecs[B]
-        implicit val aCodec = MapBasedCodecs.deriveAllCodecs[A]
+        implicit lazy val bCodec: Codec[B] = MapBasedCodecs.deriveAllCodecs[B]
+        implicit val aCodec                = MapBasedCodecs.deriveAllCodecs[A]
 
-        roundTrip("""{"_type":"B","_type":"C","x":42}""", C(42): A)
+        roundTrip("""{"_type":"B","_type":"C","x":[]}""", C(None): A)
       }
     }
 
