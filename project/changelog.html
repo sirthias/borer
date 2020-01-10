@@ -158,10 +158,11 @@ sirthias/borer/
   </ul></li>
   <li><a href="../borer-derivation/index.html" class="page"><code>borer-derivation</code></a>
   <ul>
+    <li><a href="../borer-derivation/basics.html" class="page">Derivation Basics</a></li>
     <li><a href="../borer-derivation/array-based.html" class="page">Array-Based Codecs</a></li>
     <li><a href="../borer-derivation/map-based.html" class="page">Map-Based Codecs</a></li>
     <li><a href="../borer-derivation/type-ids.html" class="page">Type IDs</a></li>
-    <li><a href="../borer-derivation/semi-vs-full-automatic.html" class="page">Semi- vs. Fully-automatic Derivation</a></li>
+    <li><a href="../borer-derivation/faq.html" class="page">Derivation FAQ</a></li>
   </ul></li>
   <li><a href="../borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
   <li><a href="../borer-compat-circe.html" class="page"><code>borer-compat-circe</code></a></li>
@@ -181,7 +182,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.2.1
+<i class="md-icon" title="Version">label_outline</i> 1.3.0
 </label>
 </li>
 </ul>
@@ -194,7 +195,18 @@ sirthias/borer/
 <h1><a href="#changelog" name="changelog" class="anchor"><span class="anchor-link"></span></a>Changelog</h1>
 <p>This is the current <em>borer</em> <a href="https://github.com/sirthias/borer/tree/master/CHANGELOG">CHANGELOG</a>:</p>
 <br>
-<pre><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/CHANGELOG" target="_blank" title="Go to snippet source"></a><code>Version 1.2.1 (2019-12-05)
+<pre><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/CHANGELOG" target="_blank" title="Go to snippet source"></a><code>Version 1.3.0 (2020-01-10)
+--------------------------
+
+- added fully automatic codec derivation for ADT hierarchies (#36)
+- added `Dom.Transformer` and `Dom.Transformer.ToJsonSubset` (#143)
+- added `CompactMapBasedCodecs`
+- removed `ArrayBasedCodecs.deriveUnaryXXX`
+- fixed `AdtEncodingStrategy.flat` defunct within certain wrapping elements (#142)
+- fixed `AdtEncodingStrategy.flat` broken for stacked ADTs (#144)
+
+
+Version 1.2.1 (2019-12-05)
 --------------------------
 
 - improved JSON parsing performance (numbers by about 20%)
@@ -351,7 +363,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.2.1
+1.3.0
 </span>
 </div>
 </article>

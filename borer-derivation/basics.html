@@ -20,7 +20,7 @@
 
 <meta name="description" content="CBOR and JSON (de)serialization in Scala">
 <link rel="shortcut icon" href="../assets/images/favicon.ico">
-<title>StringNumbers and StringBooleans · borer</title>
+<title>Derivation Basics · borer</title>
 <link rel="stylesheet" href="../assets/stylesheets/application.451f80e5.css">
 <link rel="stylesheet" href="../assets/stylesheets/application-palette.22915126.css">
 <meta name="theme-color" content="#3f51b5" />
@@ -61,7 +61,7 @@ data-md-color-accent="orange"
 borer
 </span>
 <span class="md-header-nav__topic">
-StringNumbers and StringBooleans
+Derivation Basics
 </span>
 </div>
 </div>
@@ -148,7 +148,7 @@ sirthias/borer/
     <li><a href="../borer-core/supported-types.html" class="page">Types Supported Out-of-the-Box</a></li>
     <li><a href="../borer-core/custom-types.html" class="page">Encoding and Decoding Custom Types</a></li>
     <li><a href="../borer-core/nullable-and-default.html" class="page">Nullable and Default</a></li>
-    <li><a href="../borer-core/StringNumbers.html" class="active page"><code>StringNumbers</code> and <code>StringBooleans</code></a></li>
+    <li><a href="../borer-core/StringNumbers.html" class="page"><code>StringNumbers</code> and <code>StringBooleans</code></a></li>
     <li><a href="../borer-core/ByteStringArrayCodecs.html" class="page"><code>ByteStringArrayCodecs</code></a></li>
     <li><a href="../borer-core/supporting-typeclasses.html" class="page"><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></a></li>
     <li><a href="../borer-core/JSON-specifics.html" class="page">JSON Specifics</a></li>
@@ -158,7 +158,7 @@ sirthias/borer/
   </ul></li>
   <li><a href="../borer-derivation/index.html" class="page"><code>borer-derivation</code></a>
   <ul>
-    <li><a href="../borer-derivation/basics.html" class="page">Derivation Basics</a></li>
+    <li><a href="../borer-derivation/basics.html" class="active page">Derivation Basics</a></li>
     <li><a href="../borer-derivation/array-based.html" class="page">Array-Based Codecs</a></li>
     <li><a href="../borer-derivation/map-based.html" class="page">Map-Based Codecs</a></li>
     <li><a href="../borer-derivation/type-ids.html" class="page">Type IDs</a></li>
@@ -176,6 +176,14 @@ sirthias/borer/
   </ul></li>
 </ul>
 <nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="../borer-derivation/basics.html#derivation-basics" class="header">Derivation Basics</a>
+  <ul>
+    <li><a href="../borer-derivation/basics.html#semi-automatic-derivation" class="header">Semi-Automatic Derivation</a></li>
+    <li><a href="../borer-derivation/basics.html#fully-automatic-derivation" class="header">Fully-Automatic Derivation</a></li>
+  </ul></li>
+</ul>
 </nav>
 
 </nav>
@@ -189,43 +197,76 @@ sirthias/borer/
 </div>
 </div>
 </div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="../borer-derivation/basics.html#derivation-basics" class="header">Derivation Basics</a>
+  <ul>
+    <li><a href="../borer-derivation/basics.html#semi-automatic-derivation" class="header">Semi-Automatic Derivation</a></li>
+    <li><a href="../borer-derivation/basics.html#fully-automatic-derivation" class="header">Fully-Automatic Derivation</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</div>
+</div>
+</div>
 <div class="md-content">
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
-<h1><a href="#stringnumbers-and-stringbooleans" name="stringnumbers-and-stringbooleans" class="anchor"><span class="anchor-link"></span></a><code>StringNumbers</code> and <code>StringBooleans</code></h1>
-<p>Some external APIs, especially <a href="http://json.org/">JSON</a>-based ones, encode certain or all numbers, booleans and even <code>null</code> as string values, even if the respective value <em>could</em> be represented as a native <a href="http://json.org/">JSON</a> or <a href="http://cbor.io/">CBOR</a> number, boolean or <code>null</code>.</p>
-<p>In order to make integration with these kind of services easy <em>borer</em> comes with predefined encoders and decoders for numbers, booleans and <code>null</code> that you can &ldquo;enable&rdquo; with simple imports and which then take precedence over the default encoders and decoders.</p>
-<p>This is how they are enabled:</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/StringNumbersSpec.scala#L11-L19" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.{Decoder, Encoder}
+<h1><a href="#derivation-basics" name="derivation-basics" class="anchor"><span class="anchor-link"></span></a>Derivation Basics</h1>
+<p>In order to have <em>borer</em> automatically derive Encoders and/or Decoders for your custom types you need to first include the <code>borer-derivation</code> module as a dependency.<br> See the <a href="../getting-started.html">Getting Started</a> chapter for details.</p>
+<p>Once that is done you need to pick one of two available encoding strategies: </p>
+<ul>
+  <li><a href="array-based.html">Array-Based Codecs</a> or</li>
+  <li><a href="map-based.html">Map-Based Codecs</a>.</li>
+</ul>
+<p>As the name implies the difference between these two encoding strategies lies in the type of the underlying structure that class instances are serialized to.</p>
+<p>The <a href="array-based.html">Array-Based Codecs</a> render class instances into arrays where each member is identified merely via its positional index. This is more efficient than <a href="map-based.html">Map-Based</a> encoding, with regard to both runtime performance and storage requirements.</p>
+<p>The <a href="map-based.html">Map-Based Codecs</a> on the other hand render class members as named map entries, which has the the benefit that the wire format is more descriptive, not dependent on ordering and even allows for missing and default members.</p>
+<h2><a href="#semi-automatic-derivation" name="semi-automatic-derivation" class="anchor"><span class="anchor-link"></span></a>Semi-Automatic Derivation</h2>
+<p>Once you have the respective import for <a href="array-based.html">Array-Based</a> or <a href="map-based.html">Map-Based Codecs</a> derivation in scope the following macros for semi-automatic derivation are available:</p>
+<ul>
+  <li><code>deriveEncoder[T]</code>, which derives an <code>Encoder[T]</code></li>
+  <li><code>deriveDecoder[T]</code>, which derives a <code>Decoder[T]</code></li>
+  <li><code>deriveCodec[T]</code>, which derives a <code>Codec[T]</code>, i.e. an <code>Encoder[T]</code> as well as a <code>Decoder[T]</code></li>
+</ul>
+<p>These methods work for all <code>T</code> that are are either <code>case class</code>es, <code>sealed trait</code>s or <code>sealed abstract class</code>es.</p>
+<p>See the chapters on <a href="array-based.html">Array-Based Codecs</a> or <a href="map-based.html">Map-Based Codecs</a> for examples.</p>
+<h2><a href="#fully-automatic-derivation" name="fully-automatic-derivation" class="anchor"><span class="anchor-link"></span></a>Fully-Automatic Derivation</h2>
+<p>In addition to semi-automatic derivation, which will only ever derive a typeclass instance for a single type, <em>borer</em> also provides the following macros for fully-automatic derivation of encoder/decoder typeclasses for whole ADT hierarchies, i.e. <code>sealed trait</code>s or <code>sealed abstract class</code>es and all their sub-types:</p>
+<ul>
+  <li><code>deriveAllEncoders[T]</code>, which derives an <code>Encoder[T]</code></li>
+  <li><code>deriveAllDecoders[T]</code>, which derives a <code>Decoder[T]</code></li>
+  <li><code>deriveAllCodecs[T]</code>, which derives a <code>Codec[T]</code>, i.e. an <code>Encoder[T]</code> as well as a <code>Decoder[T]</code></li>
+</ul>
+<p>To understand what these macros do consider this simple example:</p>
+<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L82-L86" target="_blank" title="Go to snippet source"></a><code class="language-scala">sealed trait Animal
+case class Dog(age: Int, name: String)                      extends Animal
+case class Cat(weight: Double, color: String, home: String) extends Animal
+case class Fish(color: String)                              extends Animal
+case object Yeti                                            extends Animal</code></pre>
+<p>With semi-automatic derivation you&rsquo;d have to explicitly call a derivation macro <em>for each</em> sub-type individually:</p>
+<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L91-L99" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.derivation.MapBasedCodecs._
 
-import Encoder.StringNumbers._  // enables number-as-strings encoding
-import Encoder.StringBooleans._ // enables booleans-as-strings encoding
-import Encoder.StringNulls._    // enables null-as-strings encoding
+implicit val animalCodec = {
+  implicit val dogCodec  = deriveCodec[Dog]
+  implicit val catCodec  = deriveCodec[Cat]
+  implicit val fishCodec = deriveCodec[Fish]
+  implicit val yetiCodec = deriveCodec[Yeti.type]
+  deriveCodec[Animal]
+}</code></pre>
+<p>This gives you full control but can be a bit tedious for larger ADT hierarchies.</p>
+<p>Fully-automatic derivation on the other hand lets you reduce the boilerplate to a minimum by generating the calls to the derivation macro for each ADT sub-type automatically, so you only need to write a single line: </p>
+<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L114-L116" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.derivation.MapBasedCodecs._
 
-import Decoder.StringNumbers._  // enables number-as-strings decoding
-import Decoder.StringBooleans._ // enables booleans-as-strings decoding
-import Decoder.StringNulls._    // enables null-as-strings decoding</code></pre>
-<p>As always these imports are &ldquo;active&rdquo; throughout the complete scope in which they are visible.</p>
-<p>Here is an example demonstrating how to encode numbers and booleans as strings:</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/StringNumbersSpec.scala#L32-L46" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.{Encoder, Json}
-import io.bullet.borer.derivation.MapBasedCodecs._
-
-case class Dog(age: Int, male: Boolean, name: String)
-
-import Encoder.StringNumbers._  // enables number-as-strings encoding
-import Encoder.StringBooleans._ // enables booleans-as-strings encoding
-
-implicit val dogCodec = deriveCodec[Dog]
-
-val dog = Dog(2, false, &quot;Lolle&quot;)
-
-// note how the Int and Boolean are rendered as JSON strings
-Json.encode(dog).toUtf8String ==&gt;
-&quot;&quot;&quot;{&quot;age&quot;:&quot;2&quot;,&quot;male&quot;:&quot;false&quot;,&quot;name&quot;:&quot;Lolle&quot;}&quot;&quot;&quot;</code></pre>
-<p>Decoding works correspondingly.</p>
+implicit val animalCodec = deriveAllCodecs[Animal]</code></pre>
 </div>
 <div>
-<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-core/StringNumbers.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-derivation/basics.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
@@ -241,7 +282,7 @@ Edit this page
 <footer class="md-footer">
 <div class="md-footer-nav">
 <nav class="md-footer-nav__inner md-grid">
-<a href="../borer-core/nullable-and-default.html" title="Nullable and Default" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<a href="../borer-derivation/index.html" title="borer-derivation" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
 <div class="md-flex__cell md-flex__cell--shrink">
 <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
 </div>
@@ -250,17 +291,17 @@ Edit this page
 <span class="md-footer-nav__direction">
 Previous
 </span>
-Nullable and Default
+borer-derivation
 </span>
 </div>
 </a>
-<a href="../borer-core/ByteStringArrayCodecs.html" title="ByteStringArrayCodecs" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<a href="../borer-derivation/array-based.html" title="Array-Based Codecs" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
 <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
 <span class="md-flex__ellipsis">
 <span class="md-footer-nav__direction">
 Next
 </span>
-ByteStringArrayCodecs
+Array-Based Codecs
 </span>
 </div>
 <div class="md-flex__cell md-flex__cell--shrink">

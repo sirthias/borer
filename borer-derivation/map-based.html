@@ -158,10 +158,11 @@ sirthias/borer/
   </ul></li>
   <li><a href="../borer-derivation/index.html" class="page"><code>borer-derivation</code></a>
   <ul>
+    <li><a href="../borer-derivation/basics.html" class="page">Derivation Basics</a></li>
     <li><a href="../borer-derivation/array-based.html" class="page">Array-Based Codecs</a></li>
     <li><a href="../borer-derivation/map-based.html" class="active page">Map-Based Codecs</a></li>
     <li><a href="../borer-derivation/type-ids.html" class="page">Type IDs</a></li>
-    <li><a href="../borer-derivation/semi-vs-full-automatic.html" class="page">Semi- vs. Fully-automatic Derivation</a></li>
+    <li><a href="../borer-derivation/faq.html" class="page">Derivation FAQ</a></li>
   </ul></li>
   <li><a href="../borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
   <li><a href="../borer-compat-circe.html" class="page"><code>borer-compat-circe</code></a></li>
@@ -179,9 +180,11 @@ sirthias/borer/
 <ul>
   <li><a href="../borer-derivation/map-based.html#map-based-codecs" class="header">Map-Based Codecs</a>
   <ul>
-    <li><a href="../borer-derivation/map-based.html#adt-encoding" class="header">ADT Encoding</a></li>
+    <li><a href="../borer-derivation/map-based.html#default-adt-encoding" class="header">Default ADT Encoding</a></li>
+    <li><a href="../borer-derivation/map-based.html#alternative-encoding-of-adts" class="header">Alternative &ldquo;Flat&rdquo; Encoding of ADTs</a></li>
     <li><a href="../borer-derivation/map-based.html#default-values" class="header">Default Values</a></li>
     <li><a href="../borer-derivation/map-based.html#customized-member-keys" class="header">Customized Member Keys</a></li>
+    <li><a href="../borer-derivation/map-based.html#compactmapbasedcodecs" class="header">CompactMapBasedCodecs</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -190,7 +193,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.2.1
+<i class="md-icon" title="Version">label_outline</i> 1.3.0
 </label>
 </li>
 </ul>
@@ -205,9 +208,11 @@ sirthias/borer/
 <ul>
   <li><a href="../borer-derivation/map-based.html#map-based-codecs" class="header">Map-Based Codecs</a>
   <ul>
-    <li><a href="../borer-derivation/map-based.html#adt-encoding" class="header">ADT Encoding</a></li>
+    <li><a href="../borer-derivation/map-based.html#default-adt-encoding" class="header">Default ADT Encoding</a></li>
+    <li><a href="../borer-derivation/map-based.html#alternative-encoding-of-adts" class="header">Alternative &ldquo;Flat&rdquo; Encoding of ADTs</a></li>
     <li><a href="../borer-derivation/map-based.html#default-values" class="header">Default Values</a></li>
     <li><a href="../borer-derivation/map-based.html#customized-member-keys" class="header">Customized Member Keys</a></li>
+    <li><a href="../borer-derivation/map-based.html#compactmapbasedcodecs" class="header">CompactMapBasedCodecs</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -238,25 +243,15 @@ val bar = Bar(foo, d = 1.234)
 // Json.encode(bar).toByteArray or
 Json.encode(bar).toUtf8String ==&gt;
 &quot;&quot;&quot;{&quot;foo&quot;:{&quot;int&quot;:42,&quot;string&quot;:&quot;yeah&quot;},&quot;d&quot;:1.234}&quot;&quot;&quot;</code></pre>
-<h3><a href="#adt-encoding" name="adt-encoding" class="anchor"><span class="anchor-link"></span></a>ADT Encoding</h3>
-<p>Like <a href="array-based.html">Array-Based Codecs</a> the Map-based codecs come with built-in support for Abstract Data Types (ADT), e.g.</p>
+<h3><a href="#default-adt-encoding" name="default-adt-encoding" class="anchor"><span class="anchor-link"></span></a>Default ADT Encoding</h3>
+<p>The default encoding for ADT super-types is a single-entry map, with the key being the type id and the value becoming the encoding of the actual ADT subtype instance.</p>
+<p>For example, a <code>Dog</code> instance of the following ADT:</p>
 <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L82-L86" target="_blank" title="Go to snippet source"></a><code class="language-scala">sealed trait Animal
 case class Dog(age: Int, name: String)                      extends Animal
 case class Cat(weight: Double, color: String, home: String) extends Animal
 case class Fish(color: String)                              extends Animal
 case object Yeti                                            extends Animal</code></pre>
-<p>Since, up to now, <em>borer</em> doesn&rsquo;t support fully-automatic derivation (but only semi-automatic, see also <a href="semi-vs-full-automatic.html">Semi- vs. Fully-automatic</a>) the current best practice for deriving codecs for ADTs looks like this:</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L91-L99" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.derivation.MapBasedCodecs._
-
-implicit val animalCodec = {
-  implicit val dogCodec  = deriveCodec[Dog]
-  implicit val catCodec  = deriveCodec[Cat]
-  implicit val fishCodec = deriveCodec[Fish]
-  implicit val yetiCodec = deriveCodec[Yeti.type]
-  deriveCodec[Animal]
-}</code></pre>
-<p>Each ADT sub-type requires its own implicit codec (or encoder/decoder) definition with a call to the <code>deriveCodec</code> (or <code>deriveEncoder</code> / <code>deriveDecoder</code>) macro. If the sub-type codecs are not required for anything else but the ADT codec derivation the best practice is to move them into a sub-block scope as shown above.</p>
-<p>The default encoding for ADT super-types is a single-entry map, with the key being the type id and the value becoming the encoding of the actual ADT subtype instance, e.g. like this (<a href="http://json.org/">JSON</a> example):</p>
+<p>would be encoded to <a href="http://json.org/">JSON</a> like this:</p>
 <pre><code>{ &quot;Dog&quot; :
   {
     &quot;age&quot;:2,
@@ -264,16 +259,16 @@ implicit val animalCodec = {
   }
 }
 </code></pre>
-<p>This is how you get to this encoding (Note the explicit upcast to the ADT super-type <code>Animal</code>!):</p>
+<p>Here is the code (Note the explicit upcast to the ADT super-type <code>Animal</code>!):</p>
 <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L103-L108" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.Json
 
 val animal: Animal = Dog(2, &quot;Rex&quot;)
 
 // Json.encode(animal).toByteArray or
 Json.encode(animal).toUtf8String ==&gt; &quot;&quot;&quot;{&quot;Dog&quot;:{&quot;age&quot;:2,&quot;name&quot;:&quot;Rex&quot;}}&quot;&quot;&quot;</code></pre>
-<h4><a href="#alternative-encoding-of-adts" name="alternative-encoding-of-adts" class="anchor"><span class="anchor-link"></span></a>Alternative &ldquo;Flat&rdquo; Encoding of ADTs</h4>
+<h3><a href="#alternative-encoding-of-adts" name="alternative-encoding-of-adts" class="anchor"><span class="anchor-link"></span></a>Alternative &ldquo;Flat&rdquo; Encoding of ADTs</h3>
 <p>The default encoding for ADTs (single-entry maps) cleanly separates the encoding of the ADT super-type from the encoding of the ADT sub-types by introducing a dedicated &ldquo;envelope&rdquo; layer holding the type ID in an efficient form. This encoding can be written, stored and read in a very efficient manner and is therefore recommended for all application where you have full control over the both ends of the encoding &ldquo;channel&rdquo;.</p>
-<p>However, especially when interoperating with other systems it is sometimes required to support another encoding style, which carries the type ID in a special map entry, e.g. like this:</p>
+<p>However, especially when interoperating with other systems, it is sometimes required to support another encoding style, which carries the type ID in a special map entry, e.g. like this:</p>
 <pre><code>{
   &quot;_type&quot;: &quot;Dog&quot;,
   &quot;age&quot;:2,
@@ -281,20 +276,14 @@ Json.encode(animal).toUtf8String ==&gt; &quot;&quot;&quot;{&quot;Dog&quot;:{&quo
 }
 </code></pre>
 <p>This alternative ADT encoding can be switched to by making the result of a call to <code>AdtEncodingStrategy.flat()</code> implicitly available:</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L114-L132" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.{AdtEncodingStrategy, Json}
+<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L129-L141" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.{AdtEncodingStrategy, Json}
 import io.bullet.borer.derivation.MapBasedCodecs._
 
 // this enables the flat ADT encoding
 implicit val flatAdtEncoding =
   AdtEncodingStrategy.flat(typeMemberName = &quot;_type&quot;)
 
-implicit val animalCodec = {
-  implicit val dogCodec  = deriveCodec[Dog]
-  implicit val catCodec  = deriveCodec[Cat]
-  implicit val fishCodec = deriveCodec[Fish]
-  implicit val yetiCodec = deriveCodec[Yeti.type]
-  deriveCodec[Animal]
-}
+implicit val animalCodec = deriveAllCodecs[Animal]
 
 val animal: Animal = Dog(2, &quot;Rex&quot;)
 
@@ -303,7 +292,7 @@ Json.encode(animal).toUtf8String ==&gt; &quot;&quot;&quot;{&quot;_type&quot;:&qu
 <p>While this &ldquo;flat&rdquo; ADT encoding has the benefit that the encoding can be decoded into the ADT super-type <em>or</em> the respective ADT sub-type (provided that the decoder simply ignores surplus members, as <em>borer</em> does) it also has a number of significant drawbacks:</p>
 <ul>
   <li>
-  <p>It requires all ADT sub-types to be encoded to maps, i.e. it violates separation of concerns between the super- and  sub-types. This can be annoying, e.g. when unary case classes could otherwise use <code>ArrayBasedCodecs.deriveUnaryCodec</code>  (which encodes to the unwrapped parameter value) for more efficiency.</p></li>
+  <p>It requires all ADT sub-types to be encoded to maps, i.e. it violates separation of concerns between the super- and  sub-types. This can be annoying, e.g. when unary case classes could otherwise be stored more efficiently in an  &ldquo;unwrapped&rdquo; form, e.g. with the <a href="map-based.html#compactmapbasedcodecs">CompactMapBasedCodecs</a>.</p></li>
   <li>
   <p>It conflates two conceptually well separated and distinct name spaces: The one of the envelope (ADT super-type) and  the one of the sub-type. This always leads to the risk of name collisions, which gives rise to type member names like  <code>$type</code> or <code>__type</code> or the like, which make the hacky &ldquo;smell&rdquo; of the approach even more visible.</p></li>
   <li>
@@ -315,7 +304,7 @@ Json.encode(animal).toUtf8String ==&gt; &quot;&quot;&quot;{&quot;_type&quot;:&qu
 <h3><a href="#default-values" name="default-values" class="anchor"><span class="anchor-link"></span></a>Default Values</h3>
 <p>Map-based codecs support missing and extra members.</p>
 <p>During encoding a member whose value matches the default value is not written to the output at all. During decoding the type&rsquo;s <code>Decoder</code> will use the potentially defined default value for all missing members, e.g.:</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L139-L149" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.Json
+<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L185-L195" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.Json
 import io.bullet.borer.derivation.MapBasedCodecs._
 
 case class Dog(age: Int, name: String = &quot;&lt;unknown&gt;&quot;)
@@ -356,7 +345,7 @@ Json
 <h3><a href="#customized-member-keys" name="customized-member-keys" class="anchor"><span class="anchor-link"></span></a>Customized Member Keys</h3>
 <p><em>borer</em> supports customizing the name of case class members in the encoding with the same <code>@key</code> annotation, that is also used for custom ADT type-ids (see <a href="array-based.html">Array-Based Codec</a> and the <code>@key</code> sources <a href="https://github.com/sirthias/borer/tree/master/derivation/src/main/scala/io/bullet/borer/derivation/key.scala">here</a> for more info).</p>
 <p>Simply annotate a case class member do provide a custom name:</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L155-L164" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.Json
+<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L201-L210" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.Json
 import io.bullet.borer.derivation.key
 import io.bullet.borer.derivation.MapBasedCodecs._
 
@@ -366,6 +355,9 @@ implicit val dogCodec = deriveCodec[Dog]
 
 Json.encode(Dog(1, &quot;Lolle&quot;)).toUtf8String ==&gt;
 &quot;&quot;&quot;{&quot;age&quot;:1,&quot;the-name&quot;:&quot;Lolle&quot;}&quot;&quot;&quot;</code></pre>
+<h3><a href="#compactmapbasedcodecs" name="compactmapbasedcodecs" class="anchor"><span class="anchor-link"></span></a>CompactMapBasedCodecs</h3>
+<p>As a slight variant of the <code>MapBasedCodecs</code> <em>borer</em> also provides <code>CompactMapBasedCodecs</code> which are identical except for the encoding of unary <code>case class</code>es, i.e. <code>case class</code>es with only a single member.</p>
+<p>The <code>CompactMapBasedCodecs</code> encode them in an unwrapped form, i.e. directly as the value of the single member. The name of the sole <code>case class</code> therefore doesn&rsquo;t appear in the encoding at all.</p>
 </div>
 <div>
 <a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-derivation/map-based.md" title="Edit this page" class="md-source-file md-edit">
@@ -374,7 +366,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.2.1
+1.3.0
 </span>
 </div>
 </article>
