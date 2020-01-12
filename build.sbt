@@ -350,7 +350,7 @@ lazy val benchmarks = project
       "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros"      % "2.1.3" % Provided,
       "com.fasterxml.jackson.module"          %% "jackson-module-scala"       % "2.10.2",
       "com.fasterxml.jackson.module"          %  "jackson-module-afterburner" % "2.10.2",
-      "com.lihaoyi"                           %% "upickle"                    % "0.9.6",
+      "com.lihaoyi"                           %% "upickle"                    % "0.9.7",
       "io.spray"                              %% "spray-json"                 % "1.3.5",
       `circe-core`.value,
       `circe-parser`.value,
