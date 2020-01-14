@@ -111,17 +111,22 @@ trait AkkaHttpCompat {
     * Provides a [[ToEntityMarshaller]] for [[T]] given an implicit borer Encoder for [[T]].
     * Supports both CBOR and JSON with the given MediaTypes.
     * Content negotiation will determine, whether CBOR or JSON is produced.
-    * If the client accepts both the marshaller will produce CBOR.
+    * If the client accepts both formats with equal q-value the marshaller will produce
+    * whatever the `prefer` parameter specifies.
     */
   final def borerMarshaller[T: Encoder](
       cborContentType: ContentType = MediaTypes.`application/cbor`,
       jsonContentType: ContentType = MediaTypes.`application/json`,
       configureCbor: CborEncodingSetup => CborEncodingSetup = identity,
-      configureJson: JsonEncodingSetup => JsonEncodingSetup = identity
+      configureJson: JsonEncodingSetup => JsonEncodingSetup = identity,
+      prefer: Target = Json
   ): ToEntityMarshaller[T] = {
     val cborMarshaller = borerCborMarshaller(cborContentType, configureCbor)
     val jsonMarshaller = borerJsonMarshaller(jsonContentType, configureJson)
-    Marshaller.oneOf(cborMarshaller, jsonMarshaller)
+    if (prefer == Cbor)
+      Marshaller.oneOf(cborMarshaller, jsonMarshaller)
+    else
+      Marshaller.oneOf(jsonMarshaller, cborMarshaller)
   }
 
   /**

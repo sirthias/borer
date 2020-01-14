@@ -11,13 +11,15 @@ package io.bullet.borer.compat
 import _root_.akka.actor.ActorSystem
 import _root_.akka.http.scaladsl.marshalling.Marshal
 import _root_.akka.http.scaladsl.model._
-import _root_.akka.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException
 import _root_.akka.http.scaladsl.unmarshalling.{Unmarshal, Unmarshaller}
+import _root_.akka.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException
 import _root_.akka.stream.scaladsl.{Sink, Source}
+import _root_.akka.util.ByteString
 import _root_.akka.NotUsed
-import io.bullet.borer.Codec
+import _root_.akka.http.scaladsl.model.MediaTypes.{`application/cbor`, `application/json`}
+import io.bullet.borer.{Cbor, Codec, Encoder}
+import io.bullet.borer.derivation.MapBasedCodecs
 import utest._
-import MediaTypes.{`application/cbor`, `application/json`}
 
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
@@ -38,21 +40,16 @@ object AkkaHttpSupportSpec extends TestSuite {
   implicit private val system: ActorSystem = ActorSystem()
   import system.dispatcher
 
-  implicit private val fooCodec: Codec[Foo] = {
-    import io.bullet.borer.derivation.MapBasedCodecs._
-    deriveCodec[Foo]
-  }
-
-  implicit private val numCodec: Codec[Num] = {
-    import io.bullet.borer.derivation.MapBasedCodecs._
-    deriveCodec[Num]
-  }
+  implicit private val fooCodec: Codec[Foo] = MapBasedCodecs.deriveCodec[Foo]
+  implicit private val numCodec: Codec[Num] = MapBasedCodecs.deriveCodec[Num]
 
   val tests = Tests {
 
     import akkaHttp._
 
     "marshalling and unmarshalling (CBOR)" - {
+      implicit def borerToEntityMarshaller[T: Encoder] = borerMarshaller(prefer = Cbor)
+
       val foo = Foo("bar")
       Marshal(foo)
         .to[RequestEntity]
@@ -65,17 +62,30 @@ object AkkaHttpSupportSpec extends TestSuite {
     }
 
     "marshalling and unmarshalling (JSON)" - {
-      val foo          = Foo("bar")
-      val acceptHeader = _root_.akka.http.scaladsl.model.headers.Accept(MediaRange.One(`application/json`, 1.0f))
+      val foo = Foo("bar")
       Marshal(foo)
-        .toResponseFor(HttpRequest(headers = acceptHeader :: Nil))
-        .flatMap(_.entity.toStrict(1.second))
+        .to[RequestEntity]
         .map { entity =>
-          entity.contentType ==> ContentTypes.`application/json`
+          entity.contentType ==> ContentType(`application/json`)
           entity
         }
         .flatMap(Unmarshal(_).to[Foo])
         .map(_ ==> foo)
+    }
+
+    "prefer JSON on equal q-value (by default)" - {
+      val foo = Foo("bar")
+      val acceptHeader = _root_.akka.http.scaladsl.model.headers.Accept(
+        MediaRange.One(`application/json`, 1.0f),
+        MediaRanges.`*/*`
+      )
+      Await
+        .result(
+          Marshal(foo)
+            .toResponseFor(HttpRequest(headers = acceptHeader :: Nil))
+            .flatMap(_.entity.toStrict(1.second)),
+          100.millis
+        ) ==> HttpEntity.Strict(`application/json`, ByteString("""{"bar":"bar"}"""))
     }
 
     "surface error message for requirement errors" - {
