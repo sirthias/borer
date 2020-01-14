@@ -79,13 +79,10 @@ object AkkaHttpSupportSpec extends TestSuite {
         MediaRange.One(`application/json`, 1.0f),
         MediaRanges.`*/*`
       )
-      Await
-        .result(
-          Marshal(foo)
-            .toResponseFor(HttpRequest(headers = acceptHeader :: Nil))
-            .flatMap(_.entity.toStrict(1.second)),
-          100.millis
-        ) ==> HttpEntity.Strict(`application/json`, ByteString("""{"bar":"bar"}"""))
+      Marshal(foo)
+        .toResponseFor(HttpRequest(headers = acceptHeader :: Nil))
+        .flatMap(_.entity.toStrict(1.second))
+        .map(_ ==> HttpEntity.Strict(`application/json`, ByteString("""{"bar":"bar"}""")))
     }
 
     "surface error message for requirement errors" - {
