@@ -151,7 +151,7 @@ final class InputReader[Config <: Reader.Config](
 
   /**
     * Returns one of the following 4 values:
-    * - Int.MinValue if the next data item is not a Long
+    * - Int.MaxValue if the next data item is not a Long
     * - minus one a if the next data item is a Long < `value`
     * - zero if the next data item is a Long == `value`
     * - one if the next data item is a Long > `value`
@@ -160,7 +160,7 @@ final class InputReader[Config <: Reader.Config](
     if (hasLong) {
       val long = if (hasInt) receptacle.intValue.toLong else receptacle.longValue
       math.signum(long - value).toInt
-    } else Int.MinValue
+    } else Int.MaxValue
 
   def tryReadLongCompare(value: Long): Int = {
     val result = longCompare(value)
