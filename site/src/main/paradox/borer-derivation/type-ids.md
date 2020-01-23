@@ -1,7 +1,7 @@
 Type IDs
 ========
 
-When encoding _Abstract Data Types_ (ADTs), i.e. super-types of `sealed` type hierarchies like `Animal` in this example:
+When encoding _Abstract Data Types_ (ADTs), i.e. top types of `sealed` type hierarchies like `Animal` in this example:
 
 @@snip [-]($test$/DerivationSpec.scala) { #example-adt }
 

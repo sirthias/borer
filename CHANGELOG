@@ -1,3 +1,11 @@
+Version 1.4.0 (2020-01-23)
+--------------------------
+
+- compat-akka: make marshalling target format preference configurable, switch default to JSON (#148)
+- fix generation of stacked type ids in certain cases (#145)
+- fix derived ADT decoders not reading type ids with certain mixed (String/Long) keys
+
+
 Version 1.3.0 (2020-01-10)
 --------------------------
 
