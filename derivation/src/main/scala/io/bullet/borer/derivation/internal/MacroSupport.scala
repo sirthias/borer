@@ -27,13 +27,14 @@ private[derivation] object MacroSupport {
   val EncoderPlaceholder = Encoder[Any]((_, _) => sys.error("Internal Error: Unresolved Encoder Placeholder"))
   val DecoderPlaceholder = Decoder[Any](_ => sys.error("Internal Error: Unresolved Decoder Placeholder"))
 
-  val KeyPairOrdering: Ordering[Object] = {
-    Ordering.fromLessThan[(Key, _)] {
-      case ((Key.Long(x), _), (Key.Long(y), _))     => x < y
-      case ((Key.String(x), _), (Key.String(y), _)) => x < y
-      case ((x, _), _)                              => x.isInstanceOf[Key.Long] // we sort LongKeys before StringKeys
-    }
-  }.asInstanceOf[Ordering[Object]]
+  def sortAndVerifyNoCollisions[T](array: Array[(Key, T)])(onCollision: (Key, T, T) => Nothing): Unit = {
+    def lessThan(comp: Int, k: Key, a: T, b: T): Boolean = if (comp == 0) onCollision(k, a, b) else comp < 0
+    java.util.Arrays.sort(array, Ordering.fromLessThan[(Key, T)] {
+      case ((k @ Key.Long(x), a), (Key.Long(y), b))     => lessThan(java.lang.Long.compare(x, y), k, a, b)
+      case ((k @ Key.String(x), a), (Key.String(y), b)) => lessThan(x compare y, k, a, b)
+      case ((x, _), _)                                  => x.isInstanceOf[Key.Long] // we sort LongKeys before StringKeys
+    })
+  }
 
   def codecMacro[T: c.WeakTypeTag](c: blackbox.Context)(objectName: String, de: String, dd: String): c.Tree = {
     import c.universe._
@@ -72,7 +73,7 @@ private[derivation] object MacroSupport {
         def deriveForSealedTrait(node: AdtTypeNode) = {
           val altMacro     = q"$borerPkg.derivation.${TermName(objectName)}.${TermName(altMacroName)}"
           val tc           = if (isEncoder) encoderType else decoderType
-          val relevantSubs = flattenedSubs(node, tc).collect { case (node, false) => node }.toList
+          val relevantSubs = flattenedSubs(node, tc, deepRecurse = false).collect { case (node, false) => node }.toList
 
           // for each non-abstract sub-type S we collect the "links",
           // which are the ADT sub-types that appear somewhere within the member definitions of S and,

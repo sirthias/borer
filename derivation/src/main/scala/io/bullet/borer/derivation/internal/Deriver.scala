@@ -51,6 +51,19 @@ abstract private[derivation] class Deriver[C <: blackbox.Context](val c: C) {
     def isAbstract: Boolean                           = tpe.typeSymbol.isAbstract
     def annotations: List[Tree]                       = annotationTrees(tpe.typeSymbol)
     def containedIn(list: List[AdtTypeNode]): Boolean = list.exists(_ eq this)
+
+    private[this] var parent: Option[AdtTypeNode] = _
+
+    def setAllParents(p: Option[AdtTypeNode]): Unit = {
+      if (parent ne null) throw new IllegalStateException
+      parent = p
+      val someThis = Some(this)
+      subs.foreach(_.setAllParents(someThis))
+    }
+    def isRoot: Boolean = parent.isEmpty
+
+    def nodePath(suffix: List[AdtTypeNode] = Nil): List[AdtTypeNode] =
+      if (isRoot) suffix else parent.get.nodePath(this :: suffix)
   }
 
   protected def deriveForCaseObject(tpe: Type, module: ModuleSymbol): Tree
@@ -76,6 +89,7 @@ abstract private[derivation] class Deriver[C <: blackbox.Context](val c: C) {
       case Some(x) if x.isCaseClass   => forCaseClass(tpe, x)
       case Some(x) if x.isSealed =>
         val node = adtTypeNode(tpe)
+        node.setAllParents(None)
         if (node.subs.isEmpty) error(s"Could not find any direct subtypes of `$typeSymbol`")
         deriveForSealedTrait(node)
       case None => error(s"`$tpe` is not a case class or sealed abstract data type")

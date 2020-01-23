@@ -16,7 +16,7 @@ import io.bullet.borer.internal.{ElementDeque, Util}
 import scala.annotation.tailrec
 
 sealed abstract class AdtEncodingStrategy {
-  def writeAdtEnvelopeOpen(w: Writer, typeName: String): Unit
+  def writeAdtEnvelopeOpen(w: Writer, typeName: String): w.type
   def writeAdtEnvelopeClose(w: Writer, typeName: String): w.type
 
   def readAdtEnvelopeOpen(r: Reader, typeName: String): Boolean
@@ -54,7 +54,7 @@ object AdtEncodingStrategy {
     */
   implicit object Default extends AdtEncodingStrategy {
 
-    def writeAdtEnvelopeOpen(w: Writer, typeName: String): Unit =
+    def writeAdtEnvelopeOpen(w: Writer, typeName: String): w.type =
       if (w.writingJson) w.writeMapStart()
       else w.writeMapHeader(1)
 
@@ -116,7 +116,7 @@ object AdtEncodingStrategy {
 
       private lazy val typeMemberNameBytes = typeMemberName.getBytes(StandardCharsets.UTF_8)
 
-      def writeAdtEnvelopeOpen(w: Writer, typeName: String): Unit = {
+      def writeAdtEnvelopeOpen(w: Writer, typeName: String): w.type = {
         val originalReceiver = w.receiver
         w.receiver = new borer.Receiver.WithDefault {
           private var longTypeId: Long     = _
@@ -167,6 +167,7 @@ object AdtEncodingStrategy {
               w.output,
               s"AdtEncodingStrategy.flat requires all sub-types of `$typeName` be serialized as a Map but here it was $t")
         }
+        w
       }
 
       def writeAdtEnvelopeClose(w: Writer, typeName: String): w.type = w

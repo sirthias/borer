@@ -96,7 +96,7 @@ object JsonFlatAdtEncodingSpec extends AbstractBorerSpec {
         implicit lazy val bCodec: Codec[B] = MapBasedCodecs.deriveAllCodecs[B]
         implicit val aCodec                = MapBasedCodecs.deriveAllCodecs[A]
 
-        roundTrip("""{"_type":"B","_type":"C","x":[]}""", C(None): A)
+        roundTrip("""{"_type":"C","x":[]}""", C(None): A)
       }
     }
 

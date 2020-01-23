@@ -196,17 +196,14 @@ object MapBasedCodecs {
               }: $encoderType[$tpe]"""
         }
 
-        def deriveForSealedTrait(node: AdtTypeNode) = {
-          val cases = adtSubtypeWritingCases(node)
-          q"""$encoderCompanion { (w, value) =>
-              def writeValue(): Unit = value match { case ..$cases }
-              val typeName = ${node.tpe.toString}
-              val strategy = implicitly[$borerPkg.AdtEncodingStrategy]
-              strategy.writeAdtEnvelopeOpen(w, typeName)
-              writeValue()
-              strategy.writeAdtEnvelopeClose(w, typeName)
-           }"""
-        }
+        def deriveForSealedTrait(node: AdtTypeNode) =
+          deriveAdtEncoder(
+            node,
+            x => q"""val typeName = ${node.tpe.toString}
+                val strategy = implicitly[$borerPkg.AdtEncodingStrategy]
+                strategy.writeAdtEnvelopeOpen(w, typeName)
+                $x
+                strategy.writeAdtEnvelopeClose(w, typeName)""")
       }
     }
 
@@ -237,7 +234,13 @@ object MapBasedCodecs {
           val keysAndParams = new Array[(Key, CaseParam)](arity)
           params.foreach(p => keysAndParams(p.index) = p.key() -> p)
           val keysAndParamsSorted = keysAndParams.clone()
-          java.util.Arrays.sort(keysAndParamsSorted.asInstanceOf[Array[Object]], KeyPairOrdering)
+          sortAndVerifyNoCollisions(keysAndParamsSorted) {
+            case (k, a, b) =>
+              c.abort(
+                ctx.enclosingPosition,
+                s"@key collision: parameters `${a.name}` and `${b.name}` " +
+                  s"of case class ADT `$tpe` share the same type id `${k.value}`")
+          }
 
           val decodersForParams = params.map(p => p -> p.getImplicit(decoderType)).toMap
           val nonBasicParams =
@@ -324,7 +327,7 @@ object MapBasedCodecs {
           val failMissingDef =
             if (params.nonEmpty) {
               q"""def failMissing(..$maskAsParams) = {
-                    $borerPkg.derivation.internal.Helpers.failMissing(r, ${literal(typeName)},
+                    $helpers.failMissing(r, ${literal(typeName)},
                       ..$maskAsArgs, Array(..${params.map(p => literal(p.name.decodedName.toString))}))}"""
             } else q"()"
 
@@ -389,33 +392,15 @@ object MapBasedCodecs {
               }: $decoderType[$tpe]"""
         }
 
-        def deriveForSealedTrait(node: AdtTypeNode) = {
-          val typeIdsAndSubTypes = typeIdsAndFlattenedSubsSorted(node, decoderType)
-
-          def rec(start: Int, end: Int): Tree =
-            if (start < end) {
-              val mid           = (start + end) >> 1
-              val (typeId, sub) = typeIdsAndSubTypes(mid)
-              val cmp           = r("tryRead", typeId, "Compare")
-              if (start < mid) {
-                q"""val cmp = $cmp
-                  if (cmp < 0) ${rec(start, mid)}
-                  else if (cmp > 0) ${rec(mid + 1, end)}
-                  else r.read[${sub.tpe}]()"""
-              } else q"if ($cmp == 0) r.read[${sub.tpe}]() else fail()"
-            } else q"fail()"
-
-          q"""$decoderCompanion { r =>
-                def fail() = r.unexpectedDataItem(${s"type id key for subtype of `${node.tpe}`"})
-
-                val typeName = ${node.tpe.toString}
-                val strategy = implicitly[$borerPkg.AdtEncodingStrategy]
+        def deriveForSealedTrait(node: AdtTypeNode) =
+          deriveAdtDecoder(
+            node,
+            q"private[this] val strategy = implicitly[$borerPkg.AdtEncodingStrategy]",
+            x => q"""val typeName = ${node.tpe.toString}
                 val opening = strategy.readAdtEnvelopeOpen(r, typeName)
-                val result = ${rec(0, typeIdsAndSubTypes.length)}
+                val result = $x
                 strategy.readAdtEnvelopeClose(r, opening, typeName)
-                result
-              }"""
-        }
+                result""")
       }
     }
 

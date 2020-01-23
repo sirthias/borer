@@ -315,3 +315,13 @@ sealed abstract class LowPrioEncoders extends TupleEncoders {
 
   implicit final def forIterator[T: Encoder]: Encoder[Iterator[T]] = Encoder(_ writeIterator _)
 }
+
+/**
+  * An [[AdtEncoder]] is an [[Encoder]] which encodes its values with an envelope holding the value's type id.
+  *
+  * It doesn't change or add to the outside interface of [[Encoder]] but merely serves as a marker
+  * signaling that it takes on the responsibility of encoding the type id in addition to the value itself.
+  * This allows outside encoders calling an [[AdtEncoder]] to delegate this responsibility rather than performing
+  * the task themselves.
+  */
+trait AdtEncoder[T] extends Encoder[T]

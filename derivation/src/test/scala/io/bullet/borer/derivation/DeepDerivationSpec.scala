@@ -128,5 +128,16 @@ object DeepDerivationSpec extends AbstractBorerSpec {
 
       roundTrip("""{"D":{"x":42}}""", D(42): A)
     }
+
+    "stacked" - {
+      sealed trait A
+      sealed trait B             extends A
+      case class C(x: Option[B]) extends B
+
+      implicit lazy val bCodec: Codec[B] = MapBasedCodecs.deriveAllCodecs[B]
+      implicit val aCodec                = MapBasedCodecs.deriveAllCodecs[A]
+
+      roundTrip("""{"C":{"x":[]}}""", C(None): A)
+    }
   }
 }

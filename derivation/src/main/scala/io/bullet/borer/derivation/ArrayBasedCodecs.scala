@@ -138,14 +138,12 @@ object ArrayBasedCodecs {
           q"""$encoderCompanion((w, x) => $writeOpenFieldsAndClose)"""
         }
 
-        def deriveForSealedTrait(node: AdtTypeNode) = {
-          val cases = adtSubtypeWritingCases(node)
-          q"""$encoderCompanion { (w, value) =>
-                w.writeArrayOpen(2)
-                value match { case ..$cases }
-                w.writeArrayClose()
-              }"""
-        }
+        def deriveForSealedTrait(node: AdtTypeNode) =
+          deriveAdtEncoder(
+            node,
+            x => q"""w.writeArrayOpen(2)
+                $x
+                w.writeArrayClose()""")
       }
     }
 
@@ -196,29 +194,8 @@ object ArrayBasedCodecs {
           q"$decoderCompanion(r => $readObjectWithWrapping)"
         }
 
-        def deriveForSealedTrait(node: AdtTypeNode) = {
-          val typeIdsAndSubTypes = typeIdsAndFlattenedSubsSorted(node, decoderType)
-
-          def rec(start: Int, end: Int): Tree =
-            if (start < end) {
-              val mid           = (start + end) >> 1
-              val (typeId, sub) = typeIdsAndSubTypes(mid)
-              val cmp           = r("tryRead", typeId, "Compare")
-              if (start < mid) {
-                q"""val cmp = $cmp
-                  if (cmp < 0) ${rec(start, mid)}
-                  else if (cmp > 0) ${rec(mid + 1, end)}
-                  else r.read[${sub.tpe}]()"""
-              } else q"if ($cmp == 0) r.read[${sub.tpe}]() else fail()"
-            } else q"fail()"
-
-          val readTypeIdAndValue = rec(0, typeIdsAndSubTypes.length)
-
-          q"""$decoderCompanion { r =>
-                def fail() = r.unexpectedDataItem(${s"type id key for subtype of `${node.tpe}`"})
-                r.readArrayClose(r.readArrayOpen(2), $readTypeIdAndValue)
-              }"""
-        }
+        def deriveForSealedTrait(node: AdtTypeNode) =
+          deriveAdtDecoder(node, q"()", x => q"r.readArrayClose(r.readArrayOpen(2), $x)")
       }
     }
 

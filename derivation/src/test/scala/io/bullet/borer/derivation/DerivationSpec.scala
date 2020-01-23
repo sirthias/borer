@@ -215,8 +215,8 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
         Scalac
           .typecheck("deriveEncoder[Animal]")
           .assertErrorMsgMatches(
-            "@key collision: sub types `io.bullet.borer.derivation.AdtWithKeyCollision.Dog` and " +
-              "`io.bullet.borer.derivation.AdtWithKeyCollision.Cat` of ADT " +
+            "@key collision: sub types `io.bullet.borer.derivation.AdtWithKeyCollision.Cat` and " +
+              "`io.bullet.borer.derivation.AdtWithKeyCollision.Dog` of ADT " +
               "`io.bullet.borer.derivation.AdtWithKeyCollision.Animal` share the same type id `Dog`"
           )
       }
@@ -456,8 +456,8 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
         Scalac
           .typecheck("deriveEncoder[Animal]")
           .assertErrorMsgMatches(
-            "@key collision: sub types `io.bullet.borer.derivation.AdtWithKeyCollision.Dog` and " +
-              "`io.bullet.borer.derivation.AdtWithKeyCollision.Cat` of ADT " +
+            "@key collision: sub types `io.bullet.borer.derivation.AdtWithKeyCollision.Cat` and " +
+              "`io.bullet.borer.derivation.AdtWithKeyCollision.Dog` of ADT " +
               "`io.bullet.borer.derivation.AdtWithKeyCollision.Animal` share the same type id `Dog`"
           )
       }

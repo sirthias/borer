@@ -8,7 +8,7 @@
 
 package io.bullet.borer.derivation.internal
 
-import io.bullet.borer.{Borer, Reader}
+import io.bullet.borer._
 
 object Helpers {
 
@@ -29,6 +29,18 @@ object Helpers {
     }
     throw new Borer.Error.InvalidInputData(r.position, s"Cannot decode `$typeName` instance due to missing map $misses")
   }
+
+  def readAdtValue[T](r: Reader, typeId: Long)(implicit dec: Decoder[T]) =
+    dec match {
+      case dec: AdtDecoder[T] => dec.read(r, typeId)
+      case _                  => dec.read(r)
+    }
+
+  def readAdtValue[T](r: Reader, typeId: String)(implicit dec: Decoder[T]) =
+    dec match {
+      case dec: AdtDecoder[T] => dec.read(r, typeId)
+      case _                  => dec.read(r)
+    }
 
   private def oneBits(m0: Long, m1: Long): Iterator[Int] = oneBits(m0) ++ oneBits(m1).map(_ + 64)
   private def oneBits(mask: Long): Iterator[Int]         = Iterator.from(0).take(64).filter(i => ((mask >>> i) & 1) != 0)

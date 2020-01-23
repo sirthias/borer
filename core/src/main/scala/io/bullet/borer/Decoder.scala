@@ -386,3 +386,18 @@ sealed abstract class LowPrioDecoders extends TupleDecoders {
       } else r.unexpectedDataItem(expected = "Map")
     }
 }
+
+/**
+  * An [[AdtDecoder]] is a [[Decoder]] whose `read` method expects to read an envelope
+  * (holding the type id) around the actual value encoding.
+  *
+  * In order to be able to collapse several envelope levels into a single one, when several [[AdtDecoder]] instances
+  * call each other, this type also provides `read` overloads which don't read the type id envelope themselves
+  * but can receive the type id from the outside.
+  */
+trait AdtDecoder[T] extends Decoder[T] {
+
+  def read(r: Reader, typeId: Long): T
+
+  def read(r: Reader, typeId: String): T
+}
