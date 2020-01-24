@@ -39,7 +39,7 @@ import io.bullet.borer.compat.akkaHttp._
 By default the `Unmarshaller` constructed by `borer-compat-akka` understand both [CBOR] and [JSON] with Content-Type
 `application/cbor` and `application/json`, respectively.<br>
 The `Marshaller` also supports both formats and lets the client determine via HTTP content negotiation (i.e. the
-`Accept` header) , which one it prefers. If the client has no preference [CBOR] is chosen.
+`Accept` header) , which one it prefers. If the client has no preference [JSON] is chosen.
 
 Also, (Un)marshaller construction can be customized in various ways, e.g. with custom media types, and is also available
 for streams, i.e. to and from `akka.stream.scaladsl.Source[T, _]` rather than simply `T`.<br>
