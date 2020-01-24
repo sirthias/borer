@@ -15,6 +15,6 @@ addSbtPlugin("com.typesafe.sbt"       % "sbt-site"                    % "1.4.0")
 addSbtPlugin("com.typesafe"           % "sbt-mima-plugin"             % "0.6.1")
 
 libraryDependencies ++= Seq(
-  "io.bullet" %% "borer-core"       % "1.3.0",
-  "io.bullet" %% "borer-derivation" % "1.3.0"
+  "io.bullet" %% "borer-core"       % "1.4.0",
+  "io.bullet" %% "borer-derivation" % "1.4.0"
 )
