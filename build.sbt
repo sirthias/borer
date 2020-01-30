@@ -69,6 +69,9 @@ lazy val commonSettings = Seq(
   publishTo := sonatypePublishToBundle.value,
   mimaFailOnNoPrevious := false,
 
+  // we need this resolver to let Travis CI find new release artifacts before they are available from Maven Central
+  resolvers += Resolver.sonatypeRepo("staging"),
+
   developers := List(
     Developer("sirthias", "Mathias Doenitz", "devnull@bullet.io", url("https://github.com/sirthias/"))
   ),
@@ -93,8 +96,6 @@ lazy val mimaSettings = {
   val newVersion = Def.setting(version.value.split('.').toList)
 
   Seq(
-    // we need this resolver to let Travis CI find new release artifacts before they are available from Maven Central
-    resolvers += Resolver.sonatypeRepo("staging"),
     mimaCheckDirection := {
       val isPatch = newVersion.value.take(2) == oldVersion.take(2)
       if (isPatch) "both" else "backward"
