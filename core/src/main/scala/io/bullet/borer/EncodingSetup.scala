@@ -65,6 +65,13 @@ object EncodingSetup {
     def toByteArrayTry: Try[Array[Byte]]
 
     /**
+      * Short-cut for encoding to a plain byte array, wrapped in an [[Either]] for error handling.
+      *
+      * NOTE: You can get a slightly more narrowly typed error by using `.to[Array[Byte]].resultEither` instead!
+      */
+    def toByteArrayEither: Either[Borer.Error[Output], Array[Byte]]
+
+    /**
       * Short-cut for encoding to a [[ByteBuffer]], throwing an exception in case of any failures.
       */
     def toByteBuffer: ByteBuffer
@@ -73,6 +80,13 @@ object EncodingSetup {
       * Short-cut for encoding to a [[ByteBuffer]], wrapped in a [[Try]] for error handling.
       */
     def toByteBufferTry: Try[ByteBuffer]
+
+    /**
+      * Short-cut for encoding to a [[ByteBuffer]], wrapped in an [[Either]] for error handling.
+      *
+      * NOTE: You can get a slightly more narrowly typed error by using `.to[ByteBuffer].resultEither` instead!
+      */
+    def toByteBufferEither: Either[Borer.Error[Output], ByteBuffer]
 
     /**
       * Encodes an instance of T to the given type `R` type using the configured options.
@@ -126,9 +140,13 @@ object EncodingSetup {
 
     def toByteArrayTry: Try[Array[Byte]] = to[Array[Byte]].resultTry
 
+    def toByteArrayEither: Either[Borer.Error[Output], Array[Byte]] = to[Array[Byte]].resultEither
+
     def toByteBuffer: ByteBuffer = to[ByteBuffer].result
 
     def toByteBufferTry: Try[ByteBuffer] = to[ByteBuffer].resultTry
+
+    def toByteBufferEither: Either[Borer.Error[Output], ByteBuffer] = to[ByteBuffer].resultEither
 
     def to[R](implicit op: Output.ToTypeProvider[R]): Sealed[op.Out, R] = {
       _output = op(config.bufferSize, config.allowBufferCaching)
