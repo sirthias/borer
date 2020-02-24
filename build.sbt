@@ -192,10 +192,12 @@ addCommandsAlias(
     "derivation/test",
     "akka/test",
     "scodec/test",
+    "circe/test",
     "core/coverageReport",
     "derivation/coverageReport",
     "akka/coverageReport",
     "scodec/coverageReport",
+    "circe/coverageReport",
     "coverageOff",
   )
 )
@@ -384,7 +386,7 @@ lazy val site = project
         .withColor("indigo", "orange")
         .withLogo("assets/images/borer-logo-white.svg")
         .withCustomStylesheet("assets/stylesheets/borer.css")
-        .withCopyright("Copyright (C) 2019 Mathias Doenitz")
+        .withCopyright("Copyright (C) 2019-2020 Mathias Doenitz")
         .withRepository(scmInfo.value.get.browseUrl.toURI)
         .withSocial(uri("https://github.com/sirthias"), uri("https://twitter.com/sirthias"))
         .withSearch()

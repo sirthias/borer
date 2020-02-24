@@ -283,9 +283,7 @@ abstract class AbstractJsonSpec extends AbstractBorerSpec {
       val wsStrings  = Iterator.continually(wsCharIter.take(random.nextInt(20)).mkString)
       def ws         = wsStrings.next()
       val list       = List(1, 2, 3)
-      (1 to 100).foreach { _ =>
-        verifyDecoding(s"$ws[${ws}1$ws,${ws}2$ws,${ws}3$ws]$ws", list)
-      }
+      (1 to 100).foreach(_ => verifyDecoding(s"$ws[${ws}1$ws,${ws}2$ws,${ws}3$ws]$ws", list))
     }
 
     "Complex Case Classes" - {
