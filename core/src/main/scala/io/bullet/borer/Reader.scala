@@ -11,6 +11,7 @@ package io.bullet.borer
 import java.nio.charset.StandardCharsets
 
 import io.bullet.borer.internal.{ElementDeque, Parser, Receptacle, Util}
+import io.bullet.borer.json.JsonParser
 
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -37,6 +38,14 @@ final class InputReader[Config <: Reader.Config](
   // a stash of elements that are injected _before_ the next element from the parser,
   // if null or empty the next element comes from the parser
   private[borer] var stash: ElementDeque = _
+
+  private[borer] def release(): Unit =
+    if (directParser eq null) {
+      parser match {
+        case x: JsonParser[_] => x.release()
+        case _                => //
+      }
+    } else directParser.release()
 
   @inline def dataItem(): Int = {
     def pullFromStash() =

@@ -172,10 +172,11 @@ object DecodingSetup {
       new InputReader(parser, directParser, receiverWrapper, config, target)
     }
 
-    private def decodeFrom(reader: Reader): AnyRef = {
-      val value = decoder.read(reader)
-      if (!prefixOnly) reader.readEndOfInput()
-      value
-    }
+    private def decodeFrom(reader: Reader): AnyRef =
+      try {
+        val value = decoder.read(reader)
+        if (!prefixOnly) reader.readEndOfInput()
+        value
+      } finally reader.release()
   }
 }

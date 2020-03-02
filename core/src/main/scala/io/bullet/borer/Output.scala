@@ -15,7 +15,7 @@ import scala.annotation.tailrec
 /**
   * Abstraction over serialization output.
   *
-  * The implementation be either mutable or immutable.
+  * The implementation can be either mutable or immutable.
   */
 trait Output { outer =>
   type Self <: Output { type Self <: outer.Self }

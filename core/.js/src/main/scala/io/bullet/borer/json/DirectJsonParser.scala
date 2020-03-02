@@ -21,5 +21,6 @@ final private[borer] class DirectJsonParser private extends Parser[Array[Byte]] 
   def padQuadByte(remaining: Int)                = fail()
   def padOctaByte(remaining: Int)                = fail()
   def padBytes(rest: Array[Byte], missing: Long) = fail()
+  def release()                                  = fail()
   private def fail()                             = throw new UnsupportedOperationException
 }

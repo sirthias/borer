@@ -57,8 +57,9 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
   private[this] val allowDoubleParsing = !config.readDecimalNumbersOnlyAsNumberStrings
 
   private[this] var chars: Array[Char] =
-    if (config.allowBufferCaching) CharArrayCache.getBuffer(config.initialCharbufferSize)
+    if (config.allowBufferCaching) CharArrayCache.acquire(config.initialCharbufferSize)
     else new Array[Char](config.initialCharbufferSize)
+
   private[this] var state: Int        = EXPECT_VALUE
   private[this] var cursorExtra: Int  = _
   private[this] var auxLong: Long     = _
@@ -72,6 +73,12 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
   private[this] var nextChar: Int = nextCharAfterWhitespace()
 
   def valueIndex: Long = _valueIndex - 1
+
+  def release(): Unit =
+    if (config.allowBufferCaching) {
+      CharArrayCache.release(chars)
+      chars = null
+    }
 
   /**
     * Reads the next data item from the input and sends it to the given [[Receiver]].

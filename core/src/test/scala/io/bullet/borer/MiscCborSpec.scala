@@ -129,5 +129,22 @@ object MiscCborSpec extends AbstractBorerSpec {
         encode(Writer.Script(_.writeMapStart().writeInt(1).writeBreak()))
       ).getMessage ==> "Expected map entry value data item but got BREAK (Output.ToByteArray index 2)"
     }
+
+    "Nested Encodings" - {
+      case class Qux(bytes: Array[Byte], foo: Foo)
+
+      implicit val quxCodec = Codec[Qux](
+        encoder = { (w, x) =>
+          w.writeArrayHeader(2)
+            .writeTag(Tag.Other(2828))
+            .writeBytes(x.bytes)
+            .writeBytes(Cbor.encode(x.foo).withConfig(Cbor.EncodingConfig(allowBufferCaching = false)).toByteArray)
+        },
+        decoder = { r => ??? }
+      )
+
+      val qux = Qux("YEAH".getBytes, Foo(42, "foo", None))
+      verifyEncoding(qux, "82d90b0c44594541484883182a63666f6f80")
+    }
   }
 }
