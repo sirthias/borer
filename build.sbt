@@ -222,7 +222,7 @@ val `scala-reflect`     = Def.setting("org.scala-lang"         %  "scala-reflect
 lazy val borer = project.in(file("."))
   .aggregate(`core-jvm`, `core-js`)
   .aggregate(`compat-akka`)
-  .aggregate(`compat-cats-jvm`, `compat-cats-js`)
+  .aggregate(`compat-cats-jvm`) // , `compat-cats-js`) // temporarily disabled due to strange java.io.IOException: Failed to deserialize .../Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-core_sjs1_2.12/2.1.0/cats-core_sjs1_2.12-2.1.0.jar:/cats/syntax/package$hash$.sjsir
   .aggregate(`compat-circe-jvm`) //, `compat-circe-js`)  // temporarily disabled until circe-derivation_sjs1_2.1X is available
   .aggregate(`compat-scodec-jvm`, `compat-scodec-js`)
   .aggregate(`derivation-jvm`, `derivation-js`)
