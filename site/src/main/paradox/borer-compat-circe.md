@@ -79,7 +79,7 @@ Custom Simple Values
 The behavior of the `borer-circe-compat` decoding logic can be customized, if necessary, by constructing the _borer_
 `Decoder[io.circe.Json]` with a custom call to `io.bullet.borer.compat.circe.circeJsonAstDecoder(...)`.
 
-See the @github[module sources](/circe/src/main/scala/io/bullet/borer/compat/circe.scala#L90) for full details.
+See the @github[module sources](/compat-circe/src/main/scala/io/bullet/borer/compat/circe.scala#L90) for full details.
 
   [circe]: https://circe.github.io/circe/
   [CBOR]: http://cbor.io/

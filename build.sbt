@@ -391,7 +391,7 @@ lazy val benchmarks = project
 
 lazy val site = project
   .in(file("site"))
-  .dependsOn(`core-jvm`, `derivation-jvm`, `compat-akka`, `compat-circe-jvm`, `compat-scodec-jvm`)
+  .dependsOn(`core-jvm`, `derivation-jvm`, `compat-akka`, `compat-cats-jvm`, `compat-circe-jvm`, `compat-scodec-jvm`)
   .enablePlugins(
     ParadoxPlugin,
     ParadoxMaterialThemePlugin,
