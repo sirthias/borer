@@ -120,7 +120,7 @@ lazy val crossSettings = Seq(
 lazy val scalajsSettings = Seq(
   scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule).withSourceMap(false)),
   scalaJSStage in Global := FastOptStage,
-  scalacOptions ~= { _.filterNot(_ == "-Ywarn-dead-code") :+ "-P:scalajs:sjsDefinedByDefault" }
+  scalacOptions ~= { _.filterNot(_ == "-Ywarn-dead-code") }
 )
 
 lazy val releaseSettings = {
@@ -210,7 +210,7 @@ val `akka-stream`       = Def.setting("com.typesafe.akka"      %%  "akka-stream"
 val `akka-http`         = Def.setting("com.typesafe.akka"      %%  "akka-http"               % "10.1.11")
 val `circe-core`        = Def.setting("io.circe"               %%% "circe-core"              % "0.13.0")
 val `circe-parser`      = Def.setting("io.circe"               %%% "circe-parser"            % "0.13.0")
-val `circe-derivation`  = Def.setting("io.circe"               %%% "circe-derivation"        % "0.12.0-M7")
+val `circe-derivation`  = Def.setting("io.circe"               %%% "circe-derivation"        % "0.13.0-M2")
 val `scodec-bits`       = Def.setting("org.scodec"             %%% "scodec-bits"             % "1.1.14")
 val utest               = Def.setting("com.lihaoyi"            %%% "utest"                   % "0.7.4"  % "test")
 val `scala-compiler`    = Def.setting("org.scala-lang"         %  "scala-compiler"           % scalaVersion.value % "provided")
@@ -221,7 +221,7 @@ val `scala-reflect`     = Def.setting("org.scala-lang"         %  "scala-reflect
 lazy val borer = project.in(file("."))
   .aggregate(coreJVM, coreJS)
   .aggregate(akka)
-  .aggregate(circeJVM, circeJS)
+  .aggregate(circeJVM) //, circeJS)  // temporarily disabled until circe-derivation_sjs1_2.1X is available
   .aggregate(scodecJVM, scodecJS)
   .aggregate(derivationJVM, derivationJS)
   .aggregate(benchmarks)
