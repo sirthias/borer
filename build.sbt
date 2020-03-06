@@ -210,7 +210,7 @@ val `collection-compat` = Def.setting("org.scala-lang.modules" %%% "scala-collec
 val `akka-actor`        = Def.setting("com.typesafe.akka"      %%  "akka-actor"              % "2.6.3")
 val `akka-stream`       = Def.setting("com.typesafe.akka"      %%  "akka-stream"             % "2.6.3")
 val `akka-http`         = Def.setting("com.typesafe.akka"      %%  "akka-http"               % "10.1.11")
-val `cats-core`         = Def.setting("org.typelevel"          %%% "cats-core"               % "2.1.0")
+val `cats-core`         = Def.setting("org.typelevel"          %%% "cats-core"               % "2.1.1")
 val `circe-core`        = Def.setting("io.circe"               %%% "circe-core"              % "0.13.0")
 val `circe-parser`      = Def.setting("io.circe"               %%% "circe-parser"            % "0.13.0")
 val `circe-derivation`  = Def.setting("io.circe"               %%% "circe-derivation"        % "0.13.0-M2")
@@ -224,7 +224,7 @@ val `scala-reflect`     = Def.setting("org.scala-lang"         %  "scala-reflect
 lazy val borer = project.in(file("."))
   .aggregate(`core-jvm`, `core-js`)
   .aggregate(`compat-akka`)
-  .aggregate(`compat-cats-jvm`) // , `compat-cats-js`) // temporarily disabled due to strange java.io.IOException: Failed to deserialize .../Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-core_sjs1_2.12/2.1.0/cats-core_sjs1_2.12-2.1.0.jar:/cats/syntax/package$hash$.sjsir
+  .aggregate(`compat-cats-jvm`, `compat-cats-js`)
   .aggregate(`compat-circe-jvm`) //, `compat-circe-js`)  // temporarily disabled until circe-derivation_sjs1_2.1X is available
   .aggregate(`compat-scodec-jvm`, `compat-scodec-js`)
   .aggregate(`derivation-jvm`, `derivation-js`)
