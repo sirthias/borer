@@ -448,7 +448,7 @@ final class InputReader[Config <: Reader.Config](
   /**
     * If the current data item is a sized or unsized Text item it'll be buffered and decoded into a Chars data item.
     */
-  def decodeTextBytes(): this.type =
+  @tailrec def decodeTextBytes(): this.type =
     dataItem() match {
       case DI.Text =>
         receptacle.onChars(Utf8.decode(receptacle.getBytes[Array[Byte]]))

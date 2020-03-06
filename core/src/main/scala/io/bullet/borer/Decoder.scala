@@ -239,7 +239,7 @@ object Decoder extends LowPrioDecoders {
         else Decoder[Option[T]](r => Some(r.read[T]()))
     }
 
-  implicit def forIterable[T: Decoder, M[X] <: Iterable[X]](implicit factory: Factory[T, M[T]]): Decoder[M[T]] =
+  implicit def fromFactory[T: Decoder, M[_]](implicit factory: Factory[T, M[T]]): Decoder[M[T]] =
     Decoder { r =>
       if (r.hasArrayHeader) {
         @tailrec def rec(remaining: Int, b: mutable.Builder[T, M[T]]): M[T] =
@@ -298,26 +298,15 @@ object Decoder extends LowPrioDecoders {
 
     implicit def default[A: Decoder, B: Decoder]: Decoder[Either[A, B]] =
       Decoder { r =>
-        if (r.tryReadArrayStart()) {
-          if (r.readArrayStart().tryReadBreak()) {
-            val x = r.readArrayStart().read[B]()
-            r.readBreak().readBreak()
-            Right(x)
-          } else {
-            val x = r.read[A]()
-            r.readBreak().readArrayStart().readBreak().readBreak()
-            Left(x)
+        val breakExpected = r.tryReadArrayStart() || { r.readMapHeader(1); false }
+        val result =
+          r.readInt() match {
+            case 0 => Left(r.read[A]())
+            case 1 => Right(r.read[B]())
+            case x => r.unexpectedDataItem(expected = "Int 0 or 1 for decoding an `Either`", actual = s"Int $x")
           }
-        } else {
-          r.readMapHeader(1).readInt() match {
-            case 0 => Left(r[A])
-            case 1 => Right(r[B])
-            case x =>
-              r.unexpectedDataItem(
-                expected = "Map entry with key 0 or 1 for decoding an `Either`",
-                actual = s"Map entry with key $x")
-          }
-        }
+        if (breakExpected) r.readBreak()
+        result
       }
   }
 

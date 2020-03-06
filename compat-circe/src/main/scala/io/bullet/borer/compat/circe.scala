@@ -97,7 +97,7 @@ object circe {
     new Decoder[Json] {
       import DataItem.{Shifts => DIS}
 
-      private[this] val arrayDecoder = Decoder.forIterable(this, implicitly[Factory[Json, Vector[Json]]])
+      private[this] val arrayDecoder = Decoder.fromFactory(this, implicitly[Factory[Json, Vector[Json]]])
       private[this] val mapDecoder   = Decoder.forListMap(Decoder.forString, this)
 
       def read(r: Reader) =

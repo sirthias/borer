@@ -264,9 +264,9 @@ abstract class AbstractJsonSpec extends AbstractBorerSpec {
 
       roundTrip("{}", Map.empty[Int, String])
       intercept[Borer.Error.ValidationFailure[_ <: AnyRef]](encode(ListMap(1 -> 2)))
-      roundTrip("""{"":2,"foo":4}""", ListMap(""                   -> 2, "foo"     -> 4))
-      roundTrip("""{"a":[[1],[]],"b":[[],[[2,3]]]}""", ListMap("a" -> Left(1), "b" -> Right(Vector(2, 3))))
-      roundTrip("""[[[],["a"]],[[{"b":"c"}],[]]]""", Vector(Right("a"), Left(ListMap("b" -> "c"))))
+      roundTrip("""{"":2,"foo":4}""", ListMap(""             -> 2, "foo"     -> 4))
+      roundTrip("""{"a":[0,1],"b":[1,[2,3]]}""", ListMap("a" -> Left(1), "b" -> Right(Vector(2, 3))))
+      roundTrip("""[[1,"a"],[0,{"b":"c"}]]""", Vector(Right("a"), Left(ListMap("b" -> "c"))))
       roundTrip(
         """{"a":"A","b":"B","c":"C","d":"D","e":"E"}""",
         ListMap("a" -> "A", "b" -> "B", "c" -> "C", "d" -> "D", "e" -> "E"))

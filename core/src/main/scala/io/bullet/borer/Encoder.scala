@@ -19,7 +19,7 @@ import java.lang.{
 import java.math.{BigDecimal => JBigDecimal, BigInteger => JBigInteger}
 
 import io.bullet.borer.encodings.BaseEncoding
-import io.bullet.borer.internal.{Util, XIterableOnceBound}
+import io.bullet.borer.internal.{Util, XIterableOnce, XIterableOnceBound}
 
 import scala.annotation.tailrec
 import scala.collection.LinearSeq
@@ -258,18 +258,12 @@ object Encoder extends LowPrioEncoders {
 
     implicit def default[A: Encoder, B: Encoder]: Encoder[Either[A, B]] =
       Encoder { (w, x) =>
-        if (w.writingJson) {
-          w.writeArrayStart()
-          x match {
-            case Left(a)  => w.writeToArray(a).writeEmptyArray()
-            case Right(b) => w.writeEmptyArray().writeToArray(b)
-          }
-          w.writeBreak()
-        } else
-          x match {
-            case Left(a)  => w.writeMapHeader(1).writeInt(0).write(a)
-            case Right(b) => w.writeMapHeader(1).writeInt(1).write(b)
-          }
+        if (w.writingJson) w.writeArrayStart() else w.writeMapHeader(1)
+        x match {
+          case Left(a)  => w.writeInt(0).write(a)
+          case Right(b) => w.writeInt(1).write(b)
+        }
+        if (w.writingJson) w.writeBreak() else w
       }
   }
 
@@ -307,10 +301,27 @@ object Encoder extends LowPrioEncoders {
 sealed abstract class LowPrioEncoders extends TupleEncoders {
 
   implicit final def forIterableOnce[T: Encoder, M[X] <: XIterableOnceBound[X]]: Encoder[M[T]] =
-    Encoder {
-      case (w, x: IndexedSeq[T]) => w writeIndexedSeq x
-      case (w, x: LinearSeq[T])  => w writeLinearSeq x
-      case (w, x)                => w writeIterableOnce x
+    new Encoder.DefaultValueAware[M[T]] { self =>
+
+      def write(w: Writer, value: M[T]) =
+        value match {
+          case x: IndexedSeq[T] => w.writeIndexedSeq(x)
+          case x: LinearSeq[T]  => w.writeLinearSeq(x)
+          case x                => w.writeIterableOnce(x)
+        }
+
+      def withDefaultValue(defaultValue: M[T]): Encoder[M[T]] =
+        if (isEmpty(defaultValue)) {
+          new Encoder.PossiblyWithoutOutput[M[T]] {
+            def producesOutputFor(value: M[T]) = !isEmpty(value)
+            def write(w: Writer, value: M[T])  = if (isEmpty(value)) w else self.write(w, value)
+          }
+        } else this
+
+      private def isEmpty(value: M[T]): Boolean = {
+        val ks = (value: XIterableOnce[T]).knownSize
+        ks == 0 || (ks < 0) && value.iterator.isEmpty
+      }
     }
 
   implicit final def forIterator[T: Encoder]: Encoder[Iterator[T]] = Encoder(_ writeIterator _)
