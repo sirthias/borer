@@ -208,6 +208,7 @@ val `collection-compat` = Def.setting("org.scala-lang.modules" %%% "scala-collec
 val `akka-actor`        = Def.setting("com.typesafe.akka"      %%  "akka-actor"              % "2.6.3")
 val `akka-stream`       = Def.setting("com.typesafe.akka"      %%  "akka-stream"             % "2.6.3")
 val `akka-http`         = Def.setting("com.typesafe.akka"      %%  "akka-http"               % "10.1.11")
+val `cats-core`         = Def.setting("org.typelevel"          %%% "cats-core"               % "2.1.0")
 val `circe-core`        = Def.setting("io.circe"               %%% "circe-core"              % "0.13.0")
 val `circe-parser`      = Def.setting("io.circe"               %%% "circe-parser"            % "0.13.0")
 val `circe-derivation`  = Def.setting("io.circe"               %%% "circe-derivation"        % "0.13.0-M2")
@@ -219,11 +220,12 @@ val `scala-reflect`     = Def.setting("org.scala-lang"         %  "scala-reflect
 /////////////////////// PROJECTS /////////////////////////
 
 lazy val borer = project.in(file("."))
-  .aggregate(coreJVM, coreJS)
-  .aggregate(akka)
-  .aggregate(circeJVM) //, circeJS)  // temporarily disabled until circe-derivation_sjs1_2.1X is available
-  .aggregate(scodecJVM, scodecJS)
-  .aggregate(derivationJVM, derivationJS)
+  .aggregate(`core-jvm`, `core-js`)
+  .aggregate(`compat-akka`)
+  .aggregate(`compat-cats-jvm`, `compat-cats-js`)
+  .aggregate(`compat-circe-jvm`) //, `compat-circe-js`)  // temporarily disabled until circe-derivation_sjs1_2.1X is available
+  .aggregate(`compat-scodec-jvm`, `compat-scodec-js`)
+  .aggregate(`derivation-jvm`, `derivation-js`)
   .aggregate(benchmarks)
   .aggregate(site)
   .disablePlugins(MimaPlugin)
@@ -234,8 +236,8 @@ lazy val borer = project.in(file("."))
     onLoadMessage := welcomeMessage.value
   )
 
-lazy val coreJVM = core.jvm.enablePlugins(SpecializeJsonParserPlugin)
-lazy val coreJS  = core.js.disablePlugins(MimaPlugin)
+lazy val `core-jvm` = core.jvm.enablePlugins(SpecializeJsonParserPlugin)
+lazy val `core-js`  = core.js.disablePlugins(MimaPlugin)
 lazy val core = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
@@ -260,10 +262,10 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   )
   .jsSettings(scalajsSettings: _*)
 
-lazy val akka = project
+lazy val `compat-akka` = project
   .enablePlugins(AutomateHeaderPlugin)
-  .dependsOn(coreJVM % "compile->compile;test->test")
-  .dependsOn(derivationJVM % "test->compile")
+  .dependsOn(`core-jvm` % "compile->compile;test->test")
+  .dependsOn(`derivation-jvm` % "test->compile")
   .settings(commonSettings)
   .settings(releaseSettings)
   .settings(mimaSettings)
@@ -276,13 +278,37 @@ lazy val akka = project
       utest.value)
   )
 
-lazy val circeJVM = circe.jvm
-  .dependsOn(coreJVM % "compile->compile;test->test")
-  .dependsOn(derivationJVM % "test->compile")
-lazy val circeJS  = circe.js
-  .dependsOn(coreJS   % "compile->compile;test->test")
-  .dependsOn(derivationJS % "test->compile")
-lazy val circe = crossProject(JSPlatform, JVMPlatform)
+lazy val `compat-cats-jvm` = `compat-cats`.jvm
+  .dependsOn(`core-jvm` % "compile->compile;test->test")
+  .dependsOn(`derivation-jvm` % "test->compile")
+lazy val `compat-cats-js`  = `compat-cats`.js
+  .dependsOn(`core-js`   % "compile->compile;test->test")
+  .dependsOn(`derivation-js` % "test->compile")
+lazy val `compat-cats` = crossProject(JSPlatform, JVMPlatform)
+  .withoutSuffixFor(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .enablePlugins(AutomateHeaderPlugin)
+  .settings(crossSettings)
+  .settings(commonSettings)
+  .settings(releaseSettings)
+  .settings(mimaSettings)
+  .settings(
+    moduleName := "borer-compat-cats",
+    libraryDependencies ++= Seq(
+      `collection-compat`.value,
+      `cats-core`.value,
+      utest.value
+    )
+  )
+  .jsSettings(scalajsSettings: _*)
+
+lazy val `compat-circe-jvm` = `compat-circe`.jvm
+  .dependsOn(`core-jvm` % "compile->compile;test->test")
+  .dependsOn(`derivation-jvm` % "test->compile")
+//lazy val `compat-circe-js`  = `compat-circe`.js
+//  .dependsOn(`core-js`   % "compile->compile;test->test")
+//  .dependsOn(`derivation-js` % "test->compile")
+lazy val `compat-circe` = crossProject(JVMPlatform) // JSPlatform
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .enablePlugins(AutomateHeaderPlugin)
@@ -300,15 +326,15 @@ lazy val circe = crossProject(JSPlatform, JVMPlatform)
       utest.value
     )
   )
-  .jsSettings(scalajsSettings: _*)
+  //.jsSettings(scalajsSettings: _*)
 
-lazy val scodecJVM = scodec.jvm
-  .dependsOn(coreJVM % "compile->compile;test->test")
-  .dependsOn(derivationJVM % "test->compile")
-lazy val scodecJS  = scodec.js
-  .dependsOn(coreJS   % "compile->compile;test->test")
-  .dependsOn(derivationJS % "test->compile")
-lazy val scodec = crossProject(JSPlatform, JVMPlatform)
+lazy val `compat-scodec-jvm` = `compat-scodec`.jvm
+  .dependsOn(`core-jvm` % "compile->compile;test->test")
+  .dependsOn(`derivation-jvm` % "test->compile")
+lazy val `compat-scodec-js`  = `compat-scodec`.js
+  .dependsOn(`core-js`   % "compile->compile;test->test")
+  .dependsOn(`derivation-js` % "test->compile")
+lazy val `compat-scodec` = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .enablePlugins(AutomateHeaderPlugin)
@@ -325,8 +351,8 @@ lazy val scodec = crossProject(JSPlatform, JVMPlatform)
   )
   .jsSettings(scalajsSettings: _*)
 
-lazy val derivationJVM = derivation.jvm.dependsOn(coreJVM % "compile->compile;test->test")
-lazy val derivationJS  = derivation.js.dependsOn(coreJS % "compile->compile;test->test")
+lazy val `derivation-jvm` = derivation.jvm.dependsOn(`core-jvm` % "compile->compile;test->test")
+lazy val `derivation-js`  = derivation.js.dependsOn(`core-js` % "compile->compile;test->test")
 lazy val derivation = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
@@ -344,7 +370,7 @@ lazy val derivation = crossProject(JSPlatform, JVMPlatform)
 lazy val benchmarks = project
   .enablePlugins(AutomateHeaderPlugin, JmhPlugin, BenchmarkResultsPlugin)
   .disablePlugins(MimaPlugin)
-  .dependsOn(coreJVM, derivationJVM)
+  .dependsOn(`core-jvm`, `derivation-jvm`)
   .settings(commonSettings)
   .settings(
     skip in publish := true,
@@ -363,7 +389,7 @@ lazy val benchmarks = project
 
 lazy val site = project
   .in(file("site"))
-  .dependsOn(coreJVM, derivationJVM, akka, circeJVM, scodecJVM)
+  .dependsOn(`core-jvm`, `derivation-jvm`, `compat-akka`, `compat-circe-jvm`, `compat-scodec-jvm`)
   .enablePlugins(
     ParadoxPlugin,
     ParadoxMaterialThemePlugin,
@@ -429,7 +455,7 @@ def welcomeMessage = Def.setting {
       |
       |Useful sbt tasks:
       |${item("project core")} - Descend into the JVM core module
-      |${item("project coreJS")} - Descend into the JS core module
+      |${item("project `core-js`")} - Descend into the JS core module
       |${item("test")} - Run all tests
       |${item("project benchmarks;benchmarkResults;project /")} - Show results of latest benchmark runs
       """.stripMargin
