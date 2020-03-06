@@ -8,14 +8,9 @@
 
 package io.bullet.borer
 
-import java.nio.charset.StandardCharsets.UTF_8
-
 import utest._
 
-object ByteStringArrayCodecsSpec extends AbstractBorerSpec {
-
-  def encode[T: Encoder](value: T): String   = Json.encode(value).toUtf8String
-  def decode[T: Decoder](encoded: String): T = Json.decode(encoded getBytes UTF_8).to[T].value
+object ByteStringArrayCodecsSpec extends ByteArrayJsonSpec {
 
   val tests = Tests {
 

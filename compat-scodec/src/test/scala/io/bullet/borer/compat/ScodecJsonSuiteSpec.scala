@@ -6,21 +6,21 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package io.bullet.borer
+package io.bullet.borer.compat
 
 import java.nio.charset.StandardCharsets
-import java.nio.ByteBuffer
+import _root_.scodec.bits.ByteVector
+import io.bullet.borer._
 
-object ByteBufferJsonSpec extends AbstractJsonSpec {
+object ScodecJsonSuiteSpec extends AbstractJsonSuiteSpec {
+  import scodec._
 
-  def encode[T: Encoder](value: T): String = {
-    val byteBuffer = Json.encode(value).withConfig(Json.EncodingConfig(bufferSize = 8)).toByteBuffer
-    new String(ByteAccess.ForByteBuffer.toByteArray(byteBuffer), StandardCharsets.UTF_8)
-  }
+  def encode[T: Encoder](value: T): String =
+    Json.encode(value).to[ByteVector].result.decodeUtf8.getOrElse("")
 
   def decode[T: Decoder](encoded: String): T =
     Json
-      .decode(ByteBuffer.wrap(encoded getBytes StandardCharsets.UTF_8))
+      .decode(ByteVector(encoded getBytes StandardCharsets.UTF_8))
       .withConfig(Json.DecodingConfig.default.copy(maxNumberAbsExponent = 300))
       .to[T]
       .value

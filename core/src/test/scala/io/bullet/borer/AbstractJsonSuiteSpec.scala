@@ -16,7 +16,7 @@ import utest._
 import scala.collection.immutable.ListMap
 import scala.util.Random
 
-abstract class AbstractJsonSpec extends AbstractBorerSpec {
+abstract class AbstractJsonSuiteSpec extends AbstractBorerSpec {
 
   val tests = Tests {
 

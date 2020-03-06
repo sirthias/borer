@@ -11,10 +11,7 @@ package io.bullet.borer
 import utest._
 import io.bullet.borer.internal.Util._
 
-object MiscCborSpec extends AbstractBorerSpec {
-
-  def encode[T: Encoder](value: T): String   = toHexString(Cbor.encode(value).toByteArray)
-  def decode[T: Decoder](encoded: String): T = Cbor.decode(hexBytes(encoded)).to[T].value
+object MiscCborSpec extends ByteArrayCborSpec {
 
   case class Foo(int: Int, string: String, doubleOpt: Option[java.lang.Double])
   case class Bar(foo: Foo, optFoo: Option[Foo], stringSeq: Seq[String])

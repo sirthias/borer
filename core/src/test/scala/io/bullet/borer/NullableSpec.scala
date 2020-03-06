@@ -8,15 +8,9 @@
 
 package io.bullet.borer
 
-import java.nio.charset.StandardCharsets.UTF_8
-
 import utest._
 
-object NullableSpec extends AbstractBorerSpec {
-
-  def encode[T: Encoder](value: T): String = Json.encode(value).toUtf8String
-
-  def decode[T: Decoder](encoded: String): T = Json.decode(encoded getBytes UTF_8).to[T].value
+object NullableSpec extends ByteArrayJsonSpec {
 
   case class Foo(int: Nullable[Int], string: Nullable[String])
   case class Bar(foo: Nullable[Option[Foo]])

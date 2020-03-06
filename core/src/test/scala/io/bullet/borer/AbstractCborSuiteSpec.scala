@@ -18,7 +18,7 @@ import scala.collection.immutable.{ListMap, TreeMap}
 /**
   * Direct implementation of https://tools.ietf.org/html/rfc7049#appendix-A
   */
-abstract class AbstractCborSpec extends AbstractBorerSpec {
+abstract class AbstractCborSuiteSpec extends AbstractBorerSpec {
 
   // for these test we use an alternative, special and somewhat hacky `Either` codec
   // to make it easier to decode the RFC examples
