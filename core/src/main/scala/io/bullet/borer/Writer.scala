@@ -8,7 +8,7 @@
 
 package io.bullet.borer
 
-import io.bullet.borer.internal.Util
+import io.bullet.borer.internal.{Util, XIterableOnce}
 
 import scala.annotation.tailrec
 import scala.collection.LinearSeq
@@ -126,6 +126,17 @@ final class Writer(
       rec(x)
       writeBreak()
     } else writeEmptyArray()
+  }
+
+  def writeIterableOnce[T: Encoder](iterableOnce: XIterableOnce[T]): this.type = {
+    val size = iterableOnce.knownSize
+    if (size > 0) {
+      writeArrayOpen(size)
+      val iterator = iterableOnce.iterator
+      while (iterator.hasNext) write(iterator.next())
+      writeArrayClose()
+    } else if (size < 0) writeIterator(iterableOnce.iterator)
+    else writeEmptyArray()
   }
 
   def writeIterator[T: Encoder](iterator: Iterator[T]): this.type =

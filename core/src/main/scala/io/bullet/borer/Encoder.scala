@@ -19,7 +19,7 @@ import java.lang.{
 import java.math.{BigDecimal => JBigDecimal, BigInteger => JBigInteger}
 
 import io.bullet.borer.encodings.BaseEncoding
-import io.bullet.borer.internal.Util
+import io.bullet.borer.internal.{Util, XIterableOnceBound}
 
 import scala.annotation.tailrec
 import scala.collection.LinearSeq
@@ -306,11 +306,11 @@ object Encoder extends LowPrioEncoders {
 
 sealed abstract class LowPrioEncoders extends TupleEncoders {
 
-  implicit final def forIterable[T: Encoder, M[X] <: Iterable[X]]: Encoder[M[T]] =
+  implicit final def forIterableOnce[T: Encoder, M[X] <: XIterableOnceBound[X]]: Encoder[M[T]] =
     Encoder {
       case (w, x: IndexedSeq[T]) => w writeIndexedSeq x
       case (w, x: LinearSeq[T])  => w writeLinearSeq x
-      case (w, x)                => w writeIterator x.iterator
+      case (w, x)                => w writeIterableOnce x
     }
 
   implicit final def forIterator[T: Encoder]: Encoder[Iterator[T]] = Encoder(_ writeIterator _)
