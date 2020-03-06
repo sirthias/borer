@@ -18,14 +18,16 @@ object JsonDeepDerivationSpec extends AbstractBorerSpec {
   def encode[T: Encoder](value: T): String   = Json.encode(value).toUtf8String
   def decode[T: Decoder](encoded: String): T = Json.decode(encoded getBytes StandardCharsets.UTF_8).to[T].value
 
-  object AnimalAdt {
-    sealed trait Animal
+  sealed trait Animal
+
+  object Animal {
+    sealed abstract class Dog extends Animal
+    sealed trait Cat          extends Animal
+
     case object Wolverine             extends Animal
     case class Yeti(name: String)     extends Animal
-    sealed trait Dog                  extends Animal
     case object TheHound              extends Dog
     case class Labrador(name: String) extends Dog
-    sealed trait Cat                  extends Animal
     case object TheLastTiger          extends Cat
     case class Lion(color: String)    extends Cat
   }
@@ -33,30 +35,24 @@ object JsonDeepDerivationSpec extends AbstractBorerSpec {
   val tests = Tests {
 
     "simple" - {
-      import AnimalAdt._
-
       implicit val codec = ArrayBasedCodecs.deriveAllCodecs[Animal]
-      roundTrip("""["Labrador","Lolle"]""", Labrador("Lolle"): Animal)
-      roundTrip("""["TheLastTiger",[]]""", TheLastTiger: Animal)
+      roundTrip("""["Labrador","Lolle"]""", Animal.Labrador("Lolle"): Animal)
+      roundTrip("""["TheLastTiger",[]]""", Animal.TheLastTiger: Animal)
     }
 
     "custom leaf" - {
-      import AnimalAdt._
-
-      implicit val lionCodec = Codec.bimap[Int, Lion](_ => 0, _ => Lion("roar"))
+      implicit val lionCodec = Codec.bimap[Int, Animal.Lion](_ => 0, _ => Animal.Lion("roar"))
       implicit val codec     = ArrayBasedCodecs.deriveAllCodecs[Animal]
-      roundTrip("""["Lion",0]""", Lion("roar"): Animal)
+      roundTrip("""["Lion",0]""", Animal.Lion("roar"): Animal)
     }
 
     "custom inner node" - {
-      import AnimalAdt._
-
-      implicit val catCodec = Codec.bimap[Int, Cat](_ => 0, _ => TheLastTiger)
+      implicit val catCodec = Codec.bimap[Int, Animal.Cat](_ => 0, _ => Animal.TheLastTiger)
       implicit val codec    = ArrayBasedCodecs.deriveAllCodecs[Animal]
 
-      roundTrip("""["Cat",0]""", TheLastTiger: Animal)
-      verifyEncoding(Lion("roar"): Animal, """["Cat",0]""")
-      verifyDecoding("""["Cat",0]""", TheLastTiger: Animal)
+      roundTrip("""["Cat",0]""", Animal.TheLastTiger: Animal)
+      verifyEncoding(Animal.Lion("roar"): Animal, """["Cat",0]""")
+      verifyDecoding("""["Cat",0]""", Animal.TheLastTiger: Animal)
     }
 
     "recursive" - {
