@@ -1,3 +1,15 @@
+Version 1.5.0 (2020-03-06)
+--------------------------
+
+- upgraded to ScalaJS 1.0.0
+- fixed buffer caching breaking nested encoding/decoding calls (#186)
+- added `borer-compat-cats` module (#191)
+- added `toByteArrayEither` and `toByteBufferEither` to `EncodingSetup.Api`
+- extended default encoder coverage to IterableOnce on 2.13 and TraversableOnce on 2.12 (#182)
+- renamed `Encoder.forIterable` to `Encoder.fromFactory`
+- improved the default encoding for `Either` (breaking change!)
+
+
 Version 1.4.0 (2020-01-23)
 --------------------------
 
