@@ -165,6 +165,7 @@ sirthias/borer/
     <li><a href="borer-derivation/faq.html" class="page">Derivation FAQ</a></li>
   </ul></li>
   <li><a href="borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
+  <li><a href="borer-compat-cats.html" class="page"><code>borer-compat-cats</code></a></li>
   <li><a href="borer-compat-circe.html" class="active page"><code>borer-compat-circe</code></a></li>
   <li><a href="borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
   <li><a href="project/index.html" class="page">Project Info</a>
@@ -191,7 +192,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.4.0
+<i class="md-icon" title="Version">label_outline</i> 1.5.0
 </label>
 </li>
 </ul>
@@ -278,7 +279,7 @@ deserializeFromCbor[List[String]](bytes) ==&gt; value</code></pre>
   <dd>By default an exception is thrown upon reading a custom <a href="http://cbor.io/">CBOR</a> &ldquo;simple value&rdquo;.</dd>
 </dl>
 <p>The behavior of the <code>borer-circe-compat</code> decoding logic can be customized, if necessary, by constructing the <em>borer</em> <code>Decoder[io.circe.Json]</code> with a custom call to <code>io.bullet.borer.compat.circe.circeJsonAstDecoder(...)</code>.</p>
-<p>See the <a href="https://github.com/sirthias/borer/tree/master/circe/src/main/scala/io/bullet/borer/compat/circe.scala#L90">module sources</a> for full details.</p>
+<p>See the <a href="https://github.com/sirthias/borer/tree/master/compat-circe/src/main/scala/io/bullet/borer/compat/circe.scala#L90">module sources</a> for full details.</p>
 </div>
 <div>
 <a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-compat-circe.md" title="Edit this page" class="md-source-file md-edit">
@@ -287,7 +288,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.4.0
+1.5.0
 </span>
 </div>
 </article>
@@ -297,7 +298,7 @@ Edit this page
 <footer class="md-footer">
 <div class="md-footer-nav">
 <nav class="md-footer-nav__inner md-grid">
-<a href="borer-compat-akka.html" title="borer-compat-akka" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<a href="borer-compat-cats.html" title="borer-compat-cats" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
 <div class="md-flex__cell md-flex__cell--shrink">
 <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
 </div>
@@ -306,7 +307,7 @@ Edit this page
 <span class="md-footer-nav__direction">
 Previous
 </span>
-borer-compat-akka
+borer-compat-cats
 </span>
 </div>
 </a>
@@ -329,7 +330,7 @@ borer-compat-scodec
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019 Mathias Doenitz
+Copyright (C) 2019-2020 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

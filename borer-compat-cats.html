@@ -20,7 +20,7 @@
 
 <meta name="description" content="CBOR and JSON (de)serialization in Scala">
 <link rel="shortcut icon" href="assets/images/favicon.ico">
-<title>Basic Design Principles and Limitations · borer</title>
+<title>borer-compat-cats · borer</title>
 <link rel="stylesheet" href="assets/stylesheets/application.451f80e5.css">
 <link rel="stylesheet" href="assets/stylesheets/application-palette.22915126.css">
 <meta name="theme-color" content="#3f51b5" />
@@ -61,7 +61,7 @@ data-md-color-accent="orange"
 borer
 </span>
 <span class="md-header-nav__topic">
-Basic Design Principles and Limitations
+borer-compat-cats
 </span>
 </div>
 </div>
@@ -140,7 +140,7 @@ sirthias/borer/
 
 </div>
 <ul>
-  <li><a href="design-principles.html" class="active page">Basic Design Principles and Limitations</a></li>
+  <li><a href="design-principles.html" class="page">Basic Design Principles and Limitations</a></li>
   <li><a href="getting-started.html" class="page">Getting Started</a></li>
   <li><a href="borer-core/index.html" class="page"><code>borer-core</code></a>
   <ul>
@@ -165,7 +165,7 @@ sirthias/borer/
     <li><a href="borer-derivation/faq.html" class="page">Derivation FAQ</a></li>
   </ul></li>
   <li><a href="borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
-  <li><a href="borer-compat-cats.html" class="page"><code>borer-compat-cats</code></a></li>
+  <li><a href="borer-compat-cats.html" class="active page"><code>borer-compat-cats</code></a></li>
   <li><a href="borer-compat-circe.html" class="page"><code>borer-compat-circe</code></a></li>
   <li><a href="borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
   <li><a href="project/index.html" class="page">Project Info</a>
@@ -177,6 +177,14 @@ sirthias/borer/
   </ul></li>
 </ul>
 <nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="borer-compat-cats.html#borer-compat-cats" class="header"><code>borer-compat-cats</code></a>
+  <ul>
+    <li><a href="borer-compat-cats.html#installation" class="header">Installation</a></li>
+    <li><a href="borer-compat-cats.html#encoding-strategies" class="header">Encoding Strategies</a></li>
+  </ul></li>
+</ul>
 </nav>
 
 </nav>
@@ -190,18 +198,81 @@ sirthias/borer/
 </div>
 </div>
 </div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="borer-compat-cats.html#borer-compat-cats" class="header"><code>borer-compat-cats</code></a>
+  <ul>
+    <li><a href="borer-compat-cats.html#installation" class="header">Installation</a></li>
+    <li><a href="borer-compat-cats.html#encoding-strategies" class="header">Encoding Strategies</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</div>
+</div>
+</div>
 <div class="md-content">
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
-<h1><a href="#basic-design-principles-and-limitations" name="basic-design-principles-and-limitations" class="anchor"><span class="anchor-link"></span></a>Basic Design Principles and Limitations</h1>
-<p><em>borer</em>&rsquo;s goal is to provide a highly efficient (de)serialization layer between some data model defined in <a href="https://www.scala-lang.org/">Scala</a> and <a href="http://cbor.io/">CBOR</a> and/or <a href="http://json.org/">JSON</a> as storage/network formats. <em>borer</em> performs this task in a very direct way, without relying on some Abstract Syntax Tree (AST, also called Document Object Model (DOM)) as intermediate structure.</p>
-<p>As such it doesn&rsquo;t offer any facilities for pre- or post-processing the serialized data, like manipulating the <a href="http://json.org/">JSON</a> structure, filtering or augmenting nodes, or the like.</p>
-<p>Also, it doesn&rsquo;t rely on reflection in any way. All information about the types to encode and decode must be statically available at the encoding/decoding point. With the exception of <code>sealed</code> ADT hierarchies (which are supported out of the box with the <a href="borer-derivation/index.html"><code>borer-derivation</code></a> module) this means that you need to define yourself how to represent type information of abstract types on the wire!</p>
-<p>Another design principle has been to implement <em>borer</em>&rsquo;s core module without relying on Scala macros or depending on any external libraries. This should make <em>borer</em> easily maintainable for the foreseeable future and reduces its weight as a dependency of your applications (which can be especially important with <a href="https://www.scala-js.org/">scala.js</a>).</p>
-<p>(Note: The <a href="borer-derivation/index.html"><code>borer-derivation</code></a> module <em>does</em> rely on macros for deriving codec type classes, but its use is completely optional.)</p>
+<h1><a href="#borer-compat-cats" name="borer-compat-cats" class="anchor"><span class="anchor-link"></span></a><code>borer-compat-cats</code></h1>
+<p>The <code>borer-compat-circe</code> module provides default codecs for the following <code>cats.data._</code> data structures from the <a href="https://typelevel.org/cats/">cats</a> <code>cats-core</code> package:</p>
+<ul>
+  <li><code>Chain[A]</code></li>
+  <li><code>Ior[A, B]</code></li>
+  <li><code>NonEmptyChain[T]</code></li>
+  <li><code>NonEmptyList[T]</code></li>
+  <li><code>NonEmptyMap[T]</code></li>
+  <li><code>NonEmptySet[T]</code></li>
+  <li><code>NonEmptyVector[T]</code></li>
+  <li><code>Validated[A, B]</code></li>
+</ul>
+<h2><a href="#installation" name="installation" class="anchor"><span class="anchor-link"></span></a>Installation</h2>
+<p>Include the <code>borer-compat-cats</code> module as a dependency (see the <a href="getting-started.html">Getting Started</a> chapter for details) and</p>
+<pre class="prettyprint"><code class="language-scala">import io.bullet.borer.compat.cats._
+</code></pre>
+<p>With this import in place <em>borer</em> will seamlessly encode and decode instances of the types listed above, provided that encoders and/or decoders are available for the respective &ldquo;inner&rdquo; types. </p>
+<h2><a href="#encoding-strategies" name="encoding-strategies" class="anchor"><span class="anchor-link"></span></a>Encoding Strategies</h2>
+<p>While the encoding strategies for most of the above data structures should be relatively straight-forward there are two types, for which there is no clear default encoding:</p>
+<ul>
+  <li><code>Ior[A, B]</code></li>
+  <li><code>Validated[A, B]</code></li>
+</ul>
+<p>The encodings implemented by <code>borer-compat-circe</code> aim for best time and space efficiency, not &ldquo;readability&rdquo;.</p>
+<p>One easy way to optimize for self-describability rather than efficiency would be to rely on <code>borer-derivation</code> instead. Here is an example contrasting the difference:</p>
+<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/CatsCompatSpec.scala#L12-L37" target="_blank" title="Go to snippet source"></a><code class="language-scala">import cats.data.Ior
+import io.bullet.borer.{Decoder, Encoder, Json}
+
+val value = List(
+  Ior.Left(1),
+  Ior.Right(&quot;foo&quot;),
+  Ior.Both(42, &quot;bar&quot;)
+)
+
+// the Ior encoding of `borer-compat-circe` is optimized for efficiency
+{
+  import io.bullet.borer.compat.cats._
+
+  Json.encode(value).toUtf8String ==&gt;
+  &quot;&quot;&quot;[[0,1],[1,&quot;foo&quot;],[2,42,&quot;bar&quot;]]&quot;&quot;&quot;
+}
+
+// the map-based codec generated by `borer-derivation` produces encodings
+// that self-describe better, but are less efficient space and time-wise
+{
+  implicit def iorCodec[A: Encoder: Decoder, B: Encoder: Decoder] =
+    MapBasedCodecs.deriveAllCodecs[Ior[A, B]]
+
+  Json.encode(value).toUtf8String ==&gt;
+  &quot;&quot;&quot;[{&quot;Left&quot;:{&quot;a&quot;:1}},{&quot;Right&quot;:{&quot;b&quot;:&quot;foo&quot;}},{&quot;Both&quot;:{&quot;a&quot;:42,&quot;b&quot;:&quot;bar&quot;}}]&quot;&quot;&quot;
+}</code></pre>
+<p>See the <a href="https://github.com/sirthias/borer/tree/master/compat-cats/src/main/scala/io/bullet/borer/compat/cats.scala">module sources</a> for full details.</p>
 </div>
 <div>
-<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/design-principles.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-compat-cats.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
@@ -217,7 +288,7 @@ Edit this page
 <footer class="md-footer">
 <div class="md-footer-nav">
 <nav class="md-footer-nav__inner md-grid">
-<a href="index.html" title="borer" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<a href="borer-compat-akka.html" title="borer-compat-akka" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
 <div class="md-flex__cell md-flex__cell--shrink">
 <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
 </div>
@@ -226,17 +297,17 @@ Edit this page
 <span class="md-footer-nav__direction">
 Previous
 </span>
-borer
+borer-compat-akka
 </span>
 </div>
 </a>
-<a href="getting-started.html" title="Getting Started" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<a href="borer-compat-circe.html" title="borer-compat-circe" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
 <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
 <span class="md-flex__ellipsis">
 <span class="md-footer-nav__direction">
 Next
 </span>
-Getting Started
+borer-compat-circe
 </span>
 </div>
 <div class="md-flex__cell md-flex__cell--shrink">

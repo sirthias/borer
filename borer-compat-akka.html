@@ -165,6 +165,7 @@ sirthias/borer/
     <li><a href="borer-derivation/faq.html" class="page">Derivation FAQ</a></li>
   </ul></li>
   <li><a href="borer-compat-akka.html" class="active page"><code>borer-compat-akka</code></a></li>
+  <li><a href="borer-compat-cats.html" class="page"><code>borer-compat-cats</code></a></li>
   <li><a href="borer-compat-circe.html" class="page"><code>borer-compat-circe</code></a></li>
   <li><a href="borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
   <li><a href="project/index.html" class="page">Project Info</a>
@@ -190,7 +191,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.4.0
+<i class="md-icon" title="Version">label_outline</i> 1.5.0
 </label>
 </li>
 </ul>
@@ -258,7 +259,7 @@ val route: Route =
     }
   }</code></pre>
 <p>By default the <code>Unmarshaller</code> constructed by <code>borer-compat-akka</code> understand both <a href="http://cbor.io/">CBOR</a> and <a href="http://json.org/">JSON</a> with Content-Type <code>application/cbor</code> and <code>application/json</code>, respectively.<br> The <code>Marshaller</code> also supports both formats and lets the client determine via HTTP content negotiation (i.e. the <code>Accept</code> header) , which one it prefers. If the client has no clear preference, i.e. it accepts both <a href="http://cbor.io/">CBOR</a> and <a href="http://json.org/">JSON</a> with equal &ldquo;q-value&rdquo; (preference weight) the <code>Marshaller</code> choses <a href="http://json.org/">JSON</a> by default. This default, however, can be configured to <a href="http://cbor.io/">CBOR</a> if needed. </p>
-<p>(Un)marshaller construction can be customized in various ways, e.g. with custom media types, and is also available for streams, i.e. to and from <code>akka.stream.scaladsl.Source[T, _]</code> rather than simply <code>T</code>.<br> Check out the <a href="https://github.com/sirthias/borer/tree/master/akka/src/main/scala/io/bullet/borer/compat/akkaHttp.scala">sources</a> for full details.</p>
+<p>(Un)marshaller construction can be customized in various ways, e.g. with custom media types, and is also available for streams, i.e. to and from <code>akka.stream.scaladsl.Source[T, _]</code> rather than simply <code>T</code>.<br> Check out the <a href="https://github.com/sirthias/borer/tree/master/compat-akka/src/main/scala/io/bullet/borer/compat/akkaHttp.scala">sources</a> for full details.</p>
 </div>
 <div>
 <a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-compat-akka.md" title="Edit this page" class="md-source-file md-edit">
@@ -267,7 +268,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.4.0
+1.5.0
 </span>
 </div>
 </article>
@@ -290,13 +291,13 @@ Derivation FAQ
 </span>
 </div>
 </a>
-<a href="borer-compat-circe.html" title="borer-compat-circe" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<a href="borer-compat-cats.html" title="borer-compat-cats" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
 <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
 <span class="md-flex__ellipsis">
 <span class="md-footer-nav__direction">
 Next
 </span>
-borer-compat-circe
+borer-compat-cats
 </span>
 </div>
 <div class="md-flex__cell md-flex__cell--shrink">
@@ -309,7 +310,7 @@ borer-compat-circe
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019 Mathias Doenitz
+Copyright (C) 2019-2020 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>
