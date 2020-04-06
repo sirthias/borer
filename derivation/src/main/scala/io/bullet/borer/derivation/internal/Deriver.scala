@@ -78,10 +78,6 @@ abstract private[derivation] class Deriver[C <: blackbox.Context](val c: C) {
   protected def deriveForSealedTrait(node: AdtTypeNode): Tree
 
   final def deriveFor(tpe: c.Type): Tree = {
-    val debug = c.macroApplication.symbol.annotations
-      .find(_.tree.tpe <:< typeOf[debug])
-      .flatMap(_.tree.children.tail.collectFirst { case Literal(Constant(s: String)) => s })
-
     val typeSymbol = tpe.typeSymbol
     val classType  = if (typeSymbol.isClass) Some(typeSymbol.asClass) else None
     val result = classType match {
@@ -94,12 +90,6 @@ abstract private[derivation] class Deriver[C <: blackbox.Context](val c: C) {
         deriveForSealedTrait(node)
       case None => error(s"`$tpe` is not a case class or sealed abstract data type")
     }
-
-    if (debug.isDefined && tpe.toString.contains(debug.get)) {
-      c.echo(c.enclosingPosition, s"Derivation macro expansion for `$tpe`")
-      c.echo(NoPosition, s"... = ${showCode(result)}\n\n")
-    }
-
     result
   }
 
