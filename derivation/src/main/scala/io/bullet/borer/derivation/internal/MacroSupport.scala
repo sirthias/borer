@@ -9,6 +9,7 @@
 package io.bullet.borer.derivation.internal
 
 import io.bullet.borer.{Decoder, Encoder}
+import io.bullet.borer.deriver.DeriveWith
 
 import scala.annotation.tailrec
 import scala.reflect.macros.blackbox
@@ -41,7 +42,11 @@ private[derivation] object MacroSupport {
     val tpe      = weakTypeOf[T]
     val borerPkg = c.mirror.staticPackage("_root_.io.bullet.borer")
     val prefix   = q"$borerPkg.derivation.${TermName(objectName)}"
-    q"$borerPkg.Codec($prefix.${TermName(de)}[$tpe], $prefix.${TermName(dd)}[$tpe])"
+    val encName  = TermName(c.freshName("encoder"))
+    val decName  = TermName(c.freshName("decoder"))
+    q"""val $encName = $prefix.${TermName(de)}[$tpe]
+        val $decName = $prefix.${TermName(dd)}[$tpe]
+        $borerPkg.Codec($encName, $decName)"""
   }
 
   def deriveAll[T: ctx.WeakTypeTag](ctx: blackbox.Context)(

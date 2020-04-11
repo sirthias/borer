@@ -10,6 +10,7 @@ package io.bullet.borer.derivation.internal
 
 import io.bullet.borer._
 import io.bullet.borer.derivation.key
+import io.bullet.borer.deriver.Deriver
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer

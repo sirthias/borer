@@ -6,12 +6,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package io.bullet.borer.derivation.internal
+package io.bullet.borer.deriver
 
 import scala.reflect.macros.blackbox
 import scala.reflect.macros.contexts.Context
 
-private[derivation] object DeriveWith {
+object DeriveWith {
 
   def apply[T: c.WeakTypeTag](c: blackbox.Context)(deriver: Deriver[c.type]): c.Tree =
     deriver.deriveFor(c.universe.weakTypeOf[T].dealias)
@@ -21,7 +21,7 @@ private[derivation] object DeriveWith {
   * Heavily inspired and some parts actually copied from Magnolia (https://github.com/propensive/magnolia),
   * which is Copyright 2018 Jon Pretty, Propensive Ltd. and licensed under the Apache License, Version 2.0.
   */
-abstract private[derivation] class Deriver[C <: blackbox.Context](val c: C) {
+abstract class Deriver[C <: blackbox.Context](val c: C) {
   import c.universe._
 
   sealed protected trait CaseParamType {

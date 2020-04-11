@@ -228,6 +228,7 @@ lazy val borer = project.in(file("."))
   .aggregate(`compat-circe-jvm`) //, `compat-circe-js`)  // temporarily disabled until circe-derivation_sjs1_2.1X is available
   .aggregate(`compat-scodec-jvm`, `compat-scodec-js`)
   .aggregate(`derivation-jvm`, `derivation-js`)
+  .aggregate(deriver)
   .aggregate(benchmarks)
   .aggregate(site)
   .disablePlugins(MimaPlugin)
@@ -353,8 +354,12 @@ lazy val `compat-scodec` = crossProject(JSPlatform, JVMPlatform)
   )
   .jsSettings(scalajsSettings: _*)
 
-lazy val `derivation-jvm` = derivation.jvm.dependsOn(`core-jvm` % "compile->compile;test->test")
-lazy val `derivation-js`  = derivation.js.dependsOn(`core-js` % "compile->compile;test->test")
+lazy val `derivation-jvm` = derivation.jvm
+  .dependsOn(deriver)
+  .dependsOn(`core-jvm` % "compile->compile;test->test")
+lazy val `derivation-js`  = derivation.js
+  .dependsOn(deriver)
+  .dependsOn(`core-js` % "compile->compile;test->test")
 lazy val derivation = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
@@ -368,6 +373,15 @@ lazy val derivation = crossProject(JSPlatform, JVMPlatform)
     libraryDependencies ++= Seq(`scala-compiler`.value, `scala-reflect`.value, utest.value),
   )
   .jsSettings(scalajsSettings: _*)
+
+lazy val deriver = project
+  .enablePlugins(AutomateHeaderPlugin)
+  .settings(commonSettings)
+  .settings(releaseSettings)
+  .settings(
+    moduleName := "borer-deriver",
+    libraryDependencies ++= Seq(`scala-compiler`.value, `scala-reflect`.value),
+  )
 
 lazy val benchmarks = project
   .enablePlugins(AutomateHeaderPlugin, JmhPlugin, BenchmarkResultsPlugin)

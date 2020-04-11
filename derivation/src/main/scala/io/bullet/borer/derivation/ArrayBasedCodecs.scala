@@ -10,6 +10,7 @@ package io.bullet.borer.derivation
 
 import io.bullet.borer._
 import io.bullet.borer.derivation.internal._
+import io.bullet.borer.deriver.DeriveWith
 
 import scala.reflect.macros.blackbox
 
@@ -167,14 +168,21 @@ object ArrayBasedCodecs {
           if (constructorIsPrivate)
             error(s"Cannot derive Decoder[$tpe] because the primary constructor of `$tpe` is private")
 
-          val readFields = params.map { p =>
-            val paramType = p.paramType.tpe
-            if (isBasicType(paramType) && isDefinedOn(p.getImplicit(decoderType).get, decoderCompanion)) {
-              q"r.${TermName(s"read$paramType")}()"
-            } else q"r.read[$paramType]()"
+          val arity = params.size
+          val readObject = {
+            val fieldNames = params.indices.map(ix => TermName(s"x$ix"))
+            val readFields = params.zip(fieldNames).map {
+              case (p, name) =>
+                val paramType = p.paramType.tpe
+                val rhs =
+                  if (isBasicType(paramType) && isDefinedOn(p.getImplicit(decoderType).get, decoderCompanion)) {
+                    q"r.${TermName(s"read$paramType")}()"
+                  } else q"r.read[$paramType]()"
+                q"val $name = $rhs"
+            }
+            q"""..$readFields
+                $companion.apply(..$fieldNames)"""
           }
-          val arity               = params.size
-          val readObject          = q"$companion.apply(..$readFields)"
           def expected(s: String) = s"$s for decoding an instance of type `$tpe`"
           val readObjectWithWrapping =
             arity match {

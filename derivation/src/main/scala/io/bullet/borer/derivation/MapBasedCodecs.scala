@@ -10,6 +10,7 @@ package io.bullet.borer.derivation
 
 import io.bullet.borer._
 import io.bullet.borer.derivation.internal._
+import io.bullet.borer.deriver.DeriveWith
 
 import scala.reflect.macros.blackbox
 
