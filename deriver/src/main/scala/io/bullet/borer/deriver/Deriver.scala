@@ -18,7 +18,7 @@ object DeriveWith {
 }
 
 /**
-  * Heavily inspired and some parts actually copied from Magnolia (https://github.com/propensive/magnolia),
+  * Heavily inspired by and some parts actually copied from Magnolia (https://github.com/propensive/magnolia),
   * which is Copyright 2018 Jon Pretty, Propensive Ltd. and licensed under the Apache License, Version 2.0.
   */
 abstract class Deriver[C <: blackbox.Context](val c: C) {
@@ -30,9 +30,10 @@ abstract class Deriver[C <: blackbox.Context](val c: C) {
   protected case class SameAs(earlierParam: CaseParam) extends CaseParamType { def tpe = earlierParam.paramType.tpe }
   protected case class OwnType(tpe: Type)              extends CaseParamType
 
-  sealed protected trait WithAnnotations {
+  sealed abstract protected class WithAnnotations {
     def annotations: List[Tree]
     def name: Name
+    lazy val stringName: String = name.decodedName.toString
   }
 
   protected case class CaseParam(
@@ -52,18 +53,26 @@ abstract class Deriver[C <: blackbox.Context](val c: C) {
     def annotations: List[Tree]                       = annotationTrees(tpe.typeSymbol)
     def containedIn(list: List[AdtTypeNode]): Boolean = list.exists(_ eq this)
 
-    private[this] var parent: Option[AdtTypeNode] = _
+    def allNodes: List[AdtTypeNode]                  = this :: subs.flatMap(_.allNodes)
+    def allDescendants: List[AdtTypeNode]            = allNodes.tail
+    def allNonAbstractDescendants: List[AdtTypeNode] = allDescendants.filterNot(_.isAbstract)
 
-    def setAllParents(p: Option[AdtTypeNode]): Unit = {
-      if (parent ne null) throw new IllegalStateException
-      parent = p
-      val someThis = Some(this)
-      subs.foreach(_.setAllParents(someThis))
-    }
     def isRoot: Boolean = parent.isEmpty
 
     def nodePath(suffix: List[AdtTypeNode] = Nil): List[AdtTypeNode] =
       if (isRoot) suffix else parent.get.nodePath(this :: suffix)
+
+    /////////////////// internal ////////////////////
+
+    // write-once, before actually making it to the user
+    private[this] var parent: Option[AdtTypeNode] = _
+
+    private[Deriver] def initAllParentBacklinks(p: Option[AdtTypeNode]): Unit = {
+      if (parent ne null) throw new IllegalStateException
+      parent = p
+      val someThis = Some(this)
+      subs.foreach(_.initAllParentBacklinks(someThis))
+    }
   }
 
   protected def deriveForCaseObject(tpe: Type, module: ModuleSymbol): Tree
@@ -85,7 +94,7 @@ abstract class Deriver[C <: blackbox.Context](val c: C) {
       case Some(x) if x.isCaseClass   => forCaseClass(tpe, x)
       case Some(x) if x.isSealed =>
         val node = adtTypeNode(tpe)
-        node.setAllParents(None)
+        node.initAllParentBacklinks(None)
         if (node.subs.isEmpty) error(s"Could not find any direct subtypes of `$typeSymbol`")
         deriveForSealedTrait(node)
       case None => error(s"`$tpe` is not a case class or sealed abstract data type")
