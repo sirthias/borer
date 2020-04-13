@@ -20,9 +20,9 @@ object Default {
   implicit val float   = Default(0.0f)
   implicit val double  = Default(0.0)
 
-  @inline def get[T](implicit d: Default[T]): T = d.defaultValue
+  @inline def of[T](implicit d: Default[T]): T = d.defaultValue
 
-  @inline def orValue[T: Default](value: T): T = if (value == null) get[T] else value
+  @inline def orValue[T: Default](value: T): T = if (value == null) Default.of[T] else value
 
   private[this] val optionDefault            = Default(None)
   implicit def option[T]: Default[Option[T]] = optionDefault
@@ -62,5 +62,5 @@ sealed abstract class LowPrioNullable {
     Encoder((w, x) => w.write(x.value))
 
   implicit def decoder[T: Decoder: Default]: Decoder[Nullable[T]] =
-    Decoder(r => new Nullable(if (r.tryReadNull()) Default.get[T] else r.read[T]()))
+    Decoder(r => new Nullable(if (r.tryReadNull()) Default.of[T] else r.read[T]()))
 }

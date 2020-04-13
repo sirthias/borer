@@ -72,7 +72,7 @@ class SprayModelBenchmark extends DomBenchmark {
     implicit def nullableJsonFormat[T: JsonFormat: Default]: JsonFormat[Nullable[T]] =
       new JsonFormat[Nullable[T]] {
         def write(value: Nullable[T]) = value.value.toJson
-        def read(value: JsValue)      = if (value == JsNull) Default.get[T] else value.convertTo[T]
+        def read(value: JsValue)      = if (value == JsNull) Default.of[T] else value.convertTo[T]
       }
 
     // format: OFF

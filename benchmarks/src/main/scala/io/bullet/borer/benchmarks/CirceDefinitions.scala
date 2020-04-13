@@ -231,7 +231,7 @@ class CirceModelBenchmark extends DomBenchmark {
 
     implicit def nullableDecoder[T: Decoder: Default]: Decoder[Nullable[T]] =
       Decoder.instance { cursor =>
-        if (cursor.value.isNull) Right(new Nullable(Default.get[T]))
+        if (cursor.value.isNull) Right(new Nullable(Default.of[T]))
         else cursor.as[T].map(new Nullable(_))
       }
 

@@ -69,7 +69,7 @@ class UPickleModelBenchmark extends DomBenchmark {
   implicit def nullableWriter[T: Writer]: Writer[Nullable[T]] = implicitly[Writer[T]].comap(_.value)
 
   implicit def nullableReader[T: Reader: Default]: Reader[Nullable[T]] =
-    implicitly[Reader[T]].map(x => Nullable(if (x == null) Default.get[T] else x))
+    implicitly[Reader[T]].map(x => Nullable(if (x == null) Default.of[T] else x))
 
   implicit def OptionWriter[T: Writer]: Writer[Option[T]] =
     implicitly[Writer[T]].comap[Option[T]] {

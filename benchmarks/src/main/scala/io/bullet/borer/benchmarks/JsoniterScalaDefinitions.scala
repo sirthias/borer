@@ -60,7 +60,7 @@ class JsoniterScalaModelBenchmark extends DomBenchmark {
   private var codec: JsonValueCodec[Product] = _
 
   implicit val nullableDoubleCodec: JsonValueCodec[Nullable[Double]] = new JsonValueCodec[Nullable[Double]] {
-    override val nullValue: Nullable[Double]                             = Default.get[Double]
+    override val nullValue: Nullable[Double]                             = Default.of[Double]
     override def encodeValue(x: Nullable[Double], out: JsonWriter): Unit = out.writeVal(x.value)
 
     override def decodeValue(in: JsonReader, default: Nullable[Double]): Nullable[Double] =
@@ -72,7 +72,7 @@ class JsoniterScalaModelBenchmark extends DomBenchmark {
   }
 
   implicit val nullableIntCodec: JsonValueCodec[Nullable[Int]] = new JsonValueCodec[Nullable[Int]] {
-    override val nullValue: Nullable[Int]                             = Default.get[Int]
+    override val nullValue: Nullable[Int]                             = Default.of[Int]
     override def encodeValue(x: Nullable[Int], out: JsonWriter): Unit = out.writeVal(x.value)
 
     override def decodeValue(in: JsonReader, default: Nullable[Int]): Nullable[Int] =
@@ -84,7 +84,7 @@ class JsoniterScalaModelBenchmark extends DomBenchmark {
   }
 
   implicit val nullableStringCodec: JsonValueCodec[Nullable[String]] = new JsonValueCodec[Nullable[String]] {
-    override val nullValue: Nullable[String] = Default.get[String]
+    override val nullValue: Nullable[String] = Default.of[String]
 
     override def encodeValue(x: Nullable[String], out: JsonWriter): Unit =
       if (x.value == null) out.writeNull() else out.writeVal(x.value)
