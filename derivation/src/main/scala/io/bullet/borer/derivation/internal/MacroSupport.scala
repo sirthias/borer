@@ -11,7 +11,6 @@ package io.bullet.borer.derivation.internal
 import io.bullet.borer.{Decoder, Encoder}
 import io.bullet.borer.deriver.DeriveWith
 
-import scala.annotation.tailrec
 import scala.reflect.macros.blackbox
 
 private[derivation] object MacroSupport {
@@ -76,53 +75,12 @@ private[derivation] object MacroSupport {
               s"classes, not on case classes. Use `$altMacroName` instead!")
 
         def deriveForSealedTrait(node: AdtTypeNode) = {
-          val altMacro     = q"$borerPkg.derivation.${TermName(objectName)}.${TermName(altMacroName)}"
-          val tc           = if (isEncoder) encoderType else decoderType
-          val relevantSubs = flattenedSubs(node, tc, deepRecurse = false).collect { case (node, false) => node }.toList
-
-          // for each non-abstract sub-type S we collect the "links",
-          // which are the ADT sub-types that appear somewhere within the member definitions of S and,
-          // as such, need to have their typeclass be implicitly available _before_ the implicit derivation of S
-          val relevantSubsWithLinks =
-            relevantSubs.map { node =>
-              node -> {
-                if (!node.isAbstract) {
-                  val memberTypes =
-                    node.tpe.decls.collect {
-                      case m: MethodSymbol if m.isCaseAccessor => m.asMethod.typeSignatureIn(node.tpe).resultType
-                    }
-                  relevantSubs.filter(x => memberTypes.exists(_.contains(x.tpe.typeSymbol)))
-                } else Nil
-              }
-            }
-          @tailrec def topoSort(
-              remaining: List[(AdtTypeNode, List[AdtTypeNode])],
-              blackSet: List[AdtTypeNode],
-              result: List[AdtTypeNode]): List[AdtTypeNode] =
-            remaining match {
-              case (n, links) :: tail if links.forall(_ containedIn result) =>
-                // we already have all links of the node in the result, to we can simply add the node itself
-                topoSort(tail, blackSet, n :: result)
-              case (n, links) :: _ =>
-                // if the node has links that we haven't processed yet we need to pull these forward
-                // but we need to be careful to detect unresolvable cycles, which we do via the "blackSet"
-                if (!n.containedIn(blackSet)) {
-                  val (toPullForward, otherRemaining) = remaining.partition(_._1 containedIn links)
-                  topoSort(toPullForward ::: otherRemaining, n :: blackSet, result)
-                } else {
-                  c.abort(
-                    c.enclosingPosition,
-                    s"The ADT `${node.tpe}` contains a circular dependency involving `${n.tpe}` that you need to " +
-                      s"break manually, e.g. by explicitly defining the implicit typeclass for `${n.tpe}`."
-                  )
-                }
-              case Nil => result.reverse
-            }
-
-          val topologicallySortedSubs = topoSort(relevantSubsWithLinks, Nil, Nil)
+          val altMacro = q"$borerPkg.derivation.${TermName(objectName)}.${TermName(altMacroName)}"
+          val tc       = if (isEncoder) encoderType else decoderType
+          val subs     = subsWithoutImplicitTypeclassInstances(node, tc)
 
           q"""{
-            ..${topologicallySortedSubs.map(x => q"implicit val ${TermName(c.freshName())} = $altMacro[${x.tpe}]")}
+            ..${subs.map(x => q"implicit val ${TermName(c.freshName())} = $altMacro[${x.tpe}]")}
             $altMacro[${node.tpe}]
           }"""
         }

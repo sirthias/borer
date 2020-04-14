@@ -8,6 +8,8 @@
 
 package io.bullet.borer.deriver
 
+import scala.annotation.tailrec
+import scala.collection.mutable.ArrayBuffer
 import scala.reflect.macros.blackbox
 import scala.reflect.macros.contexts.Context
 
@@ -109,6 +111,98 @@ abstract class Deriver[C <: blackbox.Context](val c: C) {
     val typeChecked = c.typecheck(applied, c.TYPEmode).tpe
     val tree        = c.inferImplicitValue(typeChecked)
     Option(tree).filterNot(_.isEmpty)
+  }
+
+  /**
+    * When generating type class instances for a whole type hierarchy this method returns all descendant nodes of
+    * an ADT super type that don't have implicit type class instances already available.
+    *
+    * The resulting list is already ordered in a way that allows intra-dependencies (i.e. between sub types) be resolved
+    * properly if the missing implicits are generated in order.
+    * (If there are circular dependencies a compiler error is automatically thrown.)
+    */
+  final protected def subsWithoutImplicitTypeclassInstances(
+      node: AdtTypeNode,
+      typeclass: TypeSymbol): List[AdtTypeNode] = {
+    val relevantSubs = flattenedSubs(node, typeclass, deepRecurse = false).collect { case (node, false) => node }.toList
+
+    // for each non-abstract sub-type S we collect the "links",
+    // which are the ADT sub-types that appear somewhere within the member definitions of S and,
+    // as such, need to have their typeclass be implicitly available _before_ the implicit derivation of S
+    val relevantSubsWithLinks =
+      relevantSubs.map { node =>
+        node -> {
+          if (!node.isAbstract) {
+            val memberTypes =
+              node.tpe.decls.collect {
+                case m: MethodSymbol if m.isCaseAccessor => m.asMethod.typeSignatureIn(node.tpe).resultType
+              }
+            relevantSubs.filter(x => memberTypes.exists(_.contains(x.tpe.typeSymbol)))
+          } else Nil
+        }
+      }
+    @tailrec def topoSort(
+        remaining: List[(AdtTypeNode, List[AdtTypeNode])],
+        blackSet: List[AdtTypeNode],
+        result: List[AdtTypeNode]): List[AdtTypeNode] =
+      remaining match {
+        case (n, links) :: tail if links.forall(_ containedIn result) =>
+          // we already have all links of the node in the result, to we can simply add the node itself
+          topoSort(tail, blackSet, n :: result)
+        case (n, links) :: _ =>
+          // if the node has links that we haven't processed yet we need to pull these forward
+          // but we need to be careful to detect unresolvable cycles, which we do via the "blackSet"
+          if (!n.containedIn(blackSet)) {
+            val (toPullForward, otherRemaining) = remaining.partition(_._1 containedIn links)
+            topoSort(toPullForward ::: otherRemaining, n :: blackSet, result)
+          } else {
+            c.abort(
+              c.enclosingPosition,
+              s"The ADT `${node.tpe}` contains a circular dependency involving `${n.tpe}` that you need to " +
+                s"break manually, e.g. by explicitly defining the implicit typeclass for `${n.tpe}`."
+            )
+          }
+        case Nil => result.reverse
+      }
+
+    topoSort(relevantSubsWithLinks, Nil, Nil)
+  }
+
+  // returns all (recursively reachable, i.e. descendant) sub-types of `node` along with a flag showing
+  // whether an instance of the given typeclass is implicitly available for the respective sub-type
+  //
+  // The `deepRecurse` flag determines, whether to recurse into abstract sub-types whose flag is
+  // `true` (deepRecurse == true) or not (deepRecurse == false).
+  //
+  // Abstract sub-types whose flag is `true` are always returned (if reached during the tree walk)
+  // while abstract sub-types whose flag is `false` are never part of the result.
+  protected def flattenedSubs(
+      node: AdtTypeNode,
+      typeClass: TypeSymbol,
+      deepRecurse: Boolean): Array[(AdtTypeNode, Boolean)] = {
+    val buf = new ArrayBuffer[(AdtTypeNode, Boolean)]
+    @tailrec def rec(remaining: List[AdtTypeNode]): Array[(AdtTypeNode, Boolean)] =
+      remaining match {
+        case head :: tail =>
+          val implicitAvailable = inferImplicit(typeClass, head.tpe).nonEmpty
+          def appendHead()      = if (!buf.exists(_._1.tpe =:= head.tpe)) buf += head -> implicitAvailable
+          rec {
+            if (head.isAbstract) {
+              if (implicitAvailable) {
+                appendHead()
+                if (deepRecurse) head.subs ::: tail else tail
+              } else {
+                // if we cannot find an implicit typeclass instance for an abstract sub we flatten that sub's subs
+                head.subs ::: tail
+              }
+            } else {
+              appendHead()
+              tail
+            }
+          }
+        case Nil => buf.toArray
+      }
+    rec(node.subs)
   }
 
   private def forCaseClass(tpe: Type, typeSymbol: ClassSymbol): Tree = {
@@ -224,4 +318,9 @@ abstract class Deriver[C <: blackbox.Context](val c: C) {
   }
 
   protected def error(msg: String) = c.abort(c.enclosingPosition, msg)
+
+  protected def showResult(pos: Position, tree: Tree): Tree = {
+    c.echo(pos, showCode(tree))
+    tree
+  }
 }

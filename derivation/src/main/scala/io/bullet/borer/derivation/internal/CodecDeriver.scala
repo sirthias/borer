@@ -12,8 +12,6 @@ import io.bullet.borer._
 import io.bullet.borer.derivation.key
 import io.bullet.borer.deriver.Deriver
 
-import scala.annotation.tailrec
-import scala.collection.mutable.ArrayBuffer
 import scala.reflect.macros.blackbox
 
 abstract private[derivation] class CodecDeriver[C <: blackbox.Context](ctx: C) extends Deriver[C](ctx) {
@@ -118,40 +116,6 @@ abstract private[derivation] class CodecDeriver[C <: blackbox.Context](ctx: C) e
           s"@key collision: sub types `${a.tpe}` and `${b.tpe}` of ADT `${node.tpe}` share the same type id `${k.value}`")
     }
     result
-  }
-
-  // returns all (recursively reachable, i.e. descendant) sub-types of `node` along with a flag showing
-  // whether an instance of the given typeclass is implicitly available for the respective sub-type
-  //
-  // The `deepRecurse` flag determines, whether to recurse into abstract sub-types whose flag is
-  // `true` (deepRecurse == true) or not (deepRecurse == false).
-  //
-  // Abstract sub-types whose flag is `true` are always returned
-  // while abstract sub-types whose flag is `false` are never part of the result.
-  def flattenedSubs(node: AdtTypeNode, typeClass: Symbol, deepRecurse: Boolean): Array[(AdtTypeNode, Boolean)] = {
-    val buf = new ArrayBuffer[(AdtTypeNode, Boolean)]
-    @tailrec def rec(remaining: List[AdtTypeNode]): Array[(AdtTypeNode, Boolean)] =
-      remaining match {
-        case head :: tail =>
-          val implicitAvailable = inferImplicit(typeClass, head.tpe).nonEmpty
-          def appendHead()      = if (!buf.exists(_._1.tpe =:= head.tpe)) buf += head -> implicitAvailable
-          rec {
-            if (head.isAbstract) {
-              if (implicitAvailable) {
-                appendHead()
-                if (deepRecurse) head.subs ::: tail else tail
-              } else {
-                // if we cannot find an explicit encoder/decoder for an abstract sub we flatten that sub's subs
-                head.subs ::: tail
-              }
-            } else {
-              appendHead()
-              tail
-            }
-          }
-        case Nil => buf.toArray
-      }
-    rec(node.subs)
   }
 
   def r(methodNamePrefix: String, key: Key, methodNameSuffix: String = "") = {
