@@ -377,8 +377,8 @@ lazy val benchmarks = project
   .settings(
     skip in publish := true,
     libraryDependencies ++= Seq(
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"        % "2.1.11",
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros"      % "2.1.11" % Provided,
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"        % "2.1.15",
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros"      % "2.1.15" % Provided,
       "com.fasterxml.jackson.module"          %% "jackson-module-scala"       % "2.10.3",
       "com.fasterxml.jackson.module"          %  "jackson-module-afterburner" % "2.10.3",
       "com.lihaoyi"                           %% "upickle"                    % "1.0.0",
