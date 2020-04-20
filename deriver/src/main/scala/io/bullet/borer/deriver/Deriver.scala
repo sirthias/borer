@@ -99,7 +99,10 @@ abstract class Deriver[C <: blackbox.Context](val c: C) {
         node.initAllParentBacklinks(None)
         if (node.subs.isEmpty) error(s"Could not find any direct subtypes of `$typeSymbol`")
         deriveForSealedTrait(node)
-      case _ => error(s"`$tpe` is not a case class or sealed abstract data type")
+      case _ =>
+        val mac = c.enclosingMacros.headOption.fold("")(x =>
+          s" (macro application `${x.universe.showCode(x.macroApplication)}`)")
+        error(s"`$tpe` is not a case class or sealed abstract data type$mac")
     }
     result
   }
