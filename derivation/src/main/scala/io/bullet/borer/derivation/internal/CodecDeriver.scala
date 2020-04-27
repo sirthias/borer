@@ -33,7 +33,7 @@ abstract private[derivation] class CodecDeriver[C <: blackbox.Context](ctx: C) e
 
   def deriveAdtEncoder(node: AdtTypeNode, withEnvelope: c.Tree => c.Tree): c.Tree = {
     import c.universe._
-    val flattened             = flattenedSubs(node, decoderType, deepRecurse = false)
+    val flattened             = flattenedSubs(node, encoderType, deepRecurse = false)
     val typeIdsAndNodesSorted = extractTypeIdsAndSort(node, flattened)
     val cases = typeIdsAndNodesSorted.toList.map {
       case (typeId, sub) => cq"x: ${sub.tpe} => writeAdtValue(w, ${literal(typeId.value)}, x)"
