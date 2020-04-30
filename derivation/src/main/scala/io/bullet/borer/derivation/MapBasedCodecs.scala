@@ -128,7 +128,7 @@ object MapBasedCodecs {
 
           val encodersForParams = params.map(p => p -> p.getImplicit(encoderType)).toMap
           val (basicParams, nonBasicParams) =
-            params.partition(p => p.isBasicType && isDefinedOn(encodersForParams(p).get, encoderCompanion))
+            params.partition(p => p.isBasicType && encodersForParams(p).exists(isDefinedOn(_, encoderCompanion)))
           val fieldEncDefs = nonBasicParams.map { p =>
             val paramType = p.paramType.tpe
             val fieldEnc = encodersForParams(p).getOrElse {
@@ -245,7 +245,7 @@ object MapBasedCodecs {
 
           val decodersForParams = params.map(p => p -> p.getImplicit(decoderType)).toMap
           val nonBasicParams =
-            params.filterNot(p => p.isBasicType && isDefinedOn(decodersForParams(p).get, decoderCompanion))
+            params.filterNot(p => p.isBasicType && decodersForParams(p).exists(isDefinedOn(_, decoderCompanion)))
 
           def readField(p: CaseParam) = {
             val tpe = p.paramType.tpe

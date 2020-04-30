@@ -130,7 +130,7 @@ object ArrayBasedCodecs {
           val writeOpen = if (arity == 1) q"w" else q"w.writeArrayOpen($arity)"
           val writeOpenAndFields = params.foldLeft(writeOpen) { (acc, field) =>
             val suffix =
-              if (field.isBasicType && isDefinedOn(field.getImplicit(encoderType).get, encoderType)) {
+              if (field.isBasicType && field.getImplicit(encoderType).exists(isDefinedOn(_, encoderType))) {
                 field.paramType.tpe.toString
               } else ""
             q"$acc.${TermName(s"write$suffix")}(x.${field.name})"
@@ -175,7 +175,7 @@ object ArrayBasedCodecs {
               case (p, name) =>
                 val paramType = p.paramType.tpe
                 val rhs =
-                  if (isBasicType(paramType) && isDefinedOn(p.getImplicit(decoderType).get, decoderCompanion)) {
+                  if (isBasicType(paramType) && p.getImplicit(decoderType).exists(isDefinedOn(_, decoderCompanion))) {
                     q"r.${TermName(s"read$paramType")}()"
                   } else q"r.read[$paramType]()"
                 q"val $name = $rhs"
