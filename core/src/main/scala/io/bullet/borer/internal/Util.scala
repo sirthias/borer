@@ -70,7 +70,7 @@ private[borer] object Util {
       case java.lang.Float.TYPE     => Array.emptyFloatArray
       case java.lang.Double.TYPE    => Array.emptyDoubleArray
       case java.lang.Boolean.TYPE   => Array.emptyBooleanArray
-      case _                        => Array.emptyObjectArray
+      case _                        => java.lang.reflect.Array.newInstance(ct.runtimeClass, 0)
     }).asInstanceOf[Array[T]]
 
   def toBigEndianBytes(uLong: Long): Array[Byte] = {

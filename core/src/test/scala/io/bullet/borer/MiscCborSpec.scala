@@ -143,5 +143,9 @@ object MiscCborSpec extends ByteArrayCborSpec {
       val qux = Qux("YEAH".getBytes, Foo(42, "foo", None))
       verifyEncoding(qux, "82d90b0c44594541484883182a63666f6f80")
     }
+
+    "Issue 227" - { // https://github.com/sirthias/borer/issues/227
+      Cbor.decode(hex"80").to[Array[String]].value.getClass ==> classOf[Array[String]]
+    }
   }
 }
