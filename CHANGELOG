@@ -1,3 +1,12 @@
+Version 1.6.0 (2020-05-07)
+--------------------------
+
+- fix decoding of non-primitive empty arrays (#227)
+- fix derivation failing for tagged basic types
+- rename `Default.get` to `Default.of`
+- split out `borer-deriver` module (so far undocumented)
+
+
 Version 1.5.0 (2020-03-06)
 --------------------------
 
