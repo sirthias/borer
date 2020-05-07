@@ -113,24 +113,27 @@ object Decoder extends LowPrioDecoders {
 
   implicit val forChar: Decoder[Char] = forChar(forInt)
 
-  def forChar(intDecoder: Decoder[Int]): Decoder[Char] = intDecoder.mapWithReader { (r, int) =>
-    if ((int >> 16) != 0) r.validationFailure(s"Cannot convert int value $int to Char")
-    int.toChar
-  }
+  def forChar(intDecoder: Decoder[Int]): Decoder[Char] =
+    intDecoder.mapWithReader { (r, int) =>
+      if ((int >> 16) != 0) r.validationFailure(s"Cannot convert int value $int to Char")
+      int.toChar
+    }
 
   implicit val forByte: Decoder[Byte] = forByte(forInt)
 
-  def forByte(intDecoder: Decoder[Int]): Decoder[Byte] = intDecoder.mapWithReader { (r, int) =>
-    if ((int >> 8) != (int >> 31)) r.validationFailure(s"Cannot convert int value $int to Byte")
-    int.toByte
-  }
+  def forByte(intDecoder: Decoder[Int]): Decoder[Byte] =
+    intDecoder.mapWithReader { (r, int) =>
+      if ((int >> 8) != (int >> 31)) r.validationFailure(s"Cannot convert int value $int to Byte")
+      int.toByte
+    }
 
   implicit val forShort: Decoder[Short] = forShort(forInt)
 
-  def forShort(intDecoder: Decoder[Int]): Decoder[Short] = intDecoder.mapWithReader { (r, int) =>
-    if ((int >> 16) != (int >> 31)) r.validationFailure(s"Cannot convert int value $int to Short")
-    int.toShort
-  }
+  def forShort(intDecoder: Decoder[Int]): Decoder[Short] =
+    intDecoder.mapWithReader { (r, int) =>
+      if ((int >> 16) != (int >> 31)) r.validationFailure(s"Cannot convert int value $int to Short")
+      int.toShort
+    }
 
   implicit def forBoxedBoolean: Decoder[JBoolean] = forBoolean.asInstanceOf[Decoder[JBoolean]]
   implicit def forBoxedChar: Decoder[Character]   = forChar.asInstanceOf[Decoder[Character]]

@@ -18,7 +18,8 @@ package io.bullet.borer.internal
   */
 final private[borer] class ResizableRingBuffer[T](initialCapacity: Int, val maxCapacity: Int) {
   // automatically implies maxCapacity <= 0x40000000
-  if (!Util.isPowerOf2(maxCapacity) || maxCapacity <= 0 || !Util.isPowerOf2(initialCapacity) || initialCapacity <= 0 || maxCapacity < initialCapacity)
+  if (!Util.isPowerOf2(maxCapacity) || maxCapacity <= 0 || !Util.isPowerOf2(
+      initialCapacity) || initialCapacity <= 0 || maxCapacity < initialCapacity)
     throw new IllegalArgumentException
 
   private[this] var array = new Array[AnyRef](initialCapacity)

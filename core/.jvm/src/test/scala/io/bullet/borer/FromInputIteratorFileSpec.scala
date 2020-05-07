@@ -47,7 +47,7 @@ object FromInputIteratorFileSpec extends TestSuite with TestUtils {
     def padByte(): Byte = -1
 
     def padDoubleByte(remaining: Int): Char =
-      if (remaining < 1) '\uffff' else ((input.readByte() << 8) | 0xFF).toChar
+      if (remaining < 1) '\uffff' else ((input.readByte() << 8) | 0xff).toChar
 
     def padQuadByte(remaining: Int): Int = {
       import input.{readByte => byte, readDoubleByteBigEndian => doub}

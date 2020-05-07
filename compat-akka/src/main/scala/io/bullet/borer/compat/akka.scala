@@ -98,7 +98,7 @@ object akka {
     def readDoubleByteBigEndian(): Char = {
       val c = _cursor
       _cursor = c + 2
-      ((byteString(c) << 8) | byteString(c + 1) & 0xFF).toChar
+      ((byteString(c) << 8) | byteString(c + 1) & 0xff).toChar
     }
 
     def readDoubleByteBigEndianPadded(pp: Input.PaddingProvider[ByteString]): Char = {
@@ -111,9 +111,9 @@ object akka {
       val c = _cursor
       _cursor = c + 4
       byteString(c) << 24 |
-      (byteString(c + 1) & 0xFF) << 16 |
-      (byteString(c + 2) & 0xFF) << 8 |
-      byteString(c + 3) & 0xFF
+      (byteString(c + 1) & 0xff) << 16 |
+      (byteString(c + 2) & 0xff) << 8 |
+      byteString(c + 3) & 0xff
     }
 
     def readQuadByteBigEndianPadded(pp: Input.PaddingProvider[ByteString]): Int = {
@@ -126,13 +126,13 @@ object akka {
       val c = _cursor
       _cursor = c + 8
       byteString(c).toLong << 56 |
-      (byteString(c + 1) & 0XFFL) << 48 |
-      (byteString(c + 2) & 0XFFL) << 40 |
-      (byteString(c + 3) & 0XFFL) << 32 |
-      (byteString(c + 4) & 0XFFL) << 24 |
-      (byteString(c + 5) & 0XFFL) << 16 |
-      (byteString(c + 6) & 0XFFL) << 8 |
-      byteString(c + 7) & 0XFFL
+      (byteString(c + 1) & 0xffL) << 48 |
+      (byteString(c + 2) & 0xffL) << 40 |
+      (byteString(c + 3) & 0xffL) << 32 |
+      (byteString(c + 4) & 0xffL) << 24 |
+      (byteString(c + 5) & 0xffL) << 16 |
+      (byteString(c + 6) & 0xffL) << 8 |
+      byteString(c + 7) & 0xffL
     }
 
     def readOctaByteBigEndianPadded(pp: Input.PaddingProvider[ByteString]): Long = {

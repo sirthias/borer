@@ -49,7 +49,7 @@ final class Base64(name: String, alphabet: String) extends LookupBaseEncoding(na
 
     @tailrec def encode3(si: Int, di: Int): Array[Char] =
       if (si <= sl3) {
-        val quad = baa.doubleByteBigEndian(bytes, si).toInt << 16 | (bytes(si + 2) & 0XFF) << 8
+        val quad = baa.doubleByteBigEndian(bytes, si).toInt << 16 | (bytes(si + 2) & 0xff) << 8
         result(di + 0) = alphabetChars(quad << 0 >>> 26)
         result(di + 1) = alphabetChars(quad << 6 >>> 26)
         result(di + 2) = alphabetChars(quad << 12 >>> 26)
@@ -77,7 +77,7 @@ final class Base64(name: String, alphabet: String) extends LookupBaseEncoding(na
       val baa = ByteArrayAccess.instance
       val sl4 = sl - 4
 
-      @inline def c(offset: Int) = chars(sl - offset) & 0XFFL
+      @inline def c(offset: Int) = chars(sl - offset) & 0xffL
 
       def decode(ix: Int): Long = {
         val c = chars(ix)

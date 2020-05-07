@@ -28,10 +28,11 @@ object CirceCompatSpec extends TestSuite {
   implicit val nullDecoder: Decoder[Null] =
     new Decoder[Null] {
 
-      final def apply(c: HCursor): Decoder.Result[Null] = c.value match {
-        case io.circe.Json.Null => Right(null)
-        case _                  => Left(DecodingFailure("Null", c.history))
-      }
+      final def apply(c: HCursor): Decoder.Result[Null] =
+        c.value match {
+          case io.circe.Json.Null => Right(null)
+          case _                  => Left(DecodingFailure("Null", c.history))
+        }
     }
 
   implicit val fooDecoder: Decoder[Foo] = deriveDecoder[Foo]

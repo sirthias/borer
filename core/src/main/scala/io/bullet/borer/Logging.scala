@@ -120,7 +120,7 @@ object Logging {
     def formatBytes[Bytes](opener: String, value: Bytes)(implicit ba: ByteAccess[Bytes]): String =
       ba.toByteArray(value)
         .take(maxShownByteArrayPrefixLen)
-        .map(x => f"${x & 0xFF}%02X")
+        .map(x => f"${x & 0xff}%02X")
         .mkString(opener, " ", if (ba.sizeOf(value) > maxShownByteArrayPrefixLen) " ...]" else "]")
 
     def formatString[Bytes](value: Bytes)(implicit ba: ByteAccess[Bytes]): String =

@@ -36,8 +36,8 @@ object cats {
   implicit def iorDecoder[A: Decoder, B: Decoder]: Decoder[Ior[A, B]] =
     Decoder { r =>
       var breakExpected = false
-      val open = (if (r.tryReadArrayStart()) { breakExpected = true; -1L }
-                  else r.readArrayHeader())
+      val open = if (r.tryReadArrayStart()) { breakExpected = true; -1L }
+      else r.readArrayHeader()
       val result =
         r.readInt() match {
           case 0 if breakExpected || open == 2 => Ior.Left(r.read[A]())

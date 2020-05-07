@@ -29,11 +29,13 @@ private[derivation] object MacroSupport {
 
   def sortAndVerifyNoCollisions[T](array: Array[(Key, T)])(onCollision: (Key, T, T) => Nothing): Unit = {
     def lessThan(comp: Int, k: Key, a: T, b: T): Boolean = if (comp == 0) onCollision(k, a, b) else comp < 0
-    java.util.Arrays.sort(array, Ordering.fromLessThan[(Key, T)] {
-      case ((k @ Key.Long(x), a), (Key.Long(y), b))     => lessThan(java.lang.Long.compare(x, y), k, a, b)
-      case ((k @ Key.String(x), a), (Key.String(y), b)) => lessThan(x compare y, k, a, b)
-      case ((x, _), _)                                  => x.isInstanceOf[Key.Long] // we sort LongKeys before StringKeys
-    })
+    java.util.Arrays.sort(
+      array,
+      Ordering.fromLessThan[(Key, T)] {
+        case ((k @ Key.Long(x), a), (Key.Long(y), b))     => lessThan(java.lang.Long.compare(x, y), k, a, b)
+        case ((k @ Key.String(x), a), (Key.String(y), b)) => lessThan(x compare y, k, a, b)
+        case ((x, _), _)                                  => x.isInstanceOf[Key.Long] // we sort LongKeys before StringKeys
+      })
   }
 
   def codecMacro[T: c.WeakTypeTag](c: blackbox.Context)(objectName: String, de: String, dd: String): c.Tree = {

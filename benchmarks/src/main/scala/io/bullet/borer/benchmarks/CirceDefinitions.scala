@@ -385,10 +385,11 @@ class CirceModelBenchmark extends DomBenchmark {
     // format: ON
   }
 
-  def setup(): Unit = root = decode[Product](new String(fileBytes, UTF_8)) match {
-    case Right(x) => x
-    case Left(e)  => throw e
-  }
+  def setup(): Unit =
+    root = decode[Product](new String(fileBytes, UTF_8)) match {
+      case Right(x) => x
+      case Left(e)  => throw e
+    }
 
   @Benchmark
   def encodeModel: Array[Byte] = encoder(root).noSpaces.getBytes(UTF_8)

@@ -31,7 +31,7 @@ abstract class AbstractCborSuiteSpec extends AbstractBorerSpec {
   implicit def eitherDec[A: Decoder, B: Decoder]: Decoder[Either[A, B]] =
     Decoder { r =>
       if (r.hasAnyOf(
-            DataItem.ArrayHeader | DataItem.ArrayStart | DataItem.MapHeader | DataItem.MapStart | DataItem.Boolean))
+          DataItem.ArrayHeader | DataItem.ArrayStart | DataItem.MapHeader | DataItem.MapStart | DataItem.Boolean))
         Right(r[B])
       else Left(r[A])
     }
@@ -175,7 +175,7 @@ abstract class AbstractCborSuiteSpec extends AbstractBorerSpec {
 
     "Maps" - {
       roundTrip("a0", TreeMap.empty[Int, String])
-      roundTrip("a201020304", TreeMap(1           -> 2, 3         -> 4))
+      roundTrip("a201020304", TreeMap(1 -> 2, 3 -> 4))
       roundTrip("a26161016162820203", TreeMap("a" -> Left(1), "b" -> Right(Vector(2, 3))))
       roundTrip("826161a161626163", Vector(Left("a"), Right(TreeMap("b" -> "c"))))
       roundTrip(

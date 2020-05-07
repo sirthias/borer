@@ -13,7 +13,7 @@ import io.bullet.borer._
 object Helpers {
 
   def failMissing(r: Reader, typeName: String, mask: Int, paramNames: Array[String]): Nothing =
-    failMissing(r, typeName, oneBits(~mask & 0XFFFFFFFFL), paramNames)
+    failMissing(r, typeName, oneBits(~mask & 0xffffffffL), paramNames)
 
   def failMissing(r: Reader, typeName: String, mask: Long, paramNames: Array[String]): Nothing =
     failMissing(r, typeName, oneBits(~mask), paramNames)

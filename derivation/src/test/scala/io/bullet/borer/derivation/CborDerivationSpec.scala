@@ -179,7 +179,7 @@ object CborDerivationSpec extends DerivationSpec(Cbor) {
       MapElem.Sized(
         "TheCAT" -> MapElem
           .Sized("weight" -> Float16Elem(1.0f), "color" -> StringElem("none"), "home" -> StringElem("there"))),
-      MapElem.Sized("Dog"       -> MapElem.Sized("age"  -> IntElem(4), "name" -> StringElem("Lolle"))),
+      MapElem.Sized("Dog"       -> MapElem.Sized("age" -> IntElem(4), "name" -> StringElem("Lolle"))),
       MapElem.Sized(IntElem(42) -> MapElem.Sized("tail" -> BooleanElem.True)))
 
   def arrayBasedCaseObjectAdtDom =

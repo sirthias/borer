@@ -133,21 +133,21 @@ final private[borer] class JsonRenderer(var out: Output) extends Renderer {
             case '"'  => writeEscaped(out, '"')
             case '\\' => writeEscaped(out, '\\')
             case c if c >= 0x20 => // we re-encode the character (or surrogate pair) from UTF-16 to UTF-8 right here
-              if (c > 0x7F) {
+              if (c > 0x7f) {
                 var codePoint = c.toInt
-                (if (codePoint > 0x7FF) {
-                   (if (0xD800 <= codePoint && codePoint < 0xE000) { // UTF-16 high surrogate (i.e. first of pair)
-                      if (codePoint < 0xDC00) {
+                (if (codePoint > 0x7ff) {
+                   (if (0xd800 <= codePoint && codePoint < 0xe000) { // UTF-16 high surrogate (i.e. first of pair)
+                      if (codePoint < 0xdc00) {
                         index += 1
                         if (index < value.length) {
                           codePoint = Character.toCodePoint(c, value.charAt(index))
-                          out.writeBytes((0xF0 | (codePoint >> 18)).toByte, (0x80 | ((codePoint >> 12) & 0x3F)).toByte)
+                          out.writeBytes((0xf0 | (codePoint >> 18)).toByte, (0x80 | ((codePoint >> 12) & 0x3f)).toByte)
                         } else failValidation("Truncated UTF-16 surrogate pair at end of string")
                       } else failInvalidSurrogatePair(ix)
-                    } else out.writeAsByte(0xE0 | (codePoint >> 12))) // 3-byte UTF-8 codepoint
-                     .writeAsByte(0x80 | ((codePoint >> 6) & 0x3F))
-                 } else out.writeAsByte(0xC0 | (codePoint >> 6))) // 2-byte UTF-8 codepoint
-                  .writeAsByte(0x80 | (codePoint & 0x3F))
+                    } else out.writeAsByte(0xe0 | (codePoint >> 12))) // 3-byte UTF-8 codepoint
+                     .writeAsByte(0x80 | ((codePoint >> 6) & 0x3f))
+                 } else out.writeAsByte(0xc0 | (codePoint >> 6))) // 2-byte UTF-8 codepoint
+                  .writeAsByte(0x80 | (codePoint & 0x3f))
               } else out.writeAsByte(c)
 
             case '\b' => writeEscaped(out, 'b')
@@ -172,21 +172,21 @@ final private[borer] class JsonRenderer(var out: Output) extends Renderer {
             case '"'  => writeEscaped(out, '"')
             case '\\' => writeEscaped(out, '\\')
             case c if c >= 0x20 => // we re-encode the character (or surrogate pair) from UTF-16 to UTF-8 right here
-              if (c > 0x7F) {
+              if (c > 0x7f) {
                 var codePoint = c.toInt
-                (if (codePoint > 0x7FF) {
-                   (if (0xD800 <= codePoint && codePoint < 0xE000) { // UTF-16 high surrogate (i.e. first of pair)
-                      if (codePoint < 0xDC00) {
+                (if (codePoint > 0x7ff) {
+                   (if (0xd800 <= codePoint && codePoint < 0xe000) { // UTF-16 high surrogate (i.e. first of pair)
+                      if (codePoint < 0xdc00) {
                         index += 1
                         if (index < length) {
                           codePoint = Character.toCodePoint(c, buffer(index))
-                          out.writeBytes((0xF0 | (codePoint >> 18)).toByte, (0x80 | ((codePoint >> 12) & 0x3F)).toByte)
+                          out.writeBytes((0xf0 | (codePoint >> 18)).toByte, (0x80 | ((codePoint >> 12) & 0x3f)).toByte)
                         } else failValidation("Truncated UTF-16 surrogate pair at end of string")
                       } else failInvalidSurrogatePair(ix)
-                    } else out.writeAsByte(0xE0 | (codePoint >> 12))) // 3-byte UTF-8 codepoint
-                     .writeAsByte(0x80 | ((codePoint >> 6) & 0x3F))
-                 } else out.writeAsByte(0xC0 | (codePoint >> 6))) // 2-byte UTF-8 codepoint
-                  .writeAsByte(0x80 | (codePoint & 0x3F))
+                    } else out.writeAsByte(0xe0 | (codePoint >> 12))) // 3-byte UTF-8 codepoint
+                     .writeAsByte(0x80 | ((codePoint >> 6) & 0x3f))
+                 } else out.writeAsByte(0xc0 | (codePoint >> 6))) // 2-byte UTF-8 codepoint
+                  .writeAsByte(0x80 | (codePoint & 0x3f))
               } else out.writeAsByte(c)
 
             case '\b' => writeEscaped(out, 'b')
@@ -306,7 +306,7 @@ final private[borer] class JsonRenderer(var out: Output) extends Renderer {
 
   // fast branchless implementation returning the lower-case hex digit corresponding to the last 4 bits of the given Int
   @inline private def lowerHexDigit(int: Int): Int = {
-    val i = int & 0x0F
+    val i = int & 0x0f
     48 + i + (39 & ((9 - i) >> 31))
   }
 

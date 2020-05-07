@@ -202,8 +202,7 @@ trait AkkaHttpCompat {
     * Supports JSON or CSV, depending on the given [[EntityStreamingSupport]].
     */
   final def borerStreamMarshaller[T](ess: EntityStreamingSupport)(
-      implicit
-      marshaller: ToEntityMarshaller[T],
+      implicit marshaller: ToEntityMarshaller[T],
       classTag: ClassTag[T]): ToEntityMarshaller[Source[T, NotUsed]] = {
 
     type Marshallings = List[Marshalling[MessageEntity]]
@@ -221,21 +220,23 @@ trait AkkaHttpCompat {
 
     Marshaller[Source[T, NotUsed], MessageEntity] { implicit ec => source =>
       FastFuture successful {
-        Marshalling.WithFixedContentType(contentType, () => {
-          val byteStream =
-            source
-              .mapAsync(1)(value => marshaller(value)(ec))
-              .map { marshallings =>
-                selectMarshalling(marshallings)
-                  .orElse(marshallings collectFirst { case Marshalling.Opaque(x) => x })
-                  .getOrElse(
-                    throw new NoStrictlyCompatibleElementMarshallingAvailableException[T](contentType, marshallings))
-              }
-              .flatMapConcat(_.apply().dataBytes) // marshal!
-              .via(ess.framingRenderer)
+        Marshalling.WithFixedContentType(
+          contentType,
+          () => {
+            val byteStream =
+              source
+                .mapAsync(1)(value => marshaller(value)(ec))
+                .map { marshallings =>
+                  selectMarshalling(marshallings)
+                    .orElse(marshallings collectFirst { case Marshalling.Opaque(x) => x })
+                    .getOrElse(
+                      throw new NoStrictlyCompatibleElementMarshallingAvailableException[T](contentType, marshallings))
+                }
+                .flatMapConcat(_.apply().dataBytes) // marshal!
+                .via(ess.framingRenderer)
 
-          HttpEntity(contentType, byteStream)
-        }) :: Nil
+            HttpEntity(contentType, byteStream)
+          }) :: Nil
       }
     }
   }

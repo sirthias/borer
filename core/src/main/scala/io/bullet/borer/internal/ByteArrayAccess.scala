@@ -49,23 +49,23 @@ object ByteArrayAccess {
   final class Default extends ByteArrayAccess {
 
     def doubleByteBigEndian(byteArray: Array[Byte], ix: Int): Char =
-      ((byteArray(ix) << 8) | byteArray(ix + 1) & 0xFF).toChar
+      ((byteArray(ix) << 8) | byteArray(ix + 1) & 0xff).toChar
 
     def quadByteBigEndian(byteArray: Array[Byte], ix: Int): Int =
       byteArray(ix) << 24 |
-        (byteArray(ix + 1) & 0xFF) << 16 |
-        (byteArray(ix + 2) & 0xFF) << 8 |
-        byteArray(ix + 3) & 0xFF
+        (byteArray(ix + 1) & 0xff) << 16 |
+        (byteArray(ix + 2) & 0xff) << 8 |
+        byteArray(ix + 3) & 0xff
 
     def octaByteBigEndian(byteArray: Array[Byte], ix: Int): Long = {
       byteArray(ix).toLong << 56 |
-      (byteArray(ix + 1) & 0XFFL) << 48 |
-      (byteArray(ix + 2) & 0XFFL) << 40 |
-      (byteArray(ix + 3) & 0XFFL) << 32 |
-      (byteArray(ix + 4) & 0XFFL) << 24 |
-      (byteArray(ix + 5) & 0XFFL) << 16 |
-      (byteArray(ix + 6) & 0XFFL) << 8 |
-      byteArray(ix + 7) & 0XFFL
+      (byteArray(ix + 1) & 0xffL) << 48 |
+      (byteArray(ix + 2) & 0xffL) << 40 |
+      (byteArray(ix + 3) & 0xffL) << 32 |
+      (byteArray(ix + 4) & 0xffL) << 24 |
+      (byteArray(ix + 5) & 0xffL) << 16 |
+      (byteArray(ix + 6) & 0xffL) << 8 |
+      byteArray(ix + 7) & 0xffL
     }
 
     def setDoubleByteBigEndian(byteArray: Array[Byte], ix: Int, value: Char): Unit = {
@@ -246,13 +246,13 @@ object ByteArrayAccess {
 
         @tailrec def recBigEndian(sourceIx: Int, targetIx: Int): Array[Short] =
           if (targetIx < target.length) {
-            target(targetIx) = ((source(sourceIx).toInt << 8) | (source(sourceIx + 1) & 0xFF)).toShort
+            target(targetIx) = ((source(sourceIx).toInt << 8) | (source(sourceIx + 1) & 0xff)).toShort
             recBigEndian(sourceIx + 2, targetIx + 1)
           } else target
 
         @tailrec def recLittleEndian(sourceIx: Int, targetIx: Int): Array[Short] =
           if (targetIx < target.length) {
-            target(targetIx) = ((source(sourceIx) & 0xFF) | (source(sourceIx + 1).toInt << 8)).toShort
+            target(targetIx) = ((source(sourceIx) & 0xff) | (source(sourceIx + 1).toInt << 8)).toShort
             recLittleEndian(sourceIx + 2, targetIx + 1)
           } else target
 
@@ -269,18 +269,18 @@ object ByteArrayAccess {
           if (targetIx < target.length) {
             target(targetIx) =
               (source(sourceIx).toInt << 24) |
-                ((source(sourceIx + 1) & 0xFF) << 16) |
-                ((source(sourceIx + 2) & 0xFF) << 8) |
-                (source(sourceIx + 3) & 0xFF)
+                ((source(sourceIx + 1) & 0xff) << 16) |
+                ((source(sourceIx + 2) & 0xff) << 8) |
+                (source(sourceIx + 3) & 0xff)
             recBigEndian(sourceIx + 4, targetIx + 1)
           } else target
 
         @tailrec def recLittleEndian(sourceIx: Int, targetIx: Int): Array[Int] =
           if (targetIx < target.length) {
             target(targetIx) =
-              (source(sourceIx) & 0xFF) |
-                ((source(sourceIx + 1) & 0xFF) << 8) |
-                ((source(sourceIx + 2) & 0xFF) << 16) |
+              (source(sourceIx) & 0xff) |
+                ((source(sourceIx + 1) & 0xff) << 8) |
+                ((source(sourceIx + 2) & 0xff) << 16) |
                 (source(sourceIx + 3).toInt << 24)
             recLittleEndian(sourceIx + 4, targetIx + 1)
           } else target
@@ -298,26 +298,26 @@ object ByteArrayAccess {
           if (targetIx < target.length) {
             target(targetIx) =
               (source(sourceIx).toLong << 56) |
-                ((source(sourceIx + 1) & 0xFFL) << 48) |
-                ((source(sourceIx + 2) & 0xFFL) << 40) |
-                ((source(sourceIx + 3) & 0xFFL) << 32) |
-                ((source(sourceIx + 4) & 0xFFL) << 24) |
-                ((source(sourceIx + 5) & 0xFFL) << 16) |
-                ((source(sourceIx + 6) & 0xFFL) << 8) |
-                (source(sourceIx + 7) & 0xFFL)
+                ((source(sourceIx + 1) & 0xffL) << 48) |
+                ((source(sourceIx + 2) & 0xffL) << 40) |
+                ((source(sourceIx + 3) & 0xffL) << 32) |
+                ((source(sourceIx + 4) & 0xffL) << 24) |
+                ((source(sourceIx + 5) & 0xffL) << 16) |
+                ((source(sourceIx + 6) & 0xffL) << 8) |
+                (source(sourceIx + 7) & 0xffL)
             recBigEndian(sourceIx + 8, targetIx + 1)
           } else target
 
         @tailrec def recLittleEndian(sourceIx: Int, targetIx: Int): Array[Long] =
           if (targetIx < target.length) {
             target(targetIx) =
-              (source(sourceIx) & 0xFFL) |
-                ((source(sourceIx + 1) & 0xFFL) << 8) |
-                ((source(sourceIx + 2) & 0xFFL) << 16) |
-                ((source(sourceIx + 3) & 0xFFL) << 24) |
-                ((source(sourceIx + 4) & 0xFFL) << 32) |
-                ((source(sourceIx + 5) & 0xFFL) << 40) |
-                ((source(sourceIx + 6) & 0xFFL) << 48) |
+              (source(sourceIx) & 0xffL) |
+                ((source(sourceIx + 1) & 0xffL) << 8) |
+                ((source(sourceIx + 2) & 0xffL) << 16) |
+                ((source(sourceIx + 3) & 0xffL) << 24) |
+                ((source(sourceIx + 4) & 0xffL) << 32) |
+                ((source(sourceIx + 5) & 0xffL) << 40) |
+                ((source(sourceIx + 6) & 0xffL) << 48) |
                 (source(sourceIx + 7).toLong << 56)
             recLittleEndian(sourceIx + 8, targetIx + 1)
           } else target
@@ -335,9 +335,9 @@ object ByteArrayAccess {
           if (targetIx < target.length) {
             target(targetIx) = java.lang.Float.intBitsToFloat {
               (source(sourceIx).toInt << 24) |
-              ((source(sourceIx + 1) & 0xFF) << 16) |
-              ((source(sourceIx + 2) & 0xFF) << 8) |
-              (source(sourceIx + 3) & 0xFF)
+              ((source(sourceIx + 1) & 0xff) << 16) |
+              ((source(sourceIx + 2) & 0xff) << 8) |
+              (source(sourceIx + 3) & 0xff)
             }
             recBigEndian(sourceIx + 4, targetIx + 1)
           } else target
@@ -345,9 +345,9 @@ object ByteArrayAccess {
         @tailrec def recLittleEndian(sourceIx: Int, targetIx: Int): Array[Float] =
           if (targetIx < target.length) {
             target(targetIx) = java.lang.Float.intBitsToFloat {
-              (source(sourceIx) & 0xFF) |
-              ((source(sourceIx + 1) & 0xFF) << 8) |
-              ((source(sourceIx + 2) & 0xFF) << 16) |
+              (source(sourceIx) & 0xff) |
+              ((source(sourceIx + 1) & 0xff) << 8) |
+              ((source(sourceIx + 2) & 0xff) << 16) |
               (source(sourceIx + 3).toInt << 24)
             }
             recLittleEndian(sourceIx + 4, targetIx + 1)
@@ -366,13 +366,13 @@ object ByteArrayAccess {
           if (targetIx < target.length) {
             target(targetIx) = java.lang.Double.longBitsToDouble {
               (source(sourceIx).toLong << 56) |
-              ((source(sourceIx + 1) & 0xFFL) << 48) |
-              ((source(sourceIx + 2) & 0xFFL) << 40) |
-              ((source(sourceIx + 3) & 0xFFL) << 32) |
-              ((source(sourceIx + 4) & 0xFFL) << 24) |
-              ((source(sourceIx + 5) & 0xFFL) << 16) |
-              ((source(sourceIx + 6) & 0xFFL) << 8) |
-              (source(sourceIx + 7) & 0xFFL)
+              ((source(sourceIx + 1) & 0xffL) << 48) |
+              ((source(sourceIx + 2) & 0xffL) << 40) |
+              ((source(sourceIx + 3) & 0xffL) << 32) |
+              ((source(sourceIx + 4) & 0xffL) << 24) |
+              ((source(sourceIx + 5) & 0xffL) << 16) |
+              ((source(sourceIx + 6) & 0xffL) << 8) |
+              (source(sourceIx + 7) & 0xffL)
             }
             recBigEndian(sourceIx + 8, targetIx + 1)
           } else target
@@ -380,13 +380,13 @@ object ByteArrayAccess {
         @tailrec def recLittleEndian(sourceIx: Int, targetIx: Int): Array[Double] =
           if (targetIx < target.length) {
             target(targetIx) = java.lang.Double.longBitsToDouble {
-              (source(sourceIx) & 0xFFL) |
-              ((source(sourceIx + 1) & 0xFFL) << 8) |
-              ((source(sourceIx + 2) & 0xFFL) << 16) |
-              ((source(sourceIx + 3) & 0xFFL) << 24) |
-              ((source(sourceIx + 4) & 0xFFL) << 32) |
-              ((source(sourceIx + 5) & 0xFFL) << 40) |
-              ((source(sourceIx + 6) & 0xFFL) << 48) |
+              (source(sourceIx) & 0xffL) |
+              ((source(sourceIx + 1) & 0xffL) << 8) |
+              ((source(sourceIx + 2) & 0xffL) << 16) |
+              ((source(sourceIx + 3) & 0xffL) << 24) |
+              ((source(sourceIx + 4) & 0xffL) << 32) |
+              ((source(sourceIx + 5) & 0xffL) << 40) |
+              ((source(sourceIx + 6) & 0xffL) << 48) |
               (source(sourceIx + 7).toLong << 56)
             }
             recLittleEndian(sourceIx + 8, targetIx + 1)

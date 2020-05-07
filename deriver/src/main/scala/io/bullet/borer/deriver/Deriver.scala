@@ -289,29 +289,31 @@ abstract class Deriver[C <: blackbox.Context](val c: C) {
       val globalType = tpe.asInstanceOf[global.Type]
       val original   = globalType.typeSymbol
       global.gen
-        .mkAttributedRef(globalType.prefix, original.companion.orElse {
-          import global.{error => _, _}
-          val name          = original.name.companionName
-          val expectedOwner = original.owner
-          var ctx           = c.asInstanceOf[Context].callsiteTyper.asInstanceOf[global.analyzer.Typer].context
-          var res: Symbol   = NoSymbol
-          while (res == NoSymbol && ctx.outer != ctx) {
-            // NOTE: original implementation says `val s = ctx.scope lookup name`
-            // but we can't use it, because Scope.lookup returns wrong results when the lookup is ambiguous
-            // and that triggers https://github.com/scalamacros/paradise/issues/64
-            val s = ctx.scope
-              .lookupAll(name)
-              .filter(sym => (original.isTerm || sym.hasModuleFlag) && sym.isCoDefinedWith(original))
-              .toList match {
-              case Nil           => NoSymbol
-              case unique :: Nil => unique
-              case _             => error(s"Unexpected multiple results for a companion symbol lookup for $original")
+        .mkAttributedRef(
+          globalType.prefix,
+          original.companion.orElse {
+            import global.{error => _, _}
+            val name          = original.name.companionName
+            val expectedOwner = original.owner
+            var ctx           = c.asInstanceOf[Context].callsiteTyper.asInstanceOf[global.analyzer.Typer].context
+            var res: Symbol   = NoSymbol
+            while (res == NoSymbol && ctx.outer != ctx) {
+              // NOTE: original implementation says `val s = ctx.scope lookup name`
+              // but we can't use it, because Scope.lookup returns wrong results when the lookup is ambiguous
+              // and that triggers https://github.com/scalamacros/paradise/issues/64
+              val s = ctx.scope
+                .lookupAll(name)
+                .filter(sym => (original.isTerm || sym.hasModuleFlag) && sym.isCoDefinedWith(original))
+                .toList match {
+                case Nil           => NoSymbol
+                case unique :: Nil => unique
+                case _             => error(s"Unexpected multiple results for a companion symbol lookup for $original")
+              }
+              if (s != NoSymbol && s.owner == expectedOwner) res = s
+              else ctx = ctx.outer
             }
-            if (s != NoSymbol && s.owner == expectedOwner) res = s
-            else ctx = ctx.outer
-          }
-          res
-        })
+            res
+          })
         .asInstanceOf[Tree]
     }
 

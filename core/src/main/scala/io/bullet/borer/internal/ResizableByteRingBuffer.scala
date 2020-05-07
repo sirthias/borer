@@ -18,7 +18,8 @@ package io.bullet.borer.internal
   */
 final private[borer] class ResizableByteRingBuffer(initialCapacity: Int, val maxCapacity: Int) {
   // automatically implies maxCapacity <= 0x40000000
-  if (!Util.isPowerOf2(maxCapacity) || maxCapacity <= 0 || !Util.isPowerOf2(initialCapacity) || initialCapacity <= 0 || maxCapacity < initialCapacity)
+  if (!Util.isPowerOf2(maxCapacity) || maxCapacity <= 0 || !Util.isPowerOf2(
+      initialCapacity) || initialCapacity <= 0 || maxCapacity < initialCapacity)
     throw new IllegalArgumentException
 
   private[this] var array = new Array[Byte](initialCapacity)
@@ -239,9 +240,9 @@ final private[borer] class ResizableByteRingBuffer(initialCapacity: Int, val max
     } else
       (
         array(ix) << 24
-        | (array((r + 1) & mask) & 0xFF) << 16
-        | (array((r + 2) & mask) & 0xFF) << 8
-        | (array((r + 3) & mask) & 0xFF) << 0
+        | (array((r + 1) & mask) & 0xff) << 16
+        | (array((r + 2) & mask) & 0xff) << 8
+        | (array((r + 3) & mask) & 0xff) << 0
       )
   }
 
@@ -254,13 +255,13 @@ final private[borer] class ResizableByteRingBuffer(initialCapacity: Int, val max
     } else
       (
         array(ix).toLong << 56
-        | (array((r + 1) & mask) & 0XFFL) << 48
-        | (array((r + 2) & mask) & 0XFFL) << 40
-        | (array((r + 3) & mask) & 0XFFL) << 32
-        | (array((r + 4) & mask) & 0XFFL) << 24
-        | (array((r + 5) & mask) & 0XFFL) << 16
-        | (array((r + 6) & mask) & 0XFFL) << 8
-        | (array((r + 7) & mask) & 0XFFL) << 0
+        | (array((r + 1) & mask) & 0xffL) << 48
+        | (array((r + 2) & mask) & 0xffL) << 40
+        | (array((r + 3) & mask) & 0xffL) << 32
+        | (array((r + 4) & mask) & 0xffL) << 24
+        | (array((r + 5) & mask) & 0xffL) << 16
+        | (array((r + 6) & mask) & 0xffL) << 8
+        | (array((r + 7) & mask) & 0xffL) << 0
       )
   }
 
@@ -273,13 +274,13 @@ final private[borer] class ResizableByteRingBuffer(initialCapacity: Int, val max
       } else
         (
           array(ix).toLong << 56
-          | (array((w + 1) & mask) & 0XFFL) << 48
-          | (array((w + 2) & mask) & 0XFFL) << 40
-          | (array((w + 3) & mask) & 0XFFL) << 32
-          | (array((w + 4) & mask) & 0XFFL) << 24
-          | (array((w + 5) & mask) & 0XFFL) << 16
-          | (array((w + 6) & mask) & 0XFFL) << 8
-          | (array((w + 7) & mask) & 0XFFL) << 0
+          | (array((w + 1) & mask) & 0xffL) << 48
+          | (array((w + 2) & mask) & 0xffL) << 40
+          | (array((w + 3) & mask) & 0xffL) << 32
+          | (array((w + 4) & mask) & 0xffL) << 24
+          | (array((w + 5) & mask) & 0xffL) << 16
+          | (array((w + 6) & mask) & 0xffL) << 8
+          | (array((w + 7) & mask) & 0xffL) << 0
         )
     } else throw new NoSuchElementException
 

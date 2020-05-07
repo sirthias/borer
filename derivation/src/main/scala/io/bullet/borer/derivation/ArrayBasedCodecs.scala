@@ -112,100 +112,103 @@ object ArrayBasedCodecs {
   private object Macros {
     import MacroSupport._
 
-    def encoder[T: ctx.WeakTypeTag](ctx: blackbox.Context): ctx.Tree = DeriveWith[T](ctx) {
-      new CodecDeriver[ctx.type](ctx) {
-        import c.universe._
+    def encoder[T: ctx.WeakTypeTag](ctx: blackbox.Context): ctx.Tree =
+      DeriveWith[T](ctx) {
+        new CodecDeriver[ctx.type](ctx) {
+          import c.universe._
 
-        def deriveForCaseObject(tpe: Type, module: ModuleSymbol) =
-          q"$encoderCompanion[${module.typeSignature}]((w, _) => w.writeEmptyArray())"
+          def deriveForCaseObject(tpe: Type, module: ModuleSymbol) =
+            q"$encoderCompanion[${module.typeSignature}]((w, _) => w.writeEmptyArray())"
 
-        def deriveForCaseClass(
-            tpe: Type,
-            companion: ModuleSymbol,
-            params: List[CaseParam],
-            annotationTrees: List[Tree],
-            constructorIsPrivate: Boolean) = {
+          def deriveForCaseClass(
+              tpe: Type,
+              companion: ModuleSymbol,
+              params: List[CaseParam],
+              annotationTrees: List[Tree],
+              constructorIsPrivate: Boolean) = {
 
-          val arity     = params.size
-          val writeOpen = if (arity == 1) q"w" else q"w.writeArrayOpen($arity)"
-          val writeOpenAndFields = params.foldLeft(writeOpen) { (acc, field) =>
-            val suffix =
-              if (field.isBasicType && field.getImplicit(encoderType).exists(isDefinedOn(_, encoderType))) {
-                field.paramType.tpe.toString
-              } else ""
-            q"$acc.${TermName(s"write$suffix")}(x.${field.name})"
+            val arity     = params.size
+            val writeOpen = if (arity == 1) q"w" else q"w.writeArrayOpen($arity)"
+            val writeOpenAndFields = params.foldLeft(writeOpen) { (acc, field) =>
+              val suffix =
+                if (field.isBasicType && field.getImplicit(encoderType).exists(isDefinedOn(_, encoderType))) {
+                  field.paramType.tpe.toString
+                } else ""
+              q"$acc.${TermName(s"write$suffix")}(x.${field.name})"
+            }
+            val writeOpenFieldsAndClose =
+              if (arity == 1) writeOpenAndFields else q"$writeOpenAndFields.writeArrayClose()"
+            q"""$encoderCompanion((w, x) => $writeOpenFieldsAndClose)"""
           }
-          val writeOpenFieldsAndClose = if (arity == 1) writeOpenAndFields else q"$writeOpenAndFields.writeArrayClose()"
-          q"""$encoderCompanion((w, x) => $writeOpenFieldsAndClose)"""
-        }
 
-        def deriveForSealedTrait(node: AdtTypeNode) =
-          deriveAdtEncoder(
-            node,
-            x => q"""w.writeArrayOpen(2)
+          def deriveForSealedTrait(node: AdtTypeNode) =
+            deriveAdtEncoder(
+              node,
+              x => q"""w.writeArrayOpen(2)
                 $x
                 w.writeArrayClose()""")
+        }
       }
-    }
 
     def allEncoders[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
       deriveAll(c)(isEncoder = true, "ArrayBasedCodecs", "deriveAllEncoders", "deriveEncoder")
 
-    def decoder[T: ctx.WeakTypeTag](ctx: blackbox.Context): ctx.Tree = DeriveWith[T](ctx) {
-      new CodecDeriver[ctx.type](ctx) {
-        import c.universe._
+    def decoder[T: ctx.WeakTypeTag](ctx: blackbox.Context): ctx.Tree =
+      DeriveWith[T](ctx) {
+        new CodecDeriver[ctx.type](ctx) {
+          import c.universe._
 
-        def deriveForCaseObject(tpe: Type, module: ModuleSymbol) =
-          q"$decoderCompanion(r => r.readArrayClose(r.readArrayOpen(0), $module))"
+          def deriveForCaseObject(tpe: Type, module: ModuleSymbol) =
+            q"$decoderCompanion(r => r.readArrayClose(r.readArrayOpen(0), $module))"
 
-        def deriveForCaseClass(
-            tpe: Type,
-            companion: ModuleSymbol,
-            params: List[CaseParam],
-            annotationTrees: List[Tree],
-            constructorIsPrivate: Boolean) = {
+          def deriveForCaseClass(
+              tpe: Type,
+              companion: ModuleSymbol,
+              params: List[CaseParam],
+              annotationTrees: List[Tree],
+              constructorIsPrivate: Boolean) = {
 
-          if (constructorIsPrivate)
-            error(s"Cannot derive Decoder[$tpe] because the primary constructor of `$tpe` is private")
+            if (constructorIsPrivate)
+              error(s"Cannot derive Decoder[$tpe] because the primary constructor of `$tpe` is private")
 
-          val arity = params.size
-          val readObject = {
-            val fieldNames = params.indices.map(ix => TermName(s"x$ix"))
-            val readFields = params.zip(fieldNames).map {
-              case (p, name) =>
-                val paramType = p.paramType.tpe
-                val rhs =
-                  if (isBasicType(paramType) && p.getImplicit(decoderType).exists(isDefinedOn(_, decoderCompanion))) {
-                    q"r.${TermName(s"read$paramType")}()"
-                  } else q"r.read[$paramType]()"
-                q"val $name = $rhs"
-            }
-            q"""..$readFields
+            val arity = params.size
+            val readObject = {
+              val fieldNames = params.indices.map(ix => TermName(s"x$ix"))
+              val readFields = params.zip(fieldNames).map {
+                case (p, name) =>
+                  val paramType = p.paramType.tpe
+                  val rhs =
+                    if (isBasicType(paramType) && p.getImplicit(decoderType).exists(isDefinedOn(_, decoderCompanion))) {
+                      q"r.${TermName(s"read$paramType")}()"
+                    } else q"r.read[$paramType]()"
+                  q"val $name = $rhs"
+              }
+              q"""..$readFields
                 $companion.apply(..$fieldNames)"""
-          }
-          def expected(s: String) = s"$s for decoding an instance of type `$tpe`"
-          val readObjectWithWrapping =
-            arity match {
-              case 0 =>
-                q"""if (r.tryReadArrayHeader(0) || r.tryReadArrayStart() && r.tryReadBreak()) $readObject
+            }
+            def expected(s: String) = s"$s for decoding an instance of type `$tpe`"
+            val readObjectWithWrapping =
+              arity match {
+                case 0 =>
+                  q"""if (r.tryReadArrayHeader(0) || r.tryReadArrayStart() && r.tryReadBreak()) $readObject
                     else r.unexpectedDataItem(${expected(s"Empty array")})"""
-              case 1 => readObject
-              case x =>
-                q"""def readObject() = $readObject
+                case 1 => readObject
+                case x =>
+                  q"""def readObject() = $readObject
                     if (r.tryReadArrayStart()) {
                       val result = readObject()
                       if (r.tryReadBreak()) result
                       else r.unexpectedDataItem(${expected(s"Array with $x elements")}, "at least one extra element")
                     } else if (r.tryReadArrayHeader($x)) readObject()
                     else r.unexpectedDataItem(${expected(s"Array Start or Array Header ($x)")})"""
-            }
-          q"$decoderCompanion(r => $readObjectWithWrapping)"
-        }
+              }
+            q"$decoderCompanion(r => $readObjectWithWrapping)"
+          }
 
-        def deriveForSealedTrait(node: AdtTypeNode) =
-          deriveAdtDecoder(node, q"()", x => q"r.readArrayClose(r.readArrayOpen(2), $x)")
+          def deriveForSealedTrait(node: AdtTypeNode) =
+            deriveAdtDecoder(node, q"()", x => q"r.readArrayClose(r.readArrayOpen(2), $x)")
+        }
       }
-    }
 
     def codec[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
       codecMacro(c)("ArrayBasedCodecs", "deriveEncoder", "deriveDecoder")

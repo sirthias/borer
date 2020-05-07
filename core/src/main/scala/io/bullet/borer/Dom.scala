@@ -59,10 +59,11 @@ object Dom {
 
     override def hashCode() = util.Arrays.hashCode(value)
 
-    override def equals(obj: Any) = obj match {
-      case ByteArrayElem(x) => util.Arrays.equals(value, x)
-      case _                => false
-    }
+    override def equals(obj: Any) =
+      obj match {
+        case ByteArrayElem(x) => util.Arrays.equals(value, x)
+        case _                => false
+      }
   }
 
   final case class BytesStreamElem(value: Vector[AbstractBytesElem]) extends AbstractBytesElem(DIS.BytesStart) {

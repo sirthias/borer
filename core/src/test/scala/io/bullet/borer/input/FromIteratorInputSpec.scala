@@ -40,28 +40,28 @@ object FromIteratorInputSpec extends TestSuite with TestUtils {
   def testInput(input: Input[Array[Byte]]): Unit = {
     val pp = new FFPadder(input)
 
-    input.readOctaByteBigEndianPadded(pp) ==> 0X0000000100020003L
+    input.readOctaByteBigEndianPadded(pp) ==> 0x0000000100020003L
 
     input.unread(7)
-    input.readOctaByteBigEndianPadded(pp) ==> 0X0000010002000300L
+    input.readOctaByteBigEndianPadded(pp) ==> 0x0000010002000300L
 
     input.unread(6)
-    input.readOctaByteBigEndianPadded(pp) ==> 0X0100020003000400L
+    input.readOctaByteBigEndianPadded(pp) ==> 0x0100020003000400L
 
     input.unread(5)
-    input.readOctaByteBigEndianPadded(pp) ==> 0X0003000400050006L
+    input.readOctaByteBigEndianPadded(pp) ==> 0x0003000400050006L
 
     input.unread(4)
-    input.readOctaByteBigEndianPadded(pp) ==> 0X0005000600070008L
+    input.readOctaByteBigEndianPadded(pp) ==> 0x0005000600070008L
 
     input.unread(3)
-    input.readOctaByteBigEndianPadded(pp) ==> 0X0700080009000A00L
+    input.readOctaByteBigEndianPadded(pp) ==> 0x0700080009000a00L
 
     input.unread(2)
-    input.readOctaByteBigEndianPadded(pp) ==> 0X0A000B000C000D00L
+    input.readOctaByteBigEndianPadded(pp) ==> 0x0a000b000c000d00L
 
     input.unread(1)
-    input.readOctaByteBigEndianPadded(pp) ==> 0X000E000F00100011L
+    input.readOctaByteBigEndianPadded(pp) ==> 0x000e000f00100011L
 
     input.readQuadByteBigEndianPadded(pp) ==> 0x00120013
 
@@ -104,7 +104,7 @@ object FromIteratorInputSpec extends TestSuite with TestUtils {
       -1)
 
     input.unread(5)
-    input.readOctaByteBigEndianPadded(pp) ==> 0XFD01FE01FFFFFFFFL
+    input.readOctaByteBigEndianPadded(pp) ==> 0xfd01fe01ffffffffL
 
     input.unread(251)
     input.readBytes(255, pp) ==> inputBytes.takeRight(251) ++ Array[Byte](-1, -1, -1, -1)
@@ -126,7 +126,7 @@ object FromIteratorInputSpec extends TestSuite with TestUtils {
     def padByte(): Byte = -1
 
     def padDoubleByte(remaining: Int): Char =
-      if (remaining < 1) '\uffff' else ((input.readByte() << 8) | 0xFF).toChar
+      if (remaining < 1) '\uffff' else ((input.readByte() << 8) | 0xff).toChar
 
     def padQuadByte(remaining: Int): Int = {
       import input.{readByte => byte, readDoubleByteBigEndian => doub}

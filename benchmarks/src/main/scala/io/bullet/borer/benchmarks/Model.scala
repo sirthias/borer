@@ -160,7 +160,7 @@ object DojBlog {
 object EuLobbyCountry {
 
   case class Facets(
-      )
+  )
 
   case class Results(
       name: String,

@@ -53,7 +53,7 @@ final class Base32(name: String, alphabet: String) extends LookupBaseEncoding(na
           result(di + 7) = 0x3d
 
         case 3 =>
-          val int = baa.doubleByteBigEndian(bytes, si).toInt << 16 | (bytes(si + 2) & 0XFF) << 8
+          val int = baa.doubleByteBigEndian(bytes, si).toInt << 16 | (bytes(si + 2) & 0xff) << 8
           result(di + 0) = alphabetChars(int << 0 >>> 27)
           result(di + 1) = alphabetChars(int << 5 >>> 27)
           result(di + 2) = alphabetChars(int << 10 >>> 27)
@@ -79,7 +79,7 @@ final class Base32(name: String, alphabet: String) extends LookupBaseEncoding(na
 
     @tailrec def encode5(si: Int, di: Int): Array[Char] =
       if (si <= sl5) {
-        val octa = baa.quadByteBigEndian(bytes, si).toLong << 32 | (bytes(si + 4) & 0XFFL) << 24
+        val octa = baa.quadByteBigEndian(bytes, si).toLong << 32 | (bytes(si + 4) & 0xffL) << 24
         result(di + 0) = alphabetChars((octa << 0 >>> 59).toInt)
         result(di + 1) = alphabetChars((octa << 5 >>> 59).toInt)
         result(di + 2) = alphabetChars((octa << 10 >>> 59).toInt)
@@ -111,7 +111,7 @@ final class Base32(name: String, alphabet: String) extends LookupBaseEncoding(na
       val baa = ByteArrayAccess.instance
       val sl8 = sl - 8
 
-      @inline def c(offset: Int) = chars(sl - offset) & 0XFFL
+      @inline def c(offset: Int) = chars(sl - offset) & 0xffL
 
       def decode(ix: Int): Long = {
         val c = chars(ix)
@@ -150,8 +150,8 @@ final class Base32(name: String, alphabet: String) extends LookupBaseEncoding(na
         //       2         ==> 0 (invalid per spec)
         //       1         ==> 4
         //       0         ==> 0
-        val ntz      = java.lang.Long.numberOfTrailingZeros(final6 ^ 0X3D3D3D3D3D3D3D3DL)
-        val oddBytes = (0X0001000203000400L >> (ntz & 0xf8)).toInt & 0xF
+        val ntz      = java.lang.Long.numberOfTrailingZeros(final6 ^ 0x3d3d3d3d3d3d3d3dL)
+        val oddBytes = (0x0001000203000400L >> (ntz & 0xf8)).toInt & 0xf
         val result   = new Array[Byte](baseLen - 5 + oddBytes)
 
         def decodeRest(si: Int, di: Int): Array[Byte] = {
