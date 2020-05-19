@@ -221,7 +221,7 @@ val json: String =
   Json.encode(value).toUtf8String // throws on error
 
 json ==&gt; &quot;&quot;&quot;[&quot;foo&quot;,&quot;bar&quot;,&quot;baz&quot;]&quot;&quot;&quot;
-bytes ==&gt; json.getBytes</code></pre></dd>
+bytes ==&gt; json.getBytes(&quot;UTF8&quot;)</code></pre></dd>
 </dl>
 <p>Decoding a plain <code>Array[Byte]</code> back to a certain type:</p>
 <dl>
