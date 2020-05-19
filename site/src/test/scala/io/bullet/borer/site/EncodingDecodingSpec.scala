@@ -39,7 +39,7 @@ object EncodingDecodingSpec extends TestSuite {
           Json.encode(value).toUtf8String // throws on error
 
         json ==> """["foo","bar","baz"]"""
-        bytes ==> json.getBytes
+        bytes ==> json.getBytes("UTF8")
         //#encoding-json
       }
     }
@@ -60,7 +60,7 @@ object EncodingDecodingSpec extends TestSuite {
       }
 
       "JSON" - {
-        val bytes = """["foo","bar","baz"]""".getBytes
+        val bytes = """["foo","bar","baz"]""" getBytes "UTF8"
 
         //#decoding-json
         import io.bullet.borer.Json
@@ -95,7 +95,7 @@ object EncodingDecodingSpec extends TestSuite {
 
       "JSON" - {
         val value = List("foo", "bar", "baz")
-        val bytes = """["foo","bar","baz"]""".getBytes
+        val bytes = """["foo","bar","baz"]""" getBytes "UTF8"
 
         //#try-json
         import io.bullet.borer.Json
@@ -134,7 +134,7 @@ object EncodingDecodingSpec extends TestSuite {
 
       "JSON" - {
         val value = List("foo", "bar", "baz")
-        val bytes = """["foo","bar","baz"]""".getBytes
+        val bytes = """["foo","bar","baz"]""" getBytes "UTF8"
 
         //#either-json
         import io.bullet.borer._

@@ -27,7 +27,7 @@ object CustomCodecsSpec extends TestSuite {
       val color = Color("red", 0xff0000)
       val json  = Json.encode(color).toUtf8String
       json ==> """["red",16711680]"""
-      Json.decode(json.getBytes).to[Color].value ==> color
+      Json.decode(json getBytes "UTF8").to[Color].value ==> color
     }
 
     "Map/Contramap" - {
@@ -46,7 +46,7 @@ object CustomCodecsSpec extends TestSuite {
       val person = new Person("Fred")
       val json   = Json.encode(person).toUtf8String
       json ==> """"Fred""""
-      Json.decode(json.getBytes).to[Person].value.name ==> person.name
+      Json.decode(json getBytes "UTF8").to[Person].value.name ==> person.name
     }
 
     "Manual" - {
@@ -78,7 +78,7 @@ object CustomCodecsSpec extends TestSuite {
       val person = new Person("Fred", 49)
       val json   = Json.encode(person).toUtf8String
       json ==> """["Fred",49]"""
-      val p = Json.decode(json.getBytes).to[Person].value
+      val p = Json.decode(json getBytes "UTF8").to[Person].value
       p.name ==> person.name
       p.age ==> person.age
     }
@@ -96,10 +96,10 @@ object CustomCodecsSpec extends TestSuite {
       //#lookahead
 
       import io.bullet.borer.Json
-      Json.decode("\"yeah\"".getBytes).to[Either[String, Int]].value ==> Left("yeah")
-      Json.decode("42".getBytes).to[Either[String, Int]].value ==> Right(42)
+      Json.decode("\"yeah\"" getBytes "UTF8").to[Either[String, Int]].value ==> Left("yeah")
+      Json.decode("42" getBytes "UTF8").to[Either[String, Int]].value ==> Right(42)
       Json
-        .decode("[]".getBytes)
+        .decode("[]" getBytes "UTF8")
         .to[Either[String, Int]]
         .valueTry
         .toString
