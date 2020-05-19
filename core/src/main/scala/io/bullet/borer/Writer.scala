@@ -37,17 +37,17 @@ final class Writer(
 
   @inline def ~[T: Encoder](value: T): this.type = write(value)
 
-  def writeNull(): this.type      = { receiver.onNull(); this }
+  def writeNull(): this.type = { receiver.onNull(); this }
   def writeUndefined(): this.type = { receiver.onUndefined(); this }
 
-  @inline def writeBoolean(value: Boolean): this.type          = { receiver.onBoolean(value); this }
-  @inline def writeChar(value: Char): this.type                = writeInt(value.toInt)
-  @inline def writeByte(value: Byte): this.type                = writeInt(value.toInt)
-  @inline def writeShort(value: Short): this.type              = writeInt(value.toInt)
-  @inline def writeInt(value: Int): this.type                  = { receiver.onInt(value); this }
-  @inline def writeLong(value: Long): this.type                = { receiver.onLong(value); this }
+  @inline def writeBoolean(value: Boolean): this.type = { receiver.onBoolean(value); this }
+  @inline def writeChar(value: Char): this.type   = writeInt(value.toInt)
+  @inline def writeByte(value: Byte): this.type   = writeInt(value.toInt)
+  @inline def writeShort(value: Short): this.type = writeInt(value.toInt)
+  @inline def writeInt(value: Int): this.type = { receiver.onInt(value); this }
+  @inline def writeLong(value: Long): this.type = { receiver.onLong(value); this }
   def writeOverLong(negative: Boolean, value: Long): this.type = { receiver.onOverLong(negative, value); this }
-  def writeFloat16(value: Float): this.type                    = { receiver.onFloat16(value); this }
+  def writeFloat16(value: Float): this.type = { receiver.onFloat16(value); this }
 
   def writeFloat(value: Float): this.type = {
     if (config.compressFloatingPointValues && Util.canBeRepresentedAsFloat16(value)) {
@@ -65,24 +65,24 @@ final class Writer(
 
   def writeNumberString(value: String): this.type = { receiver.onNumberString(value); this }
 
-  @inline def writeString(value: String): this.type     = { receiver.onString(value); this }
+  @inline def writeString(value: String): this.type = { receiver.onString(value); this }
   @inline def writeChars(value: Array[Char]): this.type = { receiver.onChars(value, value.length); this }
 
   def writeBytes[Bytes: ByteAccess](value: Bytes): this.type = { receiver.onBytes(value); this }
-  def writeText[Bytes: ByteAccess](value: Bytes): this.type  = { receiver.onText(value); this }
-  def writeTag(value: Tag): this.type                        = { receiver.onTag(value); this }
-  def writeSimpleValue(value: Int): this.type                = { receiver.onSimpleValue(value); this }
+  def writeText[Bytes: ByteAccess](value: Bytes): this.type = { receiver.onText(value); this }
+  def writeTag(value: Tag): this.type = { receiver.onTag(value); this }
+  def writeSimpleValue(value: Int): this.type = { receiver.onSimpleValue(value); this }
 
   def writeBytesStart(): this.type = { receiver.onBytesStart(); this }
-  def writeTextStart(): this.type  = { receiver.onTextStart(); this }
+  def writeTextStart(): this.type = { receiver.onTextStart(); this }
 
-  @inline def writeArrayHeader(length: Int): this.type  = writeArrayHeader(length.toLong)
+  @inline def writeArrayHeader(length: Int): this.type = writeArrayHeader(length.toLong)
   @inline def writeArrayHeader(length: Long): this.type = { receiver.onArrayHeader(length); this }
-  @inline def writeArrayStart(): this.type              = { receiver.onArrayStart(); this }
+  @inline def writeArrayStart(): this.type = { receiver.onArrayStart(); this }
 
-  @inline def writeMapHeader(length: Int): this.type  = writeMapHeader(length.toLong)
+  @inline def writeMapHeader(length: Int): this.type = writeMapHeader(length.toLong)
   @inline def writeMapHeader(length: Long): this.type = { receiver.onMapHeader(length); this }
-  @inline def writeMapStart(): this.type              = { receiver.onMapStart(); this }
+  @inline def writeMapStart(): this.type = { receiver.onMapStart(); this }
 
   @inline def writeBreak(): this.type = { receiver.onBreak(); this }
 
