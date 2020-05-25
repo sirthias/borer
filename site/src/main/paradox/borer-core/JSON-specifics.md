@@ -181,16 +181,17 @@ Comparison with other Scala JSON Libraries
 
 - zero dependencies
 - very high performance (about 15% faster [JSON] decoding than _borer_)
+- support out of the box for _all_ Scala collections and `java.time.*` classes
 - highly configurable
+- has [scala.js] support
 
 @@@
 
 @@@ div { .cons }
 
-- very low-level API
-- entirely macro-based
+- very low-level core API
+- entirely macro-based high-level API
 - no pre-defined AST/DOM
-- not compatible with [scala.js]
 - no [CBOR] support
 
 @@@
