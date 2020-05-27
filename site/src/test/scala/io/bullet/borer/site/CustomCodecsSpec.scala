@@ -24,7 +24,7 @@ object CustomCodecsSpec extends TestSuite {
       //#from-unapply-apply
 
       import io.bullet.borer.Json
-      val color = Color("red", 0xff0000)
+      val color = Color("red", 0xFF0000)
       val json  = Json.encode(color).toUtf8String
       json ==> """["red",16711680]"""
       Json.decode(json getBytes "UTF8").to[Color].value ==> color

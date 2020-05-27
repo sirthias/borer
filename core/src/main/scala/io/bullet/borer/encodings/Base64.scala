@@ -34,22 +34,22 @@ final class Base64(name: String, alphabet: String) extends LookupBaseEncoding(na
           val int = bytes(si).toInt << 24
           result(di + 0) = alphabetChars(int << 0 >>> 26)
           result(di + 1) = alphabetChars(int << 6 >>> 26)
-          result(di + 2) = 0x3d
-          result(di + 3) = 0x3d
+          result(di + 2) = 0x3D
+          result(di + 3) = 0x3D
 
         case 2 =>
           val int = baa.doubleByteBigEndian(bytes, si).toInt << 16
           result(di + 0) = alphabetChars(int << 0 >>> 26)
           result(di + 1) = alphabetChars(int << 6 >>> 26)
           result(di + 2) = alphabetChars(int << 12 >>> 26)
-          result(di + 3) = 0x3d
+          result(di + 3) = 0x3D
       }
       result
     }
 
     @tailrec def encode3(si: Int, di: Int): Array[Char] =
       if (si <= sl3) {
-        val quad = baa.doubleByteBigEndian(bytes, si).toInt << 16 | (bytes(si + 2) & 0xff) << 8
+        val quad = baa.doubleByteBigEndian(bytes, si).toInt << 16 | (bytes(si + 2) & 0xFF) << 8
         result(di + 0) = alphabetChars(quad << 0 >>> 26)
         result(di + 1) = alphabetChars(quad << 6 >>> 26)
         result(di + 2) = alphabetChars(quad << 12 >>> 26)
@@ -77,7 +77,7 @@ final class Base64(name: String, alphabet: String) extends LookupBaseEncoding(na
       val baa = ByteArrayAccess.instance
       val sl4 = sl - 4
 
-      @inline def c(offset: Int) = chars(sl - offset) & 0xffL
+      @inline def c(offset: Int) = chars(sl - offset) & 0xFFL
 
       def decode(ix: Int): Long = {
         val c = chars(ix)
@@ -104,8 +104,8 @@ final class Base64(name: String, alphabet: String) extends LookupBaseEncoding(na
       }
 
       val c1 = c(1)
-      if (c1 == 0x3d) { // if we have at least one padding char
-        val oddBytes = if (c(2) == 0x3d) 1 else 2
+      if (c1 == 0x3D) { // if we have at least one padding char
+        val oddBytes = if (c(2) == 0x3D) 1 else 2
         val result   = new Array[Byte](baseLen - 3 + oddBytes)
 
         def decodeRest(si: Int, di: Int): Array[Byte] = {

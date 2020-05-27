@@ -55,13 +55,13 @@ object FromIteratorInputSpec extends TestSuite with TestUtils {
     input.readOctaByteBigEndianPadded(pp) ==> 0x0005000600070008L
 
     input.unread(3)
-    input.readOctaByteBigEndianPadded(pp) ==> 0x0700080009000a00L
+    input.readOctaByteBigEndianPadded(pp) ==> 0x0700080009000A00L
 
     input.unread(2)
-    input.readOctaByteBigEndianPadded(pp) ==> 0x0a000b000c000d00L
+    input.readOctaByteBigEndianPadded(pp) ==> 0x0A000B000C000D00L
 
     input.unread(1)
-    input.readOctaByteBigEndianPadded(pp) ==> 0x000e000f00100011L
+    input.readOctaByteBigEndianPadded(pp) ==> 0x000E000F00100011L
 
     input.readQuadByteBigEndianPadded(pp) ==> 0x00120013
 
@@ -104,7 +104,7 @@ object FromIteratorInputSpec extends TestSuite with TestUtils {
       -1)
 
     input.unread(5)
-    input.readOctaByteBigEndianPadded(pp) ==> 0xfd01fe01ffffffffL
+    input.readOctaByteBigEndianPadded(pp) ==> 0xFD01FE01FFFFFFFFL
 
     input.unread(251)
     input.readBytes(255, pp) ==> inputBytes.takeRight(251) ++ Array[Byte](-1, -1, -1, -1)
@@ -126,7 +126,7 @@ object FromIteratorInputSpec extends TestSuite with TestUtils {
     def padByte(): Byte = -1
 
     def padDoubleByte(remaining: Int): Char =
-      if (remaining < 1) '\uffff' else ((input.readByte() << 8) | 0xff).toChar
+      if (remaining < 1) '\uffff' else ((input.readByte() << 8) | 0xFF).toChar
 
     def padQuadByte(remaining: Int): Int = {
       import input.{readByte => byte, readDoubleByteBigEndian => doub}

@@ -32,21 +32,21 @@ object Float16 {
     * Hi-word of parameter value is ignored.
     */
   def shortToFloat(hbits: Int): Float = {
-    var mant = hbits & 0x03ff // 10 bits mantissa
-    var exp  = hbits & 0x7c00 // 5 bits exponent
+    var mant = hbits & 0x03FF // 10 bits mantissa
+    var exp  = hbits & 0x7C00 // 5 bits exponent
 
-    if (exp == 0x7c00) { // NaN/Inf
-      exp = 0x3fc00
+    if (exp == 0x7C00) { // NaN/Inf
+      exp = 0x3FC00
     } else if (exp != 0) { // normalized value
-      exp += 0x1c000       // exp - 15 + 127
+      exp += 0x1C000       // exp - 15 + 127
     } else {
       if (mant != 0) { // && exp==0 -> subnormal
-        exp = 0x1c400  // make it normal
+        exp = 0x1C400  // make it normal
         do {
           mant <<= 1                  // mantissa * 2
           exp -= 0x400                // decrease exp by 1
         } while ((mant & 0x400) == 0) // while not normal
-        mant &= 0x3ff                 // discard subnormal bit
+        mant &= 0x3FF                 // discard subnormal bit
       }
     }
     java.lang.Float.intBitsToFloat((hbits & 0x8000) << 16 | (exp | mant) << 13)
@@ -58,16 +58,16 @@ object Float16 {
   def floatToShort(value: Float): Int = {
     val fbits   = java.lang.Float.floatToIntBits(value)
     val sign    = fbits >>> 16 & 0x8000 // sign only
-    val lfbits  = fbits & 0x7fffffff
+    val lfbits  = fbits & 0x7FFFFFFF
     val rounded = lfbits + 0x1000
     if (rounded >= 0x47800000) { // might be or become NaN/Inf
-      val sign2 = sign | 0x7c00
-      if (rounded < 0x7f800000) { // is or must become NaN/Inf
+      val sign2 = sign | 0x7C00
+      if (rounded < 0x7F800000) { // is or must become NaN/Inf
         // was value but too large
         sign2 // make it +/-Inf
       } else {
         sign2 |                     // remains +/-Inf or NaN
-        (fbits & 0x007fffff) >>> 13 // keep NaN (and Inf) bits
+        (fbits & 0x007FFFFF) >>> 13 // keep NaN (and Inf) bits
       }
     } else if (rounded >= 0x38800000) {  // remains normalized value
       sign | rounded - 0x38000000 >>> 13 // exp - 127 + 15
@@ -75,7 +75,7 @@ object Float16 {
       sign                               // becomes +/-0
     } else {
       val rounded2 = lfbits >>> 23; // tmp exp for subnormal calc
-      sign | ((fbits & 0x7fffff | 0x800000) + // add subnormal bit
+      sign | ((fbits & 0x7FFFFF | 0x800000) + // add subnormal bit
       (0x800000 >>> rounded2 - 102) >>>       // round depending on cut off
       126 - rounded2)                         // div by 2^(1-(exp-127+15)) and >> 13 | exp=0
     }

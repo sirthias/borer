@@ -36,7 +36,7 @@ object Base16 extends BaseEncoding("base16", 4) {
       if (si < sl) {
         val b = bytes(si)
         result(di + 0) = hexDigit(b << 24 >>> 28)
-        result(di + 1) = hexDigit(b & 0x0f)
+        result(di + 1) = hexDigit(b & 0x0F)
         encodeSlow(si + 1, di + 2)
       } else result
 
@@ -50,7 +50,7 @@ object Base16 extends BaseEncoding("base16", 4) {
         result(di + 4) = hexDigit(quad << 16 >>> 28)
         result(di + 5) = hexDigit(quad << 20 >>> 28)
         result(di + 6) = hexDigit(quad << 24 >>> 28)
-        result(di + 7) = hexDigit(quad & 0x0f)
+        result(di + 7) = hexDigit(quad & 0x0F)
         encodeFast(si + 4, di + 8)
       } else encodeSlow(si, di)
 
@@ -74,8 +74,8 @@ object Base16 extends BaseEncoding("base16", 4) {
         throw new IllegalArgumentException(s""""${Util.show(chars)}" is not a valid $name encoding.
                                               | '$c' at index $ix is not part of the $name alphabet.""".stripMargin)
       val cc = c - 48
-      if (c < 0 || 102 < c || (((0x7e0000007e03ffL >> cc) & 1) == 0)) fail()
-      (c & 0x1f) + ((c >> 6) * 0x19) - 0x10
+      if (c < 0 || 102 < c || (((0x7E0000007E03FFL >> cc) & 1) == 0)) fail()
+      (c & 0x1F) + ((c >> 6) * 0x19) - 0x10
     }
 
     @tailrec def decodeSlow(si: Int, di: Int): Array[Byte] =

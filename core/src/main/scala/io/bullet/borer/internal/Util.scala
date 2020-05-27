@@ -92,7 +92,7 @@ private[borer] object Util {
     // so the 13 lower bits of the mantissa must be zero
     (bits & ((1 << 13) - 1)) == 0 && { // are the 13 lower bits of the mantissa zero?
       val exp = (bits << 1) >>> 24 // move out sign bit and get 8 bit exponent
-      exp == 0 || exp == 0xff || { // is exp a special value?
+      exp == 0 || exp == 0xFF || { // is exp a special value?
         val normalizedExp = exp - 127 // reverse exponent bias
         (normalizedExp >> 4) == (normalizedExp >> 31) // does normalizedExp fit into 5 bits?
       }

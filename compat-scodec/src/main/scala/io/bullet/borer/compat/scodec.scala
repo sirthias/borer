@@ -95,7 +95,7 @@ object scodec {
     def readDoubleByteBigEndian(): Char = {
       val c = _cursor
       _cursor = c + 2
-      ((byteVector(c) << 8) | byteVector(c + 1) & 0xff).toChar
+      ((byteVector(c) << 8) | byteVector(c + 1) & 0xFF).toChar
     }
 
     def readDoubleByteBigEndianPadded(pp: Input.PaddingProvider[ByteVector]): Char = {
@@ -108,9 +108,9 @@ object scodec {
       val c = _cursor
       _cursor = c + 4
       byteVector(c) << 24 |
-      (byteVector(c + 1) & 0xff) << 16 |
-      (byteVector(c + 2) & 0xff) << 8 |
-      byteVector(c + 3) & 0xff
+      (byteVector(c + 1) & 0xFF) << 16 |
+      (byteVector(c + 2) & 0xFF) << 8 |
+      byteVector(c + 3) & 0xFF
     }
 
     def readQuadByteBigEndianPadded(pp: Input.PaddingProvider[ByteVector]): Int = {
@@ -123,13 +123,13 @@ object scodec {
       val c = _cursor
       _cursor = c + 8
       byteVector(c).toLong << 56 |
-      (byteVector(c + 1) & 0xffL) << 48 |
-      (byteVector(c + 2) & 0xffL) << 40 |
-      (byteVector(c + 3) & 0xffL) << 32 |
-      (byteVector(c + 4) & 0xffL) << 24 |
-      (byteVector(c + 5) & 0xffL) << 16 |
-      (byteVector(c + 6) & 0xffL) << 8 |
-      byteVector(c + 7) & 0xffL
+      (byteVector(c + 1) & 0xFFL) << 48 |
+      (byteVector(c + 2) & 0xFFL) << 40 |
+      (byteVector(c + 3) & 0xFFL) << 32 |
+      (byteVector(c + 4) & 0xFFL) << 24 |
+      (byteVector(c + 5) & 0xFFL) << 16 |
+      (byteVector(c + 6) & 0xFFL) << 8 |
+      byteVector(c + 7) & 0xFFL
     }
 
     def readOctaByteBigEndianPadded(pp: Input.PaddingProvider[ByteVector]): Long = {

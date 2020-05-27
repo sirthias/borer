@@ -240,9 +240,9 @@ final private[borer] class ResizableByteRingBuffer(initialCapacity: Int, val max
     } else
       (
         array(ix) << 24
-        | (array((r + 1) & mask) & 0xff) << 16
-        | (array((r + 2) & mask) & 0xff) << 8
-        | (array((r + 3) & mask) & 0xff) << 0
+        | (array((r + 1) & mask) & 0xFF) << 16
+        | (array((r + 2) & mask) & 0xFF) << 8
+        | (array((r + 3) & mask) & 0xFF) << 0
       )
   }
 
@@ -255,13 +255,13 @@ final private[borer] class ResizableByteRingBuffer(initialCapacity: Int, val max
     } else
       (
         array(ix).toLong << 56
-        | (array((r + 1) & mask) & 0xffL) << 48
-        | (array((r + 2) & mask) & 0xffL) << 40
-        | (array((r + 3) & mask) & 0xffL) << 32
-        | (array((r + 4) & mask) & 0xffL) << 24
-        | (array((r + 5) & mask) & 0xffL) << 16
-        | (array((r + 6) & mask) & 0xffL) << 8
-        | (array((r + 7) & mask) & 0xffL) << 0
+        | (array((r + 1) & mask) & 0xFFL) << 48
+        | (array((r + 2) & mask) & 0xFFL) << 40
+        | (array((r + 3) & mask) & 0xFFL) << 32
+        | (array((r + 4) & mask) & 0xFFL) << 24
+        | (array((r + 5) & mask) & 0xFFL) << 16
+        | (array((r + 6) & mask) & 0xFFL) << 8
+        | (array((r + 7) & mask) & 0xFFL) << 0
       )
   }
 
@@ -274,13 +274,13 @@ final private[borer] class ResizableByteRingBuffer(initialCapacity: Int, val max
       } else
         (
           array(ix).toLong << 56
-          | (array((w + 1) & mask) & 0xffL) << 48
-          | (array((w + 2) & mask) & 0xffL) << 40
-          | (array((w + 3) & mask) & 0xffL) << 32
-          | (array((w + 4) & mask) & 0xffL) << 24
-          | (array((w + 5) & mask) & 0xffL) << 16
-          | (array((w + 6) & mask) & 0xffL) << 8
-          | (array((w + 7) & mask) & 0xffL) << 0
+          | (array((w + 1) & mask) & 0xFFL) << 48
+          | (array((w + 2) & mask) & 0xFFL) << 40
+          | (array((w + 3) & mask) & 0xFFL) << 32
+          | (array((w + 4) & mask) & 0xFFL) << 24
+          | (array((w + 5) & mask) & 0xFFL) << 16
+          | (array((w + 6) & mask) & 0xFFL) << 8
+          | (array((w + 7) & mask) & 0xFFL) << 0
         )
     } else throw new NoSuchElementException
 

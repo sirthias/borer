@@ -21,7 +21,7 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
 
   case class Empty()
 
-  case class Color(red: Int = 0, green: Int = 0, blue: Int = 0, alpha: Int = 0xff)
+  case class Color(red: Int = 0, green: Int = 0, blue: Int = 0, alpha: Int = 0xFF)
 
   case class Foo(
       char: Char = 'x',
@@ -33,7 +33,7 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
       @key("dub") double: Double = 26.8,
       string: String = "borer",
       empty: Empty = Empty(),
-      colors: List[Color] = List(Color(red = 0xff), Color(green = 0xff), Color(blue = 0xff)))
+      colors: List[Color] = List(Color(red = 0xFF), Color(green = 0xFF), Color(blue = 0xFF)))
 
   val foo = Foo(long = -1)
 

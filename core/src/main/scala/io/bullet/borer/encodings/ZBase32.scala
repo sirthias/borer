@@ -37,7 +37,7 @@ object ZBase32 extends LookupBaseEncoding("z-base32", 5, "ybndrfg8ejkmcpqxot1uwi
         sl - si match {
           case 1 => bytes(si).toLong << 56
           case 2 => baa.doubleByteBigEndian(bytes, si).toLong << 48
-          case 3 => baa.doubleByteBigEndian(bytes, si).toLong << 48 | (bytes(si + 2) & 0xffL) << 40
+          case 3 => baa.doubleByteBigEndian(bytes, si).toLong << 48 | (bytes(si + 2) & 0xFFL) << 40
           case 4 => baa.quadByteBigEndian(bytes, si).toLong << 32
         }
       val bits = fullBytes & ~(-1L >>> bitsRemaining)
@@ -54,7 +54,7 @@ object ZBase32 extends LookupBaseEncoding("z-base32", 5, "ybndrfg8ejkmcpqxot1uwi
 
     @tailrec def encode5(bitsRemaining: Long, si: Int, di: Int): Array[Char] =
       if (bitsRemaining >= 40) {
-        val octa = baa.quadByteBigEndian(bytes, si).toLong << 32 | (bytes(si + 4) & 0xffL) << 24
+        val octa = baa.quadByteBigEndian(bytes, si).toLong << 32 | (bytes(si + 4) & 0xFFL) << 24
         result(di + 0) = alphabetChars((octa << 0 >>> 59).toInt)
         result(di + 1) = alphabetChars((octa << 5 >>> 59).toInt)
         result(di + 2) = alphabetChars((octa << 10 >>> 59).toInt)

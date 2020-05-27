@@ -34,12 +34,12 @@ final class Base32(name: String, alphabet: String) extends LookupBaseEncoding(na
           val int = bytes(si).toInt << 24
           result(di + 0) = alphabetChars(int << 0 >>> 27)
           result(di + 1) = alphabetChars(int << 5 >>> 27)
-          result(di + 2) = 0x3d
-          result(di + 3) = 0x3d
-          result(di + 4) = 0x3d
-          result(di + 5) = 0x3d
-          result(di + 6) = 0x3d
-          result(di + 7) = 0x3d
+          result(di + 2) = 0x3D
+          result(di + 3) = 0x3D
+          result(di + 4) = 0x3D
+          result(di + 5) = 0x3D
+          result(di + 6) = 0x3D
+          result(di + 7) = 0x3D
 
         case 2 =>
           val int = baa.doubleByteBigEndian(bytes, si).toInt << 16
@@ -47,21 +47,21 @@ final class Base32(name: String, alphabet: String) extends LookupBaseEncoding(na
           result(di + 1) = alphabetChars(int << 5 >>> 27)
           result(di + 2) = alphabetChars(int << 10 >>> 27)
           result(di + 3) = alphabetChars(int << 15 >>> 27)
-          result(di + 4) = 0x3d
-          result(di + 5) = 0x3d
-          result(di + 6) = 0x3d
-          result(di + 7) = 0x3d
+          result(di + 4) = 0x3D
+          result(di + 5) = 0x3D
+          result(di + 6) = 0x3D
+          result(di + 7) = 0x3D
 
         case 3 =>
-          val int = baa.doubleByteBigEndian(bytes, si).toInt << 16 | (bytes(si + 2) & 0xff) << 8
+          val int = baa.doubleByteBigEndian(bytes, si).toInt << 16 | (bytes(si + 2) & 0xFF) << 8
           result(di + 0) = alphabetChars(int << 0 >>> 27)
           result(di + 1) = alphabetChars(int << 5 >>> 27)
           result(di + 2) = alphabetChars(int << 10 >>> 27)
           result(di + 3) = alphabetChars(int << 15 >>> 27)
           result(di + 4) = alphabetChars(int << 20 >>> 27)
-          result(di + 5) = 0x3d
-          result(di + 6) = 0x3d
-          result(di + 7) = 0x3d
+          result(di + 5) = 0x3D
+          result(di + 6) = 0x3D
+          result(di + 7) = 0x3D
 
         case 4 =>
           val octa = baa.quadByteBigEndian(bytes, si).toLong << 32
@@ -72,14 +72,14 @@ final class Base32(name: String, alphabet: String) extends LookupBaseEncoding(na
           result(di + 4) = alphabetChars((octa << 20 >>> 59).toInt)
           result(di + 5) = alphabetChars((octa << 25 >>> 59).toInt)
           result(di + 6) = alphabetChars((octa << 30 >>> 59).toInt)
-          result(di + 7) = 0x3d
+          result(di + 7) = 0x3D
       }
       result
     }
 
     @tailrec def encode5(si: Int, di: Int): Array[Char] =
       if (si <= sl5) {
-        val octa = baa.quadByteBigEndian(bytes, si).toLong << 32 | (bytes(si + 4) & 0xffL) << 24
+        val octa = baa.quadByteBigEndian(bytes, si).toLong << 32 | (bytes(si + 4) & 0xFFL) << 24
         result(di + 0) = alphabetChars((octa << 0 >>> 59).toInt)
         result(di + 1) = alphabetChars((octa << 5 >>> 59).toInt)
         result(di + 2) = alphabetChars((octa << 10 >>> 59).toInt)
@@ -111,7 +111,7 @@ final class Base32(name: String, alphabet: String) extends LookupBaseEncoding(na
       val baa = ByteArrayAccess.instance
       val sl8 = sl - 8
 
-      @inline def c(offset: Int) = chars(sl - offset) & 0xffL
+      @inline def c(offset: Int) = chars(sl - offset) & 0xFFL
 
       def decode(ix: Int): Long = {
         val c = chars(ix)
@@ -138,7 +138,7 @@ final class Base32(name: String, alphabet: String) extends LookupBaseEncoding(na
       }
 
       val c1 = c(1)
-      if (c1 == 0x3d) { // if we have at least one padding char
+      if (c1 == 0x3D) { // if we have at least one padding char
         val final6 = c(6) << 40 | c(5) << 32 | c(4) << 24 | c(3) << 16 | c(2) << 8 | c1
 
         // padding-length  ==> odd bytes
@@ -150,8 +150,8 @@ final class Base32(name: String, alphabet: String) extends LookupBaseEncoding(na
         //       2         ==> 0 (invalid per spec)
         //       1         ==> 4
         //       0         ==> 0
-        val ntz      = java.lang.Long.numberOfTrailingZeros(final6 ^ 0x3d3d3d3d3d3d3d3dL)
-        val oddBytes = (0x0001000203000400L >> (ntz & 0xf8)).toInt & 0xf
+        val ntz      = java.lang.Long.numberOfTrailingZeros(final6 ^ 0x3D3D3D3D3D3D3D3DL)
+        val oddBytes = (0x0001000203000400L >> (ntz & 0xF8)).toInt & 0xF
         val result   = new Array[Byte](baseLen - 5 + oddBytes)
 
         def decodeRest(si: Int, di: Int): Array[Byte] = {

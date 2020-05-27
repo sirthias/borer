@@ -162,15 +162,15 @@ final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes]
     if (_valueIndex < 0) {
       _valueIndex = input.cursor - 1
       val majorType = byte << 24 >>> 29
-      val info      = byte & 0x1f
+      val info      = byte & 0x1F
       val uLong =
         (info: @switch) match {
           case 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 |
               23 =>
             info.toLong
-          case 24 => input.readBytePadded(this) & 0xffL
-          case 25 => input.readDoubleByteBigEndianPadded(this) & 0xffffL
-          case 26 => input.readQuadByteBigEndianPadded(this) & 0xffffffffL
+          case 24 => input.readBytePadded(this) & 0xFFL
+          case 25 => input.readDoubleByteBigEndianPadded(this) & 0xFFFFL
+          case 26 => input.readQuadByteBigEndianPadded(this) & 0xFFFFFFFFL
           case 27 => input.readOctaByteBigEndianPadded(this)
           case 31 if 2 <= majorType && majorType <= 5 || majorType == 7 =>
             0L // handled specially

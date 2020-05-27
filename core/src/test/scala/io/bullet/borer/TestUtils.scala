@@ -10,7 +10,7 @@ package io.bullet.borer
 
 trait TestUtils {
 
-  final def toHexString(bytes: Array[Byte]): String = bytes.map(x => f"${x & 0xff}%02x").mkString
+  final def toHexString(bytes: Array[Byte]): String = bytes.map(x => f"${x & 0xFF}%02x").mkString
 
   final def hexBytes(hexString: String): Array[Byte] = {
     if ((hexString.length & 1) != 0) throw new IllegalArgumentException(s"`$hexString` is not a valid hex string")
