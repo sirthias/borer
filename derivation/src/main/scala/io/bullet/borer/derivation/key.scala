@@ -48,7 +48,6 @@ import scala.annotation.StaticAnnotation
   *   }
   * }}}
   *
-  *
   * USE CASE 2: Member Names
   * ------------------------
   *
@@ -68,6 +67,5 @@ import scala.annotation.StaticAnnotation
   * {{{
   *   case class Cat(name: String, age: Int, @key("weight") kilos: Option[Double])
   * }}}
-  *
   */
 final class key(val value: Any) extends StaticAnnotation

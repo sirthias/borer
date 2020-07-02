@@ -450,7 +450,6 @@ object Dom {
       * - Double.NaN, Double.PositiveInfinity, Double.NegativeInfinity
       * - Tags
       *
-      *
       * This transformer can be used, for example, for converting a CBOR document to JSON by first parsing the CBOR
       * encoding into a [[Dom.Element]], then applying this transformer and then encoding the transformation result to
       * JSON.
