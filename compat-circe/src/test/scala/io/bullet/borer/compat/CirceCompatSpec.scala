@@ -16,7 +16,7 @@ object CirceCompatSpec extends TestSuite {
   import circe._
 
   final case class Foo(byte: Byte, short: Short, char: Char, int: Int, long: Long, list: List[String], bar: Bar)
-  final case class Bar(boolean: Boolean, nll: Null, float: Float, double: Double, string: String)
+  final case class Bar(boolean: Boolean, nll: Null, float: Float, double: Double, string: String, bd: BigDecimal)
 
   import io.circe.derivation.{deriveDecoder, deriveEncoder}
 
@@ -48,14 +48,20 @@ object CirceCompatSpec extends TestSuite {
       int = 1234567,
       long = 98765432123456789L,
       list = List("red", "green", "blue"),
-      bar = Bar(boolean = true, nll = null, float = 1.25f, double = -0.12345, string = "borer rocks!")
+      bar = Bar(
+        boolean = true,
+        nll = null,
+        float = 1.25f,
+        double = -0.12345,
+        string = "borer rocks!",
+        bd = BigDecimal("1.23456789"))
     )
 
   val tests = Tests {
 
     "JSON round trip" - {
       val encoding =
-        """{"byte":1,"short":-26,"char":"x","int":1234567,"long":98765432123456789,"list":["red","green","blue"],"bar":{"boolean":true,"nll":null,"float":1.25,"double":-0.12345,"string":"borer rocks!"}}"""
+        """{"byte":1,"short":-26,"char":"x","int":1234567,"long":98765432123456789,"list":["red","green","blue"],"bar":{"boolean":true,"nll":null,"float":1.25,"double":-0.12345,"string":"borer rocks!","bd":1.23456789}}"""
 
       Json.encode(foo).toUtf8String ==> encoding
       Json.decode(encoding.getBytes("UTF8")).to[Foo].value ==> foo
