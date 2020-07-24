@@ -69,7 +69,7 @@ object circe {
 
           def onString(value: String) = w.writeString(value)
 
-          def onArray(value: Vector[Json]) = w.writeIndexedSeq(value)
+          def onArray(value: Vector[Json]) = w.writeIndexedSeq(value)(circeJsonAstEncoder)
 
           def onObject(value: JsonObject) =
             if (value.nonEmpty) {

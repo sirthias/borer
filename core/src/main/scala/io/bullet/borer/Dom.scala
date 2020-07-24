@@ -360,7 +360,7 @@ object Dom {
             elements.sizeHint(count)
             @tailrec def rec(remaining: Int): MapElem.Sized =
               if (remaining > 0) {
-                elements += r.read[Element] += r.read[Element]
+                elements += r.read[Element]() += r.read[Element]()
                 rec(remaining - 1)
               } else new MapElem.Sized(elements.result())
             rec(count)
@@ -368,7 +368,7 @@ object Dom {
 
         case DIS.MapStart =>
           r.skipDataItem()
-          if (!r.tryReadBreak) {
+          if (!r.tryReadBreak()) {
             @tailrec def rec(elements: mutable.ArrayBuilder.ofRef[Dom.Element]): MapElem.Unsized =
               if (r.tryReadBreak()) new MapElem.Unsized(elements.result())
               else rec(elements += r.read[Element]() += r.read[Element]())

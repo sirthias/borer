@@ -1,8 +1,8 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import sbt._
 
-def scala213 = "2.13.1"
-def scala212 = "2.12.11"
+def scala213 = "2.13.3"
+def scala212 = "2.12.12"
 
 lazy val commonSettings = Seq(
   organization := "io.bullet",

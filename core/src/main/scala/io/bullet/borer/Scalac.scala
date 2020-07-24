@@ -54,8 +54,8 @@ object Scalac {
       }
 
       try {
-        val name0 = TermName(c.freshName)
-        val name1 = TermName(c.freshName)
+        val name0 = TermName(c.freshName())
+        val name1 = TermName(c.freshName())
         c.typecheck(c.parse(s"object $name0 { val $name1 = { $fragment } }")) match {
           case ModuleDef(_, _, Template(_, _, List(_, valDef: ValDef, defDef: DefDef))) =>
             val tpe = defDef.symbol.asMethod.returnType.toString
