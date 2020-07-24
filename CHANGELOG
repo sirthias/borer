@@ -1,9 +1,16 @@
+Version 1.6.1 (2020-07-24)
+--------------------------
+
+- fixed StackOverflowError during encoding of BigInt/BigDecimal with `borer-compat-circe` (#269)
+- upgraded to Scala 2.12.12 / 2.13.3
+
+
 Version 1.6.0 (2020-05-07)
 --------------------------
 
-- fix decoding of non-primitive empty arrays (#227)
-- fix derivation failing for tagged basic types
-- rename `Default.get` to `Default.of`
+- fixed decoding of non-primitive empty arrays (#227)
+- fixed derivation failing for tagged basic types
+- renamed `Default.get` to `Default.of`
 - split out `borer-deriver` module (so far undocumented)
 
 
@@ -22,9 +29,9 @@ Version 1.5.0 (2020-03-06)
 Version 1.4.0 (2020-01-23)
 --------------------------
 
-- compat-akka: make marshalling target format preference configurable, switch default to JSON (#148)
-- fix generation of stacked type ids in certain cases (#145)
-- fix derived ADT decoders not reading type ids with certain mixed (String/Long) keys
+- compat-akka: made marshalling target format preference configurable, switch default to JSON (#148)
+- fixed generation of stacked type ids in certain cases (#145)
+- fixed derived ADT decoders not reading type ids with certain mixed (String/Long) keys
 
 
 Version 1.3.0 (2020-01-10)
@@ -123,7 +130,7 @@ Version 0.9.0 (2019-05-11)
 
 - significantly improved JSON support on all fronts
 - changed map-based ADT encoding to single-element map
-- rename `Encoder.compose` to `Encoder.contramap`
+- renamed `Encoder.compose` to `Encoder.contramap`
 - renamed @TypeId to @key, add support for custom map-key naming
 - fixed MapBasedCodecs to properly skip complex, extra data elements
 - fixed failing derivation for types with java annotations (#13)
@@ -158,29 +165,29 @@ Version 0.7.0 (2019-03-08)
 --------------------------
 
 borer-core:
-- simplify API by removing explicit `Bytes` type parameter from all abstractions
-- allow for mixed `ByteAccess` in a single encoding / decoding run
+- simplified API by removing explicit `Bytes` type parameter from all abstractions
+- allowed for mixed `ByteAccess` in a single encoding / decoding run
 - various smaller improvements
 
 borer-akka & border-scodec:
-- add missing Codecs for akka ByteString and scodec ByteVector
+- added missing Codecs for akka ByteString and scodec ByteVector
 
 
 Version 0.6.0 (2019-03-06)
 --------------------------
 
 borer-core:
-- refactor main entry-point DSL for clarity and convenience
+- refactored main entry-point DSL for clarity and convenience
 
 borer-core & borer-derivation:
-- Remove array-wrapping of derived codecs for `Product1` types
+- Removed array-wrapping of derived codecs for `Product1` types
 
 
 Version 0.5.1 (2019-03-05)
 --------------------------
 
 borer-derivation:
-- Fix broken round-trip of `deriveCaseClassCodec` for zero- and single-member case classes
+- Fixed broken round-trip of `deriveCaseClassCodec` for zero- and single-member case classes
 
 
 Version 0.5.0 (2019-03-04)
