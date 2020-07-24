@@ -192,7 +192,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.6.0
+<i class="md-icon" title="Version">label_outline</i> 1.6.1
 </label>
 </li>
 </ul>
@@ -346,13 +346,14 @@ Json.encode(binaryData).toUtf8String ==&gt; &quot;&quot;&quot;&quot;54s575a&quot
 <ul>
   <li>zero dependencies</li>
   <li>very high performance (about 15% faster <a href="http://json.org/">JSON</a> decoding than <em>borer</em>)</li>
+  <li>support out of the box for <em>all</em> Scala collections and <code>java.time.*</code> classes</li>
   <li>highly configurable</li>
+  <li>has <a href="https://www.scala-js.org/">scala.js</a> support</li>
 </ul></div><div class="cons">
 <ul>
-  <li>very low-level API</li>
-  <li>entirely macro-based</li>
+  <li>very low-level core API</li>
+  <li>entirely macro-based high-level API</li>
   <li>no pre-defined AST/DOM</li>
-  <li>not compatible with <a href="https://www.scala-js.org/">scala.js</a></li>
   <li>no <a href="http://cbor.io/">CBOR</a> support</li>
 </ul></div>
 <hr/>
@@ -364,7 +365,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.6.0
+1.6.1
 </span>
 </div>
 </article>
