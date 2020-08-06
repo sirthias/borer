@@ -208,7 +208,7 @@ addCommandsAlias(
 
 val `akka-actor`        = Def.setting("com.typesafe.akka"      %%  "akka-actor"              % "2.6.8")
 val `akka-stream`       = Def.setting("com.typesafe.akka"      %%  "akka-stream"             % "2.6.8")
-val `akka-http`         = Def.setting("com.typesafe.akka"      %%  "akka-http"               % "10.1.12")
+val `akka-http`         = Def.setting("com.typesafe.akka"      %%  "akka-http"               % "10.2.0")
 val `collection-compat` = Def.setting("org.scala-lang.modules" %%% "scala-collection-compat" % "2.1.6")
 val `cats-core`         = Def.setting("org.typelevel"          %%% "cats-core"               % "2.1.1")
 val `circe-core`        = Def.setting("io.circe"               %%% "circe-core"              % "0.13.0")
