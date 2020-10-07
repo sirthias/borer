@@ -35,8 +35,8 @@ abstract private[derivation] class CodecDeriver[C <: blackbox.Context](ctx: C) e
     import c.universe._
     val flattened             = flattenedSubs(node, encoderType, deepRecurse = false)
     val typeIdsAndNodesSorted = extractTypeIdsAndSort(node, flattened)
-    val cases = typeIdsAndNodesSorted.toList.map {
-      case (typeId, sub) => cq"x: ${sub.tpe} => writeAdtValue(w, ${literal(typeId.value)}, x)"
+    val cases = typeIdsAndNodesSorted.toList.map { case (typeId, sub) =>
+      cq"x: ${sub.tpe} => writeAdtValue(w, ${literal(typeId.value)}, x)"
     }
 
     val writeAdtValueLong =
@@ -109,11 +109,10 @@ abstract private[derivation] class CodecDeriver[C <: blackbox.Context](ctx: C) e
 
   def extractTypeIdsAndSort(node: AdtTypeNode, flattened: Array[(AdtTypeNode, Boolean)]): Array[(Key, AdtTypeNode)] = {
     val result = flattened.map(x => x._1.key() -> x._1)
-    sortAndVerifyNoCollisions(result) {
-      case (k, a, b) =>
-        c.abort(
-          node.tpe.typeSymbol.pos,
-          s"@key collision: sub types `${a.tpe}` and `${b.tpe}` of ADT `${node.tpe}` share the same type id `${k.value}`")
+    sortAndVerifyNoCollisions(result) { case (k, a, b) =>
+      c.abort(
+        node.tpe.typeSymbol.pos,
+        s"@key collision: sub types `${a.tpe}` and `${b.tpe}` of ADT `${node.tpe}` share the same type id `${k.value}`")
     }
     result
   }

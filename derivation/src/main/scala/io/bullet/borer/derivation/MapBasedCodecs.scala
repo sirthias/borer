@@ -237,12 +237,11 @@ object MapBasedCodecs {
             val keysAndParams = new Array[(Key, CaseParam)](arity)
             params.foreach(p => keysAndParams(p.index) = p.key() -> p)
             val keysAndParamsSorted = keysAndParams.clone()
-            sortAndVerifyNoCollisions(keysAndParamsSorted) {
-              case (k, a, b) =>
-                c.abort(
-                  ctx.enclosingPosition,
-                  s"@key collision: parameters `${a.name}` and `${b.name}` " +
-                    s"of case class ADT `$tpe` share the same type id `${k.value}`")
+            sortAndVerifyNoCollisions(keysAndParamsSorted) { case (k, a, b) =>
+              c.abort(
+                ctx.enclosingPosition,
+                s"@key collision: parameters `${a.name}` and `${b.name}` " +
+                  s"of case class ADT `$tpe` share the same type id `${k.value}`")
             }
 
             val decodersForParams = params.map(p => p -> p.getImplicit(decoderType)).toMap
@@ -294,10 +293,9 @@ object MapBasedCodecs {
 
             val maskAsArgs = if (arity <= 64) q"mask" :: Nil else q"mask0" :: q"mask1" :: Nil
 
-            val fieldVarDefs: List[Tree] = keysAndParams.map {
-              case (key, p) =>
-                val defaultValue = p.defaultValueMethod.getOrElse(q"null.asInstanceOf[${p.paramType.tpe}]")
-                q"""var ${varName(p)} = if (rem != 0 && ${r("tryRead", key)}) {
+            val fieldVarDefs: List[Tree] = keysAndParams.map { case (key, p) =>
+              val defaultValue = p.defaultValueMethod.getOrElse(q"null.asInstanceOf[${p.paramType.tpe}]")
+              q"""var ${varName(p)} = if (rem != 0 && ${r("tryRead", key)}) {
                   ${setMaskBit(p)}
                   rem -= 1
                   ${readField(p)}

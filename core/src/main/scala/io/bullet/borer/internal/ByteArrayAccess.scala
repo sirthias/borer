@@ -267,21 +267,19 @@ object ByteArrayAccess {
 
         @tailrec def recBigEndian(sourceIx: Int, targetIx: Int): Array[Int] =
           if (targetIx < target.length) {
-            target(targetIx) =
-              (source(sourceIx).toInt << 24) |
-                ((source(sourceIx + 1) & 0xFF) << 16) |
-                ((source(sourceIx + 2) & 0xFF) << 8) |
-                (source(sourceIx + 3) & 0xFF)
+            target(targetIx) = (source(sourceIx).toInt << 24) |
+              ((source(sourceIx + 1) & 0xFF) << 16) |
+              ((source(sourceIx + 2) & 0xFF) << 8) |
+              (source(sourceIx + 3) & 0xFF)
             recBigEndian(sourceIx + 4, targetIx + 1)
           } else target
 
         @tailrec def recLittleEndian(sourceIx: Int, targetIx: Int): Array[Int] =
           if (targetIx < target.length) {
-            target(targetIx) =
-              (source(sourceIx) & 0xFF) |
-                ((source(sourceIx + 1) & 0xFF) << 8) |
-                ((source(sourceIx + 2) & 0xFF) << 16) |
-                (source(sourceIx + 3).toInt << 24)
+            target(targetIx) = (source(sourceIx) & 0xFF) |
+              ((source(sourceIx + 1) & 0xFF) << 8) |
+              ((source(sourceIx + 2) & 0xFF) << 16) |
+              (source(sourceIx + 3).toInt << 24)
             recLittleEndian(sourceIx + 4, targetIx + 1)
           } else target
 
@@ -296,29 +294,27 @@ object ByteArrayAccess {
 
         @tailrec def recBigEndian(sourceIx: Int, targetIx: Int): Array[Long] =
           if (targetIx < target.length) {
-            target(targetIx) =
-              (source(sourceIx).toLong << 56) |
-                ((source(sourceIx + 1) & 0xFFL) << 48) |
-                ((source(sourceIx + 2) & 0xFFL) << 40) |
-                ((source(sourceIx + 3) & 0xFFL) << 32) |
-                ((source(sourceIx + 4) & 0xFFL) << 24) |
-                ((source(sourceIx + 5) & 0xFFL) << 16) |
-                ((source(sourceIx + 6) & 0xFFL) << 8) |
-                (source(sourceIx + 7) & 0xFFL)
+            target(targetIx) = (source(sourceIx).toLong << 56) |
+              ((source(sourceIx + 1) & 0xFFL) << 48) |
+              ((source(sourceIx + 2) & 0xFFL) << 40) |
+              ((source(sourceIx + 3) & 0xFFL) << 32) |
+              ((source(sourceIx + 4) & 0xFFL) << 24) |
+              ((source(sourceIx + 5) & 0xFFL) << 16) |
+              ((source(sourceIx + 6) & 0xFFL) << 8) |
+              (source(sourceIx + 7) & 0xFFL)
             recBigEndian(sourceIx + 8, targetIx + 1)
           } else target
 
         @tailrec def recLittleEndian(sourceIx: Int, targetIx: Int): Array[Long] =
           if (targetIx < target.length) {
-            target(targetIx) =
-              (source(sourceIx) & 0xFFL) |
-                ((source(sourceIx + 1) & 0xFFL) << 8) |
-                ((source(sourceIx + 2) & 0xFFL) << 16) |
-                ((source(sourceIx + 3) & 0xFFL) << 24) |
-                ((source(sourceIx + 4) & 0xFFL) << 32) |
-                ((source(sourceIx + 5) & 0xFFL) << 40) |
-                ((source(sourceIx + 6) & 0xFFL) << 48) |
-                (source(sourceIx + 7).toLong << 56)
+            target(targetIx) = (source(sourceIx) & 0xFFL) |
+              ((source(sourceIx + 1) & 0xFFL) << 8) |
+              ((source(sourceIx + 2) & 0xFFL) << 16) |
+              ((source(sourceIx + 3) & 0xFFL) << 24) |
+              ((source(sourceIx + 4) & 0xFFL) << 32) |
+              ((source(sourceIx + 5) & 0xFFL) << 40) |
+              ((source(sourceIx + 6) & 0xFFL) << 48) |
+              (source(sourceIx + 7).toLong << 56)
             recLittleEndian(sourceIx + 8, targetIx + 1)
           } else target
 

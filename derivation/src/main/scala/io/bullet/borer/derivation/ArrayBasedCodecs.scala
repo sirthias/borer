@@ -174,14 +174,13 @@ object ArrayBasedCodecs {
             val arity = params.size
             val readObject = {
               val fieldNames = params.indices.map(ix => TermName(s"x$ix"))
-              val readFields = params.zip(fieldNames).map {
-                case (p, name) =>
-                  val paramType = p.paramType.tpe
-                  val rhs =
-                    if (isBasicType(paramType) && p.getImplicit(decoderType).exists(isDefinedOn(_, decoderCompanion))) {
-                      q"r.${TermName(s"read$paramType")}()"
-                    } else q"r.read[$paramType]()"
-                  q"val $name = $rhs"
+              val readFields = params.zip(fieldNames).map { case (p, name) =>
+                val paramType = p.paramType.tpe
+                val rhs =
+                  if (isBasicType(paramType) && p.getImplicit(decoderType).exists(isDefinedOn(_, decoderCompanion))) {
+                    q"r.${TermName(s"read$paramType")}()"
+                  } else q"r.read[$paramType]()"
+                q"val $name = $rhs"
               }
               q"""..$readFields
                 $companion.apply(..$fieldNames)"""

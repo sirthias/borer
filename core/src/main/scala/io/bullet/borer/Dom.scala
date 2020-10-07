@@ -226,13 +226,12 @@ object Dom {
     private def construct[T](entries: Iterable[(AnyRef, Element)], f: Array[Element] => T): T = {
       val elements = new mutable.ArrayBuilder.ofRef[Dom.Element]
       elements.sizeHint(entries.size << 1)
-      entries.foreach {
-        case (key, value) =>
-          var keyElem = key match {
-            case x: String  => StringElem(x)
-            case x: Element => x
-          }
-          elements += keyElem += value
+      entries.foreach { case (key, value) =>
+        var keyElem = key match {
+          case x: String  => StringElem(x)
+          case x: Element => x
+        }
+        elements += keyElem += value
       }
       f(elements.result())
     }

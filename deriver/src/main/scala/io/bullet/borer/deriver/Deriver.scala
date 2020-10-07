@@ -232,17 +232,16 @@ abstract class Deriver[C <: blackbox.Context](val c: C) {
       }
       val annotations: Iterator[List[Tree]] = headParamList.iterator.map(annotationTrees)
       val indices                           = Iterator.from(0)
-      caseParamMethods.foldLeft(List.empty[CaseParam]) {
-        case (acc, paramSymbol) =>
-          val (repeated, paramType) = paramSymbol.typeSignatureIn(tpe).resultType match {
-            case TypeRef(_, `repeatedParamClass`, typeArgs) => true  -> appliedType(scalaSeqType, typeArgs)
-            case x                                          => false -> x
-          }
-          val caseParamType = acc.find(_.paramType.tpe =:= paramType) match {
-            case None    => OwnType(paramType)
-            case Some(x) => SameAs(x)
-          }
-          CaseParam(paramSymbol, indices.next(), caseParamType, defaults.next(), annotations.next(), repeated) :: acc
+      caseParamMethods.foldLeft(List.empty[CaseParam]) { case (acc, paramSymbol) =>
+        val (repeated, paramType) = paramSymbol.typeSignatureIn(tpe).resultType match {
+          case TypeRef(_, `repeatedParamClass`, typeArgs) => true  -> appliedType(scalaSeqType, typeArgs)
+          case x                                          => false -> x
+        }
+        val caseParamType = acc.find(_.paramType.tpe =:= paramType) match {
+          case None    => OwnType(paramType)
+          case Some(x) => SameAs(x)
+        }
+        CaseParam(paramSymbol, indices.next(), caseParamType, defaults.next(), annotations.next(), repeated) :: acc
       }
     }
 
