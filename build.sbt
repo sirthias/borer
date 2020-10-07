@@ -85,7 +85,17 @@ lazy val commonSettings = Seq(
     state.log.info(s"Opening browser at $uri ...")
     java.awt.Desktop.getDesktop.browse(new java.net.URI(uri))
     state
-  }
+  },
+
+  Global / excludeLintKeys ++= Set(
+    scalafmt / sourceDirectories,
+    shellPrompt,
+    releaseProcess,
+    releaseCrossBuild,
+    mimaCheckDirection,
+    mimaFailOnNoPrevious,
+    mimaPreviousArtifacts
+  )
 )
 
 lazy val mimaSettings = {
@@ -391,11 +401,11 @@ lazy val benchmarks = project
   .settings(
     skip in publish := true,
     libraryDependencies ++= Seq(
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"        % "2.6.0",
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros"      % "2.6.0" % Provided,
-      "com.fasterxml.jackson.module"          %% "jackson-module-scala"       % "2.11.2",
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"        % "2.6.1",
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros"      % "2.6.1" % Provided,
+      "com.fasterxml.jackson.module"          %% "jackson-module-scala"       % "2.11.3",
       "com.fasterxml.jackson.module"          %  "jackson-module-afterburner" % "2.11.3",
-      "com.lihaoyi"                           %% "upickle"                    % "1.2.0",
+      "com.lihaoyi"                           %% "upickle"                    % "1.2.1",
       "io.spray"                              %% "spray-json"                 % "1.3.5",
       `circe-core`.value,
       `circe-parser`.value,
