@@ -11,9 +11,32 @@ package io.bullet.borer.compat
 import java.nio.ByteBuffer
 
 import _root_.akka.util.ByteString
+import _root_.akka.actor
+import _root_.akka.actor.typed.{ActorRef, ActorRefResolver, ActorSystem}
+import _root_.akka.serialization.Serialization
 import io.bullet.borer.{ByteAccess, _}
 
 object akka {
+
+  implicit def actorRefCodec(implicit system: actor.ActorSystem = serializationSystem): Codec[actor.ActorRef] = {
+    val actorRefProvider = system.asInstanceOf[actor.ExtendedActorSystem].provider
+
+    Codec.bimap[String, actor.ActorRef](
+      Serialization.serializedActorPath,
+      actorRefProvider.resolveActorRef
+    )
+  }
+
+  implicit def typedActorRefCodec[T](implicit system: actor.ActorSystem = serializationSystem): Codec[ActorRef[T]] = {
+    val resolver = ActorRefResolver(ActorSystem.wrap(system))
+
+    Codec.bimap[String, ActorRef[T]](
+      resolver.toSerializationFormat,
+      resolver.resolveActorRef
+    )
+  }
+
+  private def serializationSystem: actor.ActorSystem = Serialization.getCurrentTransportInformation().system
 
   /**
     * [[ByteAccess]] for [[ByteString]].
