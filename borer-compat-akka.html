@@ -191,7 +191,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.6.1
+<i class="md-icon" title="Version">label_outline</i> 1.6.2
 </label>
 </li>
 </ul>
@@ -224,7 +224,11 @@ sirthias/borer/
 <p>When you include the <code>borer-compat-akka</code> module as a dependency (see the <a href="getting-started.html">Getting Started</a> chapter for details) and</p>
 <pre class="prettyprint"><code class="language-scala">import io.bullet.borer.compat.akka._
 </code></pre>
-<p>you also get full &ldquo;zero-copy&rdquo; support for encoding to and decoding from <code>akka.util.ByteString</code> as well as an implicit <code>Encoder[ByteString]</code> and <code>Decoder[ByteString]</code>.</p>
+<p>you also get:</p>
+<ul>
+  <li>full &ldquo;zero-copy&rdquo; support for encoding to and decoding from <code>akka.util.ByteString</code></li>
+  <li>implicit codecs for <code>akka.util.ByteString</code>, <code>akka.actor.ActorRef</code> and <code>akka.actor.typed.ActorRef[T]</code></li>
+</ul>
 <h2><a href="#akka-http-un-marshalling" name="akka-http-un-marshalling" class="anchor"><span class="anchor-link"></span></a>Akka Http (Un)Marshalling</h2>
 <p>In addition to <code>ByteString</code> support the <code>borer-compat-akka</code> also provides convenient marshallers and unmarshallers for HTTP entities.</p>
 <p>When you include the <code>borer-compat-akka</code> module as a dependency (see the <a href="getting-started.html">Getting Started</a> chapter for details) and</p>
@@ -268,7 +272,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.6.1
+1.6.2
 </span>
 </div>
 </article>
