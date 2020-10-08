@@ -24,6 +24,9 @@ package io.bullet.borer
 final case class Codec[A](encoder: Encoder[A], decoder: Decoder[A]) {
 
   @inline def bimap[B](f: B => A, g: A => B): Codec[B] = Codec.bimap(f, g)(encoder, decoder)
+
+  def withEncoder(encoder: Encoder[A]): Codec[A] = copy(encoder = encoder)
+  def withDecoder(decoder: Decoder[A]): Codec[A] = copy(decoder = decoder)
 }
 
 object Codec {
