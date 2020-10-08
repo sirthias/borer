@@ -1,3 +1,12 @@
+Version 1.6.2 (2020-10-08)
+--------------------------
+
+- compat-akka: add codecs for typed and classic ActorRefs (#208)
+- added ConcatEncoder (#289)
+- added Codec#withEncoder and Codec#withDecoder helpers
+- fixed ArrayIndexOutOfBoundsException when logging certain illegal input or output
+
+
 Version 1.6.1 (2020-07-24)
 --------------------------
 
