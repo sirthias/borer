@@ -241,43 +241,46 @@ object Logging {
 
     def level = _level
 
-    def levelCount = {
-      val count = _levelCount(_level)
-      val size  = _levelSize(_level)
-      val rawCount = if (count >= 0) {
-        if (size >= 0) count // bounded array
-        else count >> 1      // bounded map
-      } else {
-        if (size == 1) ~count >> 1 // unbounded map
-        else ~count                // unbounded array, bytes or text
-      }
-      rawCount + 1
-    }
-
-    def levelSize = {
-      val count = _levelCount(_level)
-      if (count >= 0) {
-        val size = _levelSize(_level)
-        if (size >= 0) size // bounded array
-        else ~size >> 1     // bounded map
-      } else -1             // unbounded something
-    }
-
-    def levelType = {
-      val count = _levelCount(_level)
-      val size  = _levelSize(_level)
-      if (count >= 0) {
-        if (size >= 0) LevelType.Array
-        else if ((count & 1) == 0) LevelType.MapKey
-        else LevelType.MapValue
-      } else
-        size match {
-          case 0 => LevelType.Array
-          case 1 => if ((count & 1) != 0) LevelType.MapKey else LevelType.MapValue
-          case 2 => LevelType.UnboundedByteString
-          case 3 => LevelType.UnboundedTextString
+    def levelCount =
+      if (_level >= 0) {
+        val count = _levelCount(_level)
+        val size  = _levelSize(_level)
+        val rawCount = if (count >= 0) {
+          if (size >= 0) count // bounded array
+          else count >> 1      // bounded map
+        } else {
+          if (size == 1) ~count >> 1 // unbounded map
+          else ~count                // unbounded array, bytes or text
         }
-    }
+        rawCount + 1
+      } else 0
+
+    def levelSize =
+      if (_level >= 0) {
+        val count = _levelCount(_level)
+        if (count >= 0) {
+          val size = _levelSize(_level)
+          if (size >= 0) size // bounded array
+          else ~size >> 1     // bounded map
+        } else -1             // unbounded something
+      } else -1
+
+    def levelType =
+      if (_level >= 0) {
+        val count = _levelCount(_level)
+        val size  = _levelSize(_level)
+        if (count >= 0) {
+          if (size >= 0) LevelType.Array
+          else if ((count & 1) == 0) LevelType.MapKey
+          else LevelType.MapValue
+        } else
+          size match {
+            case 0 => LevelType.Array
+            case 1 => if ((count & 1) != 0) LevelType.MapKey else LevelType.MapValue
+            case 2 => LevelType.UnboundedByteString
+            case 3 => LevelType.UnboundedTextString
+          }
+      } else LevelType.Array
 
     def onNull(): Unit = {
       logger.onNull()
@@ -423,21 +426,22 @@ object Logging {
       target.onEndOfInput()
     }
 
-    @tailrec private def count(): Unit = {
-      val cnt = _levelCount(_level)
-      if (cnt >= 0) {
-        // bounded array or map
-        val newCount = cnt + 1
-        val rawSize  = _levelSize(_level)
-        val size     = if (rawSize >= 0) rawSize else ~rawSize
-        if (newCount == size) {
-          val exitedLevelType = levelType
-          exitLevel()
-          logger.onLevelExited(exitedLevelType, break = false)
-          count() // level-entering items are only counted when the level is exited, not when they are entered
-        } else _levelCount(_level) = newCount
-      } else _levelCount(_level) = cnt - 1 // unbounded something
-    }
+    @tailrec private def count(): Unit =
+      if (_level >= 0) {
+        val cnt = _levelCount(_level)
+        if (cnt >= 0) {
+          // bounded array or map
+          val newCount = cnt + 1
+          val rawSize  = _levelSize(_level)
+          val size     = if (rawSize >= 0) rawSize else ~rawSize
+          if (newCount == size) {
+            val exitedLevelType = levelType
+            exitLevel()
+            logger.onLevelExited(exitedLevelType, break = false)
+            count() // level-entering items are only counted when the level is exited, not when they are entered
+          } else _levelCount(_level) = newCount
+        } else _levelCount(_level) = cnt - 1 // unbounded something
+      }
 
     private def enterLevel(count: Long, size: Long): Unit = {
       val newLevel = _level + 1
