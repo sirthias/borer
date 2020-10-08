@@ -8,7 +8,7 @@
 
 package io.bullet.borer.internal
 
-import io.bullet.borer.{ByteAccess, DataItem, Reader, Receiver, Tag}
+import io.bullet.borer._
 
 import scala.annotation.tailrec
 
@@ -143,6 +143,8 @@ final private[borer] class ElementDeque(maxBufferSize: Int, val next: ElementDeq
     1 << shift.toInt
   }
 
+  def pullAll(receiver: Receiver): Unit = while (nonEmpty) pull(receiver)
+
   def dataItemValueFromEnd(offset: Int): AnyRef = objBuffer.peekFromEnd(offset)
 
   def appendElementFrom(r: Reader): Int = {
@@ -192,6 +194,8 @@ final private[borer] class ElementDeque(maxBufferSize: Int, val next: ElementDeq
     byteBuffer.dropLast(1)
     objBuffer.dropLast(2)
   }
+
+  def dropLastBreakDataItem(): Unit = byteBuffer.dropLast(1)
 
   private def ret(result: Boolean): Boolean = if (result) true else throw new ElementDeque.Overflow
 }

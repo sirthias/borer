@@ -19,7 +19,7 @@ import java.lang.{
 import java.math.{BigDecimal => JBigDecimal, BigInteger => JBigInteger}
 
 import io.bullet.borer.encodings.BaseEncoding
-import io.bullet.borer.internal.{Util, XIterableOnce, XIterableOnceBound}
+import io.bullet.borer.internal.{ElementDeque, Util, XIterableOnce, XIterableOnceBound}
 
 import scala.annotation.tailrec
 import scala.collection.LinearSeq
@@ -91,6 +91,18 @@ object Encoder extends LowPrioEncoders {
         case x: Encoder.DefaultValueAware[A] => x withDefaultValue defaultValue
         case x                               => x
       }
+
+    /**
+      * Creates a new [[Encoder]] which emits the flat, concatenated encoding of the underlying encoder and the given
+      * other one. Only works with encoders that encode to arrays or maps and both encoders must be of the same type,
+      * i.e. both encode to an array or both encode to a map.
+      * If the encoders are incompatible or produce elements that are not wrapped in an array or map each encoding
+      * attempt will fail with a [[Borer.Error.Unsupported]] exception.
+      *
+      * @param maxBufferSize the maximum size of the buffer for the encoding of the first encoder
+      */
+    def concat(other: Encoder[A], maxBufferSize: Int = 16384): Encoder[A] =
+      new Encoder.ConcatEncoder(underlying, other, maxBufferSize)
   }
 
   implicit def fromCodec[T](implicit codec: Codec[T]): Encoder[T] = codec.encoder
@@ -265,6 +277,15 @@ object Encoder extends LowPrioEncoders {
         }
         if (w.writingJson) w.writeBreak() else w
       }
+
+    /**
+      * An [[Encoder]] that unpacks the either and writes its content without any wrapping or type information.
+      */
+    implicit def raw[A: Encoder, B: Encoder]: Encoder[Either[A, B]] =
+      Encoder {
+        case (w, Left(x))  => w ~ x
+        case (w, Right(x)) => w ~ x
+      }
   }
 
   private val _toStringEncoder: Encoder[Any] = Encoder((w, x) => w.writeString(x.toString))
@@ -295,6 +316,109 @@ object Encoder extends LowPrioEncoders {
 
   object StringNulls {
     implicit val nullEncoder: Encoder[Null] = Encoder((w, _) => w.writeString("null"))
+  }
+
+  /**
+    * Creates a new [[Encoder]] which emits the flat, concatenated encoding of two other encoders.
+    * Only works with encoders that encode to arrays or maps and both encoders must be of the same type,
+    * i.e. both encode to an array or both encode to a map.
+    * If the encoders are incompatible or produce elements that are not wrapped in an array or map each encoding
+    * attempt will fail with a [[Borer.Error.Unsupported]] exception.
+    *
+    * @param maxBufferSize the maximum size of the buffer for the encoding of the first encoder
+    */
+  final class ConcatEncoder[T](encoder0: Encoder[T], encoder1: Encoder[T], maxBufferSize: Int = 16384)
+      extends Encoder[T] {
+    if (maxBufferSize <= 0 || !Util.isPowerOf2(maxBufferSize))
+      throw new IllegalArgumentException(s"maxBufferSize must be a positive power of two, but was $maxBufferSize")
+
+    def write(w: Writer, value: T): Writer = {
+      val stash                    = new ElementDeque(maxBufferSize, null)
+      val originalReceiver         = w.receiver
+      var arrayOrMap               = 0             // 1 => array, 2 => map
+      var len0                     = Long.MinValue // -1 => unbounded
+      var len1                     = Long.MinValue // -1 => unbounded
+      def unsupported(msg: String) = throw new Borer.Error.Unsupported(w.output, msg)
+
+      w.receiver = new Receiver.WithDefault {
+
+        override def onArrayHeader(length: Long): Unit = {
+          arrayOrMap = 1
+          len0 = length
+          w.receiver = stash.appendReceiver
+        }
+
+        override def onArrayStart(): Unit = {
+          arrayOrMap = 1
+          len0 = -1
+          w.receiver = stash.appendReceiver
+        }
+
+        override def onMapHeader(length: Long): Unit = {
+          arrayOrMap = 2
+          len0 = length
+          w.receiver = stash.appendReceiver
+        }
+
+        override def onMapStart(): Unit = {
+          arrayOrMap = 2
+          len0 = -1
+          w.receiver = stash.appendReceiver
+        }
+
+        protected def default(t: String): Unit =
+          unsupported(s"First Encoder produced $t but Encoder merging only supports 'to-Array' and 'to-Map' Encoders")
+      }
+
+      encoder0.write(w, value)
+
+      // stash now contains the complete first encoding, except for the Header/Start element
+      if (len0 < 0) stash.dropLastBreakDataItem()
+
+      w.receiver = new Receiver.WithDefault {
+
+        override def onArrayHeader(length: Long): Unit =
+          if (arrayOrMap == 1) {
+            w.receiver = originalReceiver
+            len1 = length
+            if (len0 >= 0 && len1 >= 0 && len0 + len1 >= 0) w.writeArrayHeader(len0 + len1) else w.writeArrayStart()
+            stash.pullAll(originalReceiver)
+          } else unsupported("Cannot merge a 'to-Map' Encoder with a 'to-Array' Encoder")
+
+        override def onArrayStart(): Unit =
+          if (arrayOrMap == 1) {
+            w.receiver = originalReceiver
+            len1 = -1
+            w.writeArrayStart()
+            stash.pullAll(originalReceiver)
+          } else unsupported("Cannot merge a 'to-Map' Encoder with a 'to-Array' Encoder")
+
+        override def onMapHeader(length: Long): Unit =
+          if (arrayOrMap == 2) {
+            w.receiver = originalReceiver
+            len1 = length
+            if (len0 >= 0 && len1 >= 0 && len0 + len1 >= 0) w.writeMapHeader(len0 + len1) else w.writeMapStart()
+            stash.pullAll(originalReceiver)
+          } else unsupported("Cannot merge a 'to-Array' Encoder with a 'to-Map' Encoder")
+
+        override def onMapStart(): Unit =
+          if (arrayOrMap == 2) {
+            w.receiver = originalReceiver
+            len1 = -1
+            w.writeMapStart()
+            stash.pullAll(originalReceiver)
+          } else unsupported("Cannot merge a 'to-Array' Encoder with a 'to-Map' Encoder")
+
+        protected def default(t: String): Unit =
+          unsupported(s"Second Encoder produced $t but Encoder merging only supports 'to-Array' and 'to-Map' Encoders")
+      }
+
+      encoder1.write(w, value)
+
+      // if we dropped the terminating break before and encoder1 did not emit one, we need to manually append it
+      if (len0 < 0 && len1 >= 0) w.writeBreak()
+      w
+    }
   }
 }
 

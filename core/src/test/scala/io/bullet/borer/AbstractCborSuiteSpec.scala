@@ -20,13 +20,7 @@ import scala.collection.immutable.{ListMap, TreeMap}
   */
 abstract class AbstractCborSuiteSpec extends AbstractBorerSpec {
 
-  // for these test we use an alternative, special and somewhat hacky `Either` codec
-  // to make it easier to decode the RFC examples
-  implicit def eitherEnc[A: Encoder, B: Encoder]: Encoder[Either[A, B]] =
-    Encoder {
-      case (w, Left(x))  => w.write(x)
-      case (w, Right(x)) => w.write(x)
-    }
+  import Encoder.ForEither.raw
 
   implicit def eitherDec[A: Decoder, B: Decoder]: Decoder[Either[A, B]] =
     Decoder { r =>
