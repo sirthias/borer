@@ -15,8 +15,10 @@ When you include the `borer-compat-akka` module as a dependency (see the
 import io.bullet.borer.compat.akka._
 ```
 
-you also get full "zero-copy" support for encoding to and decoding from `akka.util.ByteString` as well as an implicit
-`Encoder[ByteString]` and `Decoder[ByteString]`.
+you also get:
+ 
+- full "zero-copy" support for encoding to and decoding from `akka.util.ByteString`
+- implicit codecs for `akka.util.ByteString`, `akka.actor.ActorRef` and `akka.actor.typed.ActorRef[T]` 
 
 
 Akka Http (Un)Marshalling
