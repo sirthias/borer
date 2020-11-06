@@ -146,7 +146,8 @@ object MapBasedCodecs {
             }
             val basicFieldOutputFlags = basicParams.flatMap { p =>
               p.defaultValueMethod.map { defaultValue =>
-                q"val ${encName(p, "o")} = (value.${p.name} != $defaultValue) || { count -= 1; false }"
+                q"""val ${encName(p, "o")} = _derivationConfig.encodeCaseClassMemberDefaultValues ||
+                      (value.${p.name} != $defaultValue) || { count -= 1; false }"""
               }
             }
             val nonBasicFieldOutputFlags = nonBasicParams.map { p =>
@@ -158,7 +159,7 @@ object MapBasedCodecs {
               q"""val ${encName(p, "o")} =
                   (${encName(p)} match {
                     case x: $pt => x producesOutputFor value.${p.name}
-                    case _      => $tail
+                    case _      => _derivationConfig.encodeCaseClassMemberDefaultValues || $tail
                   }) || { count -= 1; false }"""
             }
             val writeEntries = params.map { p =>
@@ -174,6 +175,7 @@ object MapBasedCodecs {
             val encoderName = TypeName(s"${tpe.typeSymbol.name.decodedName}Encoder")
 
             q"""final class $encoderName {
+                private[this] val _derivationConfig = implicitly[$borerPkg.derivation.DerivationConfig]
                 ..$nonBasicDefaultValues
                 ..$fieldEncDefs
                 def write(w: $writerType, value: $tpe): w.type = {

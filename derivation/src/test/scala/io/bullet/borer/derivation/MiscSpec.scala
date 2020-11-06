@@ -24,8 +24,6 @@ object MiscSpec extends AbstractBorerSpec {
 
   final case class CaseClass1(flag: Boolean)
 
-  final case class CaseClass2(x: Int, @key("z") y: String)
-
   object CaseClass1 {
     def apply(): CaseClass1 = new CaseClass1(false)
   }
@@ -85,10 +83,25 @@ object MiscSpec extends AbstractBorerSpec {
     }
 
     "Missing map member with @key annotation" - {
-      implicit val codec = CompactMapBasedCodecs.deriveCodec[CaseClass2]
-      val errorMsg       = """Cannot decode `CaseClass2` instance due to missing map key "z" (input position 7)"""
-      assertMatch(Json.decode("""{"x":42}""" getBytes StandardCharsets.UTF_8).to[CaseClass2].valueEither) {
+      final case class Foo(x: Int, @key("z") y: String)
+
+      implicit val codec = MapBasedCodecs.deriveCodec[Foo]
+      val errorMsg       = """Cannot decode `Foo` instance due to missing map key "z" (input position 7)"""
+      assertMatch(Json.decode("""{"x":42}""" getBytes StandardCharsets.UTF_8).to[Foo].valueEither) {
         case Left(e: Borer.Error.InvalidInputData[_]) if e.getMessage == errorMsg => // ok
+      }
+    }
+
+    "encodeCaseClassMemberDefaultValues = true" - {
+      final case class Foo(x: Int, y: String = "bar");
+      {
+        implicit val codec = MapBasedCodecs.deriveCodec[Foo]
+        verifyEncoding(Foo(42), """{"x":42}""")
+      }
+      {
+        implicit val myConfig = DerivationConfig(encodeCaseClassMemberDefaultValues = true)
+        implicit val codec    = MapBasedCodecs.deriveCodec[Foo]
+        verifyEncoding(Foo(42), """{"x":42,"y":"bar"}""")
       }
     }
   }

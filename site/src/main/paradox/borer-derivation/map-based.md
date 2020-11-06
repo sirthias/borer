@@ -88,7 +88,9 @@ For these reasons _borer's_ default ADT encoding relying on single-element maps 
 
 Map-based codecs support missing and extra members.
 
-During encoding a member whose value matches the default value is not written to the output at all.
+By default a member whose value matches the default value is not written to the output at all during encoding.
+This can be changed by bringing a customized `io.bullet.borer.derivation.DerivationConfig` instance into scope.
+ 
 During decoding the type's `Decoder` will use the potentially defined default value for all missing members, e.g.:
 
 @@snip [-]($test$/DerivationSpec.scala) { #default-value } 
