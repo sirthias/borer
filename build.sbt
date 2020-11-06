@@ -89,7 +89,6 @@ lazy val commonSettings = Seq(
 
   Global / excludeLintKeys ++= Set(
     scalafmt / sourceDirectories,
-    shellPrompt,
     releaseProcess,
     releaseCrossBuild,
     mimaCheckDirection,
