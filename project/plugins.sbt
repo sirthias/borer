@@ -12,7 +12,7 @@ addSbtPlugin("com.lightbend.paradox"  % "sbt-paradox"                 % "0.8.0")
 addSbtPlugin("io.bullet"              % "sbt-paradox-material-theme"  % "0.7.0")
 addSbtPlugin("com.typesafe.sbt"       % "sbt-ghpages"                 % "0.6.3")
 addSbtPlugin("com.typesafe.sbt"       % "sbt-site"                    % "1.4.0")
-addSbtPlugin("com.typesafe"           % "sbt-mima-plugin"             % "0.8.0")
+addSbtPlugin("com.typesafe"           % "sbt-mima-plugin"             % "0.8.1")
 
 libraryDependencies ++= Seq(
   "io.bullet" %% "borer-core"       % "1.6.2",
