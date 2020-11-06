@@ -1,3 +1,11 @@
+Version 1.6.3 (2020-11-06)
+--------------------------
+
+- reenabled build and publishing of `compat-circe-js` (#309)
+- fixed missing map member errors not honoring @key annotations (#312)
+- added `io.bullet.borer.derivation.DerivationConfig` (#311)
+
+
 Version 1.6.2 (2020-10-08)
 --------------------------
 
