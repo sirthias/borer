@@ -234,7 +234,7 @@ lazy val borer = project.in(file("."))
   .aggregate(`core-jvm`, `core-js`)
   .aggregate(`compat-akka`)
   .aggregate(`compat-cats-jvm`, `compat-cats-js`)
-  .aggregate(`compat-circe-jvm`) //, `compat-circe-js`)  // temporarily disabled until circe-derivation_sjs1_2.1X is available
+  .aggregate(`compat-circe-jvm`, `compat-circe-js`)
   .aggregate(`compat-scodec-jvm`, `compat-scodec-js`)
   .aggregate(`derivation-jvm`, `derivation-js`)
   .aggregate(deriver)
@@ -317,10 +317,10 @@ lazy val `compat-cats` = crossProject(JSPlatform, JVMPlatform)
 lazy val `compat-circe-jvm` = `compat-circe`.jvm
   .dependsOn(`core-jvm` % "compile->compile;test->test")
   .dependsOn(`derivation-jvm` % "test->compile")
-//lazy val `compat-circe-js`  = `compat-circe`.js
-//  .dependsOn(`core-js`   % "compile->compile;test->test")
-//  .dependsOn(`derivation-js` % "test->compile")
-lazy val `compat-circe` = crossProject(JVMPlatform) // JSPlatform
+lazy val `compat-circe-js`  = `compat-circe`.js
+  .dependsOn(`core-js`   % "compile->compile;test->test")
+  .dependsOn(`derivation-js` % "test->compile")
+lazy val `compat-circe` = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .enablePlugins(AutomateHeaderPlugin)
@@ -338,7 +338,7 @@ lazy val `compat-circe` = crossProject(JVMPlatform) // JSPlatform
       utest.value
     )
   )
-  //.jsSettings(scalajsSettings: _*)
+  .jsSettings(scalajsSettings: _*)
 
 lazy val `compat-scodec-jvm` = `compat-scodec`.jvm
   .dependsOn(`core-jvm` % "compile->compile;test->test")
