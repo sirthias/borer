@@ -24,6 +24,8 @@ object MiscSpec extends AbstractBorerSpec {
 
   final case class CaseClass1(flag: Boolean)
 
+  final case class CaseClass2(x: Int, @key("z") y: String)
+
   object CaseClass1 {
     def apply(): CaseClass1 = new CaseClass1(false)
   }
@@ -79,6 +81,14 @@ object MiscSpec extends AbstractBorerSpec {
       "non-unary" - {
         implicit val codec = CompactMapBasedCodecs.deriveCodec[CaseClass3]
         roundTrip("""{"abc":42,"d":"","efghi":true}""", CaseClass3(42, "", efghi = true))
+      }
+    }
+
+    "Missing map member with @key annotation" - {
+      implicit val codec = CompactMapBasedCodecs.deriveCodec[CaseClass2]
+      val errorMsg       = """Cannot decode `CaseClass2` instance due to missing map key "z" (input position 7)"""
+      assertMatch(Json.decode("""{"x":42}""" getBytes StandardCharsets.UTF_8).to[CaseClass2].valueEither) {
+        case Left(e: Borer.Error.InvalidInputData[_]) if e.getMessage == errorMsg => // ok
       }
     }
   }

@@ -328,8 +328,8 @@ object MapBasedCodecs {
             val failMissingDef =
               if (params.nonEmpty) {
                 q"""def failMissing(..$maskAsParams) = {
-                    $helpers.failMissing(r, ${literal(typeName)},
-                      ..$maskAsArgs, Array(..${params.map(p => literal(p.stringName))}))}"""
+                    $helpers.failMissing(r, ${literal(typeName)}, ..$maskAsArgs,
+                      Array(..${keysAndParams.iterator.map(t => literal(t._1.value.toString)).toList}))}"""
               } else q"()"
 
             val construct = {
