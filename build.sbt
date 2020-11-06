@@ -216,8 +216,8 @@ addCommandsAlias(
 
 /////////////////////// DEPENDENCIES /////////////////////////
 
-val `akka-actor`        = Def.setting("com.typesafe.akka"      %%  "akka-actor-typed"        % "2.6.9")
-val `akka-stream`       = Def.setting("com.typesafe.akka"      %%  "akka-stream"             % "2.6.9")
+val `akka-actor`        = Def.setting("com.typesafe.akka"      %%  "akka-actor-typed"        % "2.6.10")
+val `akka-stream`       = Def.setting("com.typesafe.akka"      %%  "akka-stream"             % "2.6.10")
 val `akka-http`         = Def.setting("com.typesafe.akka"      %%  "akka-http"               % "10.2.1")
 val `collection-compat` = Def.setting("org.scala-lang.modules" %%% "scala-collection-compat" % "2.2.0")
 val `cats-core`         = Def.setting("org.typelevel"          %%% "cats-core"               % "2.2.0")
@@ -405,7 +405,7 @@ lazy val benchmarks = project
       "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros"      % "2.6.1" % Provided,
       "com.fasterxml.jackson.module"          %% "jackson-module-scala"       % "2.11.3",
       "com.fasterxml.jackson.module"          %  "jackson-module-afterburner" % "2.11.3",
-      "com.lihaoyi"                           %% "upickle"                    % "1.2.1",
+      "com.lihaoyi"                           %% "upickle"                    % "1.2.2",
       "io.spray"                              %% "spray-json"                 % "1.3.5",
       `circe-core`.value,
       `circe-parser`.value,
