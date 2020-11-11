@@ -172,7 +172,7 @@ object JsonDerivationSpec extends DerivationSpec(Json) {
     ArrayElem.Unsized(
       ArrayElem.Unsized(StringElem("Dog"), ArrayElem.Unsized(IntElem(12), StringElem("Fred"))),
       ArrayElem
-        .Unsized(StringElem("TheCAT"), ArrayElem.Unsized(DoubleElem(1.0f), StringElem("none"), StringElem("there"))),
+        .Unsized(StringElem("TheCAT"), ArrayElem.Unsized(DoubleElem(1.0), StringElem("none"), StringElem("there"))),
       ArrayElem.Unsized(StringElem("Dog"), ArrayElem.Unsized(IntElem(4), StringElem("Lolle"))),
       ArrayElem.Unsized(IntElem(42), BooleanElem.True))
 

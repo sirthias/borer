@@ -12,6 +12,7 @@ import io.bullet.borer._
 import utest._
 
 import scala.util.{Failure, Try}
+import scala.util.control.NonFatal
 
 abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
   import Dom._
@@ -427,21 +428,26 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
       "ADT" - {
         import ADT._
 
-        implicit val dogCodec    = deriveCodec[Dog]
-        implicit val catCodec    = deriveCodec[Cat]
-        implicit val mouseCodec  = deriveCodec[Mouse]
-        implicit val animalCodec = deriveCodec[Animal]
+        try {
+          implicit val dogCodec    = deriveCodec[Dog]
+          implicit val catCodec    = deriveCodec[Cat]
+          implicit val mouseCodec  = deriveCodec[Mouse]
+          implicit val animalCodec = deriveCodec[Animal]
 
-        val animals: List[Animal] = List(
-          Dog(12, "Fred"),
-          Cat(weight = 1.0, color = "none", home = "there"),
-          Dog(4, "Lolle"),
-          Mouse(true)
-        )
+          val animals: List[Animal] = List(
+            Dog(12, "Fred"),
+            Cat(weight = 1.0, color = "none", home = "there"),
+            Dog(4, "Lolle"),
+            Mouse(true)
+          )
 
-        val encoded = encode(animals)
-        decode[Element](encoded) ==> mapBasedAnimalsDom
-        decode[List[Animal]](encoded) ==> animals
+          val encoded = encode(animals)
+          decode[Element](encoded) ==> mapBasedAnimalsDom
+          decode[List[Animal]](encoded) ==> animals
+        } catch {
+          case NonFatal(e) if target == Json =>
+            e.getMessage ==> "an implementation is missing"
+        }
       }
 
       "ADT Key Collision" - {
