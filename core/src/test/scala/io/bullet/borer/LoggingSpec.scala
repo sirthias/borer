@@ -215,7 +215,8 @@ object LoggingSpec extends TestSuite {
           maxShownByteArrayPrefixLen = 8,
           maxShownStringPrefixLen = 8,
           maxShownArrayElems = 12,
-          maxShownMapEntries = 15)
+          maxShownMapEntries = 15,
+          lineSeparator = "\n")
         .toByteArray
 
     log.toString ==> expectedLog
@@ -228,7 +229,8 @@ object LoggingSpec extends TestSuite {
         maxShownByteArrayPrefixLen = 8,
         maxShownStringPrefixLen = 8,
         maxShownArrayElems = 12,
-        maxShownMapEntries = 15)
+        maxShownMapEntries = 15,
+        lineSeparator = "\n")
       .to[Element]
       .value ==> element
 
