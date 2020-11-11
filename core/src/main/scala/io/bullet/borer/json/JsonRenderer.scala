@@ -74,7 +74,9 @@ final private[borer] class JsonRenderer(var out: Output) extends Renderer {
   def onLong(value: Long): Unit =
     if (isNotMapKey) {
       out = count(writeLong(sep(out), value))
-    } else failCannotBeMapKey("integer values")
+    } else {
+      out = count(writeLong(sep(out).writeAsByte('"'), value).writeAsByte('"'))
+    }
 
   def onOverLong(negative: Boolean, value: Long): Unit =
     if (isNotMapKey) {
