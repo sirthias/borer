@@ -288,8 +288,7 @@ abstract class AbstractJsonSuiteSpec extends AbstractBorerSpec {
         intKey = ListMap(1 -> "Int")
       )
 
-      verifyEncoding(map, """{"1":"Int"}""")
-
+      roundTrip("""{"1":"Int"}""", map)
     }
 
     "Whitespace" - {
