@@ -263,7 +263,6 @@ abstract class AbstractJsonSuiteSpec extends AbstractBorerSpec {
       import Codec.ForEither.default
 
       roundTrip("{}", Map.empty[Int, String])
-      intercept[Borer.Error.ValidationFailure[_ <: AnyRef]](encode(ListMap(1 -> 2)))
       roundTrip("""{"":2,"foo":4}""", ListMap("" -> 2, "foo" -> 4))
       roundTrip("""{"a":[0,1],"b":[1,[2,3]]}""", ListMap("a" -> Left(1), "b" -> Right(Vector(2, 3))))
       roundTrip("""[[1,"a"],[0,{"b":"c"}]]""", Vector(Right("a"), Left(ListMap("b" -> "c"))))
@@ -274,6 +273,22 @@ abstract class AbstractJsonSuiteSpec extends AbstractBorerSpec {
       verifyDecoding(
         "{\"addr\":\"1x6YnuBVeeE65dQRZztRWgUPwyBjHCA5g\"\n}\n    ",
         ListMap("addr" -> "1x6YnuBVeeE65dQRZztRWgUPwyBjHCA5g"))
+    }
+
+    "Maps with numeric keys" - {
+      verifyEncoding(ListMap(1 -> 2, 2 -> 4), """{"1":2,"2":4}""")
+
+      case class Maps(
+          intKey: ListMap[Int, String]
+      )
+
+      implicit val mapsCodec = Codec(Encoder.from(Maps.unapply _), Decoder.from(Maps.apply _))
+
+      val map = Maps(
+        intKey = ListMap(1 -> "Int")
+      )
+
+      roundTrip("""{"1":"Int"}""", map)
     }
 
     "Whitespace" - {

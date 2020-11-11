@@ -128,10 +128,17 @@ final class InputReader[Config <: Reader.Config](
   @inline def hasByte(value: Byte): Boolean     = hasByte && receptacle.intValue == value.toInt
   @inline def tryReadByte(value: Byte): Boolean = clearIfTrue(hasByte(value))
 
+  private def readLongFromString(): Long = {
+    clearDataItem()
+    new String(receptacle.charBufValue, 0, receptacle.intValue).toLong
+  }
+
   def readShort(): Short =
     if (hasShort) {
       clearDataItem()
       receptacle.intValue.toShort
+    } else if (hasChars) {
+      readLongFromString().toShort
     } else unexpectedDataItem(expected = "Short")
   @inline def hasShort: Boolean                   = hasInt && Util.isShort(receptacle.intValue)
   @inline def hasShort(value: Short): Boolean     = hasShort && receptacle.intValue == value.toInt
@@ -141,6 +148,8 @@ final class InputReader[Config <: Reader.Config](
     if (hasInt) {
       clearDataItem()
       receptacle.intValue
+    } else if (hasChars) {
+      readLongFromString().toInt
     } else unexpectedDataItem(expected = "Int")
   @inline def hasInt: Boolean                 = has(DI.Int)
   @inline def hasInt(value: Int): Boolean     = hasInt && receptacle.intValue == value
@@ -151,6 +160,8 @@ final class InputReader[Config <: Reader.Config](
       val result = if (hasInt) receptacle.intValue.toLong else receptacle.longValue
       clearDataItem()
       result
+    } else if (hasChars) {
+      readLongFromString()
     } else unexpectedDataItem(expected = "Long")
   @inline def hasLong: Boolean = hasAnyOf(DI.Int | DI.Long)
 
