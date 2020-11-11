@@ -276,6 +276,23 @@ abstract class AbstractJsonSuiteSpec extends AbstractBorerSpec {
         ListMap("addr" -> "1x6YnuBVeeE65dQRZztRWgUPwyBjHCA5g"))
     }
 
+    "Maps with numeric keys" - {
+      verifyEncoding(ListMap(1 -> 2, 2 -> 4), """{"1":2,"2":4}""")
+
+      case class Maps(
+          intKey: ListMap[Int, String]
+      )
+
+      implicit val mapsCodec = Codec(Encoder.from(Maps.unapply _), Decoder.from(Maps.apply _))
+
+      val map = Maps(
+        intKey = ListMap(1 -> "Int")
+      )
+
+      verifyEncoding(map, """{"1":"Int"}""")
+
+    }
+
     "Whitespace" - {
       val wschars    = " \t\n\r"
       val random     = new Random()
