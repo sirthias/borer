@@ -183,7 +183,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.6.2
+<i class="md-icon" title="Version">label_outline</i> 1.6.3
 </label>
 </li>
 </ul>
@@ -197,7 +197,7 @@ sirthias/borer/
 <p>Some external APIs, especially <a href="http://json.org/">JSON</a>-based ones, encode certain or all numbers, booleans and even <code>null</code> as string values, even if the respective value <em>could</em> be represented as a native <a href="http://json.org/">JSON</a> or <a href="http://cbor.io/">CBOR</a> number, boolean or <code>null</code>.</p>
 <p>In order to make integration with these kind of services easy <em>borer</em> comes with predefined encoders and decoders for numbers, booleans and <code>null</code> that you can &ldquo;enable&rdquo; with simple imports and which then take precedence over the default encoders and decoders.</p>
 <p>This is how they are enabled:</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/StringNumbersSpec.scala#L11-L19" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.{Decoder, Encoder}
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/StringNumbersSpec.scala#L11-L19" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Decoder, Encoder}
 
 import Encoder.StringNumbers._  // enables number-as-strings encoding
 import Encoder.StringBooleans._ // enables booleans-as-strings encoding
@@ -208,7 +208,7 @@ import Decoder.StringBooleans._ // enables booleans-as-strings decoding
 import Decoder.StringNulls._    // enables null-as-strings decoding</code></pre>
 <p>As always these imports are &ldquo;active&rdquo; throughout the complete scope in which they are visible.</p>
 <p>Here is an example demonstrating how to encode numbers and booleans as strings:</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/StringNumbersSpec.scala#L32-L46" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.{Encoder, Json}
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/StringNumbersSpec.scala#L32-L46" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Encoder, Json}
 import io.bullet.borer.derivation.MapBasedCodecs._
 
 case class Dog(age: Int, male: Boolean, name: String)
@@ -232,7 +232,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.6.2
+1.6.3
 </span>
 </div>
 </article>

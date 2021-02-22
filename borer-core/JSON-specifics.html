@@ -192,7 +192,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.6.2
+<i class="md-icon" title="Version">label_outline</i> 1.6.3
 </label>
 </li>
 </ul>
@@ -225,13 +225,13 @@ sirthias/borer/
 <p>From <em>borer</em>&rsquo;s point of view <a href="http://json.org/">JSON</a> is simply a slightly different binary format that only supports a subset of the <a href="http://cbor.io/">CBOR</a> data primitives. Like <a href="http://cbor.io/">CBOR</a> <em>borer</em> encodes and decodes <a href="http://json.org/">JSON</a> in a <em>single pass</em>, UTF-8 encoding and decoding to and from raw bytes on the fly.</p>
 <p>All higher-level abstractions (i.e. <code>Writer</code>, <code>Reader</code>, <code>Encoder</code>, <code>Decoder</code>, <code>Codec</code>, etc.) are essentially agnostic to the (de)serialization target format. Nevertheless, the <code>Writer</code> and <code>Reader</code> types do have a <code>target</code> member, which enables custom logic to discriminate between the two variants, if required.<br> Since the underlying <a href="http://json.org/">JSON</a> renderer will throw exceptions on attempts to write data primitives that are not supported in <a href="http://json.org/">JSON</a> (like <a href="http://cbor.io/">CBOR</a> Tags, for example), this is sometimes necessary to efficiently support both formats.</p>
 <p>For example, in order to write an empty array in the most efficient way to both <a href="http://cbor.io/">CBOR</a> and <a href="http://json.org/">JSON</a> using only the most low-level data items one would use this approach:</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/JsonSpecificsSpec.scala#L14-L18" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.Writer
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/JsonSpecificsSpec.scala#L14-L18" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Writer
 
 def writeEmptyArray(w: Writer): w.type =
   if (w.writingJson) w.writeArrayStart().writeBreak()
   else w.writeArrayHeader(0) // fixed-sized Arrays are not supported in JSON</code></pre>
 <p>But on a slightly higher level the <code>Writer</code> also gives you a way to write arrays (and maps) without having distinguish between <a href="http://cbor.io/">CBOR</a> and <a href="http://json.org/">JSON</a> yourself:</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/JsonSpecificsSpec.scala#L34-L39" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.Writer
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/JsonSpecificsSpec.scala#L34-L39" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Writer
 
 def writeAsUnaryArray(w: Writer, s: String): w.type =
   w.writeArrayOpen(1) // automatically chooses the most efficient
@@ -252,7 +252,7 @@ def writeAsUnaryArray(w: Writer, s: String): w.type =
 </ul>
 <p>The default <a href="http://json.org/">JSON</a> encoding for <code>Array[Byte]</code> is <a href="https://tools.ietf.org/html/rfc4648#section-4">base64</a>.</p>
 <p>In order to switch to a different base encoding in a particular scope define the a pair of implicits as in this example:</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/JsonSpecificsSpec.scala#L55-L68" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.{Decoder, Encoder, Json}
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/JsonSpecificsSpec.scala#L55-L68" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Decoder, Encoder, Json}
 import io.bullet.borer.encodings.BaseEncoding
 
 val binaryData = hex&quot;DEADBEEF&quot;
@@ -365,7 +365,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.6.2
+1.6.3
 </span>
 </div>
 </article>

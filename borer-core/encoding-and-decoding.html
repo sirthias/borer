@@ -183,7 +183,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.6.2
+<i class="md-icon" title="Version">label_outline</i> 1.6.3
 </label>
 </li>
 </ul>
@@ -198,7 +198,7 @@ sirthias/borer/
 <dl>
   <dt>CBOR</dt>
   <dd>
-  <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/EncodingDecodingSpec.scala#L16-L23" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.Cbor
+  <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/EncodingDecodingSpec.scala#L16-L23" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Cbor
 
 val value = List(&quot;foo&quot;, &quot;bar&quot;, &quot;baz&quot;) // example value
 
@@ -208,7 +208,7 @@ val bytes: Array[Byte] =
 bytes ==&gt; hex&quot;9f63666f6f636261726362617aff&quot;</code></pre></dd>
   <dt>JSON</dt>
   <dd>
-  <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/EncodingDecodingSpec.scala#L29-L42" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.Json
+  <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/EncodingDecodingSpec.scala#L29-L42" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Json
 
 val value = List(&quot;foo&quot;, &quot;bar&quot;, &quot;baz&quot;) // example value
 
@@ -227,13 +227,13 @@ bytes ==&gt; json.getBytes(&quot;UTF8&quot;)</code></pre></dd>
 <dl>
   <dt>CBOR</dt>
   <dd>
-  <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/EncodingDecodingSpec.scala#L53-L56" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.Cbor
+  <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/EncodingDecodingSpec.scala#L53-L56" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Cbor
 
 val list: List[String] =
   Cbor.decode(bytes).to[List[String]].value // throws on error</code></pre></dd>
   <dt>JSON</dt>
   <dd>
-  <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/EncodingDecodingSpec.scala#L66-L69" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.Json
+  <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/EncodingDecodingSpec.scala#L66-L69" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Json
 
 val list: List[String] =
   Json.decode(bytes).to[List[String]].value // throws on error</code></pre></dd>
@@ -242,7 +242,7 @@ val list: List[String] =
 <dl>
   <dt>CBOR</dt>
   <dd>
-  <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/EncodingDecodingSpec.scala#L83-L89" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.Cbor
+  <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/EncodingDecodingSpec.scala#L83-L89" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Cbor
 
 val encoded: Try[Array[Byte]] =
   Cbor.encode(value).toByteArrayTry
@@ -251,7 +251,7 @@ val decoded: Try[List[String]] =
   Cbor.decode(bytes).to[List[String]].valueTry</code></pre></dd>
   <dt>JSON</dt>
   <dd>
-  <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/EncodingDecodingSpec.scala#L101-L107" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.Json
+  <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/EncodingDecodingSpec.scala#L101-L107" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Json
 
 val encoded: Try[Array[Byte]] =
   Json.encode(value).toByteArrayTry
@@ -263,7 +263,7 @@ val decoded: Try[List[String]] =
 <dl>
   <dt>CBOR</dt>
   <dd>
-  <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/EncodingDecodingSpec.scala#L122-L128" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer._
+  <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/EncodingDecodingSpec.scala#L122-L128" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer._
 
 val encoded: Either[Borer.Error[Output], Array[Byte]] =
   Cbor.encode(value).to[Array[Byte]].resultEither
@@ -272,7 +272,7 @@ val decoded: Either[Borer.Error[Input.Position], List[String]] =
   Cbor.decode(bytes).to[List[String]].valueEither</code></pre></dd>
   <dt>JSON</dt>
   <dd>
-  <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/EncodingDecodingSpec.scala#L140-L146" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer._
+  <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/EncodingDecodingSpec.scala#L140-L146" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer._
 
 val encoded: Either[Borer.Error[Output], Array[Byte]] =
   Json.encode(value).to[Array[Byte]].resultEither
@@ -289,7 +289,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.6.2
+1.6.3
 </span>
 </div>
 </article>

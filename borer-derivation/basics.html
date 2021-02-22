@@ -191,7 +191,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.6.2
+<i class="md-icon" title="Version">label_outline</i> 1.6.3
 </label>
 </li>
 </ul>
@@ -245,13 +245,13 @@ sirthias/borer/
   <li><code>deriveAllCodecs[T]</code>, which derives a <code>Codec[T]</code>, i.e. an <code>Encoder[T]</code> as well as a <code>Decoder[T]</code></li>
 </ul>
 <p>To understand what these macros do consider this simple example:</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L82-L86" target="_blank" title="Go to snippet source"></a><code class="language-scala">sealed trait Animal
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L82-L86" target="_blank" title="Go to snippet source">source</a><code class="language-scala">sealed trait Animal
 case class Dog(age: Int, name: String)                      extends Animal
 case class Cat(weight: Double, color: String, home: String) extends Animal
 case class Fish(color: String)                              extends Animal
 case object Yeti                                            extends Animal</code></pre>
 <p>With semi-automatic derivation you&rsquo;d have to explicitly call a derivation macro <em>for each</em> sub-type individually:</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L91-L99" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.derivation.MapBasedCodecs._
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L91-L99" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.derivation.MapBasedCodecs._
 
 implicit val animalCodec = {
   implicit val dogCodec  = deriveCodec[Dog]
@@ -262,7 +262,7 @@ implicit val animalCodec = {
 }</code></pre>
 <p>This gives you full control but can be a bit tedious for larger ADT hierarchies.</p>
 <p>Fully-automatic derivation on the other hand lets you reduce the boilerplate to a minimum by generating the calls to the derivation macro for each ADT sub-type automatically, so you only need to write a single line: </p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L114-L116" target="_blank" title="Go to snippet source"></a><code class="language-scala">import io.bullet.borer.derivation.MapBasedCodecs._
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L114-L116" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.derivation.MapBasedCodecs._
 
 implicit val animalCodec = deriveAllCodecs[Animal]</code></pre>
 </div>
@@ -273,7 +273,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.6.2
+1.6.3
 </span>
 </div>
 </article>
