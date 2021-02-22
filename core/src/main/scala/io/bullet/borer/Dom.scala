@@ -9,10 +9,9 @@
 package io.bullet.borer
 
 import java.util
-
 import io.bullet.borer.encodings.BaseEncoding
 
-import scala.annotation.{switch, tailrec}
+import scala.annotation.{nowarn, switch, tailrec}
 import scala.collection.{immutable, mutable}
 import scala.collection.compat.immutable.ArraySeq
 import scala.collection.immutable.HashMap
@@ -223,6 +222,7 @@ object Dom {
       def unapply(value: Unsized): Unsized                                   = value
     }
 
+    @nowarn("cat=other-match-analysis")
     private def construct[T](entries: Iterable[(AnyRef, Element)], f: Array[Element] => T): T = {
       val elements = new mutable.ArrayBuilder.ofRef[Dom.Element]
       elements.sizeHint(entries.size << 1)
