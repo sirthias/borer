@@ -1,5 +1,5 @@
 <div style="display:flex">
-  <img src="assets/images/borer-logo.svg" alt="borer Logo" style="flex:0 1 100px; margin: 0 4rem 3rem 0"/>
+  <img src="assets/images/borer-logo.svg" alt="borer Logo" style="width: 100px; margin: 0 4rem 3rem 0"/>
   <div style="flex:1 1 400px">
     <h1 style="font-size:10rem;font-weight:600;margin-bottom: 1rem;">borer</h1>
     Efficient <a href="http://cbor.io/">CBOR</a> and <a href="http://json.org/">JSON</a> (de)serialization for
