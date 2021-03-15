@@ -74,7 +74,7 @@ object ByteAccess {
   /**
     * The default [[ByteAccess]] for plain byte arrays.
     */
-  implicit final object ForByteArray extends ByteAccess[Array[Byte]] {
+  implicit object ForByteArray extends ByteAccess[Array[Byte]] {
     type Out = Output.ToByteArray
 
     @inline def empty = Array.emptyByteArray
@@ -136,7 +136,7 @@ object ByteAccess {
   /**
     * The default [[ByteAccess]] for [[ByteBuffer]].
     */
-  implicit final object ForByteBuffer extends ByteAccess[ByteBuffer] {
+  implicit object ForByteBuffer extends ByteAccess[ByteBuffer] {
     type Out = Output.ToByteBuffer
 
     val empty = ByteBuffer.wrap(Array.emptyByteArray)

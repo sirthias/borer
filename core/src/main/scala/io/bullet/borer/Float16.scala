@@ -42,11 +42,12 @@ object Float16 {
     } else {
       if (mant != 0) { // && exp==0 -> subnormal
         exp = 0x1C400  // make it normal
-        do {
-          mant <<= 1                  // mantissa * 2
-          exp -= 0x400                // decrease exp by 1
-        } while ((mant & 0x400) == 0) // while not normal
-        mant &= 0x3FF                 // discard subnormal bit
+        while ({
+          mant <<= 1          // mantissa * 2
+          exp -= 0x400        // decrease exp by 1
+          (mant & 0x400) == 0 // while not normal
+        }) {}
+        mant &= 0x3FF // discard subnormal bit
       }
     }
     java.lang.Float.intBitsToFloat((hbits & 0x8000) << 16 | (exp | mant) << 13)

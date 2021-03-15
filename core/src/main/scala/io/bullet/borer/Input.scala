@@ -137,7 +137,7 @@ object Input
   /**
     * The trivial provider for an already existing [[Input]].
     */
-  implicit def provider[B: ByteAccess] =
+  implicit def provider[B: ByteAccess]: Provider[Input[B]] =
     new Provider[Input[B]] {
       type Bytes = B
       def byteAccess: ByteAccess[B]            = implicitly[ByteAccess[B]]

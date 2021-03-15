@@ -28,8 +28,8 @@ trait ToByteArrayOutput {
 
     private[this] var currentChunkBuffer: Array[Byte] = _
     private[this] var currentChunkBufferCursor: Int   = _
-    private[this] var rootChunk: Chunk                = _
-    private[this] var currentChunk: Chunk             = _
+    private[this] var rootChunk: ArrayChunk           = _
+    private[this] var currentChunk: ArrayChunk        = _
     private[this] var filledChunksSize: Long          = _
 
     type Self   = ToByteArray
@@ -106,7 +106,7 @@ trait ToByteArrayOutput {
       }
       val array = new Array[Byte](intSize)
 
-      @tailrec def rec(chunk: Chunk, cursor: Int): Array[Byte] =
+      @tailrec def rec(chunk: ArrayChunk, cursor: Int): Array[Byte] =
         if (chunk ne null) {
           val len = if (chunk.next eq null) currentChunkBufferCursor else bufferSize
           System.arraycopy(chunk.buffer, 0, array, cursor, len)
@@ -126,14 +126,14 @@ trait ToByteArrayOutput {
     private def allocateBuffer(): Unit = {
       currentChunkBuffer = if (allowBufferCaching) ByteArrayCache.acquire(bufferSize) else new Array[Byte](bufferSize)
       currentChunkBufferCursor = 0
-      rootChunk = new Chunk(currentChunkBuffer, next = null)
+      rootChunk = new ArrayChunk(currentChunkBuffer, next = null)
       currentChunk = rootChunk
       filledChunksSize = 0L
     }
 
     private def appendChunk(): Unit = {
       currentChunkBuffer = new Array[Byte](bufferSize)
-      val newChunk = new Chunk(currentChunkBuffer, null)
+      val newChunk = new ArrayChunk(currentChunkBuffer, null)
       currentChunkBufferCursor = 0
       currentChunk.next = newChunk
       currentChunk = newChunk
@@ -143,5 +143,5 @@ trait ToByteArrayOutput {
     override def toString = s"Output.ToByteArray index $size"
   }
 
-  final private class Chunk(val buffer: Array[Byte], var next: Chunk)
+  final private class ArrayChunk(val buffer: Array[Byte], var next: ArrayChunk)
 }

@@ -172,9 +172,9 @@ final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes]
           case 25 => input.readDoubleByteBigEndianPadded(this) & 0xFFFFL
           case 26 => input.readQuadByteBigEndianPadded(this) & 0xFFFFFFFFL
           case 27 => input.readOctaByteBigEndianPadded(this)
-          case 31 if 2 <= majorType && majorType <= 5 || majorType == 7 =>
-            0L // handled specially
-          case 28 | 29 | 30 => failInvalidInput(s"Additional info `$info` is invalid (major type `$majorType`)")
+          case _ =>
+            if (info == 31 && 2 <= majorType && majorType <= 5 || majorType == 7) 0L // handled specially
+            else failInvalidInput(s"Additional info `$info` is invalid (major type `$majorType`)")
         }
 
       (majorType: @switch) match {

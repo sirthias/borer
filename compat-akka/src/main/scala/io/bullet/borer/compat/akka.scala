@@ -41,7 +41,7 @@ object akka {
   /**
     * [[ByteAccess]] for [[ByteString]].
     */
-  implicit final object ByteStringByteAccess extends ByteAccess[ByteString] {
+  implicit object ByteStringByteAccess extends ByteAccess[ByteString] {
 
     type Out = ByteStringOutput
 
@@ -91,7 +91,7 @@ object akka {
   /**
     * [[Input]] around [[ByteString]].
     */
-  implicit final object ByteStringProvider extends Input.Provider[ByteString] {
+  implicit object ByteStringProvider extends Input.Provider[ByteString] {
     type Bytes = ByteString
     type In    = FromByteString
     def byteAccess               = ByteStringByteAccess

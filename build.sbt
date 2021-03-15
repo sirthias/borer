@@ -1,6 +1,7 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import sbt._
 
+def scala30 = "3.0.0-RC1"
 def scala213 = "2.13.5"
 def scala212 = "2.12.13"
 
@@ -14,7 +15,7 @@ lazy val commonSettings = Seq(
   scmInfo := Some(ScmInfo(url("https://github.com/sirthias/borer/"), "scm:git:git@github.com:sirthias/borer.git")),
 
   scalaVersion := scala213,
-  crossScalaVersions := Seq(scala212, scala213),
+  crossScalaVersions := Seq(scala212, scala213, scala30),
 
   scalacOptions ++= Seq(
     "-deprecation",
@@ -22,27 +23,37 @@ lazy val commonSettings = Seq(
     "-feature",
     "-language:_",
     "-unchecked",
-    "-target:jvm-1.8",
-    "-Xlint:_,-missing-interpolator",
-    "-Ywarn-dead-code",
-    "-Ywarn-numeric-widen",
-    "-Ybackend-parallelism", "8",
-    "-Ywarn-unused:imports,-patvars,-privates,-locals,-implicits,-explicits",
-    "-Ycache-macro-class-loader:last-modified",
   ),
   
   scalacOptions ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, 12)) => Seq(
-        "-Yno-adapted-args",
-        "-Ywarn-inaccessible",
-        "-Ywarn-infer-any",
-        "-Ywarn-nullary-override",
-        "-Ywarn-nullary-unit",
+        "-target:jvm-1.8",
+        "-Xlint:_,-missing-interpolator",
         "-Xfuture",
         "-Xsource:2.13",
+        "-Ybackend-parallelism", "8",
+        "-Ycache-macro-class-loader:last-modified",
+        "-Yno-adapted-args",
       )
-      case Some((2, 13)) => Seq("-Xfatal-warnings")
+
+      case Some((2, 13)) => Seq(
+        "-target:jvm-1.8",
+        "-Xlint:_,-missing-interpolator",
+        "-Xfatal-warnings",
+        "-Ywarn-dead-code",
+        "-Ywarn-numeric-widen",
+        "-Ybackend-parallelism", "8",
+        "-Ywarn-unused:imports,-patvars,-privates,-locals,-implicits,-explicits",
+        "-Ycache-macro-class-loader:last-modified",
+      )
+
+      case Some((3, 0)) => Seq(
+        "-source:3.0-migration",
+        "-explain",
+        "-explain-types",
+      )
+
       case x => sys.error(s"unsupported scala version: $x")
     }
   },
@@ -212,6 +223,18 @@ addCommandsAlias(
   )
 )
 
+// copied from cats build
+def scalaVersionSpecificFolders(srcName: String, srcBaseDir: File, scalaVersion: String): List[File] = {
+  def extraDirs(suffix: String) =
+    List(CrossType.Pure, CrossType.Full)
+      .flatMap(_.sharedSrcDir(srcBaseDir, srcName).toList.map(f => file(f.getPath + suffix)))
+
+  CrossVersion.partialVersion(scalaVersion) match {
+    case Some((0 | 3, _)) => extraDirs("-3.x")
+    case _                => Nil
+  }
+}
+
 /////////////////////// DEPENDENCIES /////////////////////////
 
 val `akka-actor`        = Def.setting("com.typesafe.akka"      %%  "akka-actor-typed"        % "2.6.13")
@@ -263,7 +286,10 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
 
     // point sbt-boilerplate to the common "project"
     Compile / boilerplateSource := baseDirectory.value.getParentFile / "src" / "main" / "boilerplate",
-    Compile / sourceManaged := baseDirectory.value.getParentFile / "target" / "scala" / "src_managed" / "main"
+    Compile / sourceManaged := baseDirectory.value.getParentFile / "target" / "scala" / "src_managed" / "main",
+
+    Compile / unmanagedSourceDirectories ++= scalaVersionSpecificFolders("main", baseDirectory.value, scalaVersion.value),
+    Test / unmanagedSourceDirectories ++= scalaVersionSpecificFolders("test", baseDirectory.value, scalaVersion.value),
   )
   .jvmSettings(
     Compile / specializeJsonParser / sourceDirectory := baseDirectory.value.getParentFile / "src" / "main",

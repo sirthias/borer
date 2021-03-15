@@ -44,13 +44,13 @@ object Logging {
   sealed trait LevelType
 
   object LevelType {
-    final case object Array               extends LevelType
-    final case object UnboundedByteString extends LevelType
-    final case object UnboundedTextString extends LevelType
+    object Array               extends LevelType
+    object UnboundedByteString extends LevelType
+    object UnboundedTextString extends LevelType
 
-    sealed trait MapEntry      extends LevelType
-    final case object MapKey   extends MapEntry
-    final case object MapValue extends MapEntry
+    sealed trait MapEntry extends LevelType
+    object MapKey         extends MapEntry
+    object MapValue       extends MapEntry
   }
 
   trait Logger {
