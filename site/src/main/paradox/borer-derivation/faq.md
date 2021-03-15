@@ -8,7 +8,7 @@ this page.
 ### Custom Overrides
 
 Fully-automatic derivation of encoders/decoders for ADTs allows for providing custom codecs for a subsets
-of the type hierarchy. If a implicit typeclass for a certain sub-type is already available at the `deriveAll...` macro
+of the type hierarchy. If an implicit typeclass for a certain sub-type is already available at the `deriveAll...` macro
 call site then this implicit will be used rather than a new (and potentially conflicting) one generated.
 
 Example:
