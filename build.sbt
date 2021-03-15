@@ -53,7 +53,7 @@ lazy val commonSettings = Seq(
   sourcesInBase := false,
 
   // file headers
-  headerLicense := Some(HeaderLicense.MPLv2("2019", "Mathias Doenitz")),
+  headerLicense := Some(HeaderLicense.MPLv2("2019-2021", "Mathias Doenitz")),
 
   // reformat main and test sources on compile
   scalafmtOnCompile := true,
