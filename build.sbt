@@ -259,7 +259,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .settings(
     moduleName := "borer-core",
     macroParadise,
-    libraryDependencies ++= Seq(`collection-compat`.value, `scala-reflect`.value, utest.value),
+    libraryDependencies ++= Seq(`collection-compat`.value, utest.value),
 
     // point sbt-boilerplate to the common "project"
     Compile / boilerplateSource := baseDirectory.value.getParentFile / "src" / "main" / "boilerplate",
