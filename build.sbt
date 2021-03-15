@@ -24,13 +24,12 @@ lazy val commonSettings = Seq(
     "-unchecked",
     "-target:jvm-1.8",
     "-Xlint:_,-missing-interpolator",
-    "-Xfatal-warnings",
     "-Ywarn-dead-code",
     "-Ywarn-numeric-widen",
     "-Ybackend-parallelism", "8",
     "-Ywarn-unused:imports,-patvars,-privates,-locals,-implicits,-explicits",
     "-Ycache-macro-class-loader:last-modified",
-  ),// ++ (if (sys.props("java.version") startsWith "1." /* i.e. Java version < 9 */) Nil else Seq("-release", "8")),
+  ),
   
   scalacOptions ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
@@ -43,7 +42,7 @@ lazy val commonSettings = Seq(
         "-Xfuture",
         "-Xsource:2.13",
       )
-      case Some((2, 13)) => Nil
+      case Some((2, 13)) => Seq("-Xfatal-warnings")
       case x => sys.error(s"unsupported scala version: $x")
     }
   },
