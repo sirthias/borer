@@ -21,4 +21,6 @@ package object internal {
         case x              => x.toIterable.iterator
       }
   }
+
+  def unapplyOption[P, T](f: P => Option[T]): P => Option[T] = f
 }

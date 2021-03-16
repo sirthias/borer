@@ -39,19 +39,19 @@ object JsonTestSuite extends TestSuite {
 
   val tests = Tests {
 
-    "Accept" - {
+    test("Accept") - {
       for {
         (name, bytes) <- testFiles
         if name startsWith "y"
       } {
         Json.decode(bytes).withConfig(config).to[Dom.Element].valueEither match {
-          case Left(e)  => throw new RuntimeException(s"Test `$name` did not parse as it should", e)
           case Right(_) => // ok
+          case Left(e)  => throw new RuntimeException(s"Test `$name` did not parse as it should", e)
         }
       }
     }
 
-    "Reject" - {
+    test("Reject") - {
       for {
         (name, bytes) <- testFiles
         if name startsWith "n"
@@ -63,14 +63,15 @@ object JsonTestSuite extends TestSuite {
       }
     }
 
-    "Not Crash" - {
+    test("Not Crash") - {
       for {
         (name, bytes) <- testFiles
         if name startsWith "i"
       } {
         Json.decode(bytes).withConfig(config).to[Dom.Element].valueEither match {
+          case Right(_)                        => // everything else is fine
           case Left(e: Borer.Error.General[_]) => throw new RuntimeException(s"Test `$name` did fail unexpectedly", e)
-          case _                               => // everything else is fine
+          case Left(_)                         => // everything else is fine
         }
       }
     }

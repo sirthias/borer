@@ -6,12 +6,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package io.bullet.borer
+package io.bullet.borer.internal
 
-package object internal {
+import scala.deriving.Mirror
 
-  type XIterableOnce[+T] = IterableOnce[T]
+type XIterableOnce[+T] = IterableOnce[T]
 
-  type XIterableOnceBound[+T] = IterableOnce[T]
+type XIterableOnceBound[+T] = IterableOnce[T]
 
-}
+def unapplyOption[T <: Product](f: T => T)(using m: Mirror.ProductOf[T]): T => Option[m.MirroredElemTypes] =
+  x => Some(Tuple.fromProduct(x).asInstanceOf[m.MirroredElemTypes])

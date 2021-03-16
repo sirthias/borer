@@ -8,11 +8,11 @@
 
 package io.bullet.borer.internal
 
+import sun.misc.{Unsafe => SMUnsafe}
+
 import java.lang.{Long => JLong}
 import java.nio.ByteOrder
 import java.security.PrivilegedExceptionAction
-import sun.misc.{Unsafe => SMUnsafe}
-
 import scala.annotation.{nowarn, tailrec}
 import scala.util.control.NonFatal
 

@@ -21,13 +21,13 @@ lazy val commonSettings = Seq(
     "-deprecation",
     "-encoding", "UTF-8",
     "-feature",
-    "-language:_",
     "-unchecked",
   ),
   
   scalacOptions ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, 12)) => Seq(
+        "-language:_",
         "-target:jvm-1.8",
         "-Xlint:_,-missing-interpolator",
         "-Xfuture",
@@ -38,6 +38,7 @@ lazy val commonSettings = Seq(
       )
 
       case Some((2, 13)) => Seq(
+        "-language:_",
         "-target:jvm-1.8",
         "-Xlint:_,-missing-interpolator",
         "-Xfatal-warnings",
@@ -49,9 +50,12 @@ lazy val commonSettings = Seq(
       )
 
       case Some((3, 0)) => Seq(
+        "-release:8",
         "-source:3.0-migration",
         "-explain",
         "-explain-types",
+        "-language:implicitConversions",
+        "-Xfatal-warnings",
       )
 
       case x => sys.error(s"unsupported scala version: $x")

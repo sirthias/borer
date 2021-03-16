@@ -8,8 +8,6 @@
 
 package io.bullet.borer
 
-import scala.language.implicitConversions
-
 final case class Default[+T](defaultValue: T)
 
 object Default {

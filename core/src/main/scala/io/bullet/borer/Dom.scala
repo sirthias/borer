@@ -8,9 +8,9 @@
 
 package io.bullet.borer
 
-import java.util
 import io.bullet.borer.encodings.BaseEncoding
 
+import java.util
 import scala.annotation.{nowarn, switch, tailrec}
 import scala.collection.{immutable, mutable}
 import scala.collection.compat.immutable.ArraySeq

@@ -8,12 +8,12 @@
 
 package io.bullet.borer
 
-import java.lang.{StringBuilder => JStringBuilder}
-import java.nio.charset.StandardCharsets.UTF_8
-import java.util
 import io.bullet.borer
 import io.bullet.borer.internal.Util
 
+import java.lang.{StringBuilder => JStringBuilder}
+import java.nio.charset.StandardCharsets.UTF_8
+import java.util
 import scala.annotation.{nowarn, tailrec}
 
 /**

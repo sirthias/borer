@@ -75,7 +75,7 @@ object LoggingSpec extends TestSuite {
       ArrayElem.Sized(
         StringElem(alphabet.take(8)),
         StringElem(alphabet),
-        TextStreamElem(alphabet.grouped(4).map(StringElem).toVector))
+        TextStreamElem(alphabet.grouped(4).map(StringElem.apply).toVector))
     } {
       """1: [
         |    1/3: "ABCDEFGH"
@@ -145,8 +145,8 @@ object LoggingSpec extends TestSuite {
 
     "long arrays and maps" - roundTripLogEquals {
       ArrayElem.Sized(
-        ArrayElem.Sized((0 to 20).map(IntElem): _*),
-        MapElem.Sized((0 to 20).map(IntElem).zip(('A' to 'Z').map(x => StringElem(x.toString))): _*)
+        ArrayElem.Sized((0 to 20).map(IntElem.apply): _*),
+        MapElem.Sized((0 to 20).map(IntElem.apply).zip(('A' to 'Z').map(x => StringElem(x.toString))): _*)
       )
     } {
       """1: [
