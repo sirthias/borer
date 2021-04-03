@@ -19,10 +19,10 @@ trait ToOutputStreamOutput {
     type Out = ToOutputStream
 
     def apply(outputStream: OutputStream, bufferSize: Int, allowBufferCaching: Boolean) =
-      new ToOutputStream(outputStream, bufferSize)
+      new ToOutputStream(outputStream)
   }
 
-  abstract class ToOutputStreamBase(protected val outputStream: OutputStream, bufferSize: Int) extends Output {
+  abstract class ToOutputStreamBase(protected val outputStream: OutputStream) extends Output {
     type Self <: ToOutputStreamBase { type Self = ToOutputStreamBase.this.Self }
 
     final def writeByte(byte: Byte): Self = {
@@ -47,8 +47,7 @@ trait ToOutputStreamOutput {
     *
     * NOTE: The given [[OutputStream]] is NOT closed at the end of the encoding run!
     */
-  final class ToOutputStream(outputStream: OutputStream, bufferSize: Int)
-      extends ToOutputStreamBase(outputStream, bufferSize) {
+  final class ToOutputStream(outputStream: OutputStream) extends ToOutputStreamBase(outputStream) {
     type Self   = ToOutputStream
     type Result = OutputStream
 
