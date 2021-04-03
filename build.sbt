@@ -10,7 +10,7 @@ lazy val commonSettings = Seq(
   description := "CBOR and JSON (de)serialization in Scala",
   startYear := Some(2019),
   licenses := Seq("MPLv2" → new URL("https://www.mozilla.org/en-US/MPL/2.0/")),
-  unmanagedResources in Compile += baseDirectory.value.getParentFile.getParentFile / "LICENSE",
+  Compile / unmanagedResources += baseDirectory.value.getParentFile.getParentFile / "LICENSE",
   scmInfo := Some(ScmInfo(url("https://github.com/sirthias/borer/"), "scm:git:git@github.com:sirthias/borer.git")),
 
   scalaVersion := scala213,
@@ -47,9 +47,9 @@ lazy val commonSettings = Seq(
     }
   },
 
-  scalacOptions in (Compile, console) ~= (_ filterNot(o => o.contains("warn") || o.contains("Xlint"))),
-  scalacOptions in (Test, console) := (scalacOptions in (Compile, console)).value,
-  scalacOptions in (Compile, doc) += "-no-link-warnings",
+  Compile / console / scalacOptions ~= (_ filterNot(o => o.contains("warn") || o.contains("Xlint"))),
+  Test / console / scalacOptions := (Compile / console / scalacOptions).value,
+  Compile / doc / scalacOptions += "-no-link-warnings",
   sourcesInBase := false,
 
   // file headers
@@ -59,11 +59,11 @@ lazy val commonSettings = Seq(
   scalafmtOnCompile := true,
 
   testFrameworks += new TestFramework("utest.runner.Framework"),
-  initialCommands in console := """import io.bullet.borer._""",
+  console / initialCommands := """import io.bullet.borer._""",
 
   // publishing
   publishMavenStyle := true,
-  publishArtifact in Test := false,
+  Test / publishArtifact := false,
   pomIncludeRepository := (_ ⇒ false),
   publishTo := sonatypePublishToBundle.value,
   mimaFailOnNoPrevious := false,
@@ -121,8 +121,8 @@ lazy val mimaSettings = {
 }
 
 lazy val crossSettings = Seq(
-  sourceDirectories in (Compile, scalafmt) := (unmanagedSourceDirectories in Compile).value,
-  sourceDirectories in (Test, scalafmt) := (unmanagedSourceDirectories in Test).value
+  Compile / scalafmt / sourceDirectories := (Compile / unmanagedSourceDirectories).value,
+  Test / scalafmt / sourceDirectories := (Test / unmanagedSourceDirectories).value
 )
 
 lazy val scalajsSettings = Seq(
@@ -217,12 +217,12 @@ addCommandsAlias(
 val `akka-actor`        = Def.setting("com.typesafe.akka"      %%  "akka-actor-typed"        % "2.6.13")
 val `akka-stream`       = Def.setting("com.typesafe.akka"      %%  "akka-stream"             % "2.6.13")
 val `akka-http`         = Def.setting("com.typesafe.akka"      %%  "akka-http"               % "10.2.4")
-val `collection-compat` = Def.setting("org.scala-lang.modules" %%% "scala-collection-compat" % "2.4.2")
+val `collection-compat` = Def.setting("org.scala-lang.modules" %%% "scala-collection-compat" % "2.4.3")
 val `cats-core`         = Def.setting("org.typelevel"          %%% "cats-core"               % "2.4.2")
 val `circe-core`        = Def.setting("io.circe"               %%% "circe-core"              % "0.13.0")
 val `circe-parser`      = Def.setting("io.circe"               %%% "circe-parser"            % "0.13.0")
 val `circe-derivation`  = Def.setting("io.circe"               %%% "circe-derivation"        % "0.13.0-M5")
-val `scodec-bits`       = Def.setting("org.scodec"             %%% "scodec-bits"             % "1.1.24")
+val `scodec-bits`       = Def.setting("org.scodec"             %%% "scodec-bits"             % "1.1.25")
 val utest               = Def.setting("com.lihaoyi"            %%% "utest"                   % "0.7.7"  % "test")
 val `scala-compiler`    = Def.setting("org.scala-lang"         %  "scala-compiler"           % scalaVersion.value % "provided")
 val `scala-reflect`     = Def.setting("org.scala-lang"         %  "scala-reflect"            % scalaVersion.value % "provided")
@@ -385,13 +385,13 @@ lazy val benchmarks = project
   .dependsOn(`core-jvm`, `derivation-jvm`)
   .settings(commonSettings)
   .settings(
-    skip in publish := true,
+    publish / skip := true,
     libraryDependencies ++= Seq(
       "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"        % "2.6.4",
       "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros"      % "2.6.4" % Provided,
       "com.fasterxml.jackson.module"          %% "jackson-module-scala"       % "2.12.2",
       "com.fasterxml.jackson.module"          %  "jackson-module-afterburner" % "2.12.2",
-      "com.lihaoyi"                           %% "upickle"                    % "1.3.0",
+      "com.lihaoyi"                           %% "upickle"                    % "1.3.9",
       "io.spray"                              %% "spray-json"                 % "1.3.6",
       `circe-core`.value,
       `circe-parser`.value,
