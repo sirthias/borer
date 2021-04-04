@@ -43,9 +43,28 @@ private[borer] object ByteBufferCache {
 
   def acquire(size: Int): ByteBuffer = {
     var buf = cache.getAndSet(null)
-    if ((buf eq null) || buf.capacity != size) buf = ByteBuffer.allocate(size) else buf.clear()
+    if ((buf eq null) || buf.capacity != size)
+      buf = ByteBuffer.allocate(size)
+    else
+      buf.clear()
     buf
   }
 
   def release(buf: ByteBuffer): Unit = cache.set(buf)
+}
+
+private[borer] object ElementDequeCache {
+
+  private val cache = new AtomicReference[ElementDeque]()
+
+  def acquire(maxBufferSize: Int): ElementDeque = {
+    var deque = cache.getAndSet(null)
+    if ((deque eq null) || deque.maxBufferSize != maxBufferSize)
+      deque = new ElementDeque(maxBufferSize)
+    else
+      deque.clear()
+    deque
+  }
+
+  def release(deque: ElementDeque): Unit = cache.set(deque)
 }

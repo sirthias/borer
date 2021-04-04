@@ -12,7 +12,7 @@ import io.bullet.borer._
 
 import scala.annotation.tailrec
 
-final private[borer] class ElementDeque(maxBufferSize: Int, val next: ElementDeque) {
+final private[borer] class ElementDeque(val maxBufferSize: Int, val next: ElementDeque = null) {
   import io.bullet.borer.DataItem.{Shifts => DIS}
 
   private[this] val byteBuffer = new ResizableByteRingBuffer(16, math.max(16, maxBufferSize))

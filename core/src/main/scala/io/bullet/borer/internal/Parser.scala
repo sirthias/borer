@@ -8,7 +8,7 @@
 
 package io.bullet.borer.internal
 
-import io.bullet.borer.{ByteAccess, Input, Receiver}
+import io.bullet.borer.{ByteAccess, DataItem, Input, Receiver}
 
 /**
   * Common parent type of [[io.bullet.borer.cbor.CborParser]] and [[io.bullet.borer.json.JsonParser]]
@@ -41,4 +41,22 @@ private[borer] object Parser {
   private[this] val _nopWrapper: Wrapper[Any] = (receiver, _) => receiver
 
   def nopWrapper[Config]: Wrapper[Config] = _nopWrapper.asInstanceOf[Wrapper[Config]]
+
+  /**
+    * A parser that only ever produces EndOfInput DataItems.
+    */
+  object EmptyParser extends Parser[Array[Byte]] {
+    val input      = Input.FromByteArrayProvider(Array.emptyByteArray)
+    def valueIndex = 0
+
+    def pull(receiver: Receiver) = {
+      receiver.onEndOfInput()
+      DataItem.EndOfInput
+    }
+    def padByte()                                  = ???
+    def padDoubleByte(remaining: Int)              = ???
+    def padQuadByte(remaining: Int)                = ???
+    def padOctaByte(remaining: Int)                = ???
+    def padBytes(rest: Array[Byte], missing: Long) = ???
+  }
 }

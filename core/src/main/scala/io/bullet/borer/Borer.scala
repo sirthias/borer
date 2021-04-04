@@ -36,6 +36,18 @@ case object Cbor extends Target {
       this)
 
   /**
+    * Entry point into the CBOR transcoding mini-DSL.
+    */
+  def transEncode[T: Encoder](value: T): TranscodingSetup.EncodingApi[TransEncodingConfig, TransDecodingConfig] =
+    new TranscodingSetup.EncodingApiImpl(
+      value,
+      this,
+      TransEncodingConfig.default,
+      CborValidation.wrapper,
+      TransDecodingConfig.default,
+      CborValidation.wrapper)
+
+  /**
     * Constructs a new [[Writer]] that writes CBOR to the given [[Output]].
     */
   def writer(
@@ -70,6 +82,10 @@ case object Cbor extends Target {
       maxMapLength: Long = Int.MaxValue,
       maxNestingLevels: Int = 1000)
       extends Borer.EncodingConfig with CborValidation.Config {
+
+    Util.requireNonNegative(maxArrayLength, "maxArrayLength")
+    Util.requireNonNegative(maxMapLength, "maxMapLength")
+    Util.requireNonNegative(maxNestingLevels, "maxNestingLevels")
 
     if (bufferSize < 8) throw new IllegalArgumentException(s"bufferSize must be >= 8, but was $bufferSize")
   }
@@ -110,6 +126,62 @@ case object Cbor extends Target {
   object DecodingConfig {
     val default = DecodingConfig()
   }
+
+  /**
+    * @param maxBufferSize                  the max number of transcoding elements (not bytes!) that can be buffered
+    * @param compressFloatingPointValues set to false in order to always write floats as 32-bit values and doubles
+    *                                    as 64-bit values, even if they could safely be represented with fewer bits
+    * @param maxArrayLength the maximum array length to accept
+    * @param maxMapLength the maximum map length to accept
+    * @param maxNestingLevels the maximum number of nesting levels to accept
+    */
+  final case class TransEncodingConfig(
+      maxBufferSize: Int = 16384,
+      allowBufferCaching: Boolean = true,
+      compressFloatingPointValues: Boolean = true,
+      maxArrayLength: Long = Int.MaxValue,
+      maxMapLength: Long = Int.MaxValue,
+      maxNestingLevels: Int = 1000)
+      extends Borer.TransEncodingConfig with CborValidation.Config {
+
+    Util.requireNonNegative(maxArrayLength, "maxArrayLength")
+    Util.requireNonNegative(maxMapLength, "maxMapLength")
+    Util.requireNonNegative(maxNestingLevels, "maxNestingLevels")
+
+    if (!Util.isPowerOf2(maxBufferSize) || maxBufferSize < 16)
+      throw new IllegalArgumentException(s"maxBufferSize must be a power of two >= 16, but was $maxBufferSize")
+  }
+
+  object TransEncodingConfig {
+    val default = TransEncodingConfig()
+  }
+
+  /**
+    * @param readIntegersAlsoAsFloatingPoint set to false to disable automatic conversion of integer to floating point values
+    * @param readDoubleAlsoAsFloat set to false to disable automatic conversion of [[Double]] to [[Float]] values
+    * @param maxArrayLength the maximum array length to accept
+    * @param maxMapLength the maximum map length to accept
+    * @param maxNestingLevels the maximum number of nesting levels to accept
+    */
+  final case class TransDecodingConfig(
+      readIntegersAlsoAsFloatingPoint: Boolean = true,
+      readDoubleAlsoAsFloat: Boolean = false,
+      maxArrayLength: Long = Int.MaxValue,
+      maxMapLength: Long = Int.MaxValue,
+      maxNestingLevels: Int = 1000)
+      extends Reader.Config with CborValidation.Config {
+
+    Util.requireNonNegative(maxArrayLength, "maxArrayLength")
+    Util.requireNonNegative(maxMapLength, "maxMapLength")
+    Util.requireNonNegative(maxNestingLevels, "maxNestingLevels")
+
+    if (maxMapLength > Long.MaxValue / 2)
+      throw new IllegalArgumentException(s"maxMapLength must be <= ${Long.MaxValue / 2}, but was $maxMapLength")
+  }
+
+  object TransDecodingConfig {
+    val default = TransDecodingConfig()
+  }
 }
 
 case object Json extends Target {
@@ -130,6 +202,18 @@ case object Json extends Target {
       Receiver.nopWrapper,
       JsonParser.creator[p.Bytes, DecodingConfig],
       this)
+
+  /**
+    * Entry point into the JSON transcoding mini-DSL.
+    */
+  def transEncode[T: Encoder](value: T): TranscodingSetup.EncodingApi[TransEncodingConfig, TransDecodingConfig] =
+    new TranscodingSetup.EncodingApiImpl(
+      value,
+      this,
+      TransEncodingConfig.default,
+      Receiver.nopWrapper,
+      TransDecodingConfig.default,
+      Receiver.nopWrapper)
 
   /**
     * Constructs a new [[Writer]] that writes JSON to the given [[Output]].
@@ -209,6 +293,38 @@ case object Json extends Target {
   object DecodingConfig {
     val default = DecodingConfig()
   }
+
+  /**
+    * @param maxBufferSize                  the max number of transcoding elements (not bytes!) that can be buffered
+    * @param compressFloatingPointValues set to false in order to always write floats as 32-bit values and doubles
+    *                                    as 64-bit values, even if they could safely be represented with fewer bits
+    */
+  final case class TransEncodingConfig(
+      maxBufferSize: Int = 16384,
+      allowBufferCaching: Boolean = true,
+      compressFloatingPointValues: Boolean = true)
+      extends Borer.TransEncodingConfig {
+
+    if (!Util.isPowerOf2(maxBufferSize) || maxBufferSize < 16)
+      throw new IllegalArgumentException(s"maxBufferSize must be a power of two >= 16, but was $maxBufferSize")
+  }
+
+  object TransEncodingConfig {
+    val default = TransEncodingConfig()
+  }
+
+  /**
+    * @param readIntegersAlsoAsFloatingPoint set to false to disable automatic conversion of integer to floating point values
+    * @param readDoubleAlsoAsFloat set to false to disable automatic conversion of [[Double]] to [[Float]] values
+    */
+  final case class TransDecodingConfig(
+      readIntegersAlsoAsFloatingPoint: Boolean = true,
+      readDoubleAlsoAsFloat: Boolean = false)
+      extends Reader.Config
+
+  object TransDecodingConfig {
+    val default = TransDecodingConfig()
+  }
 }
 
 /**
@@ -223,6 +339,8 @@ sealed abstract class Target {
   def encode[T: Encoder](value: T): EncodingSetup.Api[_]
 
   def decode[T](input: T)(implicit w: Input.Provider[T]): DecodingSetup.Api[_]
+
+  def transEncode[T: Encoder](value: T): TranscodingSetup.EncodingApi[_, _]
 }
 
 /**
@@ -232,6 +350,11 @@ object Borer {
 
   sealed abstract class EncodingConfig extends Writer.Config {
     def bufferSize: Int
+    def allowBufferCaching: Boolean
+  }
+
+  sealed abstract class TransEncodingConfig extends Writer.Config {
+    def maxBufferSize: Int
     def allowBufferCaching: Boolean
   }
 
@@ -305,6 +428,12 @@ object Borer {
     private[borer] def withOut(out: Output): Error[Output] = {
       val thiz = this.asInstanceOf[Error[Output]]
       if (thiz._io eq null) thiz._io = out
+      thiz
+    }
+
+    private[borer] def withUnit: Error[Unit] = {
+      val thiz = this.asInstanceOf[Error[Unit]]
+      thiz._io = ()
       thiz
     }
   }

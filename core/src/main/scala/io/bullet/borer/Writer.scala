@@ -17,7 +17,7 @@ import scala.collection.LinearSeq
   * Stateful, mutable abstraction for writing a stream of CBOR or JSON data to the given [[Output]].
   */
 final class Writer(
-    val output: Output,
+    val output: Output, // CAUTION: `null` in case of transcoding!
     private[borer] var receiver: Receiver,
     val target: Target,
     config: Writer.Config) {

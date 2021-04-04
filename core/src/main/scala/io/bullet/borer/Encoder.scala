@@ -333,7 +333,7 @@ object Encoder extends LowPrioEncoders {
       throw new IllegalArgumentException(s"maxBufferSize must be a positive power of two, but was $maxBufferSize")
 
     def write(w: Writer, value: T): Writer = {
-      val stash                    = new ElementDeque(maxBufferSize, null)
+      val stash                    = new ElementDeque(maxBufferSize)
       val originalReceiver         = w.receiver
       var arrayOrMap               = 0             // 1 => array, 2 => map
       var len0                     = Long.MinValue // -1 => unbounded
