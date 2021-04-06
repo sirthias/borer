@@ -13,8 +13,6 @@ import com.github.plokhotnyuk.jsoniter_scala.macros._
 import io.bullet.borer.{Default, Nullable}
 import org.openjdk.jmh.annotations._
 
-import scala.annotation.nowarn
-
 object JsoniterScalaCodecs {
 
   val foosCodec: JsonValueCodec[Map[String, Foo]] =
@@ -99,7 +97,6 @@ class JsoniterScalaModelBenchmark extends DomBenchmark {
       }
   }
 
-  @nowarn("cat=other-match-analysis")
   def setup(): Unit = {
     codec = (fileName match {
       case "australia-abc.json"      => JsonCodecMaker.make[Australia.RootInterface](CodecMakerConfig)
