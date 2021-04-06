@@ -1,3 +1,13 @@
+Version 1.7.0 (2021-04-06)
+--------------------------
+
+- added transcoding feature
+- improved DOM and DOM.Transformer
+- removed unused `buffer` parameter from `ToOutputStreamOutput`
+- removed support/cross-building for Scala 2.12
+- upgraded to Scala 2.13.5 and latest versions of all dependencies
+
+
 Version 1.6.3 (2020-11-06)
 --------------------------
 
