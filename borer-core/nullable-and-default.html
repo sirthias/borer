@@ -154,6 +154,7 @@ sirthias/borer/
     <li><a href="../borer-core/JSON-specifics.html" class="page">JSON Specifics</a></li>
     <li><a href="../borer-core/JSON-performance.html" class="page">JSON Performance</a></li>
     <li><a href="../borer-core/DOM.html" class="page">Document Object Model (DOM)</a></li>
+    <li><a href="../borer-core/transcoding.html" class="page">Transcoding</a></li>
     <li><a href="../borer-core/debugging.html" class="page">Debugging</a></li>
   </ul></li>
   <li><a href="../borer-derivation/index.html" class="page"><code>borer-derivation</code></a>
@@ -190,7 +191,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.6.3
+<i class="md-icon" title="Version">label_outline</i> 1.7.0
 </label>
 </li>
 </ul>
@@ -221,7 +222,7 @@ sirthias/borer/
 <p><code>null</code> values differ from missing members (see also <a href="../borer-derivation/map-based.html#default-values">Map-Based Codecs</a>) in that the value for an element is indeed present, but is <code>null</code>.</p>
 <p><em>borer</em> handles this case in a properly typed fashion: If your data model allows for certain members to have a <code>null</code> encoding that you would like to treat specially the member&rsquo;s type should be wrapped with <code>Nullable</code>, e.g. <code>Nullable[String]</code>.<br> In combination with the simple type class <code>Default[T]</code>, which provides the capability to supply default values for a type <code>T</code>, the pre-defined Encoder and Decoder for <code>Nullable[T]</code> will be able to translate <code>null</code> values to the respective default value and back.</p>
 <p>Example:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/NullableSpec.scala#L11-L22" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Json, Nullable}
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/NullableSpec.scala#L19-L30" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Json, Nullable}
 import io.bullet.borer.derivation.MapBasedCodecs._
 
 case class Dog(age: Int, name: Nullable[String])
@@ -271,7 +272,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.6.3
+1.7.0
 </span>
 </div>
 </article>

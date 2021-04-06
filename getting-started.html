@@ -154,6 +154,7 @@ sirthias/borer/
     <li><a href="borer-core/JSON-specifics.html" class="page">JSON Specifics</a></li>
     <li><a href="borer-core/JSON-performance.html" class="page">JSON Performance</a></li>
     <li><a href="borer-core/DOM.html" class="page">Document Object Model (DOM)</a></li>
+    <li><a href="borer-core/transcoding.html" class="page">Transcoding</a></li>
     <li><a href="borer-core/debugging.html" class="page">Debugging</a></li>
   </ul></li>
   <li><a href="borer-derivation/index.html" class="page"><code>borer-derivation</code></a>
@@ -191,7 +192,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.6.3
+<i class="md-icon" title="Version">label_outline</i> 1.7.0
 </label>
 </li>
 </ul>
@@ -224,52 +225,52 @@ sirthias/borer/
 <ul>
   <li><a href="borer-core/index.html"><code>borer-core</code></a>, the actual core logic (no dependencies)</li>
   <li><a href="borer-derivation/index.html"><code>borer-derivation</code></a>, (semi-)automatic codec derivation for case classes and ADTs<br>(no dependencies, relies on macros)</li>
-  <li><a href="borer-compat-akka.html"><code>borer-compat-akka</code></a>, support for <code>akka.util.ByteString</code> and <code>akka-http</code> (un)marshalling<br>(has a <code>provided</code> dependency on <a href="https://doc.akka.io/docs/akka/2.5/actors.html#dependency">akka-actor</a>, <a href="https://doc.akka.io/docs/akka/current/stream/index.html">akka-stream</a> and <a href="https://doc.akka.io/docs/akka-http/current/index.html">akka-http</a>)</li>
+  <li><a href="borer-compat-akka.html"><code>borer-compat-akka</code></a>, support for <code>akka.util.ByteString</code> and <code>akka-http</code> (un)marshalling<br>(has a <code>provided</code> dependency on <a href="https://doc.akka.io/docs/akka/2.6/actors.html#dependency">akka-actor</a>, <a href="https://doc.akka.io/docs/akka/current/stream/index.html">akka-stream</a> and <a href="https://doc.akka.io/docs/akka-http/current/index.html">akka-http</a>)</li>
   <li><a href="borer-compat-cats.html"><code>borer-compat-cats</code></a>, support for popular <a href="https://typelevel.org/cats/">cats</a> data structures from the <code>cats.data._</code> package (has a <code>provided</code> dependency on <code>cats-core</code>)</li>
   <li><a href="borer-compat-circe.html"><code>borer-compat-circe</code></a>, seamless integration with <a href="https://circe.github.io/circe/">circe</a> codecs<br>(has a <code>provided</code> dependency on <a href="https://circe.github.io/circe/">circe</a>)</li>
   <li><a href="borer-compat-scodec.html"><code>borer-compat-scodec</code></a>, support for <code>scodec.bits.ByteVector</code><br>(has a <code>provided</code> dependency on <a href="http://scodec.org/">scodec</a>)</li>
 </ul>
 <h2><a href="#installation" name="installation" class="anchor"><span class="anchor-link"></span></a>Installation</h2>
 <p>The artifacts for <em>borer</em> live on Maven Central and can be tied into your project like this:</p><dl class="dependency"><dt>sbt</dt><dd><pre class="prettyprint"><code class="language-scala">libraryDependencies ++= Seq(
-  "io.bullet" %% "borer-core" % "1.6.3",
-  "io.bullet" %% "borer-derivation" % "1.6.3",
-  "io.bullet" %% "borer-compat-akka" % "1.6.3",
-  "io.bullet" %% "borer-compat-circe" % "1.6.3",
-  "io.bullet" %% "borer-compat-scodec" % "1.6.3"
+  "io.bullet" %% "borer-core" % "1.7.0",
+  "io.bullet" %% "borer-derivation" % "1.7.0",
+  "io.bullet" %% "borer-compat-akka" % "1.7.0",
+  "io.bullet" %% "borer-compat-circe" % "1.7.0",
+  "io.bullet" %% "borer-compat-scodec" % "1.7.0"
 )</code></pre></dd><dt>Maven</dt><dd><pre class="prettyprint"><code class="language-xml">&lt;dependencies&gt
   &lt;dependency&gt;
     &lt;groupId&gt;io.bullet&lt;/groupId&gt;
     &lt;artifactId&gt;borer-core_2.13&lt;/artifactId&gt;
-    &lt;version&gt;1.6.3&lt;/version&gt;
+    &lt;version&gt;1.7.0&lt;/version&gt;
   &lt;/dependency&gt
   &lt;dependency&gt;
     &lt;groupId&gt;io.bullet&lt;/groupId&gt;
     &lt;artifactId&gt;borer-derivation_2.13&lt;/artifactId&gt;
-    &lt;version&gt;1.6.3&lt;/version&gt;
+    &lt;version&gt;1.7.0&lt;/version&gt;
   &lt;/dependency&gt
   &lt;dependency&gt;
     &lt;groupId&gt;io.bullet&lt;/groupId&gt;
     &lt;artifactId&gt;borer-compat-akka_2.13&lt;/artifactId&gt;
-    &lt;version&gt;1.6.3&lt;/version&gt;
+    &lt;version&gt;1.7.0&lt;/version&gt;
   &lt;/dependency&gt
   &lt;dependency&gt;
     &lt;groupId&gt;io.bullet&lt;/groupId&gt;
     &lt;artifactId&gt;borer-compat-circe_2.13&lt;/artifactId&gt;
-    &lt;version&gt;1.6.3&lt;/version&gt;
+    &lt;version&gt;1.7.0&lt;/version&gt;
   &lt;/dependency&gt
   &lt;dependency&gt;
     &lt;groupId&gt;io.bullet&lt;/groupId&gt;
     &lt;artifactId&gt;borer-compat-scodec_2.13&lt;/artifactId&gt;
-    &lt;version&gt;1.6.3&lt;/version&gt;
+    &lt;version&gt;1.7.0&lt;/version&gt;
   &lt;/dependency&gt
 &lt;/dependencies&gt;</code></pre></dd><dt>Gradle</dt><dd><pre class="prettyprint"><code class="language-gradle">dependencies {
-  implementation "io.bullet:borer-core_2.13:1.6.3"
-  implementation "io.bullet:borer-derivation_2.13:1.6.3"
-  implementation "io.bullet:borer-compat-akka_2.13:1.6.3"
-  implementation "io.bullet:borer-compat-circe_2.13:1.6.3"
-  implementation "io.bullet:borer-compat-scodec_2.13:1.6.3"
+  implementation "io.bullet:borer-core_2.13:1.7.0"
+  implementation "io.bullet:borer-derivation_2.13:1.7.0"
+  implementation "io.bullet:borer-compat-akka_2.13:1.7.0"
+  implementation "io.bullet:borer-compat-circe_2.13:1.7.0"
+  implementation "io.bullet:borer-compat-scodec_2.13:1.7.0"
 }</code></pre></dd></dl>
-<p><em>borer</em> is available for <a href="https://www.scala-lang.org/">Scala</a> 2.12 and 2.13 as well as <a href="https://www.scala-js.org/">scala.js</a>.</p>
+<p><em>borer</em> is available for <a href="https://www.scala-lang.org/">Scala</a> 2.13 and <a href="https://www.scala-js.org/">scala.js</a>.</p>
 </div>
 <div>
 <a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/getting-started.md" title="Edit this page" class="md-source-file md-edit">
@@ -278,7 +279,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.6.3
+1.7.0
 </span>
 </div>
 </article>

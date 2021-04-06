@@ -154,6 +154,7 @@ sirthias/borer/
     <li><a href="../borer-core/JSON-specifics.html" class="page">JSON Specifics</a></li>
     <li><a href="../borer-core/JSON-performance.html" class="page">JSON Performance</a></li>
     <li><a href="../borer-core/DOM.html" class="active page">Document Object Model (DOM)</a></li>
+    <li><a href="../borer-core/transcoding.html" class="page">Transcoding</a></li>
     <li><a href="../borer-core/debugging.html" class="page">Debugging</a></li>
   </ul></li>
   <li><a href="../borer-derivation/index.html" class="page"><code>borer-derivation</code></a>
@@ -177,16 +178,39 @@ sirthias/borer/
   </ul></li>
 </ul>
 <nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="../borer-core/DOM.html#document-object-model-dom-" class="header">Document Object Model (DOM)</a>
+  <ul>
+    <li><a href="../borer-core/DOM.html#dom-transformation" class="header">DOM Transformation</a></li>
+  </ul></li>
+</ul>
 </nav>
 
 </nav>
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.6.3
+<i class="md-icon" title="Version">label_outline</i> 1.7.0
 </label>
 </li>
 </ul>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="../borer-core/DOM.html#document-object-model-dom-" class="header">Document Object Model (DOM)</a>
+  <ul>
+    <li><a href="../borer-core/DOM.html#dom-transformation" class="header">DOM Transformation</a></li>
+  </ul></li>
+</ul>
+</nav>
+
 </div>
 </div>
 </div>
@@ -199,7 +223,7 @@ sirthias/borer/
 <dl>
   <dt>CBOR</dt>
   <dd>
-  <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DomSpec.scala#L13-L27" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Cbor
+  <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DomSpec.scala#L21-L35" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Cbor
 import io.bullet.borer.Dom._
 
 val dom = MapElem.Sized(
@@ -216,7 +240,7 @@ val decoded = Cbor.decode(encoded).to[Element].value
 decoded ==&gt; dom</code></pre></dd>
   <dt>JSON</dt>
   <dd>
-  <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DomSpec.scala#L34-L48" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Dom._
+  <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DomSpec.scala#L42-L56" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Dom._
 import io.bullet.borer.Json
 
 val dom = MapElem.Unsized(
@@ -232,9 +256,9 @@ val decoded = Json.decode(encoded).to[Element].value
 
 decoded ==&gt; dom</code></pre></dd>
 </dl>
-<p>Any <a href="http://cbor.io/">CBOR</a> or <a href="http://json.org/">JSON</a> document can be deserialized into a <code>io.bullet.borer.Dom.Element</code>, which can then be queried or transformed in any way, and potentially written back to <a href="http://cbor.io/">CBOR</a> or <a href="http://json.org/">JSON</a>.<br></p>
+<p>Any <a href="http://cbor.io/">CBOR</a> or <a href="http://json.org/">JSON</a> document can be deserialized into a <code>io.bullet.borer.Dom.Element</code>, which can then be queried or transformed in any way, and potentially written back to <a href="http://cbor.io/">CBOR</a> or <a href="http://json.org/">JSON</a>. Make sure to also look at <em>borer</em>&rsquo;s built-in support for efficient <a href="transcoding.html">transcoding</a> if that is something you are interested in.<br></p>
 <p>As such, the <em>borer</em> DOM can also be used to transform <a href="http://json.org/">JSON</a> to <a href="http://cbor.io/">CBOR</a>, e.g. like this:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DomSpec.scala#L54-L67" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Cbor, Json}
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DomSpec.scala#L62-L75" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Cbor, Json}
 import io.bullet.borer.Dom._
 
 import scala.util.Try
@@ -248,6 +272,12 @@ def jsonToCbor(json: String): Try[Array[Byte]] =
 
 jsonToCbor(&quot;&quot;&quot;{&quot;foo&quot;:[42,&quot;rocks&quot;],&quot;bar&quot;:26.8}&quot;&quot;&quot;).get ==&gt;
 hex&quot;BF63666F6F9F182A65726F636B73FF63626172FB403ACCCCCCCCCCCDFF&quot;</code></pre>
+<h2><a href="#dom-transformation" name="dom-transformation" class="anchor"><span class="anchor-link"></span></a>DOM Transformation</h2>
+<p>Having a DOM representation of a particular data structure (e.g. nested case class instances representing application state) opens up a variety of opportunities for runtime inspection and/or transformation of that data structure, which are often not that easy to achieve otherwise.</p>
+<p>One solution to such tasks can be &ldquo;optics&rdquo; (like Lenses) for which dedicated libraries like <a href="https://www.optics.dev/Monocle/">Monocle</a> exist. They are an excellent tool if the point of interest/change is deep and relatively small compared to the total size of the overage data structure.</p>
+<p>However, if many changes need to be done or the data structure must be walked in its completion (for example in order to gather some statistics) transcoding into a DOM and working on that alternate representation could be easier.</p>
+<p><em>borer</em> provides one relatively simple tool for transforming an existing DOM structure:<br> the <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Dom.scala#L444">DOM.Transformer</a> trait. </p>
+<p>See the chapter on <a href="transcoding.html">transcoding</a> for an example of how to use it.</p>
 </div>
 <div>
 <a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-core/DOM.md" title="Edit this page" class="md-source-file md-edit">
@@ -256,7 +286,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.6.3
+1.7.0
 </span>
 </div>
 </article>
@@ -279,13 +309,13 @@ JSON Performance
 </span>
 </div>
 </a>
-<a href="../borer-core/debugging.html" title="Debugging" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<a href="../borer-core/transcoding.html" title="Transcoding" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
 <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
 <span class="md-flex__ellipsis">
 <span class="md-footer-nav__direction">
 Next
 </span>
-Debugging
+Transcoding
 </span>
 </div>
 <div class="md-flex__cell md-flex__cell--shrink">

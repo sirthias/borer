@@ -20,7 +20,7 @@
 
 <meta name="description" content="CBOR and JSON (de)serialization in Scala">
 <link rel="shortcut icon" href="../assets/images/favicon.ico">
-<title>Type IDs · borer</title>
+<title>Transcoding · borer</title>
 <link rel="stylesheet" href="../assets/stylesheets/application.451f80e5.css">
 <link rel="stylesheet" href="../assets/stylesheets/application-palette.22915126.css">
 <meta name="theme-color" content="#3f51b5" />
@@ -61,7 +61,7 @@ data-md-color-accent="orange"
 borer
 </span>
 <span class="md-header-nav__topic">
-Type IDs
+Transcoding
 </span>
 </div>
 </div>
@@ -154,7 +154,7 @@ sirthias/borer/
     <li><a href="../borer-core/JSON-specifics.html" class="page">JSON Specifics</a></li>
     <li><a href="../borer-core/JSON-performance.html" class="page">JSON Performance</a></li>
     <li><a href="../borer-core/DOM.html" class="page">Document Object Model (DOM)</a></li>
-    <li><a href="../borer-core/transcoding.html" class="page">Transcoding</a></li>
+    <li><a href="../borer-core/transcoding.html" class="active page">Transcoding</a></li>
     <li><a href="../borer-core/debugging.html" class="page">Debugging</a></li>
   </ul></li>
   <li><a href="../borer-derivation/index.html" class="page"><code>borer-derivation</code></a>
@@ -162,7 +162,7 @@ sirthias/borer/
     <li><a href="../borer-derivation/basics.html" class="page">Derivation Basics</a></li>
     <li><a href="../borer-derivation/array-based.html" class="page">Array-Based Codecs</a></li>
     <li><a href="../borer-derivation/map-based.html" class="page">Map-Based Codecs</a></li>
-    <li><a href="../borer-derivation/type-ids.html" class="active page">Type IDs</a></li>
+    <li><a href="../borer-derivation/type-ids.html" class="page">Type IDs</a></li>
     <li><a href="../borer-derivation/faq.html" class="page">Derivation FAQ</a></li>
   </ul></li>
   <li><a href="../borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
@@ -178,6 +178,16 @@ sirthias/borer/
   </ul></li>
 </ul>
 <nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="../borer-core/transcoding.html#transcoding" class="header">Transcoding</a>
+  <ul>
+    <li><a href="../borer-core/transcoding.html#transcoding-vs-encoding-decoding" class="header">Transcoding vs. Encoding + Decoding</a></li>
+    <li><a href="../borer-core/transcoding.html#transcoding-as-ast-substitute" class="header">Transcoding as AST-Substitute</a></li>
+    <li><a href="../borer-core/transcoding.html#cbor-vs-json-transcoding" class="header">CBOR vs. JSON Transcoding</a></li>
+    <li><a href="../borer-core/transcoding.html#example" class="header">Example</a></li>
+  </ul></li>
+</ul>
 </nav>
 
 </nav>
@@ -191,23 +201,99 @@ sirthias/borer/
 </div>
 </div>
 </div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="../borer-core/transcoding.html#transcoding" class="header">Transcoding</a>
+  <ul>
+    <li><a href="../borer-core/transcoding.html#transcoding-vs-encoding-decoding" class="header">Transcoding vs. Encoding + Decoding</a></li>
+    <li><a href="../borer-core/transcoding.html#transcoding-as-ast-substitute" class="header">Transcoding as AST-Substitute</a></li>
+    <li><a href="../borer-core/transcoding.html#cbor-vs-json-transcoding" class="header">CBOR vs. JSON Transcoding</a></li>
+    <li><a href="../borer-core/transcoding.html#example" class="header">Example</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</div>
+</div>
+</div>
 <div class="md-content">
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
-<h1><a href="#type-ids" name="type-ids" class="anchor"><span class="anchor-link"></span></a>Type IDs</h1>
-<p>When encoding <em>Abstract Data Types</em> (ADTs), i.e. top types of <code>sealed</code> type hierarchies like <code>Animal</code> in this example:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L90-L94" target="_blank" title="Go to snippet source">source</a><code class="language-scala">sealed trait Animal
-case class Dog(age: Int, name: String)                      extends Animal
-case class Cat(weight: Double, color: String, home: String) extends Animal
-case class Fish(color: String)                              extends Animal
-case object Yeti                                            extends Animal</code></pre>
-<p>the encoder needs to somehow transfer the information to the decoder, which of the defined sub-types to decode into.<br> In the context of the example ADT above, when <code>Json.decode(encoding).to[Animal]</code> is called the decoder needs to know, whether the encoding holds a <code>Dog</code>, a <code>Cat</code> or any of the other (well-defined) sub-types of <code>Animal</code>.</p>
-<p>This is done through a &ldquo;Type ID&rdquo;, which is a <code>String</code> or number that uniquely identifies each ADT sup-type.</p>
-<p>By default <em>borer</em> will use a sub-type&rsquo;s short class name as a (textual) type ID, i.e. <code>&quot;Dog&quot;</code> would be the type id of <code>Dog</code> instances and <code>&quot;Cat&quot;</code> would be the same for the <code>Cat</code> type.</p>
-<p>If you want to customize this you can use the <code>@key</code> annotation to do so. Check out the <code>@key</code> sources <a href="https://github.com/sirthias/borer/tree/master/derivation/src/main/scala/io/bullet/borer/derivation/key.scala">here</a> for more info on this. </p>
+<h1><a href="#transcoding" name="transcoding" class="anchor"><span class="anchor-link"></span></a>Transcoding</h1>
+<p>Apart from <a href="encoding-and-decoding.html">Encoding and Decoding</a> <em>borer</em> also supports a less frequently used operation called &ldquo;transcoding&rdquo;, which combines encoding from a type <code>A</code> and immediately decoding to a type <code>B</code> into one single operation.</p>
+<p>The point of transcoding isn&rsquo;t to generate some byte stream serialization but rather to make use of the existing (and often carefully managed) codec logic to transform <code>A</code> into some other representation, which is easier to inspect or process further.</p>
+<p>For example, one could transform values of <code>A</code> into <em>borer</em>&rsquo;s <a href="DOM.html">DOM</a> representation and walk the resulting object tree to collect all members called <code>foo</code>. Or apply some kind of tree transformation before transcoding the <a href="DOM.html">DOM</a> instance back to <code>A</code>.</p>
+<h2><a href="#transcoding-vs-encoding-decoding" name="transcoding-vs-encoding-decoding" class="anchor"><span class="anchor-link"></span></a>Transcoding vs. Encoding + Decoding</h2>
+<p>Since <em>transcoding</em> is essentially encoding from one type before immediately decoding to another the same result can be achieved by doing exactly that: two completely separate steps connected only by the intermediate, serialized representation of the data in a byte array for example.</p>
+<p>The advantage of <em>borer</em>&rsquo;s dedicated transcoding operation over separate Encoding + Decoding is the much better performance and decreased overhead. Transcoding connects the respective <code>Encoder[A]</code> and <code>Decoder[B]</code> stages as directly as possible. Instances of basic types like <code>Int</code>, <code>Long</code>, <code>Double</code> and, especially, <code>String</code> don&rsquo;t need to be serialized and then parsed and recreated, but can be directly reused, which greatly helps with keeping time and memory requirements to a minimum.</p>
+<p>Due to <em>borer</em>&rsquo;s pull-based design transcoding still requires some intermediate buffering but this happens not on the level of serialized bytes but on a higher level and as such allows the transcoding infrastructure to itself run with practically no allocation overhead (when buffer caching isn&rsquo;t explicitly disabled). Of course the <code>Decoder[B]</code> will usually still need to allocate new memory for the (sub-)structures of <code>B</code> instances. </p>
+<h2><a href="#transcoding-as-ast-substitute" name="transcoding-as-ast-substitute" class="anchor"><span class="anchor-link"></span></a>Transcoding as AST-Substitute</h2>
+<p>Even though AST-less by design, support for efficient transcoding allows <em>borer</em> to be used for tasks that typically require an AST representation, like programmatic inspection/transformation of runtime object structures. Transcoding to something like <em>borer</em>&rsquo;s <a href="DOM.html">DOM</a> representation can never fail and, because the <a href="DOM.html">DOM</a> implementation shipped with <em>borer</em> is not special in any way, you are free to change it or write your own from scratch without too much effort should the need arise.</p>
+<h2><a href="#cbor-vs-json-transcoding" name="cbor-vs-json-transcoding" class="anchor"><span class="anchor-link"></span></a>CBOR vs. JSON Transcoding</h2>
+<p>Since transcoding skips the actual rendering to and parsing from raw bytes it is, in principle, agnostic to the question of whether <a href="http://cbor.io/">CBOR</a> or <a href="http://json.org/">JSON</a> is the encoding target. Nevertheless, the <code>Encoder</code> and <code>Decoder</code> implementations also have access to the information what the encoding target is and frequently use that information to adapt their logic accordingly. As such, you&rsquo;ll have to decide on whether to target <a href="http://cbor.io/">CBOR</a> or <a href="http://json.org/">JSON</a> even for transcoding.</p>
+<h2><a href="#example" name="example" class="anchor"><span class="anchor-link"></span></a>Example</h2>
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/TranscodingSpec.scala#L19-L73" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Cbor
+import io.bullet.borer.Dom
+import io.bullet.borer.derivation.MapBasedCodecs._
+
+case class Employee(nick: String, age: Int)
+case class Department(name: String, employees: List[Employee])
+
+implicit val employeeCodec   = deriveCodec[Employee]
+implicit val departmentCodec = deriveCodec[Department]
+
+val value =
+  Department(
+    name = &quot;IT&quot;,
+    employees = List(
+      Employee(&quot;Alice&quot;, 32),
+      Employee(&quot;Bob&quot;, 28),
+      Employee(&quot;Charlie&quot;, 42),
+    )
+  )
+
+val dom = Cbor // could also be `Json` to target JSON
+  .transEncode(value)
+  .transDecode
+  .to[Dom.Element]
+  .value
+
+val transformer =
+  new Dom.Transformer {
+    import Dom._
+
+    override def transformMapMember(member: (Element, Element)) =
+      member match {
+        case (k @ StringElem(&quot;age&quot;), IntElem(age)) =&gt; k -&gt; IntElem(age + 1)
+        case x                                     =&gt; super.transformMapMember(x)
+      }
+  }
+
+val transformed = transformer(dom)
+
+val result = Cbor // could also be `Json` to target JSON
+  .transEncode(transformed)
+  .transDecode
+  .to[Department]
+  .valueEither
+
+result ==&gt; Right(
+  Department(
+    name = &quot;IT&quot;,
+    employees = List(
+      Employee(&quot;Alice&quot;, 33),
+      Employee(&quot;Bob&quot;, 29),
+      Employee(&quot;Charlie&quot;, 43),
+    )
+  )
+)</code></pre>
 </div>
 <div>
-<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-derivation/type-ids.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-core/transcoding.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
@@ -223,7 +309,7 @@ Edit this page
 <footer class="md-footer">
 <div class="md-footer-nav">
 <nav class="md-footer-nav__inner md-grid">
-<a href="../borer-derivation/map-based.html" title="Map-Based Codecs" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<a href="../borer-core/DOM.html" title="Document Object Model (DOM)" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
 <div class="md-flex__cell md-flex__cell--shrink">
 <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
 </div>
@@ -232,17 +318,17 @@ Edit this page
 <span class="md-footer-nav__direction">
 Previous
 </span>
-Map-Based Codecs
+Document Object Model (DOM)
 </span>
 </div>
 </a>
-<a href="../borer-derivation/faq.html" title="Derivation FAQ" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<a href="../borer-core/debugging.html" title="Debugging" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
 <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
 <span class="md-flex__ellipsis">
 <span class="md-footer-nav__direction">
 Next
 </span>
-Derivation FAQ
+Debugging
 </span>
 </div>
 <div class="md-flex__cell md-flex__cell--shrink">

@@ -154,6 +154,7 @@ sirthias/borer/
     <li><a href="../borer-core/JSON-specifics.html" class="page">JSON Specifics</a></li>
     <li><a href="../borer-core/JSON-performance.html" class="page">JSON Performance</a></li>
     <li><a href="../borer-core/DOM.html" class="page">Document Object Model (DOM)</a></li>
+    <li><a href="../borer-core/transcoding.html" class="page">Transcoding</a></li>
     <li><a href="../borer-core/debugging.html" class="page">Debugging</a></li>
   </ul></li>
   <li><a href="../borer-derivation/index.html" class="page"><code>borer-derivation</code></a>
@@ -192,7 +193,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.6.3
+<i class="md-icon" title="Version">label_outline</i> 1.7.0
 </label>
 </li>
 </ul>
@@ -273,7 +274,7 @@ trait ToValueProvider[T] {
 </ul>
 <p>The <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Output.scala">Output</a> trait isn&rsquo;t hard to implement as it simply writes out all bytes in a single pass.</p>
 <p>Here are a few examples to illustrate the top-level output API:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/OutputExamplesSpec.scala#L15-L29" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Cbor
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/OutputExamplesSpec.scala#L23-L37" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Cbor
 
 val value = List(&quot;foo&quot;, &quot;bar&quot;, &quot;baz&quot;) // example value
 
@@ -305,7 +306,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.6.3
+1.7.0
 </span>
 </div>
 </article>
