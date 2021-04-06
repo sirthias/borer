@@ -8,11 +8,11 @@
 
 package io.bullet.borer
 
-import java.util
 import io.bullet.borer.encodings.BaseEncoding
 
-import scala.annotation.{nowarn, switch, tailrec}
-import scala.collection.{immutable, mutable}
+import java.util
+import scala.annotation.{implicitNotFound, switch, tailrec}
+import scala.collection.{immutable, mutable, MapFactory}
 import scala.collection.compat.immutable.ArraySeq
 import scala.collection.immutable.HashMap
 import scala.util.hashing.MurmurHash3
@@ -153,6 +153,12 @@ object Dom {
     @inline final def keys: Iterator[Element]                          = new MapElem.KVIterator(elements, 0)
     @inline final def values: Iterator[Element]                        = new MapElem.KVIterator(elements, 1)
 
+    final def members: Iterator[(Element, Element)] =
+      keys.zip(values)
+
+    final def stringKeyedMembers: Iterator[(String, Element)] =
+      members.collect { case (StringElem(s), v) => s -> v }
+
     def apply(key: String): Option[Element] = {
       @tailrec def rec(ix: Int): Option[Element] =
         if (ix < elements.length) {
@@ -176,6 +182,42 @@ object Dom {
       @tailrec def rec(m: HashMap[Element, Element]): HashMap[Element, Element] =
         if (k.hasNext) rec(m.updated(k.next(), v.next())) else m
       rec(HashMap.empty)
+    }
+
+    /**
+      * Attempts to transform this map element into a `HashMap[String, Element]` and either returns the
+      * result, if all keys are indeed `StringElem`s, or the first offending key element that is not a `StringElem`.
+      */
+    final def toStringKeyedMap: Either[Element, HashMap[String, Element]] = {
+      val k = keys
+      val v = values
+      @tailrec def rec(m: HashMap[String, Element]): Either[Element, HashMap[String, Element]] =
+        if (k.hasNext) {
+          k.next() match {
+            case StringElem(x) => rec(m.updated(x, v.next()))
+            case x             => Left(x)
+          }
+        } else Right(m)
+      rec(HashMap.empty)
+    }
+
+    final def to[M[A, B] <: Map[A, B]](implicit mf: MapFactory[M]): M[Element, Element] = {
+      val b = mf.newBuilder[Element, Element]
+      b.addAll(keys zip values)
+      b.result()
+    }
+
+    final def toStringKeyed[M[A, B] <: Map[A, B]](implicit mf: MapFactory[M]): Either[Element, M[String, Element]] = {
+      val k = keys
+      val v = values
+      @tailrec def rec(b: mutable.Builder[(String, Element), M[String, Element]]): Either[Element, M[String, Element]] =
+        if (k.hasNext) {
+          k.next() match {
+            case StringElem(x) => rec(b.addOne(x -> v.next()))
+            case x             => Left(x)
+          }
+        } else Right(b.result())
+      rec(mf.newBuilder[String, Element])
     }
 
     final override def toString =
@@ -203,37 +245,51 @@ object Dom {
     final class Sized private[Dom] (elements: Array[Element]) extends MapElem(elements, DIS.MapHeader)
 
     object Sized {
-      private[this] val create                                             = new Sized(_)
-      val empty                                                            = new Sized(Array.empty)
-      def apply(first: (String, Element), more: (String, Element)*): Sized = construct(first +: more, create)
-      def apply(entries: (Element, Element)*): Sized                       = construct(entries, create)
-      def apply(entries: collection.Map[Element, Element]): Sized          = construct(entries, create)
-      def unapply(value: Sized): Sized                                     = value
+      val empty = new Sized(Array.empty)
+
+      def apply[T <: AnyRef: StringOrElem](entries: (T, Element)*): Sized =
+        new Sized(construct(entries.iterator, entries.size))
+
+      def apply[T <: AnyRef: StringOrElem](entries: collection.Map[T, Element]): Sized = new Sized(
+        construct(entries.iterator, entries.size))
+
+      def apply[T <: AnyRef: StringOrElem](entries: Iterator[(T, Element)]): Sized =
+        new Sized(construct(entries))
+
+      def unapply(value: Sized): Sized = value
     }
 
     final class Unsized private[Dom] (elements: Array[Element]) extends MapElem(elements, DIS.MapStart)
 
     object Unsized {
-      private[this] val create                                               = new Unsized(_)
-      val empty                                                              = new Unsized(Array.empty)
-      def apply(first: (String, Element), more: (String, Element)*): Unsized = construct(first +: more, create)
-      def apply(entries: (Element, Element)*): Unsized                       = construct(entries, create)
-      def apply(entries: collection.Map[Element, Element]): Unsized          = construct(entries, create)
-      def unapply(value: Unsized): Unsized                                   = value
+      val empty = new Unsized(Array.empty)
+
+      def apply[T <: AnyRef: StringOrElem](entries: (T, Element)*): Unsized =
+        new Unsized(construct(entries.iterator, entries.size))
+
+      def apply[T <: AnyRef: StringOrElem](entries: collection.Map[T, Element]): Unsized =
+        new Unsized(construct(entries.iterator, entries.size))
+
+      def apply[T <: AnyRef: StringOrElem](entries: Iterator[(T, Element)]): Unsized =
+        new Unsized(construct(entries))
+
+      def unapply(value: Unsized): Unsized = value
     }
 
-    @nowarn("cat=other-match-analysis")
-    private def construct[T](entries: Iterable[(AnyRef, Element)], f: Array[Element] => T): T = {
-      val elements = new mutable.ArrayBuilder.ofRef[Dom.Element]
-      elements.sizeHint(entries.size << 1)
-      entries.foreach { case (key, value) =>
-        var keyElem = key match {
-          case x: String  => StringElem(x)
-          case x: Element => x
-        }
-        elements += keyElem += value
+    @implicitNotFound("Key type must be either `String` or a subtype of `Dom.Element`, not `${T}`")
+    sealed trait StringOrElem[T] // phantom type proving that `T` is either `String` or `Dom.Element`
+    implicit def stringStringOrElem: StringOrElem[String]           = null
+    implicit def elementStringOrElem[T <: Element]: StringOrElem[T] = null
+
+    private def construct(entries: Iterator[(AnyRef, Element)], sizeHint: Int = -1): Array[Element] = {
+      val elements = new mutable.ArrayBuilder.ofRef[Element]
+      if (sizeHint >= 0) elements.sizeHint(sizeHint << 1)
+      entries.foreach {
+        case (key: String, value)  => elements += StringElem(key) += value
+        case (key: Element, value) => elements += key += value
+        case _                     => throw new IllegalStateException
       }
-      f(elements.result())
+      elements.result()
     }
 
     final private class KVIterator(elements: Array[Element], startIndex: Int) extends Iterator[Element] {
@@ -404,35 +460,40 @@ object Dom {
         case DIS.Bytes        => transformBytes(elem.asInstanceOf[ByteArrayElem])
         case DIS.BytesStart   => transformBytesStart(elem.asInstanceOf[BytesStreamElem])
         case DIS.SimpleValue  => transformSimpleValue(elem.asInstanceOf[SimpleValueElem])
-        case DIS.ArrayHeader  => transformArrayHeader(elem.asInstanceOf[ArrayElem.Sized])
-        case DIS.ArrayStart   => transformArrayStart(elem.asInstanceOf[ArrayElem.Unsized])
-        case DIS.MapHeader    => transformMapHeader(elem.asInstanceOf[MapElem.Sized])
-        case DIS.MapStart     => transformMapStart(elem.asInstanceOf[MapElem.Unsized])
+        case DIS.ArrayHeader  => transformSizedArray(elem.asInstanceOf[ArrayElem.Sized])
+        case DIS.ArrayStart   => transformUnsizedArray(elem.asInstanceOf[ArrayElem.Unsized])
+        case DIS.MapHeader    => transformSizedMap(elem.asInstanceOf[MapElem.Sized])
+        case DIS.MapStart     => transformUnsizedMap(elem.asInstanceOf[MapElem.Unsized])
         case DIS.Tag          => transformTag(elem.asInstanceOf[TaggedElem])
       }
 
-    def transformNull(): Element                               = NullElem
-    def transformUndefined(): Element                          = UndefinedElem
-    def transformBoolean(elem: BooleanElem): Element           = elem
-    def transformInt(elem: IntElem): Element                   = elem
-    def transformLong(elem: LongElem): Element                 = elem
-    def transformOverLong(elem: OverLongElem): Element         = elem
-    def transformFloat16(elem: Float16Elem): Element           = elem
-    def transformFloat(elem: FloatElem): Element               = elem
-    def transformDouble(elem: DoubleElem): Element             = elem
-    def transformNumberString(elem: NumberStringElem): Element = elem
-    def transformString(elem: StringElem): Element             = transformTextElem(elem)
-    def transformTextStart(elem: TextStreamElem): Element      = transformTextElem(elem)
-    def transformTextElem(elem: AbstractTextElem): Element     = elem
-    def transformBytes(elem: ByteArrayElem): Element           = transformBytesElem(elem)
-    def transformBytesStart(elem: BytesStreamElem): Element    = transformBytesElem(elem)
-    def transformBytesElem(elem: AbstractBytesElem): Element   = elem
-    def transformSimpleValue(elem: SimpleValueElem): Element   = elem
-    def transformTag(elem: TaggedElem): Element                = elem
-    def transformArrayHeader(elem: ArrayElem.Sized): Element   = ArrayElem.Sized(elem.elements.map(this))
-    def transformArrayStart(elem: ArrayElem.Unsized): Element  = ArrayElem.Unsized(elem.elements.map(this))
-    def transformMapHeader(elem: MapElem.Sized): Element       = new MapElem.Sized(elem.elements.map(this))
-    def transformMapStart(elem: MapElem.Unsized): Element      = new MapElem.Unsized(elem.elements.map(this))
+    def transformNull(): Element                                   = NullElem
+    def transformUndefined(): Element                              = UndefinedElem
+    def transformBoolean(elem: BooleanElem): Element               = elem
+    def transformInt(elem: IntElem): Element                       = elem
+    def transformLong(elem: LongElem): Element                     = elem
+    def transformOverLong(elem: OverLongElem): Element             = elem
+    def transformFloat16(elem: Float16Elem): Element               = elem
+    def transformFloat(elem: FloatElem): Element                   = elem
+    def transformDouble(elem: DoubleElem): Element                 = elem
+    def transformNumberString(elem: NumberStringElem): Element     = elem
+    def transformString(elem: StringElem): Element                 = transformTextElem(elem)
+    def transformTextStart(elem: TextStreamElem): Element          = transformTextElem(elem)
+    def transformTextElem(elem: AbstractTextElem): Element         = elem
+    def transformBytes(elem: ByteArrayElem): Element               = transformBytesElem(elem)
+    def transformBytesStart(elem: BytesStreamElem): Element        = transformBytesElem(elem)
+    def transformBytesElem(elem: AbstractBytesElem): Element       = elem
+    def transformSimpleValue(elem: SimpleValueElem): Element       = elem
+    def transformTag(elem: TaggedElem): Element                    = elem
+    def transformSizedArray(elem: ArrayElem.Sized): Element        = ArrayElem.Sized(transformArray(elem.elements))
+    def transformUnsizedArray(elem: ArrayElem.Unsized): Element    = ArrayElem.Unsized(transformArray(elem.elements))
+    def transformArray(elements: Vector[Element]): Vector[Element] = elements.map(this)
+    def transformSizedMap(elem: MapElem.Sized): Element            = MapElem.Sized(transformMapMembers(elem.members))
+    def transformUnsizedMap(elem: MapElem.Unsized): Element        = MapElem.Unsized(transformMapMembers(elem.members))
+
+    def transformMapMembers(members: Iterator[(Element, Element)]): Iterator[(Element, Element)] =
+      members.map(transformMapMember)
+    def transformMapMember(member: (Element, Element)): (Element, Element) = this(member._1) -> this(member._2)
   }
 
   object Transformer {
@@ -472,10 +533,10 @@ object Dom {
       override def transformSimpleValue(elem: SimpleValueElem): Element =
         IntElem(elem.value.value)
 
-      override def transformArrayHeader(elem: ArrayElem.Sized): Element =
+      override def transformSizedArray(elem: ArrayElem.Sized): Element =
         ArrayElem.Unsized(elem.elements.map(this))
 
-      override def transformMapHeader(elem: MapElem.Sized): Element =
+      override def transformSizedMap(elem: MapElem.Sized): Element =
         new MapElem.Unsized(elem.elements.map(this))
     }
   }

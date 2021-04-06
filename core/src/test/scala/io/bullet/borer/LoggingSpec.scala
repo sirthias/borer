@@ -119,10 +119,7 @@ object LoggingSpec extends TestSuite {
 
     "maps" - roundTripLogEquals {
       val tuples = "abc".map(c => c.toString -> StringElem(c.toString))
-      MapElem.Sized(
-        "foo"   -> IntElem(42),
-        "empty" -> MapElem.Sized(),
-        "bar"   -> MapElem.Unsized(tuples.head, tuples.tail: _*))
+      MapElem.Sized("foo" -> IntElem(42), "empty" -> MapElem.Sized.empty, "bar" -> MapElem.Unsized(tuples: _*))
     } {
       """1: {
         |    1/3: "foo"
