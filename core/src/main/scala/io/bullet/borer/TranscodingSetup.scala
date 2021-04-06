@@ -181,9 +181,8 @@ object TranscodingSetup {
           .write(valueToEncode)
           .writeEndOfInput() // doesn't actually write anything but triggers certain validation checks (if configured)
 
-        val reader = new InputReader(Parser.EmptyParser, null, receiverWrapper, config, target)
-        reader.stash = deque
-        val value = decoder.read(reader)
+        val reader = new InputReader(new Parser.DequeParser(deque), null, receiverWrapper, config, target)
+        val value  = decoder.read(reader)
         if (!prefixOnly) reader.readEndOfInput()
         value
       } finally {

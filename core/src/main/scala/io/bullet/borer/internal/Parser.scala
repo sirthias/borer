@@ -42,17 +42,16 @@ private[borer] object Parser {
 
   def nopWrapper[Config]: Wrapper[Config] = _nopWrapper.asInstanceOf[Wrapper[Config]]
 
-  /**
-    * A parser that only ever produces EndOfInput DataItems.
-    */
-  object EmptyParser extends Parser[Array[Byte]] {
+  final class DequeParser(deque: ElementDeque) extends Parser[Array[Byte]] {
     val input      = Input.FromByteArrayProvider(Array.emptyByteArray)
     def valueIndex = 0
 
-    def pull(receiver: Receiver) = {
-      receiver.onEndOfInput()
-      DataItem.EndOfInput
-    }
+    def pull(receiver: Receiver) =
+      if (deque.isEmpty) {
+        receiver.onEndOfInput()
+        DataItem.EndOfInput
+      } else deque.pull(receiver)
+
     def padByte()                                  = ???
     def padDoubleByte(remaining: Int)              = ???
     def padQuadByte(remaining: Int)                = ???
