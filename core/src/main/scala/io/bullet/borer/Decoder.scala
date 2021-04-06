@@ -8,6 +8,9 @@
 
 package io.bullet.borer
 
+import io.bullet.borer.encodings.BaseEncoding
+import io.bullet.borer.internal.Util
+
 import java.lang.{
   Boolean => JBoolean,
   Byte => JByte,
@@ -17,14 +20,9 @@ import java.lang.{
   Short => JShort
 }
 import java.math.{BigDecimal => JBigDecimal, BigInteger => JBigInteger}
-
-import io.bullet.borer.encodings.BaseEncoding
-import io.bullet.borer.internal.Util
-
 import scala.annotation.tailrec
-import scala.collection.compat._
+import scala.collection.{mutable, Factory}
 import scala.collection.immutable.{HashMap, ListMap, TreeMap}
-import scala.collection.mutable
 import scala.reflect.ClassTag
 
 /**

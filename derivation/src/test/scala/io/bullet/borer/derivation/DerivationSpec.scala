@@ -517,8 +517,6 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
     }
 }
 
-// cannot be moved into the DerivationSpec class itself due to
-// https://github.com/scala/bug/issues/10035 not (yet) having been fixed in Scala 2.12
 object ADT {
   sealed trait Animal
   case class Dog(age: Int, name: String)                                     extends Animal
