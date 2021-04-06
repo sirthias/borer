@@ -13,6 +13,7 @@
 * [-](JSON-specifics.md)
 * [-](JSON-performance.md)
 * [-](DOM.md)
+* [-](transcoding.md)
 * [-](debugging.md)
 
 @@@

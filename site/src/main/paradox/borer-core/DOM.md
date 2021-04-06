@@ -17,11 +17,35 @@ JSON
 
 
 Any [CBOR] or [JSON] document can be deserialized into a `io.bullet.borer.Dom.Element`, which can then be queried or
-transformed in any way, and potentially written back to [CBOR] or [JSON].<br>
+transformed in any way, and potentially written back to [CBOR] or [JSON].
+Make sure to also look at _borer_'s built-in support for efficient @ref:[transcoding](transcoding.md) if that is
+something you are interested in.<br>
 
 As such, the _borer_ DOM can also be used to transform [JSON] to [CBOR], e.g. like this:
 
-@@snip [-]($test$/DomSpec.scala) { #json-to-cbor }  
+@@snip [-]($test$/DomSpec.scala) { #json-to-cbor }
+
+
+DOM Transformation
+------------------
+
+Having a DOM representation of a particular data structure (e.g. nested case class instances representing application
+state) opens up a variety of opportunities for runtime inspection and/or transformation of that data structure,
+which are often not that easy to achieve otherwise.
+
+One solution to such tasks can be "optics" (like Lenses) for which dedicated libraries like [Monocle] exist.
+They are an excellent tool if the point of interest/change is deep and relatively small compared to the total size of
+the overage data structure.
+
+However, if many changes need to be done or the data structure must be walked in its completion (for example in order to
+gather some statistics) transcoding into a DOM and working on that alternate representation could be easier.
+
+_borer_ provides one relatively simple tool for transforming an existing DOM structure:<br>
+the @github[DOM.Transformer](/core/src/main/scala/io/bullet/borer/Dom.scala#L444) trait. 
+
+See the chapter on @ref:[transcoding](transcoding.md) for an example of how to use it.
+
 
   [CBOR]: http://cbor.io/
   [JSON]: http://json.org/
+  [Monocle]: https://www.optics.dev/Monocle/
