@@ -192,8 +192,8 @@ addCommandsAlias(
 
 /////////////////////// DEPENDENCIES /////////////////////////
 
-val `akka-actor`        = Def.setting("com.typesafe.akka"      %%  "akka-actor-typed"        % "2.6.13")
-val `akka-stream`       = Def.setting("com.typesafe.akka"      %%  "akka-stream"             % "2.6.13")
+val `akka-actor`        = Def.setting("com.typesafe.akka"      %%  "akka-actor-typed"        % "2.6.14")
+val `akka-stream`       = Def.setting("com.typesafe.akka"      %%  "akka-stream"             % "2.6.14")
 val `akka-http`         = Def.setting("com.typesafe.akka"      %%  "akka-http"               % "10.2.4")
 val `cats-core`         = Def.setting("org.typelevel"          %%% "cats-core"               % "2.4.2")
 val `circe-core`        = Def.setting("io.circe"               %%% "circe-core"              % "0.13.0")
