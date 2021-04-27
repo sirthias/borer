@@ -314,7 +314,7 @@ object MapBasedCodecs {
                     ${varName(p)} = ${readField(p)}
                     ${setMaskBit(p)}"""
                 if (start < mid) {
-                  q"""def $methodName(): Unit = {
+                  q"""def $methodName(): scala.Unit = {
                   val cmp = ${r("tryRead", key, "Compare")}
                   if (cmp < 0) ${readFields(start, mid)}
                   else if (cmp > 0) ${readFields(mid + 1, end)}

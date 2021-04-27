@@ -104,5 +104,13 @@ object MiscSpec extends AbstractBorerSpec {
         verifyEncoding(Foo(42), """{"x":42,"y":"bar"}""")
       }
     }
+
+    "Custom 'Unit' type" - {
+      sealed trait Unit
+      implicit val unitDecoder: Decoder[Unit] = Decoder(_ => null)
+
+      final case class Foo(value: Double, unit: Unit)
+      implicit val fooDecoder: Decoder[Foo] = MapBasedCodecs.deriveDecoder
+    }
   }
 }
