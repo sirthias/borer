@@ -166,7 +166,7 @@ object MapBasedCodecs {
               val key           = p.key()
               val writeKey      = q"w.${TermName(s"write${key.productPrefix}")}(${literal(key.value)})"
               val isBasic       = basicParams contains p
-              val method        = TermName(s"write${if (isBasic) p.paramType.tpe.toString else ""}")
+              val method        = TermName(s"write${if (isBasic) p.paramType.tpe.dealias.toString else ""}")
               val rawWriteEntry = q"$writeKey.$method(value.${p.name})"
               if (isBasic) {
                 if (p.defaultValueMethod.isDefined) q"if (${encName(p, "o")}) $rawWriteEntry" else rawWriteEntry
@@ -251,7 +251,7 @@ object MapBasedCodecs {
               params.filterNot(p => p.isBasicType && decodersForParams(p).exists(isDefinedOn(_, decoderCompanion)))
 
             def readField(p: CaseParam) = {
-              val tpe = p.paramType.tpe
+              val tpe = p.paramType.tpe.dealias
               if (nonBasicParams contains p) q"r.read[$tpe]()(${decName(p)})" else q"r.${TermName(s"read$tpe")}()"
             }
 

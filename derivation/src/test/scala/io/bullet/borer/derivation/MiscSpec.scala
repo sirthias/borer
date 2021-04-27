@@ -107,10 +107,18 @@ object MiscSpec extends AbstractBorerSpec {
 
     "Custom 'Unit' type" - {
       sealed trait Unit
-      implicit val unitDecoder: Decoder[Unit] = Decoder(_ => null)
+      implicit val unitDecoder: Decoder[Unit] = Decoder { r => r.readNull(); null }
 
       final case class Foo(value: Double, unit: Unit)
       implicit val fooDecoder: Decoder[Foo] = MapBasedCodecs.deriveDecoder
+      verifyDecoding("null", null)
+    }
+
+    "Type alias" - {
+      type Foo = String
+      case class Bar(bar: Foo)
+      implicit val barCodec: Codec[Bar] = MapBasedCodecs.deriveCodec
+      roundTrip("""{"bar":"yeah"}""", Bar("yeah"))
     }
   }
 }
