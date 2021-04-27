@@ -1,3 +1,10 @@
+Version 1.7.1 (2021-04-27)
+--------------------------
+
+- fixex type aliasing of basic types tripping up derivation (#388)
+- fixed macro hygiene problem around `scala.Unit` (#367)
+
+
 Version 1.7.0 (2021-04-06)
 --------------------------
 
