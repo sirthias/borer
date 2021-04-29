@@ -13,7 +13,8 @@ import io.bullet.borer.encodings.BaseEncoding
 import java.util
 import scala.annotation.{implicitNotFound, switch, tailrec}
 import scala.collection.{immutable, mutable, MapFactory}
-import scala.collection.immutable.{ArraySeq, HashMap}
+import scala.collection.compat.immutable.ArraySeq
+import scala.collection.immutable.HashMap
 import scala.util.hashing.MurmurHash3
 
 /**

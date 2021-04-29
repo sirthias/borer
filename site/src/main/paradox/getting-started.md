@@ -28,11 +28,11 @@ The artifacts for _borer_ live on Maven Central and can be tied into your projec
   group5="io.bullet" artifact5="borer-compat-scodec_2.13" version6="$project.version$"
 }
 
-_borer_ is available for [Scala] 2.13 and [scala.js].
+_borer_ is available for [Scala] 2.12 and 2.13 as well as [scala.js].
 
   [Scala]: https://www.scala-lang.org/
   [scala.js]: https://www.scala-js.org/
-  [akka-actor]: https://doc.akka.io/docs/akka/2.6/actors.html#dependency
+  [akka-actor]: https://doc.akka.io/docs/akka/2.5/actors.html#dependency
   [akka-stream]: https://doc.akka.io/docs/akka/current/stream/index.html
   [akka-http]: https://doc.akka.io/docs/akka-http/current/index.html
   [cats]: https://typelevel.org/cats/

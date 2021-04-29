@@ -2,6 +2,7 @@ import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import sbt._
 
 def scala213 = "2.13.5"
+def scala212 = "2.12.13"
 
 lazy val commonSettings = Seq(
   organization := "io.bullet",
@@ -13,7 +14,7 @@ lazy val commonSettings = Seq(
   scmInfo := Some(ScmInfo(url("https://github.com/sirthias/borer/"), "scm:git:git@github.com:sirthias/borer.git")),
 
   scalaVersion := scala213,
-  crossScalaVersions := Seq(scala213),
+  crossScalaVersions := Seq(scala212, scala213),
 
   scalacOptions ++= Seq(
     "-deprecation",
@@ -28,9 +29,24 @@ lazy val commonSettings = Seq(
     "-Ybackend-parallelism", "8",
     "-Ywarn-unused:imports,-patvars,-privates,-locals,-implicits,-explicits",
     "-Ycache-macro-class-loader:last-modified",
-    "-Xfatal-warnings"
   ),
   
+  scalacOptions ++= {
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, 12)) => Seq(
+        "-Yno-adapted-args",
+        "-Ywarn-inaccessible",
+        "-Ywarn-infer-any",
+        "-Ywarn-nullary-override",
+        "-Ywarn-nullary-unit",
+        "-Xfuture",
+        "-Xsource:2.13",
+      )
+      case Some((2, 13)) => Seq("-Xfatal-warnings")
+      case x => sys.error(s"unsupported scala version: $x")
+    }
+  },
+
   Compile / console / scalacOptions ~= (_ filterNot(o => o.contains("warn") || o.contains("Xlint"))),
   Test / console / scalacOptions := (Compile / console / scalacOptions).value,
   Compile / doc / scalacOptions += "-no-link-warnings",
@@ -172,6 +188,12 @@ addCommandsAlias(
     "test",
     "mimaReportBinaryIssues",
 
+    // Scala 2.12
+    s"++$scala212",
+    "test:compile",
+    "test",
+    "mimaReportBinaryIssues",
+
     // establish test coverage (only on JVM projects)
     "coverage",
     "core/test",
@@ -195,6 +217,7 @@ addCommandsAlias(
 val `akka-actor`        = Def.setting("com.typesafe.akka"      %%  "akka-actor-typed"        % "2.6.14")
 val `akka-stream`       = Def.setting("com.typesafe.akka"      %%  "akka-stream"             % "2.6.14")
 val `akka-http`         = Def.setting("com.typesafe.akka"      %%  "akka-http"               % "10.2.4")
+val `collection-compat` = Def.setting("org.scala-lang.modules" %%% "scala-collection-compat" % "2.4.3")
 val `cats-core`         = Def.setting("org.typelevel"          %%% "cats-core"               % "2.6.0")
 val `circe-core`        = Def.setting("io.circe"               %%% "circe-core"              % "0.13.0")
 val `circe-parser`      = Def.setting("io.circe"               %%% "circe-parser"            % "0.13.0")
@@ -237,7 +260,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .settings(
     moduleName := "borer-core",
     macroParadise,
-    libraryDependencies ++= Seq(utest.value),
+    libraryDependencies ++= Seq(`collection-compat`.value, utest.value),
 
     // point sbt-boilerplate to the common "project"
     Compile / boilerplateSource := baseDirectory.value.getParentFile / "src" / "main" / "boilerplate",
@@ -282,7 +305,11 @@ lazy val `compat-cats` = crossProject(JSPlatform, JVMPlatform)
   .settings(mimaSettings)
   .settings(
     moduleName := "borer-compat-cats",
-    libraryDependencies ++= Seq(`cats-core`.value, utest.value)
+    libraryDependencies ++= Seq(
+      `collection-compat`.value,
+      `cats-core`.value,
+      utest.value
+    )
   )
   .jsSettings(scalajsSettings: _*)
 
@@ -303,6 +330,7 @@ lazy val `compat-circe` = crossProject(JSPlatform, JVMPlatform)
   .settings(
     moduleName := "borer-compat-circe",
     libraryDependencies ++= Seq(
+      `collection-compat`.value,
       `circe-core`.value,
       `circe-parser`.value % "test",
       `circe-derivation`.value % "test",

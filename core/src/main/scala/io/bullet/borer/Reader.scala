@@ -9,11 +9,13 @@
 package io.bullet.borer
 
 import java.nio.charset.StandardCharsets
+
 import io.bullet.borer.internal.{ElementDeque, Parser, Receptacle, Util}
 import io.bullet.borer.json.JsonParser
 
 import scala.annotation.tailrec
-import scala.collection.{mutable, Factory}
+import scala.collection.mutable
+import scala.collection.compat._
 
 /**
   * Stateful, mutable abstraction for reading a stream of CBOR or JSON data from the given `input`.
