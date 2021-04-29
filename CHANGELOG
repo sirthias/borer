@@ -1,7 +1,14 @@
+Version 1.7.2 (2021-04-29)
+--------------------------
+
+- fixed broken `Dom.MapElem.to[Map]` and `Dom.MapElem.toStringKeyed[Map]`
+- re-enabled cross-building for Scala 2.12 (removed in 1.7.0)
+
+
 Version 1.7.1 (2021-04-27)
 --------------------------
 
-- fixex type aliasing of basic types tripping up derivation (#388)
+- fixed type aliasing of basic types tripping up derivation (#388)
 - fixed macro hygiene problem around `scala.Unit` (#367)
 
 
