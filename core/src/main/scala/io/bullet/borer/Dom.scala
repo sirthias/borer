@@ -12,8 +12,9 @@ import io.bullet.borer.encodings.BaseEncoding
 
 import java.util
 import scala.annotation.{implicitNotFound, switch, tailrec}
-import scala.collection.{immutable, mutable, MapFactory}
+import scala.collection.{immutable, mutable}
 import scala.collection.compat.immutable.ArraySeq
+import scala.collection.compat._
 import scala.collection.immutable.HashMap
 import scala.util.hashing.MurmurHash3
 
@@ -201,23 +202,25 @@ object Dom {
       rec(HashMap.empty)
     }
 
-    final def to[M[A, B] <: Map[A, B]](implicit mf: MapFactory[M]): M[Element, Element] = {
-      val b = mf.newBuilder[Element, Element]
-      b.addAll(keys zip values)
+    final def to[M[A, B] <: Map[A, B]](
+        implicit fac: Factory[(Element, Element), M[Element, Element]]): M[Element, Element] = {
+      val b = fac.newBuilder
+      b ++= (keys zip values)
       b.result()
     }
 
-    final def toStringKeyed[M[A, B] <: Map[A, B]](implicit mf: MapFactory[M]): Either[Element, M[String, Element]] = {
+    final def toStringKeyed[M[A, B] <: Map[A, B]](
+        implicit fac: Factory[(String, Element), M[String, Element]]): Either[Element, M[String, Element]] = {
       val k = keys
       val v = values
       @tailrec def rec(b: mutable.Builder[(String, Element), M[String, Element]]): Either[Element, M[String, Element]] =
         if (k.hasNext) {
           k.next() match {
-            case StringElem(x) => rec(b.addOne(x -> v.next()))
+            case StringElem(x) => rec(b += (x -> v.next()))
             case x             => Left(x)
           }
         } else Right(b.result())
-      rec(mf.newBuilder[String, Element])
+      rec(fac.newBuilder)
     }
 
     final override def toString =
