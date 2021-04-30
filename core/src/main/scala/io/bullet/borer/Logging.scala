@@ -85,25 +85,24 @@ object Logging {
     * A [[Logger]] which formats each incoming element to it's own log line.
     */
   abstract class LineFormatLogger extends Logger {
-    import java.lang.Long.toHexString
 
     def onNull(): Unit                                   = show("null")
     def onUndefined(): Unit                              = show("undefined")
     def onBool(value: Boolean): Unit                     = show(value.toString)
     def onInt(value: Int): Unit                          = show(value.toString)
     def onLong(value: Long): Unit                        = show(s"${value}L")
-    def onOverLong(negative: Boolean, value: Long): Unit = show((if (negative) "-0x" else "0x") + toHexString(value))
+    def onOverLong(negative: Boolean, value: Long): Unit = show(Dom.OverLongElem(negative, value).render)
     def onFloat16(value: Float): Unit                    = show(s"${Util.doubleToString(value.toDouble)}f16")
     def onFloat(value: Float): Unit                      = show(s"${Util.doubleToString(value.toDouble)}f")
     def onDouble(value: Double): Unit                    = show(Util.doubleToString(value))
     def onDecimal(integer: Long, fraction: Int): Unit    = show(s"$integer.${fraction}d")
     def onNumberString(value: String): Unit              = show(value + 's')
     def onBytes[Bytes: ByteAccess](value: Bytes): Unit   = show(formatBytes("BYTES[", value))
-    def onBytesStart(): Unit                             = show("BYTES-STREAM[")
+    def onBytesStart(): Unit                             = show("BYTES*[")
     def onString(value: String): Unit                    = show(formatString(value))
     def onChars(buffer: Array[Char], length: Int): Unit  = show(formatString(new String(buffer, 0, length)))
     def onText[Bytes: ByteAccess](value: Bytes): Unit    = show(formatString(value))
-    def onTextStart(): Unit                              = show("TEXT-STREAM[")
+    def onTextStart(): Unit                              = show("TEXT*[")
     def onArrayHeader(length: Long): Unit                = show(if (length > 0) "[" else "[]")
     def onArrayStart(): Unit                             = show("[")
     def onMapHeader(length: Long): Unit                  = show(if (length > 0) "{" else "{}")

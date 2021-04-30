@@ -37,8 +37,8 @@ object LoggingSpec extends TestSuite {
         |     3/11: true
         |     4/11: 42
         |     5/11: 2147483648L
-        |     6/11: 0xffffffffffffffff
-        |     7/11: -0xffffffffffffffff
+        |     6/11: 18446744073709551615LL
+        |     7/11: -18446744073709551616LL
         |     8/11: 1.0f16
         |     9/11: 100000.0f
         |    10/11: 1.6
@@ -57,7 +57,7 @@ object LoggingSpec extends TestSuite {
       """1: [
         |    1/3: BYTES[41 42 43 44 45 46 47 48]
         |    2/3: BYTES[41 42 43 44 45 46 47 48 ...]
-        |    3/3: BYTES-STREAM[
+        |    3/3: BYTES*[
         |        1: BYTES[41 42 43 44]
         |        2: BYTES[45 46 47 48]
         |        3: BYTES[49 4A 4B 4C]
@@ -80,7 +80,7 @@ object LoggingSpec extends TestSuite {
       """1: [
         |    1/3: "ABCDEFGH"
         |    2/3: "ABCDEFGH..."
-        |    3/3: TEXT-STREAM[
+        |    3/3: TEXT*[
         |        1: "ABCD"
         |        2: "EFGH"
         |        3: "IJKL"

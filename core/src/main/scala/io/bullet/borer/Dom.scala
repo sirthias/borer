@@ -588,16 +588,16 @@ object Dom {
     def renderUndefined(c: Context): Context                   = c.append("undefined")
     def renderBoolean(c: Context, value: Boolean): Context     = c.append(value)
     def renderInt(c: Context, value: Int): Context             = c.append(value)
-    def renderLong(c: Context, value: Long): Context           = c.append(value).append('l')
+    def renderLong(c: Context, value: Long): Context           = c.append(value).append('L')
     def renderFloat16(c: Context, value: Float): Context       = c.append(value).append("f16")
     def renderFloat(c: Context, value: Float): Context         = c.append(value).append('f')
     def renderDouble(c: Context, value: Double): Context       = c.append(value).append('d')
-    def renderNumberString(c: Context, value: String): Context = c.append(value).append('n')
+    def renderNumberString(c: Context, value: String): Context = c.append(value).append('s')
 
     def renderOverLong(c: Context, elem: OverLongElem): Context = {
       val value = new java.math.BigInteger(1, Util.toBigEndianBytes(elem.value))
       val big   = if (elem.negative) value.not else value
-      c.append(big.toString).append("ol")
+      c.append(big.toString).append("LL")
     }
 
     def renderString(c: Context, s: String): Context =
@@ -632,7 +632,7 @@ object Dom {
       if (bytes.nonEmpty) {
         val res = bytes.iterator
           .slice(1, bytesCutoffLength)
-          .foldLeft(renderByte(c, bytes.head))((c, x) => renderByte(renderByteSep(c), x))
+          .foldLeft(renderByte(c.append("BYTES["), bytes.head))((c, x) => renderByte(renderByteSep(c), x))
         (if (bytes.length <= bytesCutoffLength) res else renderByteSep(res).append("...")).append(']')
       } else c.append("BYTES[]")
 
@@ -643,9 +643,9 @@ object Dom {
       if (values.nonEmpty) {
         values.iterator
           .slice(1, byteStreamCutoffLength)
-          .foldLeft(renderBytesElem(c.append("BYTES["), values.head))((c, x) => renderBytesElem(c.append(", "), x))
+          .foldLeft(renderBytesElem(c.append("BYTES*["), values.head))((c, x) => renderBytesElem(c.append(", "), x))
           .append(if (values.size <= byteStreamCutoffLength) "]" else ", ...]")
-      } else c.append("BYTES[]")
+      } else c.append("BYTES*[]")
 
     def renderBytesElem(c: Context, elem: AbstractBytesElem): Context =
       elem match {
