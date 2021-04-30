@@ -9,8 +9,8 @@
 package io.bullet.borer
 
 import io.bullet.borer.encodings.BaseEncoding
+import io.bullet.borer.internal.Util
 
-import java.util
 import scala.annotation.{implicitNotFound, switch, tailrec}
 import scala.collection.{immutable, mutable}
 import scala.collection.compat.immutable.ArraySeq
@@ -27,7 +27,9 @@ import scala.util.hashing.MurmurHash3
 object Dom {
   import DataItem.{Shifts => DIS}
 
-  sealed abstract class Element(val dataItemShift: Int)
+  sealed abstract class Element(val dataItemShift: Int) {
+    def render: String = Renderer.default.render(this)
+  }
 
   final case object NullElem                   extends Element(DIS.Null)
   final case object UndefinedElem              extends Element(DIS.Undefined)
@@ -52,27 +54,27 @@ object Dom {
     def compact: Array[Byte]
   }
 
-  final case class ByteArrayElem(value: Array[Byte]) extends AbstractBytesElem(DIS.Bytes) {
-    def byteCount                            = value.length.toLong
-    def bytesIterator: Iterator[Array[Byte]] = Iterator.single(value)
-    def compact                              = value
+  final case class ByteArrayElem(bytes: Array[Byte]) extends AbstractBytesElem(DIS.Bytes) {
+    def byteCount                            = bytes.length.toLong
+    def bytesIterator: Iterator[Array[Byte]] = Iterator.single(bytes)
+    def compact                              = bytes
 
     override def toString = s"$productPrefix($byteCount bytes)"
 
-    override def hashCode() = util.Arrays.hashCode(value)
+    override def hashCode() = java.util.Arrays.hashCode(bytes)
 
     override def equals(obj: Any) =
       obj match {
-        case ByteArrayElem(x) => util.Arrays.equals(value, x)
+        case ByteArrayElem(x) => java.util.Arrays.equals(bytes, x)
         case _                => false
       }
   }
 
-  final case class BytesStreamElem(value: Vector[AbstractBytesElem]) extends AbstractBytesElem(DIS.BytesStart) {
-    def byteCount = value.foldLeft(0L)((acc, x) => acc + x.byteCount)
+  final case class BytesStreamElem(elems: Vector[AbstractBytesElem]) extends AbstractBytesElem(DIS.BytesStart) {
+    def byteCount = elems.foldLeft(0L)((acc, x) => acc + x.byteCount)
 
     def bytesIterator: Iterator[Array[Byte]] =
-      value.foldLeft[Iterator[Array[Byte]]](Iterator.empty)((acc, x) => acc ++ x.bytesIterator)
+      elems.foldLeft[Iterator[Array[Byte]]](Iterator.empty)((acc, x) => acc ++ x.bytesIterator)
 
     def compact: Array[Byte] = {
       val longSize = byteCount
@@ -102,11 +104,11 @@ object Dom {
     def compact                          = value
   }
 
-  final case class TextStreamElem(value: Vector[AbstractTextElem]) extends AbstractTextElem(DIS.TextStart) {
-    def charCount = value.foldLeft(0L)((acc, x) => acc + x.charCount)
+  final case class TextStreamElem(elems: Vector[AbstractTextElem]) extends AbstractTextElem(DIS.TextStart) {
+    def charCount = elems.foldLeft(0L)((acc, x) => acc + x.charCount)
 
     def stringIterator: Iterator[String] =
-      value.foldLeft[Iterator[String]](Iterator.empty)((acc, x) => acc ++ x.stringIterator)
+      elems.foldLeft[Iterator[String]](Iterator.empty)((acc, x) => acc ++ x.stringIterator)
 
     def compact: String = {
       val longSize = charCount
@@ -122,13 +124,13 @@ object Dom {
   final case class SimpleValueElem(value: SimpleValue) extends Element(DIS.SimpleValue)
 
   sealed abstract class ArrayElem(dataItem: Int) extends Element(dataItem) {
-    def elements: Vector[Element]
+    def elems: Vector[Element]
   }
 
   object ArrayElem {
 
-    final case class Sized(elements: Vector[Element]) extends ArrayElem(DIS.ArrayHeader) {
-      override def toString = elements.mkString("[", ", ", "]")
+    final case class Sized(elems: Vector[Element]) extends ArrayElem(DIS.ArrayHeader) {
+      override def toString = elems.mkString("[", ", ", "]")
     }
 
     object Sized {
@@ -136,8 +138,8 @@ object Dom {
       def apply(elements: Element*) = new Sized(elements.toVector)
     }
 
-    final case class Unsized(elements: Vector[Element]) extends ArrayElem(DIS.ArrayStart) {
-      override def toString = elements.mkString("*[", ", ", "]")
+    final case class Unsized(elems: Vector[Element]) extends ArrayElem(DIS.ArrayStart) {
+      override def toString = elems.mkString("*[", ", ", "]")
     }
 
     object Unsized {
@@ -146,15 +148,15 @@ object Dom {
     }
   }
 
-  sealed abstract class MapElem(private[Dom] val elements: Array[Element], dataItem: Int) extends Element(dataItem) {
-    if ((elements.length & 1) != 0) throw new IllegalArgumentException
+  sealed abstract class MapElem(private[Dom] val elems: Array[Element], dataItem: Int) extends Element(dataItem) {
+    if ((elems.length & 1) != 0) throw new IllegalArgumentException
 
-    @inline final def size: Int                                        = elements.length >> 1
-    @inline final def elementsInterleaved: IndexedSeq[Element]         = ArraySeq.unsafeWrapArray(elements)
+    @inline final def size: Int                                        = elems.length >> 1
+    @inline final def elementsInterleaved: IndexedSeq[Element]         = ArraySeq.unsafeWrapArray(elems)
     @inline final def isEmpty                                          = false
     @inline final def get: (Int, Iterator[Element], Iterator[Element]) = (size, keys, values)
-    @inline final def keys: Iterator[Element]                          = new MapElem.KVIterator(elements, 0)
-    @inline final def values: Iterator[Element]                        = new MapElem.KVIterator(elements, 1)
+    @inline final def keys: Iterator[Element]                          = new MapElem.KVIterator(elems, 0)
+    @inline final def values: Iterator[Element]                        = new MapElem.KVIterator(elems, 1)
 
     final def members: Iterator[(Element, Element)] =
       keys.zip(values)
@@ -164,9 +166,9 @@ object Dom {
 
     def apply(key: String): Option[Element] = {
       @tailrec def rec(ix: Int): Option[Element] =
-        if (ix < elements.length) {
-          elements(ix) match {
-            case StringElem(`key`) => Some(elements(ix + 1))
+        if (ix < elems.length) {
+          elems(ix) match {
+            case StringElem(`key`) => Some(elems(ix + 1))
             case _                 => rec(ix + 2)
           }
         } else None
@@ -175,7 +177,7 @@ object Dom {
 
     def apply(key: Element): Option[Element] = {
       @tailrec def rec(ix: Int): Option[Element] =
-        if (ix < elements.length) if (elements(ix) == key) Some(elements(ix + 1)) else rec(ix + 2) else None
+        if (ix < elems.length) if (elems(ix) == key) Some(elems(ix + 1)) else rec(ix + 2) else None
       rec(0)
     }
 
@@ -233,14 +235,14 @@ object Dom {
 
     final override def hashCode() = {
       import scala.runtime.Statics.{finalizeHash, mix}
-      finalizeHash(mix(mix(mix(-889275714, size), MurmurHash3.arrayHash(elements)), dataItem), 3)
+      finalizeHash(mix(mix(mix(-889275714, size), MurmurHash3.arrayHash(elems)), dataItem), 3)
     }
 
     final override def equals(obj: Any) =
       obj match {
         case that: MapElem =>
-          this.dataItemShift == that.dataItemShift && util.Arrays
-            .equals(this.elements.asInstanceOf[Array[Object]], that.elements.asInstanceOf[Array[Object]])
+          this.dataItemShift == that.dataItemShift && java.util.Arrays
+            .equals(this.elems.asInstanceOf[Array[Object]], that.elems.asInstanceOf[Array[Object]])
         case _ => false
       }
   }
@@ -333,30 +335,30 @@ object Dom {
 
         case DIS.String => w.writeString(x.asInstanceOf[StringElem].value)
         case DIS.TextStart =>
-          x.asInstanceOf[TextStreamElem].value.foldLeft(w.writeTextStart())(writeElement).writeBreak()
+          x.asInstanceOf[TextStreamElem].elems.foldLeft(w.writeTextStart())(writeElement).writeBreak()
 
-        case DIS.Bytes => w.writeBytes(x.asInstanceOf[ByteArrayElem].value)
+        case DIS.Bytes => w.writeBytes(x.asInstanceOf[ByteArrayElem].bytes)
         case DIS.BytesStart =>
-          x.asInstanceOf[BytesStreamElem].value.foldLeft(w.writeBytesStart())(writeElement).writeBreak()
+          x.asInstanceOf[BytesStreamElem].elems.foldLeft(w.writeBytesStart())(writeElement).writeBreak()
 
         case DIS.SimpleValue => w.write(x.asInstanceOf[SimpleValueElem].value)
 
         case DIS.ArrayHeader =>
           val a = x.asInstanceOf[ArrayElem.Sized]
-          a.elements.foldLeft(w.writeArrayHeader(a.elements.size))(writeElement)
+          a.elems.foldLeft(w.writeArrayHeader(a.elems.size))(writeElement)
         case DIS.ArrayStart =>
-          x.asInstanceOf[ArrayElem.Unsized].elements.foldLeft(w.writeArrayStart())(writeElement).writeBreak()
+          x.asInstanceOf[ArrayElem.Unsized].elems.foldLeft(w.writeArrayStart())(writeElement).writeBreak()
 
         case DIS.MapHeader =>
           val m     = x.asInstanceOf[MapElem.Sized]
-          val array = m.elements
+          val array = m.elems
           @tailrec def rec(w: Writer, ix: Int): w.type =
             if (ix < array.length) rec(w.write(array(ix)).write(array(ix + 1)), ix + 2) else w
           rec(w.writeMapHeader(m.size), 0)
 
         case DIS.MapStart =>
           val m     = x.asInstanceOf[MapElem.Unsized]
-          val array = m.elements
+          val array = m.elems
           @tailrec def rec(w: Writer, ix: Int): w.type =
             if (ix < array.length) rec(w.write(array(ix)).write(array(ix + 1)), ix + 2) else w
           rec(w.writeMapStart(), 0).writeBreak()
@@ -461,9 +463,9 @@ object Dom {
         case DIS.Double       => transformDouble(elem.asInstanceOf[DoubleElem])
         case DIS.NumberString => transformNumberString(elem.asInstanceOf[NumberStringElem])
         case DIS.String       => transformString(elem.asInstanceOf[StringElem])
-        case DIS.TextStart    => transformTextStart(elem.asInstanceOf[TextStreamElem])
+        case DIS.TextStart    => transformTextStream(elem.asInstanceOf[TextStreamElem])
         case DIS.Bytes        => transformBytes(elem.asInstanceOf[ByteArrayElem])
-        case DIS.BytesStart   => transformBytesStart(elem.asInstanceOf[BytesStreamElem])
+        case DIS.BytesStart   => transformBytesStream(elem.asInstanceOf[BytesStreamElem])
         case DIS.SimpleValue  => transformSimpleValue(elem.asInstanceOf[SimpleValueElem])
         case DIS.ArrayHeader  => transformSizedArray(elem.asInstanceOf[ArrayElem.Sized])
         case DIS.ArrayStart   => transformUnsizedArray(elem.asInstanceOf[ArrayElem.Unsized])
@@ -483,15 +485,15 @@ object Dom {
     def transformDouble(elem: DoubleElem): Element                 = elem
     def transformNumberString(elem: NumberStringElem): Element     = elem
     def transformString(elem: StringElem): Element                 = transformTextElem(elem)
-    def transformTextStart(elem: TextStreamElem): Element          = transformTextElem(elem)
+    def transformTextStream(elem: TextStreamElem): Element         = transformTextElem(elem)
     def transformTextElem(elem: AbstractTextElem): Element         = elem
     def transformBytes(elem: ByteArrayElem): Element               = transformBytesElem(elem)
-    def transformBytesStart(elem: BytesStreamElem): Element        = transformBytesElem(elem)
+    def transformBytesStream(elem: BytesStreamElem): Element       = transformBytesElem(elem)
     def transformBytesElem(elem: AbstractBytesElem): Element       = elem
     def transformSimpleValue(elem: SimpleValueElem): Element       = elem
     def transformTag(elem: TaggedElem): Element                    = elem
-    def transformSizedArray(elem: ArrayElem.Sized): Element        = ArrayElem.Sized(transformArray(elem.elements))
-    def transformUnsizedArray(elem: ArrayElem.Unsized): Element    = ArrayElem.Unsized(transformArray(elem.elements))
+    def transformSizedArray(elem: ArrayElem.Sized): Element        = ArrayElem.Sized(transformArray(elem.elems))
+    def transformUnsizedArray(elem: ArrayElem.Unsized): Element    = ArrayElem.Unsized(transformArray(elem.elems))
     def transformArray(elements: Vector[Element]): Vector[Element] = elements.map(this)
     def transformSizedMap(elem: MapElem.Sized): Element            = MapElem.Sized(transformMapMembers(elem.members))
     def transformUnsizedMap(elem: MapElem.Unsized): Element        = MapElem.Unsized(transformMapMembers(elem.members))
@@ -532,17 +534,220 @@ object Dom {
       override def transformBytesElem(elem: AbstractBytesElem): Element =
         StringElem(new String(bytesEncoding.encode(elem.compact)))
 
-      override def transformTextStart(elem: TextStreamElem) =
+      override def transformTextStream(elem: TextStreamElem) =
         StringElem(elem.compact)
 
       override def transformSimpleValue(elem: SimpleValueElem): Element =
         IntElem(elem.value.value)
 
       override def transformSizedArray(elem: ArrayElem.Sized): Element =
-        ArrayElem.Unsized(elem.elements.map(this))
+        ArrayElem.Unsized(elem.elems.map(this))
 
       override def transformSizedMap(elem: MapElem.Sized): Element =
-        new MapElem.Unsized(elem.elements.map(this))
+        new MapElem.Unsized(elem.elems.map(this))
     }
+  }
+
+  class Renderer {
+    import Renderer.Context
+
+    def stringCutoffLength: Int     = 100
+    def textStreamCutoffLength: Int = 100
+    def bytesCutoffLength: Int      = 100
+    def byteStreamCutoffLength: Int = 100
+    def arrayCutoffLength: Int      = 20
+    def mapCutoffLength: Int        = 20
+
+    def render(elem: Element): String = render(new Context(new java.lang.StringBuilder, 0), elem).sb.toString
+
+    def render(c: Context, elem: Element): Context =
+      (elem.dataItemShift: @switch) match {
+        case DIS.Null         => renderNull(c)
+        case DIS.Undefined    => renderUndefined(c)
+        case DIS.Boolean      => renderBoolean(c, elem.asInstanceOf[BooleanElem].value)
+        case DIS.Int          => renderInt(c, elem.asInstanceOf[IntElem].value)
+        case DIS.Long         => renderLong(c, elem.asInstanceOf[LongElem].value)
+        case DIS.OverLong     => renderOverLong(c, elem.asInstanceOf[OverLongElem])
+        case DIS.Float16      => renderFloat16(c, elem.asInstanceOf[Float16Elem].value)
+        case DIS.Float        => renderFloat(c, elem.asInstanceOf[FloatElem].value)
+        case DIS.Double       => renderDouble(c, elem.asInstanceOf[DoubleElem].value)
+        case DIS.NumberString => renderNumberString(c, elem.asInstanceOf[NumberStringElem].value)
+        case DIS.String       => renderString(c, elem.asInstanceOf[StringElem].value)
+        case DIS.TextStart    => renderTextStream(c, elem.asInstanceOf[TextStreamElem].elems)
+        case DIS.Bytes        => renderBytes(c, elem.asInstanceOf[ByteArrayElem].bytes)
+        case DIS.BytesStart   => renderBytesStream(c, elem.asInstanceOf[BytesStreamElem].elems)
+        case DIS.SimpleValue  => renderSimpleValue(c, elem.asInstanceOf[SimpleValueElem].value)
+        case DIS.ArrayHeader  => renderSizedArray(c, elem.asInstanceOf[ArrayElem.Sized])
+        case DIS.ArrayStart   => renderUnsizedArray(c, elem.asInstanceOf[ArrayElem.Unsized])
+        case DIS.MapHeader    => renderSizedMap(c, elem.asInstanceOf[MapElem.Sized])
+        case DIS.MapStart     => renderUnsizedMap(c, elem.asInstanceOf[MapElem.Unsized])
+        case DIS.Tag          => renderTag(c, elem.asInstanceOf[TaggedElem])
+      }
+
+    def renderNull(c: Context): Context                        = c.append("null")
+    def renderUndefined(c: Context): Context                   = c.append("undefined")
+    def renderBoolean(c: Context, value: Boolean): Context     = c.append(value)
+    def renderInt(c: Context, value: Int): Context             = c.append(value)
+    def renderLong(c: Context, value: Long): Context           = c.append(value).append('l')
+    def renderFloat16(c: Context, value: Float): Context       = c.append(value).append("f16")
+    def renderFloat(c: Context, value: Float): Context         = c.append(value).append('f')
+    def renderDouble(c: Context, value: Double): Context       = c.append(value).append('d')
+    def renderNumberString(c: Context, value: String): Context = c.append(value).append('n')
+
+    def renderOverLong(c: Context, elem: OverLongElem): Context = {
+      val value = new java.math.BigInteger(1, Util.toBigEndianBytes(elem.value))
+      val big   = if (elem.negative) value.not else value
+      c.append(big.toString).append("ol")
+    }
+
+    def renderString(c: Context, s: String): Context =
+      if (s.length <= stringCutoffLength) s.foldLeft(c.append('"'))(renderChar).append('"')
+      else s.substring(0, stringCutoffLength).foldLeft(c.append('"'))(renderChar).append("...\"")
+
+    def renderChar(c: Context, char: Char): Context =
+      char match {
+        case '"'                            => c.append("\\\"")
+        case '\t'                           => c.append("\\t")
+        case '\r'                           => c.append("\\r")
+        case '\n'                           => c.append("\\n")
+        case x if Character.isISOControl(x) => c.append("\\u%04x".format(x.toInt))
+        case x                              => c.append(x)
+      }
+
+    def renderTextStream(c: Context, values: Vector[AbstractTextElem]): Context =
+      if (values.nonEmpty) {
+        values.iterator
+          .slice(1, textStreamCutoffLength)
+          .foldLeft(renderTextElem(c.append("TEXT["), values.head))((c, x) => renderTextElem(c.append(", "), x))
+          .append(if (values.size <= textStreamCutoffLength) "]" else ", ...]")
+      } else c.append("TEXT[]")
+
+    def renderTextElem(c: Context, elem: AbstractTextElem): Context =
+      elem match {
+        case StringElem(x)     => renderString(c, x)
+        case TextStreamElem(x) => renderTextStream(c, x)
+      }
+
+    def renderBytes(c: Context, bytes: Array[Byte]): Context =
+      if (bytes.nonEmpty) {
+        val res = bytes.iterator
+          .slice(1, bytesCutoffLength)
+          .foldLeft(renderByte(c, bytes.head))((c, x) => renderByte(renderByteSep(c), x))
+        (if (bytes.length <= bytesCutoffLength) res else renderByteSep(res).append("...")).append(']')
+      } else c.append("BYTES[]")
+
+    def renderByte(c: Context, byte: Byte): Context = c.appendUpperHexString(byte.toInt)
+    def renderByteSep(c: Context): Context          = c
+
+    def renderBytesStream(c: Context, values: Vector[AbstractBytesElem]): Context =
+      if (values.nonEmpty) {
+        values.iterator
+          .slice(1, byteStreamCutoffLength)
+          .foldLeft(renderBytesElem(c.append("BYTES["), values.head))((c, x) => renderBytesElem(c.append(", "), x))
+          .append(if (values.size <= byteStreamCutoffLength) "]" else ", ...]")
+      } else c.append("BYTES[]")
+
+    def renderBytesElem(c: Context, elem: AbstractBytesElem): Context =
+      elem match {
+        case ByteArrayElem(x)   => renderBytes(c, x)
+        case BytesStreamElem(x) => renderBytesStream(c, x)
+      }
+
+    def renderSimpleValue(c: Context, value: SimpleValue): Context = c.append(value.toString)
+
+    def renderTag(c: Context, elem: TaggedElem): Context =
+      render(c.append('@').append(elem.tag.toString).append(' '), elem.value)
+
+    def renderSizedArray(c: Context, elem: ArrayElem.Sized): Context     = renderArray(c, elem.elems)
+    def renderUnsizedArray(c: Context, elem: ArrayElem.Unsized): Context = renderArray(c.append('*'), elem.elems)
+
+    def renderArray(c: Context, elems: Vector[Element]): Context =
+      if (elems.nonEmpty) {
+        val cc = elems.iterator
+          .slice(1, arrayCutoffLength)
+          .foldLeft(render(renderIndentedNewLine(c.append('[').indented), elems.head)) { (c, x) =>
+            render(renderArraySep(c), x)
+          }
+        val ccc = if (elems.size <= arrayCutoffLength) c else renderArraySep(cc).append("...").dedented
+        renderIndentedNewLine(ccc).append(']')
+      } else c.append("[]")
+
+    def renderArraySep(c: Context): Context = renderIndentedNewLine(c.append(','))
+
+    def renderSizedMap(c: Context, elem: MapElem.Sized): Context     = renderMap(c, elem.elems)
+    def renderUnsizedMap(c: Context, elem: MapElem.Unsized): Context = renderMap(c.append('*'), elem.elems)
+
+    def renderMap(c: Context, elems: Array[Element]): Context =
+      if (elems.nonEmpty) {
+        @tailrec def rec(remaining: Iterator[Element], c: Context): Context =
+          if (remaining.hasNext)
+            rec(remaining, renderMapMember(renderMapSep(c), remaining.next(), remaining.next()))
+          else c
+
+        val cc = rec(
+          elems.iterator.slice(2, mapCutoffLength * 2),
+          renderMapMember(renderIndentedNewLine(c.append('{').indented), elems.head, elems(1))
+        )
+        val ccc = if (elems.size <= mapCutoffLength * 2) c else renderMapSep(cc).append("...").dedented
+        renderIndentedNewLine(ccc).append('}')
+      } else c.append("{}")
+
+    def renderMapMember(c: Context, key: Element, value: Element): Context =
+      render(render(c, key).append(" = "), value)
+
+    def renderMapSep(c: Context): Context = renderArraySep(c)
+
+    def renderIndentedNewLine(c: Context): Context = {
+      @tailrec def rec(remaining: Int, c: Context): Context =
+        if (remaining > 0) rec(remaining - 1, renderIndentStep(c)) else c
+      rec(c.indentLevel, renderNewLine(c))
+    }
+
+    def renderNewLine(c: Context): Context    = c.append('\n')
+    def renderIndentStep(c: Context): Context = c.append(' ').append(' ')
+  }
+
+  object Renderer {
+
+    val default: Renderer = new Renderer
+
+    final class Context(val sb: java.lang.StringBuilder, val indentLevel: Int) {
+
+      def append(s: String): this.type = { sb.append(s); this }
+      def append(i: Int): this.type = { sb.append(i); this }
+      def append(l: Long): this.type = { sb.append(l); this }
+      def append(b: Boolean): this.type = { sb.append(b); this }
+      def append(c: Char): this.type = { sb.append(c); this }
+      def append(f: Float): this.type = { sb.append(f); this }
+      def append(d: Double): this.type = { sb.append(d); this }
+
+      def appendUpperHexString(byte: Int): this.type =
+        append(upperHexDigit(byte >> 4) & 0xF).append(upperHexDigit(byte & 0xF))
+
+      def appendLowerHexString(byte: Int): this.type =
+        append(lowerHexDigit(byte >> 4) & 0xF).append(lowerHexDigit(byte & 0xF))
+
+      def indented: Context =
+        if (indentLevel < 1000000) new Context(sb, indentLevel + 1)
+        else throw new IllegalStateException("INDENT overflow")
+
+      def dedented: Context =
+        if (indentLevel > 0) new Context(sb, indentLevel - 1)
+        else throw new IllegalStateException("Mismatched DEDENT")
+    }
+
+    /**
+      * Returns the upper-case hex digit corresponding to the last 4 bits of the given Int.
+      * (fast branchless implementation)
+      * CAUTION: The high bits 28 bits must be zero for this to produce the correct result!
+      */
+    def upperHexDigit(i: Int) = (48 + i + (7 & ((9 - i) >> 31))).toChar
+
+    /**
+      * Returns the lower-case hex digit corresponding to the last 4 bits of the given Int.
+      * (fast branchless implementation)
+      * CAUTION: The high bits 28 bits must be zero for this to produce the correct result!
+      */
+    def lowerHexDigit(i: Int) = (48 + i + (39 & ((9 - i) >> 31))).toChar
   }
 }

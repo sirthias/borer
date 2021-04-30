@@ -120,5 +120,33 @@ object MiscSpec extends AbstractBorerSpec {
       implicit val barCodec: Codec[Bar] = MapBasedCodecs.deriveCodec
       roundTrip("""{"bar":"yeah"}""", Bar("yeah"))
     }
+
+    "Dom Renderer" - {
+      case class Bar(stringSeq: Seq[String], double: Double)
+      case class Foo(int: Int, bar: Bar, doubleOpt: Option[Double], boolOpt: Option[Boolean])
+
+      implicit val barEncoder: Encoder[Bar] = MapBasedCodecs.deriveEncoder
+      implicit val fooEncoder: Encoder[Foo] = MapBasedCodecs.deriveEncoder
+
+      val foo = Foo(42, Bar(List("abc", "def"), 18.34), None, Some(true))
+
+      val dom = Cbor.transEncode(foo).transDecode.to[Dom.Element].value
+
+      dom.render ==>
+      """{
+        |  "int" = 42,
+        |  "bar" = {
+        |    "stringSeq" = *[
+        |      "abc",
+        |      "def"
+        |    ],
+        |    "double" = 18.34d
+        |  },
+        |  "doubleOpt" = [],
+        |  "boolOpt" = [
+        |    true
+        |  ]
+        |}""".stripMargin
+    }
   }
 }

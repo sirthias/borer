@@ -11,8 +11,6 @@ package io.bullet.borer
 import utest._
 import io.bullet.borer.internal.Util._
 
-import scala.collection.immutable.HashMap
-
 object MiscCborSpec extends ByteArrayCborSpec {
 
   case class Foo(int: Int, string: String, doubleOpt: Option[java.lang.Double])
@@ -148,31 +146,6 @@ object MiscCborSpec extends ByteArrayCborSpec {
 
     "Issue 227" - { // https://github.com/sirthias/borer/issues/227
       Cbor.decode(hex"80").to[Array[String]].value.getClass ==> classOf[Array[String]]
-    }
-
-    "Dom.MapElem.toMap" - {
-      Dom.MapElem
-        .Sized(
-          "age"  -> Dom.IntElem(2),
-          "name" -> Dom.StringElem("Lolle")
-        )
-        .to[HashMap] ==> Map(
-        Dom.StringElem("age")  -> Dom.IntElem(2),
-        Dom.StringElem("name") -> Dom.StringElem("Lolle")
-      )
-    }
-
-    "Dom.MapElem.toStringKeyedMap" - {
-      Dom.MapElem
-        .Sized(
-          "age"  -> Dom.IntElem(2),
-          "name" -> Dom.StringElem("Lolle")
-        )
-        .toStringKeyed[HashMap] ==> Right(
-        Map(
-          "age"  -> Dom.IntElem(2),
-          "name" -> Dom.StringElem("Lolle")
-        ))
     }
   }
 }
