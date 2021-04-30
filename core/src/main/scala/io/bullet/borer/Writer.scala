@@ -177,6 +177,9 @@ final class Writer(
       }
     } else writeEmptyMap()
 
+  def writeMapMember[A: Encoder, B: Encoder](key: A, value: B): this.type =
+    write(key).write(value)
+
   def writeArrayOpen(size: Int): this.type =
     if (target eq Json) writeArrayStart() else writeArrayHeader(size)
 
