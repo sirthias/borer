@@ -57,6 +57,8 @@ object Dom {
     def bytesIterator: Iterator[Array[Byte]] = Iterator.single(value)
     def compact                              = value
 
+    override def toString = s"$productPrefix($byteCount bytes)"
+
     override def hashCode() = util.Arrays.hashCode(value)
 
     override def equals(obj: Any) =
