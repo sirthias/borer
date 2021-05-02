@@ -23,7 +23,7 @@ import scala.collection.compat._
 final class InputReader[Config <: Reader.Config](
     parser: Parser[_],
     directParser: io.bullet.borer.json.DirectJsonParser,
-    receiverWrapper: Receiver.Wrapper[Config],
+    receiverWrapper: Receiver.Transformer[Config],
     config: Config,
     val target: Target) {
 

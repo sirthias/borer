@@ -8,8 +8,6 @@
 
 package io.bullet.borer
 
-import java.lang.{StringBuilder => JStringBuilder}
-
 import io.bullet.borer.cbor._
 import io.bullet.borer.internal.Util
 import io.bullet.borer.json._
@@ -53,7 +51,7 @@ case object Cbor extends Target {
   def writer(
       output: Output,
       config: EncodingConfig = EncodingConfig.default,
-      receiverWrapper: Receiver.Wrapper[EncodingConfig] = CborValidation.wrapper): Writer =
+      receiverWrapper: Receiver.Transformer[EncodingConfig] = CborValidation.wrapper): Writer =
     new Writer(output, receiverWrapper(CborRenderer(output), config), this, config)
 
   /**
@@ -62,7 +60,7 @@ case object Cbor extends Target {
   def reader[T](
       value: T,
       config: DecodingConfig = DecodingConfig.default,
-      receiverWrapper: Receiver.Wrapper[DecodingConfig] = CborValidation.wrapper)(
+      receiverWrapper: Receiver.Transformer[DecodingConfig] = CborValidation.wrapper)(
       implicit p: Input.Provider[T]): Reader =
     new InputReader(new CborParser(p(value), config)(p.byteAccess), null, receiverWrapper, config, this)
 
@@ -190,7 +188,7 @@ case object Json extends Target {
     * Entry point into the JSON encoding mini-DSL.
     */
   def encode[T: Encoder](value: T): EncodingSetup.JsonApi[T, EncodingConfig] =
-    new EncodingSetup.Impl(value, Json, EncodingConfig.default, Receiver.nopWrapper, JsonRenderer)
+    new EncodingSetup.Impl(value, Json, EncodingConfig.default, Receiver.nopTransformer, JsonRenderer)
 
   /**
     * Entry point into the JSON decoding mini-DSL.
@@ -199,7 +197,7 @@ case object Json extends Target {
     new DecodingSetup.Impl[T, p.Bytes, DecodingConfig](
       value,
       DecodingConfig.default,
-      Receiver.nopWrapper,
+      Receiver.nopTransformer,
       JsonParser.creator[p.Bytes, DecodingConfig],
       this)
 
@@ -211,9 +209,9 @@ case object Json extends Target {
       value,
       this,
       TransEncodingConfig.default,
-      Receiver.nopWrapper,
+      Receiver.nopTransformer,
       TransDecodingConfig.default,
-      Receiver.nopWrapper)
+      Receiver.nopTransformer)
 
   /**
     * Constructs a new [[Writer]] that writes JSON to the given [[Output]].
@@ -221,7 +219,7 @@ case object Json extends Target {
   def writer(
       output: Output,
       config: EncodingConfig = EncodingConfig.default,
-      receiverWrapper: Receiver.Wrapper[EncodingConfig] = Receiver.nopWrapper): Writer =
+      receiverWrapper: Receiver.Transformer[EncodingConfig] = Receiver.nopTransformer): Writer =
     new Writer(output, receiverWrapper(JsonRenderer(output), config), null, config)
 
   /**
@@ -230,7 +228,7 @@ case object Json extends Target {
   def reader[T](
       value: T,
       config: DecodingConfig = DecodingConfig.default,
-      receiverWrapper: Receiver.Wrapper[DecodingConfig] = Receiver.nopWrapper)(
+      receiverWrapper: Receiver.Transformer[DecodingConfig] = Receiver.nopTransformer)(
       implicit p: Input.Provider[T]): Reader = {
     val directParser = io.bullet.borer.json.DirectParser(value, config)
     val parser       = if (directParser ne null) null else new JsonParser(p(value), config)(p.byteAccess)
@@ -359,58 +357,6 @@ object Borer {
   }
 
   sealed abstract class DecodingConfig extends Reader.Config
-
-  abstract private[borer] class AbstractSetup[Config](defaultConfig: Config, defaultWrapper: Receiver.Wrapper[Config]) {
-    protected var config: Config                            = defaultConfig
-    protected var receiverWrapper: Receiver.Wrapper[Config] = defaultWrapper
-
-    final def withConfig(config: Config): this.type = {
-      this.config = config
-      this
-    }
-
-    final def withPrintLogging(
-        maxShownByteArrayPrefixLen: Int,
-        maxShownStringPrefixLen: Int,
-        maxShownArrayElems: Int,
-        maxShownMapEntries: Int): this.type =
-      withStackedWrapper(
-        Logging(
-          Logging
-            .PrintLogger(maxShownByteArrayPrefixLen, maxShownStringPrefixLen, maxShownArrayElems, maxShownMapEntries)))
-
-    final def withStringLogging(
-        stringBuilder: JStringBuilder,
-        maxShownByteArrayPrefixLen: Int,
-        maxShownStringPrefixLen: Int,
-        maxShownArrayElems: Int,
-        maxShownMapEntries: Int,
-        lineSeparator: String): this.type =
-      withStackedWrapper {
-        Logging {
-          Logging.ToStringLogger(
-            stringBuilder,
-            maxShownByteArrayPrefixLen,
-            maxShownStringPrefixLen,
-            maxShownArrayElems,
-            maxShownMapEntries,
-            lineSeparator)
-        }
-      }
-
-    final def withWrapper(wrapper: Receiver.Wrapper[Config]): this.type = {
-      receiverWrapper = wrapper
-      this
-    }
-
-    final def withStackedWrapper(wrapper: Receiver.Wrapper[Config]): this.type = {
-      val prevWrapper = receiverWrapper
-      receiverWrapper =
-        if (prevWrapper eq Receiver.nopWrapper[Config]) wrapper
-        else (r: Receiver, conf: Config) => wrapper(prevWrapper(r, conf), conf)
-      this
-    }
-  }
 
   sealed abstract class Error[+IO](private var _io: IO @uncheckedVariance, msg: String, cause: Throwable = null)
       extends RuntimeException(msg, cause) {

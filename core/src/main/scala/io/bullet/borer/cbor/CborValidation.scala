@@ -36,8 +36,8 @@ private[borer] object CborValidation {
     def maxNestingLevels: Int
   }
 
-  private[this] val _wrapper: borer.Receiver.Wrapper[Config] = new Receiver(_, _)
-  def wrapper[C <: Config]: borer.Receiver.Wrapper[C]        = _wrapper.asInstanceOf[borer.Receiver.Wrapper[C]]
+  private[this] val _wrapper: borer.Receiver.Transformer[Config] = new Receiver(_, _)
+  def wrapper[C <: Config]: borer.Receiver.Transformer[C]        = _wrapper.asInstanceOf[borer.Receiver.Transformer[C]]
 
   /**
     * A [[Receiver]] wrapping another [[Receiver]].

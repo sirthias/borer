@@ -9,7 +9,6 @@
 package io.bullet.borer
 
 import io.bullet.borer.encodings.BaseEncoding
-import io.bullet.borer.internal.Util
 
 import scala.annotation.{implicitNotFound, switch, tailrec}
 import scala.collection.{immutable, mutable}
@@ -17,6 +16,7 @@ import scala.collection.compat.immutable.ArraySeq
 import scala.collection.compat._
 import scala.collection.immutable.HashMap
 import scala.util.hashing.MurmurHash3
+import java.lang.{StringBuilder => JStringBuilder}
 
 /**
   * Simple Document Object Model (DOM) for CBOR.
@@ -28,7 +28,42 @@ object Dom {
   import DataItem.{Shifts => DIS}
 
   sealed abstract class Element(val dataItemShift: Int) {
-    def render: String = Renderer.default.render(this)
+
+    def render(
+        maxShownByteArrayPrefixLen: Int = 20,
+        maxShownStringPrefixLen: Int = 50,
+        maxShownArrayElems: Int = 20,
+        maxShownMapEntries: Int = 20,
+        initialCountWidth: Int = 2,
+        renderLevelCount: Boolean = false,
+        renderEndOfInput: Boolean = false,
+        renderCommas: Boolean = true,
+        indentation: String = "  ",
+        mapKeySep: String = " = ",
+        lineSep: String = System.lineSeparator(),
+        mapValueOnNewLine: Boolean = false): String = {
+
+      val sb = new JStringBuilder
+      Cbor
+        .encode(this)
+        .withStringLogging(
+          sb,
+          maxShownByteArrayPrefixLen,
+          maxShownStringPrefixLen,
+          maxShownArrayElems,
+          maxShownMapEntries,
+          initialCountWidth,
+          renderLevelCount,
+          renderEndOfInput,
+          renderCommas,
+          indentation,
+          mapKeySep,
+          lineSep,
+          mapValueOnNewLine)
+        .to[Unit]
+        .result
+      sb.toString
+    }
   }
 
   final case object NullElem                   extends Element(DIS.Null)
@@ -546,208 +581,5 @@ object Dom {
       override def transformSizedMap(elem: MapElem.Sized): Element =
         new MapElem.Unsized(elem.elems.map(this))
     }
-  }
-
-  class Renderer {
-    import Renderer.Context
-
-    def stringCutoffLength: Int     = 100
-    def textStreamCutoffLength: Int = 100
-    def bytesCutoffLength: Int      = 100
-    def byteStreamCutoffLength: Int = 100
-    def arrayCutoffLength: Int      = 20
-    def mapCutoffLength: Int        = 20
-
-    def render(elem: Element): String = render(new Context(new java.lang.StringBuilder, 0), elem).sb.toString
-
-    def render(c: Context, elem: Element): Context =
-      (elem.dataItemShift: @switch) match {
-        case DIS.Null         => renderNull(c)
-        case DIS.Undefined    => renderUndefined(c)
-        case DIS.Boolean      => renderBoolean(c, elem.asInstanceOf[BooleanElem].value)
-        case DIS.Int          => renderInt(c, elem.asInstanceOf[IntElem].value)
-        case DIS.Long         => renderLong(c, elem.asInstanceOf[LongElem].value)
-        case DIS.OverLong     => renderOverLong(c, elem.asInstanceOf[OverLongElem])
-        case DIS.Float16      => renderFloat16(c, elem.asInstanceOf[Float16Elem].value)
-        case DIS.Float        => renderFloat(c, elem.asInstanceOf[FloatElem].value)
-        case DIS.Double       => renderDouble(c, elem.asInstanceOf[DoubleElem].value)
-        case DIS.NumberString => renderNumberString(c, elem.asInstanceOf[NumberStringElem].value)
-        case DIS.String       => renderString(c, elem.asInstanceOf[StringElem].value)
-        case DIS.TextStart    => renderTextStream(c, elem.asInstanceOf[TextStreamElem].elems)
-        case DIS.Bytes        => renderBytes(c, elem.asInstanceOf[ByteArrayElem].bytes)
-        case DIS.BytesStart   => renderBytesStream(c, elem.asInstanceOf[BytesStreamElem].elems)
-        case DIS.SimpleValue  => renderSimpleValue(c, elem.asInstanceOf[SimpleValueElem].value)
-        case DIS.ArrayHeader  => renderSizedArray(c, elem.asInstanceOf[ArrayElem.Sized])
-        case DIS.ArrayStart   => renderUnsizedArray(c, elem.asInstanceOf[ArrayElem.Unsized])
-        case DIS.MapHeader    => renderSizedMap(c, elem.asInstanceOf[MapElem.Sized])
-        case DIS.MapStart     => renderUnsizedMap(c, elem.asInstanceOf[MapElem.Unsized])
-        case DIS.Tag          => renderTag(c, elem.asInstanceOf[TaggedElem])
-      }
-
-    def renderNull(c: Context): Context                        = c.append("null")
-    def renderUndefined(c: Context): Context                   = c.append("undefined")
-    def renderBoolean(c: Context, value: Boolean): Context     = c.append(value)
-    def renderInt(c: Context, value: Int): Context             = c.append(value)
-    def renderLong(c: Context, value: Long): Context           = c.append(value).append('L')
-    def renderFloat16(c: Context, value: Float): Context       = c.append(value).append("f16")
-    def renderFloat(c: Context, value: Float): Context         = c.append(value).append('f')
-    def renderDouble(c: Context, value: Double): Context       = c.append(value).append('d')
-    def renderNumberString(c: Context, value: String): Context = c.append(value).append('s')
-
-    def renderOverLong(c: Context, elem: OverLongElem): Context = {
-      val value = new java.math.BigInteger(1, Util.toBigEndianBytes(elem.value))
-      val big   = if (elem.negative) value.not else value
-      c.append(big.toString).append("LL")
-    }
-
-    def renderString(c: Context, s: String): Context =
-      if (s.length <= stringCutoffLength) s.foldLeft(c.append('"'))(renderChar).append('"')
-      else s.substring(0, stringCutoffLength).foldLeft(c.append('"'))(renderChar).append("...\"")
-
-    def renderChar(c: Context, char: Char): Context =
-      char match {
-        case '"'                            => c.append("\\\"")
-        case '\t'                           => c.append("\\t")
-        case '\r'                           => c.append("\\r")
-        case '\n'                           => c.append("\\n")
-        case x if Character.isISOControl(x) => c.append("\\u%04x".format(x.toInt))
-        case x                              => c.append(x)
-      }
-
-    def renderTextStream(c: Context, values: Vector[AbstractTextElem]): Context =
-      if (values.nonEmpty) {
-        values.iterator
-          .slice(1, textStreamCutoffLength)
-          .foldLeft(renderTextElem(c.append("TEXT["), values.head))((c, x) => renderTextElem(c.append(", "), x))
-          .append(if (values.size <= textStreamCutoffLength) "]" else ", ...]")
-      } else c.append("TEXT[]")
-
-    def renderTextElem(c: Context, elem: AbstractTextElem): Context =
-      elem match {
-        case StringElem(x)     => renderString(c, x)
-        case TextStreamElem(x) => renderTextStream(c, x)
-      }
-
-    def renderBytes(c: Context, bytes: Array[Byte]): Context =
-      if (bytes.nonEmpty) {
-        val res = bytes.iterator
-          .slice(1, bytesCutoffLength)
-          .foldLeft(renderByte(c.append("BYTES["), bytes.head))((c, x) => renderByte(renderByteSep(c), x))
-        (if (bytes.length <= bytesCutoffLength) res else renderByteSep(res).append("...")).append(']')
-      } else c.append("BYTES[]")
-
-    def renderByte(c: Context, byte: Byte): Context = c.appendUpperHexString(byte.toInt)
-    def renderByteSep(c: Context): Context          = c
-
-    def renderBytesStream(c: Context, values: Vector[AbstractBytesElem]): Context =
-      if (values.nonEmpty) {
-        values.iterator
-          .slice(1, byteStreamCutoffLength)
-          .foldLeft(renderBytesElem(c.append("BYTES*["), values.head))((c, x) => renderBytesElem(c.append(", "), x))
-          .append(if (values.size <= byteStreamCutoffLength) "]" else ", ...]")
-      } else c.append("BYTES*[]")
-
-    def renderBytesElem(c: Context, elem: AbstractBytesElem): Context =
-      elem match {
-        case ByteArrayElem(x)   => renderBytes(c, x)
-        case BytesStreamElem(x) => renderBytesStream(c, x)
-      }
-
-    def renderSimpleValue(c: Context, value: SimpleValue): Context = c.append(value.toString)
-
-    def renderTag(c: Context, elem: TaggedElem): Context =
-      render(c.append('@').append(elem.tag.toString).append(' '), elem.value)
-
-    def renderSizedArray(c: Context, elem: ArrayElem.Sized): Context     = renderArray(c, elem.elems)
-    def renderUnsizedArray(c: Context, elem: ArrayElem.Unsized): Context = renderArray(c.append('*'), elem.elems)
-
-    def renderArray(c: Context, elems: Vector[Element]): Context =
-      if (elems.nonEmpty) {
-        val cc = elems.iterator
-          .slice(1, arrayCutoffLength)
-          .foldLeft(render(renderIndentedNewLine(c.append('[').indented), elems.head)) { (c, x) =>
-            render(renderArraySep(c), x)
-          }
-        val ccc = if (elems.size <= arrayCutoffLength) c else renderArraySep(cc).append("...").dedented
-        renderIndentedNewLine(ccc).append(']')
-      } else c.append("[]")
-
-    def renderArraySep(c: Context): Context = renderIndentedNewLine(c.append(','))
-
-    def renderSizedMap(c: Context, elem: MapElem.Sized): Context     = renderMap(c, elem.elems)
-    def renderUnsizedMap(c: Context, elem: MapElem.Unsized): Context = renderMap(c.append('*'), elem.elems)
-
-    def renderMap(c: Context, elems: Array[Element]): Context =
-      if (elems.nonEmpty) {
-        @tailrec def rec(remaining: Iterator[Element], c: Context): Context =
-          if (remaining.hasNext)
-            rec(remaining, renderMapMember(renderMapSep(c), remaining.next(), remaining.next()))
-          else c
-
-        val cc = rec(
-          elems.iterator.slice(2, mapCutoffLength * 2),
-          renderMapMember(renderIndentedNewLine(c.append('{').indented), elems.head, elems(1))
-        )
-        val ccc = if (elems.size <= mapCutoffLength * 2) c else renderMapSep(cc).append("...").dedented
-        renderIndentedNewLine(ccc).append('}')
-      } else c.append("{}")
-
-    def renderMapMember(c: Context, key: Element, value: Element): Context =
-      render(render(c, key).append(" = "), value)
-
-    def renderMapSep(c: Context): Context = renderArraySep(c)
-
-    def renderIndentedNewLine(c: Context): Context = {
-      @tailrec def rec(remaining: Int, c: Context): Context =
-        if (remaining > 0) rec(remaining - 1, renderIndentStep(c)) else c
-      rec(c.indentLevel, renderNewLine(c))
-    }
-
-    def renderNewLine(c: Context): Context    = c.append('\n')
-    def renderIndentStep(c: Context): Context = c.append(' ').append(' ')
-  }
-
-  object Renderer {
-
-    val default: Renderer = new Renderer
-
-    final class Context(val sb: java.lang.StringBuilder, val indentLevel: Int) {
-
-      def append(s: String): this.type = { sb.append(s); this }
-      def append(i: Int): this.type = { sb.append(i); this }
-      def append(l: Long): this.type = { sb.append(l); this }
-      def append(b: Boolean): this.type = { sb.append(b); this }
-      def append(c: Char): this.type = { sb.append(c); this }
-      def append(f: Float): this.type = { sb.append(f); this }
-      def append(d: Double): this.type = { sb.append(d); this }
-
-      def appendUpperHexString(byte: Int): this.type =
-        append(upperHexDigit(byte >> 4) & 0xF).append(upperHexDigit(byte & 0xF))
-
-      def appendLowerHexString(byte: Int): this.type =
-        append(lowerHexDigit(byte >> 4) & 0xF).append(lowerHexDigit(byte & 0xF))
-
-      def indented: Context =
-        if (indentLevel < 1000000) new Context(sb, indentLevel + 1)
-        else throw new IllegalStateException("INDENT overflow")
-
-      def dedented: Context =
-        if (indentLevel > 0) new Context(sb, indentLevel - 1)
-        else throw new IllegalStateException("Mismatched DEDENT")
-    }
-
-    /**
-      * Returns the upper-case hex digit corresponding to the last 4 bits of the given Int.
-      * (fast branchless implementation)
-      * CAUTION: The high bits 28 bits must be zero for this to produce the correct result!
-      */
-    def upperHexDigit(i: Int) = (48 + i + (7 & ((9 - i) >> 31))).toChar
-
-    /**
-      * Returns the lower-case hex digit corresponding to the last 4 bits of the given Int.
-      * (fast branchless implementation)
-      * CAUTION: The high bits 28 bits must be zero for this to produce the correct result!
-      */
-    def lowerHexDigit(i: Int) = (48 + i + (39 & ((9 - i) >> 31))).toChar
   }
 }

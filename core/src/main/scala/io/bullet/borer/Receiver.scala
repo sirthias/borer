@@ -52,10 +52,10 @@ abstract class Receiver {
 
 object Receiver {
 
-  type Wrapper[Config] = (Receiver, Config) => Receiver
-  private[this] val _nopWrapper: Wrapper[Any] = (receiver, _) => receiver
+  type Transformer[Config] = (Receiver, Config) => Receiver
+  private[this] val _nopTransformer: Transformer[Any] = (receiver, _) => receiver
 
-  def nopWrapper[Config]: Wrapper[Config] = _nopWrapper.asInstanceOf[Wrapper[Config]]
+  def nopTransformer[Config]: Transformer[Config] = _nopTransformer.asInstanceOf[Transformer[Config]]
 
   abstract class WithDefault extends Receiver {
     def onNull(): Unit                                   = default("`null`")

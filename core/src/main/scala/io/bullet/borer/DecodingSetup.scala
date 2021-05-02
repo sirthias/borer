@@ -8,8 +8,6 @@
 
 package io.bullet.borer
 
-import java.lang.{StringBuilder => JStringBuilder}
-
 import io.bullet.borer.internal.Parser
 
 import scala.util.control.NonFatal
@@ -17,46 +15,12 @@ import scala.util.{Failure, Success, Try}
 
 object DecodingSetup {
 
-  sealed trait Api[Config <: Borer.DecodingConfig] {
+  sealed trait Api[Config <: Borer.DecodingConfig] extends CommonApi[Config] {
 
     /**
       * Indicates that this decoding run is not expected to consume the complete [[Input]].
       */
     def withPrefixOnly: this.type
-
-    /**
-      * Configures the [[Config]] for this decoding run.
-      */
-    def withConfig(config: Config): this.type
-
-    /**
-      * Enables logging of this decoding run to the console.
-      * Each data item that is consumed from the underlying CBOR stream is pretty printed to the console
-      * on its own line.
-      */
-    def withPrintLogging(
-        maxShownByteArrayPrefixLen: Int = 20,
-        maxShownStringPrefixLen: Int = 50,
-        maxShownArrayElems: Int = 20,
-        maxShownMapEntries: Int = 20): this.type
-
-    /**
-      * Enables logging of this decoding run to the given [[JStringBuilder]].
-      * Each data item that is consumed from the underlying CBOR stream is formatted and appended as its own line.
-      */
-    def withStringLogging(
-        stringBuilder: JStringBuilder,
-        maxShownByteArrayPrefixLen: Int = 20,
-        maxShownStringPrefixLen: Int = 50,
-        maxShownArrayElems: Int = 20,
-        maxShownMapEntries: Int = 20,
-        lineSeparator: String = System.lineSeparator()): this.type
-
-    /**
-      * Allows for injecting custom logic into the decoding process.
-      * Used, for example, for on-the-side [[Logging]].
-      */
-    def withWrapper(receiverWrapper: Receiver.Wrapper[Config]): this.type
 
     /**
       * Decodes an instance of [[T]] from the configured [[Input]] using the configured options.
@@ -82,10 +46,10 @@ object DecodingSetup {
   final private[borer] class Impl[V, Bytes, Config <: Borer.DecodingConfig](
       inputValue: V,
       defaultConfig: Config,
-      defaultWrapper: Receiver.Wrapper[Config],
+      defaultWrapper: Receiver.Transformer[Config],
       parserCreator: Parser.Creator[Bytes, Config],
       target: Target)(implicit p: Input.Provider[V])
-      extends Borer.AbstractSetup[Config](defaultConfig, defaultWrapper) with Api[Config] with Sealed[AnyRef] {
+      extends CommonApi.Impl[Config](defaultConfig, defaultWrapper) with Api[Config] with Sealed[AnyRef] {
 
     private[this] var prefixOnly: Boolean      = _
     private[this] var decoder: Decoder[AnyRef] = _
@@ -169,7 +133,7 @@ object DecodingSetup {
         if (directParser ne null) null
         else
           parserCreator(p(inputValue).asInstanceOf[Input[Bytes]], p.byteAccess.asInstanceOf[ByteAccess[Bytes]], config)
-      new InputReader(parser, directParser, receiverWrapper, config, target)
+      new InputReader(parser, directParser, receiverTransformer, config, target)
     }
 
     private def decodeFrom(reader: Reader): AnyRef =

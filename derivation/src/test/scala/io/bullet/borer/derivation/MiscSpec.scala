@@ -132,13 +132,13 @@ object MiscSpec extends AbstractBorerSpec {
 
       val dom = Cbor.transEncode(foo).transDecode.to[Dom.Element].value
 
-      dom.render ==>
+      dom.render() ==>
       """{
         |  "int" = 42,
         |  "bar" = {
         |    "stringSeq" = *[
         |      "abc",
-        |      "def"
+        |      "def",
         |    ],
         |    "double" = 18.34d
         |  },
@@ -146,7 +146,25 @@ object MiscSpec extends AbstractBorerSpec {
         |  "boolOpt" = [
         |    true
         |  ]
-        |}""".stripMargin
+        |}
+        |""".stripMargin
+
+      dom.render(renderLevelCount = true) ==>
+      """    1| {
+        | 1/ 4|   "int" = 42,
+        | 2/ 4|   "bar" = {
+        | 1/ 2|     "stringSeq" = *[
+        |    1|       "abc",
+        |    2|       "def",
+        | 1/ 2|     ],
+        | 2/ 2|     "double" = 18.34d
+        | 2/ 4|   },
+        | 3/ 4|   "doubleOpt" = [],
+        | 4/ 4|   "boolOpt" = [
+        | 1/ 1|     true
+        | 4/ 4|   ]
+        |    1| }
+        |""".stripMargin
     }
   }
 }

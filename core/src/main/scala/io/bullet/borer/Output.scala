@@ -8,7 +8,7 @@
 
 package io.bullet.borer
 
-import io.bullet.borer.output.{ToByteArrayOutput, ToByteBufferOutput, ToFileOutput, ToOutputStreamOutput}
+import io.bullet.borer.output.{ToByteArrayOutput, ToByteBufferOutput, ToFileOutput, ToOutputStreamOutput, ToUnitOutput}
 
 import scala.annotation.tailrec
 
@@ -19,7 +19,7 @@ import scala.annotation.tailrec
   */
 trait Output { outer =>
   type Self <: Output { type Self <: outer.Self }
-  type Result <: AnyRef
+  type Result
 
   def writeByte(byte: Byte): Self
   def writeBytes(a: Byte, b: Byte): Self
@@ -40,7 +40,8 @@ trait Output { outer =>
   def result(): Result
 }
 
-object Output extends ToByteArrayOutput with ToByteBufferOutput with ToFileOutput with ToOutputStreamOutput {
+object Output
+    extends ToByteArrayOutput with ToByteBufferOutput with ToFileOutput with ToOutputStreamOutput with ToUnitOutput {
 
   //#provider
   /**

@@ -9,7 +9,6 @@
 package io.bullet.borer
 
 import java.nio.charset.StandardCharsets.UTF_8
-import java.lang.{StringBuilder => JStringBuilder}
 import java.nio.ByteBuffer
 
 import io.bullet.borer.internal.Renderer
@@ -19,40 +18,7 @@ import scala.util.control.NonFatal
 
 object EncodingSetup {
 
-  sealed trait Api[Config <: Borer.EncodingConfig] {
-
-    /**
-      * Configures the [[Config]] for this encoding run.
-      */
-    def withConfig(config: Config): this.type
-
-    /**
-      * Enables logging of the encoding progress to the console.
-      * Each data item that is written by the application is pretty printed to the console on its own line.
-      */
-    def withPrintLogging(
-        maxShownByteArrayPrefixLen: Int = 20,
-        maxShownStringPrefixLen: Int = 50,
-        maxShownArrayElems: Int = 20,
-        maxShownMapEntries: Int = 20): this.type
-
-    /**
-      * Enables logging of the encoding progress to the given [[JStringBuilder]].
-      * Each data item that is written by the application is formatted and appended as its own line.
-      */
-    def withStringLogging(
-        stringBuilder: JStringBuilder,
-        maxShownByteArrayPrefixLen: Int = 20,
-        maxShownStringPrefixLen: Int = 50,
-        maxShownArrayElems: Int = 20,
-        maxShownMapEntries: Int = 20,
-        lineSeparator: String = System.lineSeparator()): this.type
-
-    /**
-      * Allows for injecting custom logic into the encoding process.
-      * Used, for example, for on-the-side [[Logging]].
-      */
-    def withWrapper(receiverWrapper: Receiver.Wrapper[Config]): this.type
+  sealed trait Api[Config <: Borer.EncodingConfig] extends CommonApi[Config] {
 
     /**
       * Short-cut for encoding to a plain byte array, throwing an exception in case of any failures.
@@ -127,10 +93,9 @@ object EncodingSetup {
       value: T,
       target: Target,
       defaultConfig: Config,
-      defaultWrapper: Receiver.Wrapper[Config],
+      defaultWrapper: Receiver.Transformer[Config],
       rendererCreator: Output => Renderer)
-      extends Borer.AbstractSetup[Config](defaultConfig, defaultWrapper) with JsonApi[T, Config]
-      with Sealed[Output, AnyRef] {
+      extends CommonApi.Impl[Config](defaultConfig, defaultWrapper) with JsonApi[T, Config] with Sealed[Output, Any] {
 
     private[this] var _output: Output = _
 
@@ -158,7 +123,7 @@ object EncodingSetup {
       this.asInstanceOf[Sealed[op.Out, R]]
     }
 
-    def result: AnyRef = {
+    def result: Any = {
       val renderer = rendererCreator(_output)
       try {
         render(renderer).out.result()
@@ -168,7 +133,7 @@ object EncodingSetup {
       }
     }
 
-    def resultTry: Try[AnyRef] = {
+    def resultTry: Try[Any] = {
       val renderer = rendererCreator(_output)
       try {
         Success(render(renderer).out.result())
@@ -178,7 +143,7 @@ object EncodingSetup {
       }
     }
 
-    def resultEither: Either[Borer.Error[Output], AnyRef] = {
+    def resultEither: Either[Borer.Error[Output], Any] = {
       val renderer = rendererCreator(_output)
       try {
         Right(render(renderer).out.result())
@@ -211,7 +176,7 @@ object EncodingSetup {
     }
 
     private def render(renderer: Renderer): Renderer = {
-      val writer = new Writer(_output, receiverWrapper(renderer, config), target, config)
+      val writer = new Writer(_output, receiverTransformer(renderer, config), target, config)
       writer
         .write(value)
         .writeEndOfInput() // doesn't actually write anything but triggers certain validation checks (if configured)

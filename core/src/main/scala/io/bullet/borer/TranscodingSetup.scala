@@ -10,46 +10,13 @@ package io.bullet.borer
 
 import io.bullet.borer.internal.{ElementDeque, ElementDequeCache, Parser}
 
-import java.lang.{StringBuilder => JStringBuilder}
 import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 
 object TranscodingSetup {
 
-  sealed trait EncodingApi[EncodingConfig <: Borer.TransEncodingConfig, DecodingConfig <: Reader.Config] {
-
-    /**
-      * Configures the [[Config]] for this encoding run.
-      */
-    def withConfig(config: EncodingConfig): this.type
-
-    /**
-      * Enables logging of the encoding progress to the console.
-      * Each data item that is written by the application is pretty printed to the console on its own line.
-      */
-    def withPrintLogging(
-        maxShownByteArrayPrefixLen: Int = 20,
-        maxShownStringPrefixLen: Int = 50,
-        maxShownArrayElems: Int = 20,
-        maxShownMapEntries: Int = 20): this.type
-
-    /**
-      * Enables logging of the encoding progress to the given [[JStringBuilder]].
-      * Each data item that is written by the application is formatted and appended as its own line.
-      */
-    def withStringLogging(
-        stringBuilder: JStringBuilder,
-        maxShownByteArrayPrefixLen: Int = 20,
-        maxShownStringPrefixLen: Int = 50,
-        maxShownArrayElems: Int = 20,
-        maxShownMapEntries: Int = 20,
-        lineSeparator: String = System.lineSeparator()): this.type
-
-    /**
-      * Allows for injecting custom logic into the encoding process.
-      * Used, for example, for on-the-side [[Logging]].
-      */
-    def withWrapper(receiverWrapper: Receiver.Wrapper[EncodingConfig]): this.type
+  sealed trait EncodingApi[EncodingConfig <: Borer.TransEncodingConfig, DecodingConfig <: Reader.Config]
+      extends CommonApi[EncodingConfig] {
 
     def transDecode: DecodingApi[DecodingConfig]
   }
@@ -58,55 +25,16 @@ object TranscodingSetup {
       value: A,
       target: Target,
       defaultEncConfig: EC,
-      defaultEncWrapper: Receiver.Wrapper[EC],
+      defaultEncWrapper: Receiver.Transformer[EC],
       defaultDecConfig: DC,
-      defaultDecWrapper: Receiver.Wrapper[DC])
-      extends Borer.AbstractSetup(defaultEncConfig, defaultEncWrapper) with EncodingApi[EC, DC] {
+      defaultDecWrapper: Receiver.Transformer[DC])
+      extends CommonApi.Impl(defaultEncConfig, defaultEncWrapper) with EncodingApi[EC, DC] {
 
     def transDecode: DecodingApi[DC] =
-      new DecodingApiImpl(value, target, config, receiverWrapper, defaultDecConfig, defaultDecWrapper)
+      new DecodingApiImpl(value, target, config, receiverTransformer, defaultDecConfig, defaultDecWrapper)
   }
 
-  sealed trait DecodingApi[Config <: Reader.Config] {
-
-    /**
-      * Indicates that this decoding run is not expected to consume the complete [[Input]].
-      */
-    def withPrefixOnly: this.type
-
-    /**
-      * Configures the [[Config]] for this decoding run.
-      */
-    def withConfig(config: Config): this.type
-
-    /**
-      * Enables logging of this decoding run to the console.
-      * Each data item that is consumed from the underlying CBOR stream is pretty printed to the console
-      * on its own line.
-      */
-    def withPrintLogging(
-        maxShownByteArrayPrefixLen: Int = 20,
-        maxShownStringPrefixLen: Int = 50,
-        maxShownArrayElems: Int = 20,
-        maxShownMapEntries: Int = 20): this.type
-
-    /**
-      * Enables logging of this decoding run to the given [[JStringBuilder]].
-      * Each data item that is consumed from the underlying CBOR stream is formatted and appended as its own line.
-      */
-    def withStringLogging(
-        stringBuilder: JStringBuilder,
-        maxShownByteArrayPrefixLen: Int = 20,
-        maxShownStringPrefixLen: Int = 50,
-        maxShownArrayElems: Int = 20,
-        maxShownMapEntries: Int = 20,
-        lineSeparator: String = System.lineSeparator()): this.type
-
-    /**
-      * Allows for injecting custom logic into the decoding process.
-      * Used, for example, for on-the-side [[Logging]].
-      */
-    def withWrapper(receiverWrapper: Receiver.Wrapper[Config]): this.type
+  sealed trait DecodingApi[Config <: Reader.Config] extends CommonApi[Config] {
 
     /**
       * Decodes an instance of [[T]] from the configured [[Input]] using the configured options.
@@ -127,10 +55,10 @@ object TranscodingSetup {
       valueToEncode: A,
       target: Target,
       encConfig: EC,
-      encWrapper: Receiver.Wrapper[EC],
+      encWrapper: Receiver.Transformer[EC],
       defaultDecConfig: DC,
-      defaultDecWrapper: Receiver.Wrapper[DC])
-      extends Borer.AbstractSetup(defaultDecConfig, defaultDecWrapper) with DecodingApi[DC] with Sealed[AnyRef] {
+      defaultDecWrapper: Receiver.Transformer[DC])
+      extends CommonApi.Impl(defaultDecConfig, defaultDecWrapper) with DecodingApi[DC] with Sealed[AnyRef] {
 
     private[this] var prefixOnly: Boolean      = _
     private[this] var decoder: Decoder[AnyRef] = _
@@ -181,7 +109,7 @@ object TranscodingSetup {
           .write(valueToEncode)
           .writeEndOfInput() // doesn't actually write anything but triggers certain validation checks (if configured)
 
-        val reader = new InputReader(new Parser.DequeParser(deque), null, receiverWrapper, config, target)
+        val reader = new InputReader(new Parser.DequeParser(deque), null, receiverTransformer, config, target)
         val value  = decoder.read(reader)
         if (!prefixOnly) reader.readEndOfInput()
         value

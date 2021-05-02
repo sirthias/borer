@@ -30,25 +30,43 @@ import scala.annotation.{nowarn, tailrec}
   */
 object Logging {
 
-  def apply[Config](createLogger: LevelInfo => Logger): borer.Receiver.Wrapper[Config] =
+  def transformer[Config](createLogger: LevelInfo => Logger): borer.Receiver.Transformer[Config] =
     (target, _) => new Receiver(target, createLogger)
 
   trait LevelInfo {
+
+    /**
+      * The zero-based nesting level of the current item.
+      */
     def level: Int
+
+    /**
+      * The one-based index number of the current item within the current level.
+      */
     def levelCount: Long
+
+    /**
+      * The number of total items on the current level.
+      * -1 if the current level is unbounded.
+      */
     def levelSize: Long
-    def levelType: LevelType
+
+    /**
+      * The type of the current item.
+      */
+    def elementType: ElementType
+
     final def isUnbounded: Boolean = levelSize < 0
   }
 
-  sealed trait LevelType
+  sealed trait ElementType
 
-  object LevelType {
-    final case object Array               extends LevelType
-    final case object UnboundedByteString extends LevelType
-    final case object UnboundedTextString extends LevelType
+  object ElementType {
+    final case object ArrayElement               extends ElementType
+    final case object UnboundedByteStringElement extends ElementType
+    final case object UnboundedTextStringElement extends ElementType
 
-    sealed trait MapEntry      extends LevelType
+    sealed trait MapEntry      extends ElementType
     final case object MapKey   extends MapEntry
     final case object MapValue extends MapEntry
   }
@@ -77,7 +95,7 @@ object Logging {
     def onMapStart(): Unit
     def onTag(value: Tag): Unit
     def onSimpleValue(value: Int): Unit
-    def onLevelExited(levelType: LevelType, break: Boolean): Unit
+    def onLevelExited(levelType: ElementType, break: Boolean): Unit
     def onEndOfInput(): Unit
   }
 
@@ -85,35 +103,52 @@ object Logging {
     * A [[Logger]] which formats each incoming element to it's own log line.
     */
   abstract class LineFormatLogger extends Logger {
+    protected var maxCountWidth: Int = _
 
-    def onNull(): Unit                                   = show("null")
-    def onUndefined(): Unit                              = show("undefined")
-    def onBool(value: Boolean): Unit                     = show(value.toString)
-    def onInt(value: Int): Unit                          = show(value.toString)
-    def onLong(value: Long): Unit                        = show(s"${value}L")
-    def onOverLong(negative: Boolean, value: Long): Unit = show(Dom.OverLongElem(negative, value).render)
-    def onFloat16(value: Float): Unit                    = show(s"${Util.doubleToString(value.toDouble)}f16")
-    def onFloat(value: Float): Unit                      = show(s"${Util.doubleToString(value.toDouble)}f")
-    def onDouble(value: Double): Unit                    = show(Util.doubleToString(value))
-    def onDecimal(integer: Long, fraction: Int): Unit    = show(s"$integer.${fraction}d")
-    def onNumberString(value: String): Unit              = show(value + 's')
-    def onBytes[Bytes: ByteAccess](value: Bytes): Unit   = show(formatBytes("BYTES[", value))
-    def onBytesStart(): Unit                             = show("BYTES*[")
-    def onString(value: String): Unit                    = show(formatString(value))
-    def onChars(buffer: Array[Char], length: Int): Unit  = show(formatString(new String(buffer, 0, length)))
-    def onText[Bytes: ByteAccess](value: Bytes): Unit    = show(formatString(value))
-    def onTextStart(): Unit                              = show("TEXT*[")
-    def onArrayHeader(length: Long): Unit                = show(if (length > 0) "[" else "[]")
-    def onArrayStart(): Unit                             = show("[")
-    def onMapHeader(length: Long): Unit                  = show(if (length > 0) "{" else "{}")
-    def onMapStart(): Unit                               = show("{")
-    def onTag(value: Tag): Unit                          = show(value.toString)
-    def onSimpleValue(value: Int): Unit                  = show(s"SimpleValue($value)")
+    def info: LevelInfo
 
-    def onLevelExited(levelType: LevelType, break: Boolean): Unit =
-      show(if (levelType.isInstanceOf[LevelType.MapEntry]) "}" else "]")
+    def maxShownByteArrayPrefixLen: Int
+    def maxShownStringPrefixLen: Int
+    def maxShownArrayElems: Int
+    def maxShownMapEntries: Int
+    def initialCountWidth: Int
+    def renderLevelCount: Boolean
+    def renderEndOfInput: Boolean
+    def renderCommas: Boolean
+    def indentation: String
+    def mapKeySep: String
 
-    def onEndOfInput(): Unit = show("END")
+    def renderLine(line: String): Unit
+
+    def onNull(): Unit                                   = render("null")
+    def onUndefined(): Unit                              = render("undefined")
+    def onBool(value: Boolean): Unit                     = render(value.toString)
+    def onInt(value: Int): Unit                          = render(value.toString)
+    def onLong(value: Long): Unit                        = render(s"${value}L")
+    def onOverLong(negative: Boolean, value: Long): Unit = render(formatOverLong(negative, value))
+    def onFloat16(value: Float): Unit                    = render(s"${Util.doubleToString(value.toDouble)}f16")
+    def onFloat(value: Float): Unit                      = render(s"${Util.doubleToString(value.toDouble)}f")
+    def onDouble(value: Double): Unit                    = render(s"${Util.doubleToString(value)}d")
+    def onDecimal(integer: Long, fraction: Int): Unit    = render(s"$integer.${fraction}d")
+    def onNumberString(value: String): Unit              = render(s"${value}s")
+    def onBytes[Bytes: ByteAccess](value: Bytes): Unit   = render(formatBytes("B[", value))
+    def onBytesStart(): Unit                             = render("B*[", levelOpen = true)
+    def onString(value: String): Unit                    = render(formatString(value))
+    def onChars(buffer: Array[Char], length: Int): Unit  = render(formatString(new String(buffer, 0, length)))
+    def onText[Bytes: ByteAccess](value: Bytes): Unit    = render(formatString(value))
+    def onTextStart(): Unit                              = render("T*[", levelOpen = true)
+    def onArrayStart(): Unit                             = render("*[", levelOpen = true)
+    def onMapStart(): Unit                               = render("*{", levelOpen = true)
+    def onTag(value: Tag): Unit                          = render(s"@$value")
+    def onSimpleValue(value: Int): Unit                  = render(s"Simple($value)")
+    def onEndOfInput(): Unit                             = if (renderEndOfInput) render("END")
+
+    def onArrayHeader(length: Long): Unit = if (length > 0) render("[", levelOpen = true) else render("[]")
+
+    def onMapHeader(length: Long): Unit = if (length > 0) render("{", levelOpen = true) else render("{}")
+
+    def onLevelExited(levelType: ElementType, break: Boolean): Unit =
+      render(if (levelType.isInstanceOf[ElementType.MapEntry]) "}" else "]", levelClose = true)
 
     def formatBytes[Bytes](opener: String, value: Bytes)(implicit ba: ByteAccess[Bytes]): String =
       ba.toByteArray(value)
@@ -121,100 +156,136 @@ object Logging {
         .map(x => f"${x & 0xFF}%02X")
         .mkString(opener, " ", if (ba.sizeOf(value) > maxShownByteArrayPrefixLen) " ...]" else "]")
 
+    def formatOverLong(negative: Boolean, value: Long): String = {
+      val x = new java.math.BigInteger(1, Util.toBigEndianBytes(value))
+      val y = if (negative) x.not else x
+      s"${y.toString}LL"
+    }
+
     def formatString[Bytes](value: Bytes)(implicit ba: ByteAccess[Bytes]): String =
       formatString(new String(ba.toByteArray(value), UTF_8))
 
-    def formatString(value: String): String =
-      if (value.length > maxShownStringPrefixLen) {
-        "\"" + value.substring(0, maxShownStringPrefixLen) + "...\""
-      } else "\"" + value + '"'
-
-    def show(item: String): Unit = {
-      val inf             = info
-      val levelType       = inf.levelType
-      val sze             = inf.levelSize
-      val cnt             = inf.levelCount
-      val maxShownInLevel = if (levelType.isInstanceOf[LevelType.MapEntry]) maxShownMapEntries else maxShownArrayElems
-      val shownHalf       = maxShownInLevel >> 1
-      val ellipsisCount   = sze - shownHalf
-      if (sze <= maxShownInLevel || cnt <= shownHalf + (maxShownInLevel & 1) || cnt > ellipsisCount) {
-        val sb = new java.lang.StringBuilder
-        for (_ <- 0 until inf.level) sb.append("    ")
-        val levelCount = cnt.toString
-        if (sze >= 0) {
-          val s = sze.toString
-          for (_ <- 0 until (s.length - levelCount.length)) sb.append(' ')
-          sb.append(levelCount).append('/').append(s)
-        } else sb.append(levelCount)
-        sb.append(": ")
-        if (levelType == LevelType.MapValue && item != "]" && item != "}") sb.append("-> ")
-        sb.append(item)
-        showLine(sb.toString)
-      } else if (cnt == ellipsisCount && levelType != LevelType.MapKey) {
-        val sb = new java.lang.StringBuilder
-        for (_ <- 0 until inf.level) sb.append("    ")
-        sb.append("...")
-        showLine(sb.toString)
-      }
+    def formatString(value: String): String = {
+      val sb      = new java.lang.StringBuilder
+      val tooLong = value.length > maxShownStringPrefixLen
+      val string  = if (tooLong) value.substring(0, maxShownStringPrefixLen) else value
+      string.foldLeft(sb.append('"'))(appendChar).append(if (tooLong) "...\"" else "\"").toString
     }
 
-    def info: LevelInfo
-    def maxShownByteArrayPrefixLen: Int
-    def maxShownStringPrefixLen: Int
-    def maxShownArrayElems: Int
-    def maxShownMapEntries: Int
-    def showLine(line: String): Unit
-  }
+    def appendChar(sb: JStringBuilder, char: Char): JStringBuilder =
+      char match {
+        case '"'                            => sb.append("\\\"")
+        case '\t'                           => sb.append("\\t")
+        case '\r'                           => sb.append("\\r")
+        case '\n'                           => sb.append("\\n")
+        case x if Character.isISOControl(x) => sb.append("\\u%04x".format(x.toInt))
+        case x                              => sb.append(x)
+      }
 
-  def PrintLogger(
-      maxShownByteArrayPrefixLen: Int = 20,
-      maxShownStringPrefixLen: Int = 50,
-      maxShownArrayElems: Int = 20,
-      maxShownMapEntries: Int = 20): LevelInfo => PrintLogger =
-    new PrintLogger(maxShownByteArrayPrefixLen, maxShownStringPrefixLen, maxShownArrayElems, maxShownMapEntries, _)
+    def appendIndent(sb: JStringBuilder, level: Int): JStringBuilder = {
+      @tailrec def rec(remaining: Int, sb: JStringBuilder): JStringBuilder =
+        if (remaining > 0) rec(remaining - 1, sb.append(indentation)) else sb
+      rec(level, sb)
+    }
+
+    def appendLevelCount(sb: JStringBuilder, count: Long, size: Long): JStringBuilder = {
+      @tailrec def pad(remaining: Int, sb: JStringBuilder): JStringBuilder =
+        if (remaining > 0) pad(remaining - 1, sb.append(' ')) else sb
+      val countStr = count.toString
+      maxCountWidth = math.max(maxCountWidth, initialCountWidth)
+      if (size >= 0) {
+        val sizeStr = size.toString
+        maxCountWidth = math.max(maxCountWidth, sizeStr.length)
+        pad(maxCountWidth - countStr.length, sb).append(countStr)
+        sb.append('/')
+        pad(maxCountWidth - sizeStr.length, sb).append(sizeStr)
+      } else {
+        maxCountWidth = math.max(maxCountWidth, countStr.length)
+        pad(maxCountWidth * 2 + 1 - countStr.length, sb).append(countStr)
+      }
+      sb.append('|').append(' ')
+    }
+
+    def render(item: String, levelOpen: Boolean = false, levelClose: Boolean = false): Unit = {
+      val inf           = info
+      val level         = inf.level
+      val levelCount    = inf.levelCount
+      val levelSize     = inf.levelSize
+      val levelType     = inf.elementType
+      val maxShown      = if (levelType.isInstanceOf[ElementType.MapEntry]) maxShownMapEntries else maxShownArrayElems
+      val shownHalf     = maxShown >> 1
+      val ellipsisCount = levelSize - shownHalf
+      if (levelSize <= maxShown || levelCount <= shownHalf + (maxShown & 1) || levelCount > ellipsisCount) {
+        val sb = new JStringBuilder
+        if (renderLevelCount) appendLevelCount(sb, levelCount, levelSize)
+        appendIndent(sb, level)
+        if (levelType == ElementType.MapValue && !levelClose) sb.append(mapKeySep)
+        sb.append(item)
+        if (renderCommas && level > 0 && !levelOpen && levelType != ElementType.MapKey &&
+          (levelSize < 0 || levelCount < levelSize)) sb.append(',')
+        renderLine(sb.toString)
+      } else if (levelCount == ellipsisCount && levelType != ElementType.MapKey) {
+        val sb = new JStringBuilder
+        appendIndent(sb, level)
+        sb.append("...")
+        renderLine(sb.toString)
+      }
+    }
+  }
 
   /**
     * A [[LineFormatLogger]] that simply prints all lines to the console.
     */
-  final class PrintLogger(
+  class PrintLogger(
+      val info: LevelInfo,
       val maxShownByteArrayPrefixLen: Int,
       val maxShownStringPrefixLen: Int,
       val maxShownArrayElems: Int,
       val maxShownMapEntries: Int,
-      val info: LevelInfo)
+      val initialCountWidth: Int,
+      val renderLevelCount: Boolean,
+      val renderEndOfInput: Boolean,
+      val renderCommas: Boolean,
+      val indentation: String,
+      val mapKeySep: String)
       extends LineFormatLogger {
-    def showLine(line: String): Unit = println(line)
-  }
 
-  def ToStringLogger(
-      stringBuilder: JStringBuilder,
-      maxShownByteArrayPrefixLen: Int = 20,
-      maxShownStringPrefixLen: Int = 50,
-      maxShownArrayElems: Int = 20,
-      maxShownMapEntries: Int = 20,
-      lineSeparator: String = System.lineSeparator()): LevelInfo => ToStringLogger =
-    new ToStringLogger(
-      stringBuilder,
-      maxShownByteArrayPrefixLen,
-      maxShownStringPrefixLen,
-      maxShownArrayElems,
-      maxShownMapEntries,
-      lineSeparator,
-      _)
+    def renderLine(line: String): Unit = println(line)
+  }
 
   /**
     * A [[LineFormatLogger]] that appends all lines to a given [[JStringBuilder]].
     */
-  final class ToStringLogger(
+  class ToStringLogger(
+      val info: LevelInfo,
       val stringBuilder: JStringBuilder,
       val maxShownByteArrayPrefixLen: Int,
       val maxShownStringPrefixLen: Int,
       val maxShownArrayElems: Int,
       val maxShownMapEntries: Int,
-      val lineSeparator: String,
-      val info: LevelInfo)
+      val initialCountWidth: Int,
+      val renderLevelCount: Boolean,
+      val renderEndOfInput: Boolean,
+      val renderCommas: Boolean,
+      val indentation: String,
+      val mapKeySep: String,
+      val lineSep: String,
+      val mapValueOnNewLine: Boolean)
       extends LineFormatLogger {
-    def showLine(line: String): Unit = stringBuilder.append(line).append(lineSeparator)
+
+    def renderLine(line: String): Unit = {
+      stringBuilder.append(line)
+      if (mapValueOnNewLine || info.elementType != ElementType.MapKey) stringBuilder.append(lineSep)
+    }
+
+    override def appendIndent(sb: JStringBuilder, level: Int) =
+      if (mapValueOnNewLine || lineStart) super.appendIndent(sb, level) else sb
+
+    override def appendLevelCount(sb: JStringBuilder, count: Long, size: Long) =
+      if (mapValueOnNewLine || lineStart) super.appendLevelCount(sb, count, size) else sb
+
+    private def lineStart: Boolean =
+      stringBuilder.length() == 0 || lineSep.isEmpty || stringBuilder.charAt(stringBuilder.length() - 1) == lineSep.last
   }
 
   /**
@@ -264,22 +335,22 @@ object Logging {
       } else -1
 
     @nowarn("cat=other-match-analysis")
-    def levelType =
+    def elementType =
       if (_level >= 0) {
         val count = _levelCount(_level)
         val size  = _levelSize(_level)
         if (count >= 0) {
-          if (size >= 0) LevelType.Array
-          else if ((count & 1) == 0) LevelType.MapKey
-          else LevelType.MapValue
+          if (size >= 0) ElementType.ArrayElement
+          else if ((count & 1) == 0) ElementType.MapKey
+          else ElementType.MapValue
         } else
           size match {
-            case 0 => LevelType.Array
-            case 1 => if ((count & 1) != 0) LevelType.MapKey else LevelType.MapValue
-            case 2 => LevelType.UnboundedByteString
-            case 3 => LevelType.UnboundedTextString
+            case 0 => ElementType.ArrayElement
+            case 1 => if ((count & 1) != 0) ElementType.MapKey else ElementType.MapValue
+            case 2 => ElementType.UnboundedByteStringElement
+            case 3 => ElementType.UnboundedTextStringElement
           }
-      } else LevelType.Array
+      } else ElementType.ArrayElement
 
     def onNull(): Unit = {
       logger.onNull()
@@ -402,7 +473,7 @@ object Logging {
     }
 
     def onBreak(): Unit = {
-      val exitedLevelType = levelType
+      val exitedLevelType = elementType
       exitLevel()
       logger.onLevelExited(exitedLevelType, break = true)
       count() // level-entering items are only counted when the level is exited, not when they are entered
@@ -434,7 +505,7 @@ object Logging {
           val rawSize  = _levelSize(_level)
           val size     = if (rawSize >= 0) rawSize else ~rawSize
           if (newCount == size) {
-            val exitedLevelType = levelType
+            val exitedLevelType = elementType
             exitLevel()
             logger.onLevelExited(exitedLevelType, break = false)
             count() // level-entering items are only counted when the level is exited, not when they are entered

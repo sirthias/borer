@@ -31,20 +31,20 @@ object LoggingSpec extends TestSuite {
         DoubleElem(1.6),
         SimpleValueElem(SimpleValue(18)))
     } {
-      """1: [
-        |     1/11: null
-        |     2/11: undefined
-        |     3/11: true
-        |     4/11: 42
-        |     5/11: 2147483648L
-        |     6/11: 18446744073709551615LL
-        |     7/11: -18446744073709551616LL
-        |     8/11: 1.0f16
-        |     9/11: 100000.0f
-        |    10/11: 1.6
-        |    11/11: SimpleValue(18)
-        |1: ]
-        |2: END
+      """    1| [
+        | 1/11|     null
+        | 2/11|     undefined
+        | 3/11|     true
+        | 4/11|     42
+        | 5/11|     2147483648L
+        | 6/11|     18446744073709551615LL
+        | 7/11|     -18446744073709551616LL
+        | 8/11|     1.0f16
+        | 9/11|     100000.0f
+        |10/11|     1.6d
+        |11/11|     Simple(18)
+        |    1| ]
+        |    2| END
         |""".stripMargin
     }
 
@@ -54,20 +54,20 @@ object LoggingSpec extends TestSuite {
         ByteArrayElem(alphabet.getBytes),
         BytesStreamElem(alphabet.grouped(4).map(s => ByteArrayElem(s.getBytes)).toVector))
     } {
-      """1: [
-        |    1/3: BYTES[41 42 43 44 45 46 47 48]
-        |    2/3: BYTES[41 42 43 44 45 46 47 48 ...]
-        |    3/3: BYTES*[
-        |        1: BYTES[41 42 43 44]
-        |        2: BYTES[45 46 47 48]
-        |        3: BYTES[49 4A 4B 4C]
-        |        4: BYTES[4D 4E 4F 50]
-        |        5: BYTES[51 52 53 54]
-        |        6: BYTES[55 56 57 58]
-        |        7: BYTES[59 5A]
-        |    3/3: ]
-        |1: ]
-        |2: END
+      """    1| [
+        | 1/ 3|     B[41 42 43 44 45 46 47 48]
+        | 2/ 3|     B[41 42 43 44 45 46 47 48 ...]
+        | 3/ 3|     B*[
+        |    1|         B[41 42 43 44]
+        |    2|         B[45 46 47 48]
+        |    3|         B[49 4A 4B 4C]
+        |    4|         B[4D 4E 4F 50]
+        |    5|         B[51 52 53 54]
+        |    6|         B[55 56 57 58]
+        |    7|         B[59 5A]
+        | 3/ 3|     ]
+        |    1| ]
+        |    2| END
         |""".stripMargin
     }
 
@@ -77,20 +77,20 @@ object LoggingSpec extends TestSuite {
         StringElem(alphabet),
         TextStreamElem(alphabet.grouped(4).map(StringElem).toVector))
     } {
-      """1: [
-        |    1/3: "ABCDEFGH"
-        |    2/3: "ABCDEFGH..."
-        |    3/3: TEXT*[
-        |        1: "ABCD"
-        |        2: "EFGH"
-        |        3: "IJKL"
-        |        4: "MNOP"
-        |        5: "QRST"
-        |        6: "UVWX"
-        |        7: "YZ"
-        |    3/3: ]
-        |1: ]
-        |2: END
+      """    1| [
+        | 1/ 3|     "ABCDEFGH"
+        | 2/ 3|     "ABCDEFGH..."
+        | 3/ 3|     T*[
+        |    1|         "ABCD"
+        |    2|         "EFGH"
+        |    3|         "IJKL"
+        |    4|         "MNOP"
+        |    5|         "QRST"
+        |    6|         "UVWX"
+        |    7|         "YZ"
+        | 3/ 3|     ]
+        |    1| ]
+        |    2| END
         |""".stripMargin
     }
 
@@ -100,43 +100,43 @@ object LoggingSpec extends TestSuite {
         ArrayElem.Sized(),
         ArrayElem.Unsized(Vector(IntElem(1), IntElem(2), IntElem(3))))
     } {
-      """1: [
-        |    1/3: [
-        |        1/3: 1
-        |        2/3: 2
-        |        3/3: 3
-        |    1/3: ]
-        |    2/3: []
-        |    3/3: [
-        |        1: 1
-        |        2: 2
-        |        3: 3
-        |    3/3: ]
-        |1: ]
-        |2: END
+      """    1| [
+        | 1/ 3|     [
+        | 1/ 3|         1
+        | 2/ 3|         2
+        | 3/ 3|         3
+        | 1/ 3|     ]
+        | 2/ 3|     []
+        | 3/ 3|     *[
+        |    1|         1
+        |    2|         2
+        |    3|         3
+        | 3/ 3|     ]
+        |    1| ]
+        |    2| END
         |""".stripMargin
     }
 
     "maps" - roundTripLogEquals {
       val tuples = "abc".map(c => c.toString -> StringElem(c.toString))
-      MapElem.Sized("foo" -> IntElem(42), "empty" -> MapElem.Sized.empty, "bar" -> MapElem.Unsized(tuples: _*))
+      MapElem.Sized("foo" -> IntElem(42), "emp\nty" -> MapElem.Sized.empty, "bar" -> MapElem.Unsized(tuples: _*))
     } {
-      """1: {
-        |    1/3: "foo"
-        |    1/3: -> 42
-        |    2/3: "empty"
-        |    2/3: -> {}
-        |    3/3: "bar"
-        |    3/3: -> {
-        |        1: "a"
-        |        1: -> "a"
-        |        2: "b"
-        |        2: -> "b"
-        |        3: "c"
-        |        3: -> "c"
-        |    3/3: }
-        |1: }
-        |2: END
+      """    1| {
+        | 1/ 3|     "foo"
+        | 1/ 3|     -> 42
+        | 2/ 3|     "emp\nty"
+        | 2/ 3|     -> {}
+        | 3/ 3|     "bar"
+        | 3/ 3|     -> *{
+        |    1|         "a"
+        |    1|         -> "a"
+        |    2|         "b"
+        |    2|         -> "b"
+        |    3|         "c"
+        |    3|         -> "c"
+        | 3/ 3|     }
+        |    1| }
+        |    2| END
         |""".stripMargin
     }
 
@@ -146,57 +146,57 @@ object LoggingSpec extends TestSuite {
         MapElem.Sized((0 to 20).map(IntElem).zip(('A' to 'Z').map(x => StringElem(x.toString))): _*)
       )
     } {
-      """1: [
-        |    1/2: [
-        |         1/21: 0
-        |         2/21: 1
-        |         3/21: 2
-        |         4/21: 3
-        |         5/21: 4
-        |         6/21: 5
+      """    1| [
+        | 1/ 2|     [
+        | 1/21|         0
+        | 2/21|         1
+        | 3/21|         2
+        | 4/21|         3
+        | 5/21|         4
+        | 6/21|         5
         |        ...
-        |        16/21: 15
-        |        17/21: 16
-        |        18/21: 17
-        |        19/21: 18
-        |        20/21: 19
-        |        21/21: 20
-        |    1/2: ]
-        |    2/2: {
-        |         1/21: 0
-        |         1/21: -> "A"
-        |         2/21: 1
-        |         2/21: -> "B"
-        |         3/21: 2
-        |         3/21: -> "C"
-        |         4/21: 3
-        |         4/21: -> "D"
-        |         5/21: 4
-        |         5/21: -> "E"
-        |         6/21: 5
-        |         6/21: -> "F"
-        |         7/21: 6
-        |         7/21: -> "G"
-        |         8/21: 7
-        |         8/21: -> "H"
+        |16/21|         15
+        |17/21|         16
+        |18/21|         17
+        |19/21|         18
+        |20/21|         19
+        |21/21|         20
+        | 1/ 2|     ]
+        | 2/ 2|     {
+        | 1/21|         0
+        | 1/21|         -> "A"
+        | 2/21|         1
+        | 2/21|         -> "B"
+        | 3/21|         2
+        | 3/21|         -> "C"
+        | 4/21|         3
+        | 4/21|         -> "D"
+        | 5/21|         4
+        | 5/21|         -> "E"
+        | 6/21|         5
+        | 6/21|         -> "F"
+        | 7/21|         6
+        | 7/21|         -> "G"
+        | 8/21|         7
+        | 8/21|         -> "H"
         |        ...
-        |        15/21: 14
-        |        15/21: -> "O"
-        |        16/21: 15
-        |        16/21: -> "P"
-        |        17/21: 16
-        |        17/21: -> "Q"
-        |        18/21: 17
-        |        18/21: -> "R"
-        |        19/21: 18
-        |        19/21: -> "S"
-        |        20/21: 19
-        |        20/21: -> "T"
-        |        21/21: 20
-        |        21/21: -> "U"
-        |    2/2: }
-        |1: ]
-        |2: END
+        |15/21|         14
+        |15/21|         -> "O"
+        |16/21|         15
+        |16/21|         -> "P"
+        |17/21|         16
+        |17/21|         -> "Q"
+        |18/21|         17
+        |18/21|         -> "R"
+        |19/21|         18
+        |19/21|         -> "S"
+        |20/21|         19
+        |20/21|         -> "T"
+        |21/21|         20
+        |21/21|         -> "U"
+        | 2/ 2|     }
+        |    1| ]
+        |    2| END
         |""".stripMargin
     }
   }
@@ -213,7 +213,8 @@ object LoggingSpec extends TestSuite {
           maxShownStringPrefixLen = 8,
           maxShownArrayElems = 12,
           maxShownMapEntries = 15,
-          lineSeparator = "\n")
+          mapValueOnNewLine = true,
+          lineSep = "\n")
         .toByteArray
 
     log.toString ==> expectedLog
@@ -227,7 +228,8 @@ object LoggingSpec extends TestSuite {
         maxShownStringPrefixLen = 8,
         maxShownArrayElems = 12,
         maxShownMapEntries = 15,
-        lineSeparator = "\n")
+        mapValueOnNewLine = true,
+        lineSep = "\n")
       .to[Element]
       .value ==> element
 
