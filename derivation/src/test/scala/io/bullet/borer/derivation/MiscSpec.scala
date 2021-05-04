@@ -151,18 +151,18 @@ object MiscSpec extends AbstractBorerSpec {
 
       dom.render(renderLevelCount = true) ==>
       """    1| {
-        | 1/ 4|   "int" = 42,
-        | 2/ 4|   "bar" = {
-        | 1/ 2|     "stringSeq" = *[
+        |  1/4|   "int" = 42,
+        |  2/4|   "bar" = {
+        |  1/2|     "stringSeq" = *[
         |    1|       "abc",
         |    2|       "def",
-        | 1/ 2|     ],
-        | 2/ 2|     "double" = 18.34d
-        | 2/ 4|   },
-        | 3/ 4|   "doubleOpt" = [],
-        | 4/ 4|   "boolOpt" = [
-        | 1/ 1|     true
-        | 4/ 4|   ]
+        |  1/2|     ],
+        |  2/2|     "double" = 18.34d
+        |  2/4|   },
+        |  3/4|   "doubleOpt" = [],
+        |  4/4|   "boolOpt" = [
+        |  1/1|     true
+        |  4/4|   ]
         |    1| }
         |""".stripMargin
     }

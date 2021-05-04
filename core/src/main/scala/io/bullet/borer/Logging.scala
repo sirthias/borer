@@ -103,7 +103,7 @@ object Logging {
     * A [[Logger]] which formats each incoming element to it's own log line.
     */
   abstract class LineFormatLogger extends Logger {
-    protected var maxCountWidth: Int = _
+    protected var gutterWidth: Int = _
 
     def info: LevelInfo
 
@@ -111,7 +111,7 @@ object Logging {
     def maxShownStringPrefixLen: Int
     def maxShownArrayElems: Int
     def maxShownMapEntries: Int
-    def initialCountWidth: Int
+    def initialGutterWidth: Int
     def renderLevelCount: Boolean
     def renderEndOfInput: Boolean
     def renderCommas: Boolean
@@ -192,16 +192,15 @@ object Logging {
       @tailrec def pad(remaining: Int, sb: JStringBuilder): JStringBuilder =
         if (remaining > 0) pad(remaining - 1, sb.append(' ')) else sb
       val countStr = count.toString
-      maxCountWidth = math.max(maxCountWidth, initialCountWidth)
+      gutterWidth = math.max(gutterWidth, initialGutterWidth)
       if (size >= 0) {
         val sizeStr = size.toString
-        maxCountWidth = math.max(maxCountWidth, sizeStr.length)
-        pad(maxCountWidth - countStr.length, sb).append(countStr)
-        sb.append('/')
-        pad(maxCountWidth - sizeStr.length, sb).append(sizeStr)
+        gutterWidth = math.max(gutterWidth, sizeStr.length * 2 + 1)
+        pad(gutterWidth - sizeStr.length - countStr.length - 1, sb).append(countStr)
+        sb.append('/').append(sizeStr)
       } else {
-        maxCountWidth = math.max(maxCountWidth, countStr.length)
-        pad(maxCountWidth * 2 + 1 - countStr.length, sb).append(countStr)
+        gutterWidth = math.max(gutterWidth, countStr.length)
+        pad(gutterWidth - countStr.length, sb).append(countStr)
       }
       sb.append('|').append(' ')
     }
@@ -242,7 +241,7 @@ object Logging {
       val maxShownStringPrefixLen: Int,
       val maxShownArrayElems: Int,
       val maxShownMapEntries: Int,
-      val initialCountWidth: Int,
+      val initialGutterWidth: Int,
       val renderLevelCount: Boolean,
       val renderEndOfInput: Boolean,
       val renderCommas: Boolean,
@@ -263,7 +262,7 @@ object Logging {
       val maxShownStringPrefixLen: Int,
       val maxShownArrayElems: Int,
       val maxShownMapEntries: Int,
-      val initialCountWidth: Int,
+      val initialGutterWidth: Int,
       val renderLevelCount: Boolean,
       val renderEndOfInput: Boolean,
       val renderCommas: Boolean,

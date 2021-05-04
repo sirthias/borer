@@ -34,7 +34,7 @@ object Dom {
         maxShownStringPrefixLen: Int = 50,
         maxShownArrayElems: Int = 20,
         maxShownMapEntries: Int = 20,
-        initialCountWidth: Int = 2,
+        initialGutterWidth: Int = 5,
         renderLevelCount: Boolean = false,
         renderEndOfInput: Boolean = false,
         renderCommas: Boolean = true,
@@ -47,19 +47,19 @@ object Dom {
       Cbor
         .encode(this)
         .withStringLogging(
-          sb,
-          maxShownByteArrayPrefixLen,
-          maxShownStringPrefixLen,
-          maxShownArrayElems,
-          maxShownMapEntries,
-          initialCountWidth,
-          renderLevelCount,
-          renderEndOfInput,
-          renderCommas,
-          indentation,
-          mapKeySep,
-          lineSep,
-          mapValueOnNewLine)
+          stringBuilder = sb,
+          maxShownByteArrayPrefixLen = maxShownByteArrayPrefixLen,
+          maxShownStringPrefixLen = maxShownStringPrefixLen,
+          maxShownArrayElems = maxShownArrayElems,
+          maxShownMapEntries = maxShownMapEntries,
+          initialGutterWidth = initialGutterWidth,
+          renderLevelCount = renderLevelCount,
+          renderEndOfInput = renderEndOfInput,
+          renderCommas = renderCommas,
+          indentation = indentation,
+          mapKeySep = mapKeySep,
+          lineSep = lineSep,
+          mapValueOnNewLine = mapValueOnNewLine)
         .to[Unit]
         .result
       sb.toString

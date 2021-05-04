@@ -26,7 +26,7 @@ trait CommonApi[Config] {
       maxShownStringPrefixLen: Int = 50,
       maxShownArrayElems: Int = 20,
       maxShownMapEntries: Int = 20,
-      initialCountWidth: Int = 2,
+      initialGutterWidth: Int = 5,
       renderLevelCount: Boolean = true,
       renderEndOfInput: Boolean = true,
       renderCommas: Boolean = false,
@@ -42,7 +42,7 @@ trait CommonApi[Config] {
       maxShownStringPrefixLen: Int = 50,
       maxShownArrayElems: Int = 20,
       maxShownMapEntries: Int = 20,
-      initialCountWidth: Int = 2,
+      initialGutterWidth: Int = 5,
       renderLevelCount: Boolean = true,
       renderEndOfInput: Boolean = true,
       renderCommas: Boolean = false,
@@ -79,7 +79,7 @@ private[borer] object CommonApi {
         maxShownStringPrefixLen: Int,
         maxShownArrayElems: Int,
         maxShownMapEntries: Int,
-        initialCountWidth: Int,
+        initialGutterWidth: Int,
         renderLevelCount: Boolean,
         renderEndOfInput: Boolean,
         renderCommas: Boolean,
@@ -87,17 +87,17 @@ private[borer] object CommonApi {
         mapKeySep: String): this.type =
       withLogging { levelInfo =>
         new Logging.PrintLogger(
-          levelInfo,
-          maxShownByteArrayPrefixLen,
-          maxShownStringPrefixLen,
-          maxShownArrayElems,
-          maxShownMapEntries,
-          initialCountWidth,
-          renderLevelCount,
-          renderEndOfInput,
-          renderCommas,
-          indentation,
-          mapKeySep)
+          info = levelInfo,
+          maxShownByteArrayPrefixLen = maxShownByteArrayPrefixLen,
+          maxShownStringPrefixLen = maxShownStringPrefixLen,
+          maxShownArrayElems = maxShownArrayElems,
+          maxShownMapEntries = maxShownMapEntries,
+          initialGutterWidth = initialGutterWidth,
+          renderLevelCount = renderLevelCount,
+          renderEndOfInput = renderEndOfInput,
+          renderCommas = renderCommas,
+          indentation = indentation,
+          mapKeySep = mapKeySep)
       }
 
     final def withStringLogging(
@@ -106,7 +106,7 @@ private[borer] object CommonApi {
         maxShownStringPrefixLen: Int,
         maxShownArrayElems: Int,
         maxShownMapEntries: Int,
-        initialCountWidth: Int,
+        initialGutterWidth: Int,
         renderLevelCount: Boolean,
         renderEndOfInput: Boolean,
         renderCommas: Boolean,
@@ -116,20 +116,20 @@ private[borer] object CommonApi {
         mapValueOnNewLine: Boolean): this.type =
       withLogging { levelInfo =>
         new Logging.ToStringLogger(
-          levelInfo,
-          sb,
-          maxShownByteArrayPrefixLen,
-          maxShownStringPrefixLen,
-          maxShownArrayElems,
-          maxShownMapEntries,
-          initialCountWidth,
-          renderLevelCount,
-          renderEndOfInput,
-          renderCommas,
-          indentation,
-          mapKeySep,
-          lineSep,
-          mapValueOnNewLine)
+          info = levelInfo,
+          stringBuilder = sb,
+          maxShownByteArrayPrefixLen = maxShownByteArrayPrefixLen,
+          maxShownStringPrefixLen = maxShownStringPrefixLen,
+          maxShownArrayElems = maxShownArrayElems,
+          maxShownMapEntries = maxShownMapEntries,
+          initialGutterWidth = initialGutterWidth,
+          renderLevelCount = renderLevelCount,
+          renderEndOfInput = renderEndOfInput,
+          renderCommas = renderCommas,
+          indentation = indentation,
+          mapKeySep = mapKeySep,
+          lineSep = lineSep,
+          mapValueOnNewLine = mapValueOnNewLine)
       }
 
     final def withLogging(createLogger: Logging.LevelInfo => Logging.Logger): this.type =

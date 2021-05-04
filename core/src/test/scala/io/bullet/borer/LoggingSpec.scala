@@ -17,7 +17,7 @@ object LoggingSpec extends TestSuite {
 
   val tests = Tests {
 
-    "simple values" - roundTripLogEquals {
+    "simple values" - roundTripLogEquals(
       ArrayElem.Sized(
         NullElem,
         UndefinedElem,
@@ -29,22 +29,23 @@ object LoggingSpec extends TestSuite {
         Float16Elem(1.0f),
         FloatElem(100000.0f),
         DoubleElem(1.6),
-        SimpleValueElem(SimpleValue(18)))
-    } {
-      """    1| [
-        | 1/11|     null
-        | 2/11|     undefined
-        | 3/11|     true
-        | 4/11|     42
-        | 5/11|     2147483648L
-        | 6/11|     18446744073709551615LL
-        | 7/11|     -18446744073709551616LL
-        | 8/11|     1.0f16
-        | 9/11|     100000.0f
-        |10/11|     1.6d
-        |11/11|     Simple(18)
-        |    1| ]
-        |    2| END
+        SimpleValueElem(SimpleValue(18))),
+      initialGutterWidth = 7
+    ) {
+      """      1| [
+        |   1/11|     null
+        |   2/11|     undefined
+        |   3/11|     true
+        |   4/11|     42
+        |   5/11|     2147483648L
+        |   6/11|     18446744073709551615LL
+        |   7/11|     -18446744073709551616LL
+        |   8/11|     1.0f16
+        |   9/11|     100000.0f
+        |  10/11|     1.6d
+        |  11/11|     Simple(18)
+        |      1| ]
+        |      2| END
         |""".stripMargin
     }
 
@@ -55,9 +56,9 @@ object LoggingSpec extends TestSuite {
         BytesStreamElem(alphabet.grouped(4).map(s => ByteArrayElem(s.getBytes)).toVector))
     } {
       """    1| [
-        | 1/ 3|     B[41 42 43 44 45 46 47 48]
-        | 2/ 3|     B[41 42 43 44 45 46 47 48 ...]
-        | 3/ 3|     B*[
+        |  1/3|     B[41 42 43 44 45 46 47 48]
+        |  2/3|     B[41 42 43 44 45 46 47 48 ...]
+        |  3/3|     B*[
         |    1|         B[41 42 43 44]
         |    2|         B[45 46 47 48]
         |    3|         B[49 4A 4B 4C]
@@ -65,7 +66,7 @@ object LoggingSpec extends TestSuite {
         |    5|         B[51 52 53 54]
         |    6|         B[55 56 57 58]
         |    7|         B[59 5A]
-        | 3/ 3|     ]
+        |  3/3|     ]
         |    1| ]
         |    2| END
         |""".stripMargin
@@ -78,9 +79,9 @@ object LoggingSpec extends TestSuite {
         TextStreamElem(alphabet.grouped(4).map(StringElem).toVector))
     } {
       """    1| [
-        | 1/ 3|     "ABCDEFGH"
-        | 2/ 3|     "ABCDEFGH..."
-        | 3/ 3|     T*[
+        |  1/3|     "ABCDEFGH"
+        |  2/3|     "ABCDEFGH..."
+        |  3/3|     T*[
         |    1|         "ABCD"
         |    2|         "EFGH"
         |    3|         "IJKL"
@@ -88,7 +89,7 @@ object LoggingSpec extends TestSuite {
         |    5|         "QRST"
         |    6|         "UVWX"
         |    7|         "YZ"
-        | 3/ 3|     ]
+        |  3/3|     ]
         |    1| ]
         |    2| END
         |""".stripMargin
@@ -101,17 +102,17 @@ object LoggingSpec extends TestSuite {
         ArrayElem.Unsized(Vector(IntElem(1), IntElem(2), IntElem(3))))
     } {
       """    1| [
-        | 1/ 3|     [
-        | 1/ 3|         1
-        | 2/ 3|         2
-        | 3/ 3|         3
-        | 1/ 3|     ]
-        | 2/ 3|     []
-        | 3/ 3|     *[
+        |  1/3|     [
+        |  1/3|         1
+        |  2/3|         2
+        |  3/3|         3
+        |  1/3|     ]
+        |  2/3|     []
+        |  3/3|     *[
         |    1|         1
         |    2|         2
         |    3|         3
-        | 3/ 3|     ]
+        |  3/3|     ]
         |    1| ]
         |    2| END
         |""".stripMargin
@@ -122,19 +123,19 @@ object LoggingSpec extends TestSuite {
       MapElem.Sized("foo" -> IntElem(42), "emp\nty" -> MapElem.Sized.empty, "bar" -> MapElem.Unsized(tuples: _*))
     } {
       """    1| {
-        | 1/ 3|     "foo"
-        | 1/ 3|     -> 42
-        | 2/ 3|     "emp\nty"
-        | 2/ 3|     -> {}
-        | 3/ 3|     "bar"
-        | 3/ 3|     -> *{
+        |  1/3|     "foo"
+        |  1/3|     -> 42
+        |  2/3|     "emp\nty"
+        |  2/3|     -> {}
+        |  3/3|     "bar"
+        |  3/3|     -> *{
         |    1|         "a"
         |    1|         -> "a"
         |    2|         "b"
         |    2|         -> "b"
         |    3|         "c"
         |    3|         -> "c"
-        | 3/ 3|     }
+        |  3/3|     }
         |    1| }
         |    2| END
         |""".stripMargin
@@ -147,7 +148,7 @@ object LoggingSpec extends TestSuite {
       )
     } {
       """    1| [
-        | 1/ 2|     [
+        |  1/2|     [
         | 1/21|         0
         | 2/21|         1
         | 3/21|         2
@@ -161,8 +162,8 @@ object LoggingSpec extends TestSuite {
         |19/21|         18
         |20/21|         19
         |21/21|         20
-        | 1/ 2|     ]
-        | 2/ 2|     {
+        |  1/2|     ]
+        |  2/2|     {
         | 1/21|         0
         | 1/21|         -> "A"
         | 2/21|         1
@@ -194,14 +195,14 @@ object LoggingSpec extends TestSuite {
         |20/21|         -> "T"
         |21/21|         20
         |21/21|         -> "U"
-        | 2/ 2|     }
+        |  2/2|     }
         |    1| ]
         |    2| END
         |""".stripMargin
     }
   }
 
-  def roundTripLogEquals(element: Element)(expectedLog: String): Unit = {
+  def roundTripLogEquals(element: Element, initialGutterWidth: Int = 5)(expectedLog: String): Unit = {
     val log = new java.lang.StringBuilder
 
     val encoded =
@@ -214,6 +215,7 @@ object LoggingSpec extends TestSuite {
           maxShownArrayElems = 12,
           maxShownMapEntries = 15,
           mapValueOnNewLine = true,
+          initialGutterWidth = initialGutterWidth,
           lineSep = "\n")
         .toByteArray
 
@@ -229,6 +231,7 @@ object LoggingSpec extends TestSuite {
         maxShownArrayElems = 12,
         maxShownMapEntries = 15,
         mapValueOnNewLine = true,
+        initialGutterWidth = initialGutterWidth,
         lineSep = "\n")
       .to[Element]
       .value ==> element
