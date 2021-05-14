@@ -223,7 +223,7 @@ val `circe-core`        = Def.setting("io.circe"               %%% "circe-core" 
 val `circe-parser`      = Def.setting("io.circe"               %%% "circe-parser"            % "0.13.0")
 val `circe-derivation`  = Def.setting("io.circe"               %%% "circe-derivation"        % "0.13.0-M5")
 val `scodec-bits`       = Def.setting("org.scodec"             %%% "scodec-bits"             % "1.1.26")
-val utest               = Def.setting("com.lihaoyi"            %%% "utest"                   % "0.7.9"  % "test")
+val utest               = Def.setting("com.lihaoyi"            %%% "utest"                   % "0.7.10"  % "test")
 val `scala-compiler`    = Def.setting("org.scala-lang"         %  "scala-compiler"           % scalaVersion.value % "provided")
 val `scala-reflect`     = Def.setting("org.scala-lang"         %  "scala-reflect"            % scalaVersion.value % "provided")
 
