@@ -217,13 +217,13 @@ addCommandsAlias(
 val `akka-actor`        = Def.setting("com.typesafe.akka"      %%  "akka-actor-typed"        % "2.6.14")
 val `akka-stream`       = Def.setting("com.typesafe.akka"      %%  "akka-stream"             % "2.6.14")
 val `akka-http`         = Def.setting("com.typesafe.akka"      %%  "akka-http"               % "10.2.4")
-val `collection-compat` = Def.setting("org.scala-lang.modules" %%% "scala-collection-compat" % "2.4.3")
-val `cats-core`         = Def.setting("org.typelevel"          %%% "cats-core"               % "2.6.0")
+val `collection-compat` = Def.setting("org.scala-lang.modules" %%% "scala-collection-compat" % "2.4.4")
+val `cats-core`         = Def.setting("org.typelevel"          %%% "cats-core"               % "2.6.1")
 val `circe-core`        = Def.setting("io.circe"               %%% "circe-core"              % "0.13.0")
 val `circe-parser`      = Def.setting("io.circe"               %%% "circe-parser"            % "0.13.0")
 val `circe-derivation`  = Def.setting("io.circe"               %%% "circe-derivation"        % "0.13.0-M5")
-val `scodec-bits`       = Def.setting("org.scodec"             %%% "scodec-bits"             % "1.1.26")
-val utest               = Def.setting("com.lihaoyi"            %%% "utest"                   % "0.7.9"  % "test")
+val `scodec-bits`       = Def.setting("org.scodec"             %%% "scodec-bits"             % "1.1.27")
+val utest               = Def.setting("com.lihaoyi"            %%% "utest"                   % "0.7.10"  % "test")
 val `scala-compiler`    = Def.setting("org.scala-lang"         %  "scala-compiler"           % scalaVersion.value % "provided")
 val `scala-reflect`     = Def.setting("org.scala-lang"         %  "scala-reflect"            % scalaVersion.value % "provided")
 
@@ -399,11 +399,11 @@ lazy val benchmarks = project
   .settings(
     publish / skip := true,
     libraryDependencies ++= Seq(
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"        % "2.7.3",
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros"      % "2.7.3" % Provided,
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"        % "2.8.1",
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros"      % "2.8.1" % Provided,
       "com.fasterxml.jackson.module"          %% "jackson-module-scala"       % "2.12.3",
       "com.fasterxml.jackson.module"          %  "jackson-module-afterburner" % "2.12.3",
-      "com.lihaoyi"                           %% "upickle"                    % "1.3.12",
+      "com.lihaoyi"                           %% "upickle"                    % "1.3.13",
       "io.spray"                              %% "spray-json"                 % "1.3.6",
       `circe-core`.value,
       `circe-parser`.value,

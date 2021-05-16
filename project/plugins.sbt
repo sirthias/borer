@@ -6,7 +6,7 @@ addSbtPlugin("de.heikoseeberger"      % "sbt-header"                  % "5.6.0")
 addSbtPlugin("io.spray"               % "sbt-boilerplate"             % "0.6.1")
 addSbtPlugin("org.scala-js"           % "sbt-scalajs"                 % "1.5.1")
 addSbtPlugin("org.portable-scala"     % "sbt-scalajs-crossproject"    % "1.0.0")
-addSbtPlugin("pl.project13.scala"     % "sbt-jmh"                     % "0.4.0")
+addSbtPlugin("pl.project13.scala"     % "sbt-jmh"                     % "0.4.2")
 addSbtPlugin("org.scoverage"          % "sbt-scoverage"               % "1.6.1")
 addSbtPlugin("com.lightbend.paradox"  % "sbt-paradox"                 % "0.9.2")
 addSbtPlugin("io.bullet"              % "sbt-paradox-material-theme"  % "0.7.0")
@@ -15,6 +15,6 @@ addSbtPlugin("com.typesafe.sbt"       % "sbt-site"                    % "1.4.1")
 addSbtPlugin("com.typesafe"           % "sbt-mima-plugin"             % "0.8.1")
 
 libraryDependencies ++= Seq(
-  "io.bullet" %% "borer-core"       % "1.6.3",
-  "io.bullet" %% "borer-derivation" % "1.6.3"
+  "io.bullet" %% "borer-core"       % "1.7.2",
+  "io.bullet" %% "borer-derivation" % "1.7.2"
 )
