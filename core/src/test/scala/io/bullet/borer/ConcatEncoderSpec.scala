@@ -16,7 +16,7 @@ object ConcatEncoderSpec extends ByteArrayCborSpec {
   val tests = Tests {
 
     "bounded array + bounded array" - {
-      implicit val encoder = concatTupleEncoder[Array[Int], Vector[String]]
+      implicit val encoder: Encoder[(Array[Int], Vector[String])] = concatTupleEncoder[Array[Int], Vector[String]]
       roundTrip(
         "85010203636162636378797a",
         ArrayElem.Sized(IntElem(1), IntElem(2), IntElem(3), StringElem("abc"), StringElem("xyz")),
@@ -25,7 +25,7 @@ object ConcatEncoderSpec extends ByteArrayCborSpec {
     }
 
     "bounded array + unbounded array" - {
-      implicit val encoder = concatTupleEncoder[Array[Int], List[String]]
+      implicit val encoder: Encoder[(Array[Int], List[String])] = concatTupleEncoder[Array[Int], List[String]]
       roundTrip(
         "9f010203636162636378797aff",
         ArrayElem.Unsized(IntElem(1), IntElem(2), IntElem(3), StringElem("abc"), StringElem("xyz")),
@@ -34,7 +34,7 @@ object ConcatEncoderSpec extends ByteArrayCborSpec {
     }
 
     "unbounded array + bounded array" - {
-      implicit val encoder = concatTupleEncoder[List[Int], Array[String]]
+      implicit val encoder: Encoder[(List[Int], Array[String])] = concatTupleEncoder[List[Int], Array[String]]
       roundTrip(
         "9f010203636162636378797aff",
         ArrayElem.Unsized(IntElem(1), IntElem(2), IntElem(3), StringElem("abc"), StringElem("xyz")),
@@ -43,7 +43,7 @@ object ConcatEncoderSpec extends ByteArrayCborSpec {
     }
 
     "unbounded array + unbounded array" - {
-      implicit val encoder = concatTupleEncoder[List[Int], List[String]]
+      implicit val encoder: Encoder[(List[Int], List[String])] = concatTupleEncoder[List[Int], List[String]]
       roundTrip(
         "9f010203636162636378797aff",
         ArrayElem.Unsized(IntElem(1), IntElem(2), IntElem(3), StringElem("abc"), StringElem("xyz")),
@@ -52,7 +52,8 @@ object ConcatEncoderSpec extends ByteArrayCborSpec {
     }
 
     "bounded map + bounded map" - {
-      implicit val encoder = concatTupleEncoder[Map[String, Int], Map[String, String]]
+      implicit val encoder: Encoder[(Map[String, Int], Map[String, String])] =
+        concatTupleEncoder[Map[String, Int], Map[String, String]]
       roundTrip(
         "a561610161620261630361786361626361796378797a",
         MapElem.Sized(
@@ -66,8 +67,9 @@ object ConcatEncoderSpec extends ByteArrayCborSpec {
     }
 
     "bounded map + unbounded map" - {
-      implicit val encoder = concatTupleEncoder[Map[String, Int], Writer.Script]
-      val script           = Writer.Script(_.writeMapStart().~("x").~("abc").~("y").~("xyz").writeBreak())
+      implicit val encoder: Encoder[(Map[String, Int], Writer.Script)] =
+        concatTupleEncoder[Map[String, Int], Writer.Script]
+      val script = Writer.Script(_.writeMapStart().~("x").~("abc").~("y").~("xyz").writeBreak())
       roundTrip(
         "bf61610161620261630361786361626361796378797aff",
         MapElem.Unsized(
@@ -81,8 +83,9 @@ object ConcatEncoderSpec extends ByteArrayCborSpec {
     }
 
     "unbounded map + bounded map" - {
-      implicit val encoder = concatTupleEncoder[Writer.Script, Map[String, Int]]
-      val script           = Writer.Script(_.writeMapStart().~("x").~("abc").~("y").~("xyz").writeBreak())
+      implicit val encoder: Encoder[(Writer.Script, Map[String, Int])] =
+        concatTupleEncoder[Writer.Script, Map[String, Int]]
+      val script = Writer.Script(_.writeMapStart().~("x").~("abc").~("y").~("xyz").writeBreak())
       roundTrip(
         "bf61786361626361796378797a616101616202616303ff",
         MapElem.Unsized(
@@ -96,7 +99,7 @@ object ConcatEncoderSpec extends ByteArrayCborSpec {
     }
 
     "unbounded map + unbounded map" - {
-      implicit val encoder = concatTupleEncoder[Writer.Script, Writer.Script]
+      implicit val encoder: Encoder[(Writer.Script, Writer.Script)] = concatTupleEncoder[Writer.Script, Writer.Script]
       roundTrip(
         "bf61610161620261630361786361626361796378797aff",
         MapElem.Unsized(
@@ -112,28 +115,28 @@ object ConcatEncoderSpec extends ByteArrayCborSpec {
     }
 
     "array + map" - {
-      implicit val encoder = concatTupleEncoder[Array[Int], Map[String, Int]]
+      implicit val encoder: Encoder[(Array[Int], Map[String, Int])] = concatTupleEncoder[Array[Int], Map[String, Int]]
       intercept[Borer.Error.Unsupported[_]](
         encode(Array(1, 2, 3) -> Map("a" -> 1, "b" -> 2, "c" -> 3))
       ).getMessage ==> "Cannot merge a 'to-Array' Encoder with a 'to-Map' Encoder (Output.ToByteArray index 0)"
     }
 
     "map + array" - {
-      implicit val encoder = concatTupleEncoder[Map[String, Int], Array[Int]]
+      implicit val encoder: Encoder[(Map[String, Int], Array[Int])] = concatTupleEncoder[Map[String, Int], Array[Int]]
       intercept[Borer.Error.Unsupported[_]](
         encode(Map("a" -> 1, "b" -> 2, "c" -> 3) -> Array(1, 2, 3))
       ).getMessage ==> "Cannot merge a 'to-Map' Encoder with a 'to-Array' Encoder (Output.ToByteArray index 0)"
     }
 
     "array + string" - {
-      implicit val encoder = concatTupleEncoder[Array[Int], String]
+      implicit val encoder: Encoder[(Array[Int], String)] = concatTupleEncoder[Array[Int], String]
       intercept[Borer.Error.Unsupported[_]](
         encode(Array(1, 2, 3) -> "nope")
       ).getMessage ==> "Second Encoder produced the String `nope` but Encoder merging only supports 'to-Array' and 'to-Map' Encoders (Output.ToByteArray index 0)"
     }
 
     "string + array" - {
-      implicit val encoder = concatTupleEncoder[String, Array[Int]]
+      implicit val encoder: Encoder[(String, Array[Int])] = concatTupleEncoder[String, Array[Int]]
       intercept[Borer.Error.Unsupported[_]](
         encode("nope" -> Array(1, 2, 3))
       ).getMessage ==> "First Encoder produced the String `nope` but Encoder merging only supports 'to-Array' and 'to-Map' Encoders (Output.ToByteArray index 0)"

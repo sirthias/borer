@@ -8,11 +8,14 @@
 
 package io.bullet.borer
 
+import scala.deriving.Mirror
+
 package object internal {
 
   type XIterableOnce[+T] = IterableOnce[T]
 
   type XIterableOnceBound[+T] = IterableOnce[T]
 
-  def unapplyOption[P, T](f: P => Option[T]): P => Option[T] = f
+  def unapplyOption[T <: Product](f: T => T)(using m: Mirror.ProductOf[T]): T => Option[m.MirroredElemTypes] =
+    x => Some(Tuple.fromProduct(x).asInstanceOf[m.MirroredElemTypes])
 }

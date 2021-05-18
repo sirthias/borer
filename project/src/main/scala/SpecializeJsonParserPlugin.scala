@@ -16,8 +16,8 @@ object SpecializeJsonParserPlugin extends AutoPlugin {
     Seq(
       specializeJsonParser := generateSpecializedJsonParser(
         streams = streams.value,
-        sourceDir = (Compile / specializeJsonParser / sourceDirectory).value,
-        targetDir = (Compile / specializeJsonParser / sourceManaged).value),
+        sourceDir = sourceDirectory.value,
+        targetDir = target.value.getParentFile / "scala" / "src_managed"),
       sourceGenerators += specializeJsonParser
     )
   }
@@ -114,14 +114,17 @@ object SpecializeJsonParserPlugin extends AutoPlugin {
         val sourceFile = source(sourceDir)
         if (!sourceFile.exists()) sys.error(s"Cannot rewrite `$sourceFile`: file not found!")
         val targetFile = target(targetDir)
-        streams.log.debug(s"Rewriting $sourceFile to $targetFile ...")
-        val fileContent = IO.read(sourceFile)
-        val rewritingResult = rules.foldLeft(Right(fileContent): Either[String, String]){
-          case (error @ Left(_), _) => error
-          case (Right(string), rule) => rule(string)
+        if (!targetFile.exists()) {
+          val dropLen = sourceDir.toString.zip(targetDir.toString).takeWhile(t => t._1 == t._2).size
+          streams.log.info(s"Rewriting ../${sourceFile.toString.drop(dropLen)} to ../${targetFile.toString.drop(dropLen)}")
+          val fileContent = IO.read(sourceFile)
+          val rewritingResult = rules.foldLeft(Right(fileContent): Either[String, String]){
+            case (error @ Left(_), _) => error
+            case (Right(string), rule) => rule(string)
+          }
+          val rewrittenContent = rewritingResult.fold(err => sys.error(s"Error rewriting `$sourceFile`: $err"), identity)
+          IO.write(targetFile, rewrittenContent)
         }
-        val rewrittenContent = rewritingResult.fold(err => sys.error(s"Error rewriting `$sourceFile`: $err"), identity)
-        IO.write(targetFile, rewrittenContent)
         targetFile
     }
   }

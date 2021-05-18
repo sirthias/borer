@@ -11,14 +11,14 @@ package io.bullet.borer
 final case class Default[+T](defaultValue: T)
 
 object Default {
-  implicit val boolean = Default(false)
-  implicit val byte    = Default(0: Byte)
-  implicit val short   = Default(0: Short)
-  implicit val int     = Default(0)
-  implicit val long    = Default(0L)
-  implicit val string  = Default("")
-  implicit val float   = Default(0.0f)
-  implicit val double  = Default(0.0)
+  implicit val boolean: Default[Boolean] = Default(false)
+  implicit val byte: Default[Byte]       = Default(0: Byte)
+  implicit val short: Default[Short]     = Default(0: Short)
+  implicit val int: Default[Int]         = Default(0)
+  implicit val long: Default[Long]       = Default(0L)
+  implicit val string: Default[String]   = Default("")
+  implicit val float: Default[Float]     = Default(0.0f)
+  implicit val double: Default[Double]   = Default(0.0)
 
   @inline def of[T](implicit d: Default[T]): T = d.defaultValue
 
@@ -28,7 +28,7 @@ object Default {
   implicit def option[T]: Default[Option[T]] = optionDefault
 }
 
-final class Nullable[+T](val value: T) extends AnyVal {
+final case class Nullable[+T](value: T) { // extends AnyVal // FIXME: re-enable value class after fix of https://github.com/lampepfl/dotty/issues/11264
 
   // for efficient unapply
   def isEmpty = false

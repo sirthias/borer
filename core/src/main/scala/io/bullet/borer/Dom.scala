@@ -66,8 +66,8 @@ object Dom {
     }
   }
 
-  final case object NullElem                   extends Element(DIS.Null)
-  final case object UndefinedElem              extends Element(DIS.Undefined)
+  case object NullElem                         extends Element(DIS.Null)
+  case object UndefinedElem                    extends Element(DIS.Undefined)
   final case class BooleanElem(value: Boolean) extends Element(DIS.Boolean)
 
   object BooleanElem {

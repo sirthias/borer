@@ -18,7 +18,7 @@ object scodec {
   /**
    * [[ByteAccess]] for [[ByteVector]].
    */
-  implicit final object ByteVectorByteAccess extends ByteAccess[ByteVector] {
+  implicit object ByteVectorByteAccess extends ByteAccess[ByteVector] {
 
     type Out = ByteVectorOutput
 
@@ -65,7 +65,7 @@ object scodec {
   /**
    * [[Input]] around [[ByteVector]].
    */
-  implicit final object ByteVectorProvider extends Input.Provider[ByteVector] {
+  implicit object ByteVectorProvider extends Input.Provider[ByteVector] {
     type Bytes = ByteVector
     type In    = FromByteVector
     def byteAccess               = ByteVectorByteAccess

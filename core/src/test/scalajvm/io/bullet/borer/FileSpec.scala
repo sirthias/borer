@@ -16,6 +16,8 @@ import utest._
 
 import scala.io.Source
 
+import io.bullet.borer.internal.unapplyOption
+
 object FileSpec extends TestSuite {
 
   final case class Foo(
@@ -23,7 +25,8 @@ object FileSpec extends TestSuite {
       int: Int = 42,
       double: Double = 0.0)
 
-  implicit val fooCodec = Codec(Encoder.from(Foo.unapply _), Decoder.from(Foo.apply _))
+  implicit val fooCodec: Codec[Foo] =
+    Codec(Encoder.from(unapplyOption(Foo.unapply(_))), Decoder.from(Foo.apply(_, _, _)))
 
   val tests = Tests {
 

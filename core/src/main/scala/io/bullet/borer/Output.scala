@@ -18,7 +18,7 @@ import scala.annotation.tailrec
  * The implementation can be either mutable or immutable.
  */
 trait Output { outer =>
-  type Self <: Output { type Self <: outer.Self }
+  type Self <: Output //{ type Self <: outer.Self } // uncommenting this makes Scala 3 compiler get stuck in the typer
   type Result
 
   def writeByte(byte: Byte): Self
@@ -33,7 +33,7 @@ trait Output { outer =>
     writeBytes((value >> 24).toByte, (value >> 16).toByte, (value >> 8).toByte, value.toByte)
 
   def writeLong(value: Long): Self =
-    writeInt((value >> 32).toInt).writeInt(value.toInt)
+    writeInt((value >> 32).toInt).writeInt(value.toInt).asInstanceOf[Self]
 
   def writeBytes[Bytes: ByteAccess](bytes: Bytes): Self
 

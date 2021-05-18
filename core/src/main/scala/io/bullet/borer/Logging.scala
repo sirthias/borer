@@ -62,13 +62,13 @@ object Logging {
   sealed trait ElementType
 
   object ElementType {
-    final case object ArrayElement               extends ElementType
-    final case object UnboundedByteStringElement extends ElementType
-    final case object UnboundedTextStringElement extends ElementType
+    case object ArrayElement               extends ElementType
+    case object UnboundedByteStringElement extends ElementType
+    case object UnboundedTextStringElement extends ElementType
 
-    sealed trait MapEntry      extends ElementType
-    final case object MapKey   extends MapEntry
-    final case object MapValue extends MapEntry
+    sealed trait MapEntry extends ElementType
+    case object MapKey    extends MapEntry
+    case object MapValue  extends MapEntry
   }
 
   trait Logger {

@@ -4,7 +4,7 @@ def scala3   = "3.0.0"
 def scala213 = "2.13.6"
 def scala212 = "2.12.13"
 
-lazy val allScalaVersions = Seq(scala212, scala213) //, scala3)
+lazy val allScalaVersions = Seq(scala212, scala213, scala3)
 lazy val scala2Only = Seq(scala212, scala213)
 
 inThisBuild(
@@ -55,13 +55,17 @@ lazy val commonSettings = Seq(
                 "-Xsource:2.13",
               )
               case 13 => Seq(
-                "-Xfatal-warnings"
+                "-Xfatal-warnings",
+                "-Vimplicits",
+                "-Vtype-diffs",
               )
             }
           }
         case Some((3, _)) => Seq(
+          "-source:3.0-migration",
           "-Xtarget:8",
           "-Xfatal-warnings",
+          "-language:implicitConversions",
         )
         case x => sys.error(s"unsupported scala version: $x")
       }
@@ -77,9 +81,6 @@ lazy val commonSettings = Seq(
   // file headers
   headerLicense := Some(HeaderLicense.MPLv2("2019-2021", "Mathias Doenitz")),
 
-  // reformat main and test sources on compile
-  scalafmtOnCompile := true,
-
   testFrameworks += new TestFramework("utest.runner.Framework"),
   console / initialCommands := """import io.bullet.borer._""",
 
@@ -88,6 +89,10 @@ lazy val commonSettings = Seq(
   Test / publishArtifact := false,
   pomIncludeRepository := (_ ⇒ false),
   publishTo := sonatypePublishToBundle.value,
+)
+
+lazy val scalafmtSettings = Seq(
+  scalafmtOnCompile := true, // reformat main and test sources on compile
 )
 
 lazy val scalajsSettings = Seq(
@@ -170,10 +175,19 @@ lazy val core = (projectMatrix in file("core"))
   )
   .customRow(
     axisValues = Seq(VirtualAxis.jvm),
-    scalaVersions = allScalaVersions,
+    scalaVersions = Seq(scala213),
     process = { _
       .enablePlugins(SpecializeJsonParserPlugin)
-    })
+    }
+  )
+  .customRow(
+    axisValues = Seq(VirtualAxis.jvm),
+    scalaVersions = Seq(scala212, scala3),
+    process = { _
+      .enablePlugins(SpecializeJsonParserPlugin)
+      .disablePlugins(ScalafmtPlugin)
+    }
+  )
   .jsPlatform(allScalaVersions, scalajsSettings)
 
 lazy val `compat-akka` = (projectMatrix in file("compat-akka"))
@@ -190,7 +204,7 @@ lazy val `compat-akka` = (projectMatrix in file("compat-akka"))
       `akka-http`.value % "provided",
       utest.value)
   )
-  .jvmPlatform(scalaVersions = allScalaVersions)
+  .jvmPlatform(scalaVersions = scala2Only)
 
 lazy val `compat-cats` = (projectMatrix in file("compat-cats"))
   .enablePlugins(AutomateHeaderPlugin)
@@ -206,8 +220,8 @@ lazy val `compat-cats` = (projectMatrix in file("compat-cats"))
       utest.value
     )
   )
-  .jvmPlatform(allScalaVersions)
-  .jsPlatform(allScalaVersions, scalajsSettings)
+  .jvmPlatform(scala2Only)
+  .jsPlatform(scala2Only, scalajsSettings)
 
 lazy val `compat-circe` = (projectMatrix in file("compat-circe"))
   .enablePlugins(AutomateHeaderPlugin)
@@ -241,8 +255,8 @@ lazy val `compat-scodec` = (projectMatrix in file("compat-scodec"))
       utest.value
     )
   )
-  .jvmPlatform(allScalaVersions)
-  .jsPlatform(allScalaVersions, scalajsSettings)
+  .jvmPlatform(scala2Only)
+  .jsPlatform(scala2Only, scalajsSettings)
 
 lazy val derivation = (projectMatrix in file("derivation"))
   .enablePlugins(AutomateHeaderPlugin)
@@ -257,8 +271,8 @@ lazy val derivation = (projectMatrix in file("derivation"))
       else Seq(`scala-compiler`.value, `scala-reflect`.value, utest.value)
     }
   )
-  .jvmPlatform(allScalaVersions)
-  .jsPlatform(allScalaVersions, scalajsSettings)
+  .jvmPlatform(scala2Only)
+  .jsPlatform(scala2Only, scalajsSettings)
 
 lazy val deriver = (projectMatrix in file("deriver"))
   .enablePlugins(AutomateHeaderPlugin)
@@ -271,8 +285,8 @@ lazy val deriver = (projectMatrix in file("deriver"))
       else Seq(`scala-compiler`.value, `scala-reflect`.value, utest.value)
     }
   )
-  .jvmPlatform(allScalaVersions)
-  .jsPlatform(allScalaVersions, scalajsSettings)
+  .jvmPlatform(scala2Only)
+  .jsPlatform(scala2Only, scalajsSettings)
 
 def s213(matrix: sbt.internal.ProjectMatrix): Project = matrix.finder(VirtualAxis.jvm)(scala213)
 

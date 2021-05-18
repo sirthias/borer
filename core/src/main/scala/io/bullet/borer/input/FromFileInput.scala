@@ -13,7 +13,7 @@ import java.nio.file.Files
 
 import io.bullet.borer.{ByteAccess, Input}
 
-trait FromFileInput { this: FromByteArrayInput with FromInputStreamInput =>
+trait FromFileInput { this: FromByteArrayInput with FromInputStreamInput with FromIteratorInput =>
 
   implicit object FromFileProvider extends Input.Provider[File] {
     type Bytes = Array[Byte]
