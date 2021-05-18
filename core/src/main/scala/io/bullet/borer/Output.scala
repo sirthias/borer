@@ -13,12 +13,12 @@ import io.bullet.borer.output.{ToByteArrayOutput, ToByteBufferOutput, ToFileOutp
 import scala.annotation.tailrec
 
 /**
-  * Abstraction over serialization output.
-  *
-  * The implementation can be either mutable or immutable.
-  */
+ * Abstraction over serialization output.
+ *
+ * The implementation can be either mutable or immutable.
+ */
 trait Output { outer =>
-  type Self <: Output { type Self <: outer.Self }
+  type Self <: Output //{ type Self <: outer.Self } // uncommenting this makes Scala 3 compiler get stuck in the typer
   type Result
 
   def writeByte(byte: Byte): Self
@@ -33,7 +33,7 @@ trait Output { outer =>
     writeBytes((value >> 24).toByte, (value >> 16).toByte, (value >> 8).toByte, value.toByte)
 
   def writeLong(value: Long): Self =
-    writeInt((value >> 32).toInt).writeInt(value.toInt)
+    writeInt((value >> 32).toInt).writeInt(value.toInt).asInstanceOf[Self]
 
   def writeBytes[Bytes: ByteAccess](bytes: Bytes): Self
 
@@ -45,20 +45,21 @@ object Output
 
   //#provider
   /**
-    * Responsible for providing an Output that produces instances of [[T]].
-    */
+   * Responsible for providing an Output that produces instances of [[T]].
+   */
   trait ToTypeProvider[T] {
     type Out <: Output { type Result = T }
     def apply(bufferSize: Int, allowBufferCaching: Boolean): Out
   }
 
   /**
-    * Responsible for providing an Output that outputs into the given value [[T]].
-    */
+   * Responsible for providing an Output that outputs into the given value [[T]].
+   */
   trait ToValueProvider[T] {
     type Out <: Output { type Result = T }
     def apply(value: T, bufferSize: Int, allowBufferCaching: Boolean): Out
   }
+
   //#provider
 
   implicit final class OutputOps(val underlying: Output) extends AnyVal {

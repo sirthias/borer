@@ -9,10 +9,10 @@
 package io.bullet.borer
 
 /**
-  * Abstraction for a "simple value" in CBOR-speak.
-  *
-  * @param value the value's code
-  */
+ * Abstraction for a "simple value" in CBOR-speak.
+ *
+ * @param value the value's code
+ */
 final case class SimpleValue(value: Int) {
   if (!SimpleValue.isLegal(value)) {
     throw new IllegalArgumentException(s"`value` must be in the range ${SimpleValue.legalRange}, but was $value")
@@ -24,8 +24,9 @@ object SimpleValue {
   def isLegal(value: Int): Boolean = 0 <= value && value <= 19 || 24 <= value && value <= 255
   def legalRange: String           = "[0..19] or [24..255]"
 
-  implicit val codec = Codec[SimpleValue](
-    (w, x) => w.writeSimpleValue(x.value),
-    r => SimpleValue(r.readSimpleValue())
-  )
+  implicit val codec: Codec[SimpleValue] =
+    Codec[SimpleValue](
+      (w, x) => w.writeSimpleValue(x.value),
+      r => SimpleValue(r.readSimpleValue())
+    )
 }

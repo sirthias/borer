@@ -14,8 +14,8 @@ import scala.annotation.tailrec
 import scala.collection.LinearSeq
 
 /**
-  * Stateful, mutable abstraction for writing a stream of CBOR or JSON data to the given [[Output]].
-  */
+ * Stateful, mutable abstraction for writing a stream of CBOR or JSON data to the given [[Output]].
+ */
 final class Writer(
     val output: Output, // CAUTION: `null` in case of transcoding!
     private[borer] var receiver: Receiver,
@@ -200,8 +200,8 @@ object Writer {
   }
 
   /**
-    * Simple encapsulation of encoding logic in a stand-alone object.
-    */
+   * Simple encapsulation of encoding logic in a stand-alone object.
+   */
   final case class Script(encode: Writer => Writer)
 
   object Script {

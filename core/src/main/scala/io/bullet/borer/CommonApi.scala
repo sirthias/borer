@@ -13,14 +13,14 @@ import java.lang.{StringBuilder => JStringBuilder}
 trait CommonApi[Config] {
 
   /**
-    * Configures the [[Config]] for this encoding/decoding run.
-    */
+   * Configures the [[Config]] for this encoding/decoding run.
+   */
   def withConfig(config: Config): this.type
 
   /**
-    * Enables logging of the encoding/decoding progress to the console.
-    * Each data item that is written/received by the application is pretty printed to the console on its own line.
-    */
+   * Enables logging of the encoding/decoding progress to the console.
+   * Each data item that is written/received by the application is pretty printed to the console on its own line.
+   */
   def withPrintLogging(
       maxShownByteArrayPrefixLen: Int = 20,
       maxShownStringPrefixLen: Int = 50,
@@ -34,8 +34,8 @@ trait CommonApi[Config] {
       mapKeySep: String = "-> "): this.type
 
   /**
-    * Enables logging of the encoding/decoding progress to the given [[JStringBuilder]].
-    */
+   * Enables logging of the encoding/decoding progress to the given [[JStringBuilder]].
+   */
   def withStringLogging(
       stringBuilder: JStringBuilder,
       maxShownByteArrayPrefixLen: Int = 20,
@@ -52,14 +52,14 @@ trait CommonApi[Config] {
       mapValueOnNewLine: Boolean = false): this.type
 
   /**
-    * Enables logging of the encoding/decoding progress to the given [[Logging.Logger]].
-    */
+   * Enables logging of the encoding/decoding progress to the given [[Logging.Logger]].
+   */
   def withLogging(createLogger: Logging.LevelInfo => Logging.Logger): this.type
 
   /**
-    * Allows for injecting additional custom logic into the encoding/decoding process.
-    * Used, for example, for on-the-side [[Logging]].
-    */
+   * Allows for injecting additional custom logic into the encoding/decoding process.
+   * Used, for example, for on-the-side [[Logging]].
+   */
   def withTransformerAdded(transformer: Receiver.Transformer[Config]): this.type
 }
 

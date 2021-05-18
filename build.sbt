@@ -1,49 +1,74 @@
-import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import sbt._
 
-def scala213 = "2.13.5"
+def scala3   = "3.0.0"
+def scala213 = "2.13.6"
 def scala212 = "2.12.13"
 
+lazy val allScalaVersions = Seq(scala212, scala213, scala3)
+lazy val scala2Only = Seq(scala212, scala213)
+
+inThisBuild(
+  List(
+    organization := "io.bullet",
+    homepage := Some(new URL("https://github.com/sirthias/borer/")),
+    description := "CBOR and JSON (de)serialization in Scala",
+    startYear := Some(2019),
+    licenses := Seq("MPLv2" → new URL("https://www.mozilla.org/en-US/MPL/2.0/")),
+    scmInfo := Some(ScmInfo(url("https://github.com/sirthias/borer/"), "scm:git:git@github.com:sirthias/borer.git")),
+    developers :=
+      List(
+        "sirthias" -> "Mathias Doenitz",
+      ).map { case (username, fullName) =>
+        Developer(username, fullName, s"@$username", url(s"https://github.com/$username"))
+      }
+  )
+)
+
 lazy val commonSettings = Seq(
-  organization := "io.bullet",
-  homepage := Some(new URL("https://github.com/sirthias/borer/")),
-  description := "CBOR and JSON (de)serialization in Scala",
-  startYear := Some(2019),
-  licenses := Seq("MPLv2" → new URL("https://www.mozilla.org/en-US/MPL/2.0/")),
-  Compile / unmanagedResources += baseDirectory.value.getParentFile.getParentFile / "LICENSE",
-  scmInfo := Some(ScmInfo(url("https://github.com/sirthias/borer/"), "scm:git:git@github.com:sirthias/borer.git")),
-
-  scalaVersion := scala213,
-  crossScalaVersions := Seq(scala212, scala213),
-
-  scalacOptions ++= Seq(
-    "-deprecation",
-    "-encoding", "UTF-8",
-    "-feature",
-    "-language:_",
-    "-unchecked",
-    "-target:jvm-1.8",
-    "-Xlint:_,-missing-interpolator",
-    "-Ywarn-dead-code",
-    "-Ywarn-numeric-widen",
-    "-Ybackend-parallelism", "8",
-    "-Ywarn-unused:imports,-patvars,-privates,-locals,-implicits,-explicits",
-    "-Ycache-macro-class-loader:last-modified",
-  ),
-  
   scalacOptions ++= {
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, 12)) => Seq(
-        "-Yno-adapted-args",
-        "-Ywarn-inaccessible",
-        "-Ywarn-infer-any",
-        "-Ywarn-nullary-override",
-        "-Ywarn-nullary-unit",
-        "-Xfuture",
-        "-Xsource:2.13",
-      )
-      case Some((2, 13)) => Seq("-Xfatal-warnings")
-      case x => sys.error(s"unsupported scala version: $x")
+    Seq(
+      "-deprecation",
+      "-encoding", "UTF-8",
+      "-feature",
+      "-unchecked",
+    ) ++ {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, minor)) =>
+          Seq(
+            "-language:_",
+            "-target:jvm-1.8",
+            "-Xlint:_,-missing-interpolator",
+            "-Ywarn-dead-code",
+            "-Ywarn-numeric-widen",
+            "-Ybackend-parallelism", "8",
+            "-Ywarn-unused:imports,-patvars,-privates,-locals,-implicits,-explicits",
+            "-Ycache-macro-class-loader:last-modified",
+          ) ++ {
+            minor match {
+              case 12 => Seq(
+                "-Yno-adapted-args",
+                "-Ywarn-inaccessible",
+                "-Ywarn-infer-any",
+                "-Ywarn-nullary-override",
+                "-Ywarn-nullary-unit",
+                "-Xfuture",
+                "-Xsource:2.13",
+              )
+              case 13 => Seq(
+                "-Xfatal-warnings",
+                "-Vimplicits",
+                "-Vtype-diffs",
+              )
+            }
+          }
+        case Some((3, _)) => Seq(
+          "-source:3.0-migration",
+          "-Xtarget:8",
+          "-Xfatal-warnings",
+          "-language:implicitConversions",
+        )
+        case x => sys.error(s"unsupported scala version: $x")
+      }
     }
   },
 
@@ -51,12 +76,10 @@ lazy val commonSettings = Seq(
   Test / console / scalacOptions := (Compile / console / scalacOptions).value,
   Compile / doc / scalacOptions += "-no-link-warnings",
   sourcesInBase := false,
+  Compile / unmanagedResources += baseDirectory.value.getParentFile.getParentFile / "LICENSE",
 
   // file headers
   headerLicense := Some(HeaderLicense.MPLv2("2019-2021", "Mathias Doenitz")),
-
-  // reformat main and test sources on compile
-  scalafmtOnCompile := true,
 
   testFrameworks += new TestFramework("utest.runner.Framework"),
   console / initialCommands := """import io.bullet.borer._""",
@@ -66,63 +89,10 @@ lazy val commonSettings = Seq(
   Test / publishArtifact := false,
   pomIncludeRepository := (_ ⇒ false),
   publishTo := sonatypePublishToBundle.value,
-  mimaFailOnNoPrevious := false,
-
-  // we need this resolver to let Travis CI find new release artifacts before they are available from Maven Central
-  resolvers += Resolver.sonatypeRepo("staging"),
-
-  developers := List(
-    Developer("sirthias", "Mathias Doenitz", "devnull@bullet.io", url("https://github.com/sirthias/"))
-  ),
-
-  // test coverage
-  coverageMinimum := 90,
-  coverageFailOnMinimum := false,
-
-  commands += Command.command("openCoverageReport") { state =>
-    val uri = s"file://${Project.extract(state).get(crossTarget)}/scoverage-report/index.html"
-    state.log.info(s"Opening browser at $uri ...")
-    java.awt.Desktop.getDesktop.browse(new java.net.URI(uri))
-    state
-  },
-
-  Global / excludeLintKeys ++= Set(
-    scalafmt / sourceDirectories,
-    releaseProcess,
-    releaseCrossBuild,
-    mimaCheckDirection,
-    mimaFailOnNoPrevious,
-    mimaPreviousArtifacts
-  )
 )
 
-lazy val mimaSettings = {
-  import com.typesafe.tools.mima.core._
-
-  lazy val oldVersionString = scala.sys.process.Process("git describe --abbrev=0").!!.trim.dropWhile(_ == 'v')
-  lazy val oldVersion = oldVersionString.split('.').toList
-  val newVersion = Def.setting(version.value.split('.').toList)
-
-  Seq(
-    mimaCheckDirection := {
-      val isPatch = newVersion.value.take(2) == oldVersion.take(2)
-      if (isPatch) "both" else "backward"
-    },
-    mimaPreviousArtifacts := {
-      //val isMajorVersionBump = newVersion.value.head != oldVersion.head
-      val isPatch = newVersion.value.take(2) == oldVersion.take(2)
-      if (isPatch) Set(organization.value %% moduleName.value % oldVersionString)
-      else Set.empty // no mima-checking for non-patch releases
-    },
-    mimaBinaryIssueFilters := Seq( // known binary compatibility issues or internal API to ignore
-      ProblemFilters.exclude[ReversedMissingMethodProblem]("*") // we're lenient here: adding methods is fine everywhere
-    )
-  )
-}
-
-lazy val crossSettings = Seq(
-  Compile / scalafmt / sourceDirectories := (Compile / unmanagedSourceDirectories).value,
-  Test / scalafmt / sourceDirectories := (Test / unmanagedSourceDirectories).value
+lazy val scalafmtSettings = Seq(
+  scalafmtOnCompile := true, // reformat main and test sources on compile
 )
 
 lazy val scalajsSettings = Seq(
@@ -134,7 +104,6 @@ lazy val scalajsSettings = Seq(
 lazy val releaseSettings = {
   import ReleaseTransformations._
   Seq(
-    releaseCrossBuild := true,
     releaseProcess := Seq[ReleaseStep](
       checkSnapshotDependencies,
       inquireVersions,
@@ -152,94 +121,37 @@ lazy val releaseSettings = {
   )
 }
 
-lazy val macroParadise =
-  libraryDependencies ++= {
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, 12)) => Seq(compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.patch))
-      case _ => Nil
-    }
-  }
-
-def addCommandsAlias(name: String, cmds: Seq[String]) = addCommandAlias(name, cmds.mkString(";", ";", ""))
-
-addCommandsAlias(
-  "testCoverage",
-  Seq(
-    "clean",
-    "coverage",
-    "test",
-    "coverageReport",
-    "openCoverageReport"
-  )
-)
-
-// used by Travis CI
-addCommandsAlias(
-  "validate",
-  Seq(
-    "clean",
-    "headerCheck",
-    "scalafmtCheck",
-    "test:scalafmtCheck",
-
-    // Scala 2.13
-    s"++$scala213",
-    "test:compile",
-    "test",
-    "mimaReportBinaryIssues",
-
-    // Scala 2.12
-    s"++$scala212",
-    "test:compile",
-    "test",
-    "mimaReportBinaryIssues",
-
-    // establish test coverage (only on JVM projects)
-    "coverage",
-    "core/test",
-    "derivation/test",
-    "compat-akka/test",
-    "compat-cats/test",
-    "compat-circe/test",
-    "compat-scodec/test",
-    "core/coverageReport",
-    "derivation/coverageReport",
-    "compat-akka/coverageReport",
-    "compat-cats/coverageReport",
-    "compat-circe/coverageReport",
-    "compat-scodec/coverageReport",
-    "coverageOff",
-  )
-)
-
 /////////////////////// DEPENDENCIES /////////////////////////
 
 val `akka-actor`        = Def.setting("com.typesafe.akka"      %%  "akka-actor-typed"        % "2.6.14")
 val `akka-stream`       = Def.setting("com.typesafe.akka"      %%  "akka-stream"             % "2.6.14")
 val `akka-http`         = Def.setting("com.typesafe.akka"      %%  "akka-http"               % "10.2.4")
-val `collection-compat` = Def.setting("org.scala-lang.modules" %%% "scala-collection-compat" % "2.4.3")
-val `cats-core`         = Def.setting("org.typelevel"          %%% "cats-core"               % "2.6.0")
+val `collection-compat` = Def.setting("org.scala-lang.modules" %%% "scala-collection-compat" % "2.4.4")
+val `cats-core`         = Def.setting("org.typelevel"          %%% "cats-core"               % "2.6.1")
 val `circe-core`        = Def.setting("io.circe"               %%% "circe-core"              % "0.13.0")
 val `circe-parser`      = Def.setting("io.circe"               %%% "circe-parser"            % "0.13.0")
 val `circe-derivation`  = Def.setting("io.circe"               %%% "circe-derivation"        % "0.13.0-M5")
-val `scodec-bits`       = Def.setting("org.scodec"             %%% "scodec-bits"             % "1.1.26")
-val utest               = Def.setting("com.lihaoyi"            %%% "utest"                   % "0.7.9"  % "test")
+val `scodec-bits`       = Def.setting("org.scodec"             %%% "scodec-bits"             % "1.1.27")
+val utest               = Def.setting("com.lihaoyi"            %%% "utest"                   % "0.7.10"  % "test")
 val `scala-compiler`    = Def.setting("org.scala-lang"         %  "scala-compiler"           % scalaVersion.value % "provided")
 val `scala-reflect`     = Def.setting("org.scala-lang"         %  "scala-reflect"            % scalaVersion.value % "provided")
 
 /////////////////////// PROJECTS /////////////////////////
 
-lazy val borer = project.in(file("."))
-  .aggregate(`core-jvm`, `core-js`)
-  .aggregate(`compat-akka`)
-  .aggregate(`compat-cats-jvm`, `compat-cats-js`)
-  .aggregate(`compat-circe-jvm`, `compat-circe-js`)
-  .aggregate(`compat-scodec-jvm`, `compat-scodec-js`)
-  .aggregate(`derivation-jvm`, `derivation-js`)
-  .aggregate(deriver)
+lazy val borer = (project in file("."))
+  .aggregate(
+    Seq(
+      core,
+      `compat-akka`,
+      `compat-cats`,
+      `compat-circe`,
+      `compat-scodec`,
+      `derivation`,
+      deriver,
+    ).flatMap(_.projectRefs):_*
+  )
   .aggregate(benchmarks)
   .aggregate(site)
-  .disablePlugins(MimaPlugin)
   .settings(commonSettings)
   .settings(releaseSettings)
   .settings(
@@ -247,39 +159,43 @@ lazy val borer = project.in(file("."))
     onLoadMessage := welcomeMessage.value
   )
 
-lazy val `core-jvm` = core.jvm.enablePlugins(SpecializeJsonParserPlugin)
-lazy val `core-js`  = core.js.disablePlugins(MimaPlugin)
-lazy val core = crossProject(JSPlatform, JVMPlatform)
-  .withoutSuffixFor(JVMPlatform)
-  .crossType(CrossType.Pure)
+lazy val core = (projectMatrix in file("core"))
   .enablePlugins(AutomateHeaderPlugin, BoilerplatePlugin)
-  .settings(crossSettings)
   .settings(commonSettings)
   .settings(releaseSettings)
-  .settings(mimaSettings)
   .settings(
     moduleName := "borer-core",
-    macroParadise,
+    libraryDependencies ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, 12)) => Seq(compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.patch))
+        case _ => Nil
+      }
+    },
     libraryDependencies ++= Seq(`collection-compat`.value, utest.value),
-
-    // point sbt-boilerplate to the common "project"
-    Compile / boilerplateSource := baseDirectory.value.getParentFile / "src" / "main" / "boilerplate",
-    Compile / sourceManaged := baseDirectory.value.getParentFile / "target" / "scala" / "src_managed" / "main"
   )
-  .jvmSettings(
-    Compile / specializeJsonParser / sourceDirectory := baseDirectory.value.getParentFile / "src" / "main",
-    Compile / specializeJsonParser / sourceManaged := baseDirectory.value / "target" / "scala" / "src_managed" / "main",
-    Compile / managedSourceDirectories += (Compile / specializeJsonParser / sourceManaged).value
+  .customRow(
+    axisValues = Seq(VirtualAxis.jvm),
+    scalaVersions = Seq(scala213),
+    process = { _
+      .enablePlugins(SpecializeJsonParserPlugin)
+    }
   )
-  .jsSettings(scalajsSettings: _*)
+  .customRow(
+    axisValues = Seq(VirtualAxis.jvm),
+    scalaVersions = Seq(scala212, scala3),
+    process = { _
+      .enablePlugins(SpecializeJsonParserPlugin)
+      .disablePlugins(ScalafmtPlugin)
+    }
+  )
+  .jsPlatform(allScalaVersions, scalajsSettings)
 
-lazy val `compat-akka` = project
+lazy val `compat-akka` = (projectMatrix in file("compat-akka"))
   .enablePlugins(AutomateHeaderPlugin)
-  .dependsOn(`core-jvm` % "compile->compile;test->test")
-  .dependsOn(`derivation-jvm` % "test->compile")
+  .dependsOn(core % "compile->compile;test->test")
+  .dependsOn(derivation % "test->compile")
   .settings(commonSettings)
   .settings(releaseSettings)
-  .settings(mimaSettings)
   .settings(
     moduleName := "borer-compat-akka",
     libraryDependencies ++= Seq(
@@ -288,21 +204,14 @@ lazy val `compat-akka` = project
       `akka-http`.value % "provided",
       utest.value)
   )
+  .jvmPlatform(scalaVersions = scala2Only)
 
-lazy val `compat-cats-jvm` = `compat-cats`.jvm
-  .dependsOn(`core-jvm` % "compile->compile;test->test")
-  .dependsOn(`derivation-jvm` % "test->compile")
-lazy val `compat-cats-js`  = `compat-cats`.js
-  .dependsOn(`core-js`   % "compile->compile;test->test")
-  .dependsOn(`derivation-js` % "test->compile")
-lazy val `compat-cats` = crossProject(JSPlatform, JVMPlatform)
-  .withoutSuffixFor(JVMPlatform)
-  .crossType(CrossType.Pure)
+lazy val `compat-cats` = (projectMatrix in file("compat-cats"))
   .enablePlugins(AutomateHeaderPlugin)
-  .settings(crossSettings)
+  .dependsOn(core % "compile->compile;test->test")
+  .dependsOn(derivation % "test->compile")
   .settings(commonSettings)
   .settings(releaseSettings)
-  .settings(mimaSettings)
   .settings(
     moduleName := "borer-compat-cats",
     libraryDependencies ++= Seq(
@@ -311,22 +220,15 @@ lazy val `compat-cats` = crossProject(JSPlatform, JVMPlatform)
       utest.value
     )
   )
-  .jsSettings(scalajsSettings: _*)
+  .jvmPlatform(scala2Only)
+  .jsPlatform(scala2Only, scalajsSettings)
 
-lazy val `compat-circe-jvm` = `compat-circe`.jvm
-  .dependsOn(`core-jvm` % "compile->compile;test->test")
-  .dependsOn(`derivation-jvm` % "test->compile")
-lazy val `compat-circe-js`  = `compat-circe`.js
-  .dependsOn(`core-js`   % "compile->compile;test->test")
-  .dependsOn(`derivation-js` % "test->compile")
-lazy val `compat-circe` = crossProject(JSPlatform, JVMPlatform)
-  .withoutSuffixFor(JVMPlatform)
-  .crossType(CrossType.Pure)
+lazy val `compat-circe` = (projectMatrix in file("compat-circe"))
   .enablePlugins(AutomateHeaderPlugin)
-  .settings(crossSettings)
+  .dependsOn(core % "compile->compile;test->test")
+  .dependsOn(derivation % "test->compile")
   .settings(commonSettings)
   .settings(releaseSettings)
-  .settings(mimaSettings)
   .settings(
     moduleName := "borer-compat-circe",
     libraryDependencies ++= Seq(
@@ -337,22 +239,15 @@ lazy val `compat-circe` = crossProject(JSPlatform, JVMPlatform)
       utest.value
     )
   )
-  .jsSettings(scalajsSettings: _*)
+  .jvmPlatform(scala2Only)
+  .jsPlatform(scala2Only, scalajsSettings)
 
-lazy val `compat-scodec-jvm` = `compat-scodec`.jvm
-  .dependsOn(`core-jvm` % "compile->compile;test->test")
-  .dependsOn(`derivation-jvm` % "test->compile")
-lazy val `compat-scodec-js`  = `compat-scodec`.js
-  .dependsOn(`core-js`   % "compile->compile;test->test")
-  .dependsOn(`derivation-js` % "test->compile")
-lazy val `compat-scodec` = crossProject(JSPlatform, JVMPlatform)
-  .withoutSuffixFor(JVMPlatform)
-  .crossType(CrossType.Pure)
+lazy val `compat-scodec` = (projectMatrix in file("compat-scodec"))
   .enablePlugins(AutomateHeaderPlugin)
-  .settings(crossSettings)
+  .dependsOn(core % "compile->compile;test->test")
+  .dependsOn(derivation % "test->compile")
   .settings(commonSettings)
   .settings(releaseSettings)
-  .settings(mimaSettings)
   .settings(
     moduleName := "borer-compat-scodec",
     libraryDependencies ++= Seq(
@@ -360,50 +255,58 @@ lazy val `compat-scodec` = crossProject(JSPlatform, JVMPlatform)
       utest.value
     )
   )
-  .jsSettings(scalajsSettings: _*)
+  .jvmPlatform(scala2Only)
+  .jsPlatform(scala2Only, scalajsSettings)
 
-lazy val `derivation-jvm` = derivation.jvm
-  .dependsOn(deriver)
-  .dependsOn(`core-jvm` % "compile->compile;test->test")
-lazy val `derivation-js`  = derivation.js
-  .dependsOn(deriver)
-  .dependsOn(`core-js` % "compile->compile;test->test")
-lazy val derivation = crossProject(JSPlatform, JVMPlatform)
-  .withoutSuffixFor(JVMPlatform)
-  .crossType(CrossType.Pure)
+lazy val derivation = (projectMatrix in file("derivation"))
   .enablePlugins(AutomateHeaderPlugin)
-  .settings(crossSettings)
+  .dependsOn(core % "compile->compile;test->test")
+  .dependsOn(deriver) // it would be great to be able to eliminate this dependency for Scala 3, but: https://github.com/sbt/sbt-projectmatrix/issues/55
   .settings(commonSettings)
   .settings(releaseSettings)
-  .settings(mimaSettings)
   .settings(
     moduleName := "borer-derivation",
-    libraryDependencies ++= Seq(`scala-compiler`.value, `scala-reflect`.value, utest.value),
+    libraryDependencies ++= {
+      if(virtualAxes.value.contains(VirtualAxis.scalaABIVersion(scala3))) Nil
+      else Seq(`scala-compiler`.value, `scala-reflect`.value, utest.value)
+    }
   )
-  .jsSettings(scalajsSettings: _*)
+  .jvmPlatform(scala2Only)
+  .jsPlatform(scala2Only, scalajsSettings)
 
-lazy val deriver = project
+lazy val deriver = (projectMatrix in file("deriver"))
   .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings)
   .settings(releaseSettings)
   .settings(
     moduleName := "borer-deriver",
-    libraryDependencies ++= Seq(`scala-compiler`.value, `scala-reflect`.value),
+    libraryDependencies ++= {
+      if(virtualAxes.value.contains(VirtualAxis.scalaABIVersion(scala3))) Nil
+      else Seq(`scala-compiler`.value, `scala-reflect`.value, utest.value)
+    }
   )
+  .jvmPlatform(scala2Only)
+  .jsPlatform(scala2Only, scalajsSettings)
+
+def s213(matrix: sbt.internal.ProjectMatrix): Project = matrix.finder(VirtualAxis.jvm)(scala213)
 
 lazy val benchmarks = project
   .enablePlugins(AutomateHeaderPlugin, JmhPlugin, BenchmarkResultsPlugin)
   .disablePlugins(MimaPlugin)
-  .dependsOn(`core-jvm`, `derivation-jvm`)
+  .dependsOn(
+    s213(core),
+    s213(derivation),
+  )
   .settings(commonSettings)
   .settings(
+    scalaVersion := scala213,
     publish / skip := true,
     libraryDependencies ++= Seq(
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"        % "2.7.3",
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros"      % "2.7.3" % Provided,
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"        % "2.8.1",
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros"      % "2.8.1" % Provided,
       "com.fasterxml.jackson.module"          %% "jackson-module-scala"       % "2.12.3",
       "com.fasterxml.jackson.module"          %  "jackson-module-afterburner" % "2.12.3",
-      "com.lihaoyi"                           %% "upickle"                    % "1.3.15",
+      "com.lihaoyi"                           %% "upickle"                    % "1.3.13",
       "io.spray"                              %% "spray-json"                 % "1.3.6",
       `circe-core`.value,
       `circe-parser`.value,
@@ -413,16 +316,23 @@ lazy val benchmarks = project
 
 lazy val site = project
   .in(file("site"))
-  .dependsOn(`core-jvm`, `derivation-jvm`, `compat-akka`, `compat-cats-jvm`, `compat-circe-jvm`, `compat-scodec-jvm`)
+  .dependsOn(
+    s213(core),
+    s213(derivation),
+    s213(`compat-akka`),
+    s213(`compat-cats`),
+    s213(`compat-circe`),
+    s213(`compat-scodec`),
+  )
   .enablePlugins(
     ParadoxPlugin,
     ParadoxMaterialThemePlugin,
     ParadoxSitePlugin,
     GhpagesPlugin
   )
-  .disablePlugins(MimaPlugin)
   .settings(commonSettings)
   .settings(
+    scalaVersion := scala213,
     publish / skip := true,
     libraryDependencies ++= Seq(`akka-actor`.value, `akka-stream`.value, `akka-http`.value, utest.value),
 
@@ -479,7 +389,7 @@ def welcomeMessage = Def.setting {
       |
       |Useful sbt tasks:
       |${item("project core")} - Descend into the JVM core module
-      |${item("project `core-js`")} - Descend into the JS core module
+      |${item("project `coreJS`")} - Descend into the JS core module
       |${item("test")} - Run all tests
       |${item("project benchmarks;benchmarkResults;project /")} - Show results of latest benchmark runs
       """.stripMargin

@@ -18,13 +18,13 @@ object DecodingSetup {
   sealed trait Api[Config <: Borer.DecodingConfig] extends CommonApi[Config] {
 
     /**
-      * Indicates that this decoding run is not expected to consume the complete [[Input]].
-      */
+     * Indicates that this decoding run is not expected to consume the complete [[Input]].
+     */
     def withPrefixOnly: this.type
 
     /**
-      * Decodes an instance of [[T]] from the configured [[Input]] using the configured options.
-      */
+     * Decodes an instance of [[T]] from the configured [[Input]] using the configured options.
+     */
     def to[T: Decoder]: Sealed[T]
   }
 

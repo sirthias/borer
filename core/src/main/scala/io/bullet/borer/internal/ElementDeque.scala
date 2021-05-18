@@ -29,9 +29,9 @@ final private[borer] class ElementDeque(val maxBufferSize: Int, val next: Elemen
       def onOverLong(negative: Boolean, value: Long): Unit =
         ret(byteBuffer.prepend1(DIS.OverLong) && byteBuffer.prepend9(if (negative) 1 else 0, value))
 
-      def onFloat16(value: Float): Unit       = ret(byteBuffer.prepend5(DIS.Float16, java.lang.Float.floatToIntBits(value)))
-      def onFloat(value: Float): Unit         = ret(byteBuffer.prepend5(DIS.Float, java.lang.Float.floatToIntBits(value)))
-      def onDouble(value: Double): Unit       = ret(byteBuffer.prepend9(DIS.Double, java.lang.Double.doubleToLongBits(value)))
+      def onFloat16(value: Float): Unit = ret(byteBuffer.prepend5(DIS.Float16, java.lang.Float.floatToIntBits(value)))
+      def onFloat(value: Float): Unit   = ret(byteBuffer.prepend5(DIS.Float, java.lang.Float.floatToIntBits(value)))
+      def onDouble(value: Double): Unit = ret(byteBuffer.prepend9(DIS.Double, java.lang.Double.doubleToLongBits(value)))
       def onNumberString(value: String): Unit = ret(byteBuffer.prepend1(DIS.NumberString) && objBuffer.prepend(value))
 
       def onBytes[Bytes](value: Bytes)(implicit ba: ByteAccess[Bytes]): Unit =
@@ -68,9 +68,9 @@ final private[borer] class ElementDeque(val maxBufferSize: Int, val next: Elemen
       def onOverLong(negative: Boolean, value: Long): Unit =
         ret(byteBuffer.append1(DIS.OverLong) && byteBuffer.append9(if (negative) 1 else 0, value))
 
-      def onFloat16(value: Float): Unit       = ret(byteBuffer.append5(DIS.Float16, java.lang.Float.floatToIntBits(value)))
-      def onFloat(value: Float): Unit         = ret(byteBuffer.append5(DIS.Float, java.lang.Float.floatToIntBits(value)))
-      def onDouble(value: Double): Unit       = ret(byteBuffer.append9(DIS.Double, java.lang.Double.doubleToLongBits(value)))
+      def onFloat16(value: Float): Unit = ret(byteBuffer.append5(DIS.Float16, java.lang.Float.floatToIntBits(value)))
+      def onFloat(value: Float): Unit   = ret(byteBuffer.append5(DIS.Float, java.lang.Float.floatToIntBits(value)))
+      def onDouble(value: Double): Unit = ret(byteBuffer.append9(DIS.Double, java.lang.Double.doubleToLongBits(value)))
       def onNumberString(value: String): Unit = ret(byteBuffer.append1(DIS.NumberString) && objBuffer.append(value))
 
       def onBytes[Bytes](value: Bytes)(implicit ba: ByteAccess[Bytes]): Unit =

@@ -24,8 +24,8 @@ trait ToByteBufferOutput {
   }
 
   /**
-    * Default, mutable implementation for serializing to [[java.nio.ByteBuffer]] instances.
-    */
+   * Default, mutable implementation for serializing to [[java.nio.ByteBuffer]] instances.
+   */
   final class ToByteBuffer(bufferSize: Int, allowBufferCaching: Boolean) extends Output {
 
     private[this] var currentChunkBuffer: ByteBuffer = _

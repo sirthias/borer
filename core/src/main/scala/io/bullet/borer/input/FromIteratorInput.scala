@@ -30,10 +30,10 @@ trait FromIteratorInput {
       implicit byteAccess: ByteAccess[Bytes])
       extends Input.PaddingProvider[Bytes] with Input[Bytes] {
 
-    private[this] var history                                            = List.empty[Input[Bytes]]
-    private[this] var previous: Input[Bytes]                             = _
-    private[this] var current: Input[Bytes]                              = if (inputIterator.hasNext) inputIterator.next() else null
-    private[this] var currentStart: Long                                 = _
+    private[this] var history                = List.empty[Input[Bytes]]
+    private[this] var previous: Input[Bytes] = _
+    private[this] var current: Input[Bytes]  = if (inputIterator.hasNext) inputIterator.next() else null
+    private[this] var currentStart: Long     = _
     private[this] var outerPaddingProvider: Input.PaddingProvider[Bytes] = _
     private[this] var padBytesRecursion                                  = false
     private[this] var padBytesRecursionRest: Bytes                       = _

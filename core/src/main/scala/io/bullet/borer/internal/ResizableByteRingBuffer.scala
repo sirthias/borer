@@ -9,13 +9,13 @@
 package io.bullet.borer.internal
 
 /**
-  * A mutable RingBuffer that can grow in size.
-  * Contrary to many other ring buffer implementations this one does not automatically overwrite the oldest
-  * elements, rather, if full, the buffer tries to grow and rejects further writes if max capacity is reached.
-  *
-  * @param initialCapacity the initial buffer size
-  * @param maxCapacity the maximum number of elements the buffer can hold.
-  */
+ * A mutable RingBuffer that can grow in size.
+ * Contrary to many other ring buffer implementations this one does not automatically overwrite the oldest
+ * elements, rather, if full, the buffer tries to grow and rejects further writes if max capacity is reached.
+ *
+ * @param initialCapacity the initial buffer size
+ * @param maxCapacity the maximum number of elements the buffer can hold.
+ */
 final private[borer] class ResizableByteRingBuffer(initialCapacity: Int, val maxCapacity: Int) {
   // automatically implies maxCapacity <= 0x40000000
   if (!Util.isPowerOf2(maxCapacity) || maxCapacity <= 0 || !Util.isPowerOf2(
@@ -38,23 +38,23 @@ final private[borer] class ResizableByteRingBuffer(initialCapacity: Int, val max
   }
 
   /**
-    * The number of elements currently in the buffer.
-    */
+   * The number of elements currently in the buffer.
+   */
   @inline def count: Int = writeIx - readIx
 
   /**
-    * True if no elements are currently in the buffer.
-    */
+   * True if no elements are currently in the buffer.
+   */
   @inline def isEmpty: Boolean = writeIx == readIx
 
   /**
-    * True if at least one elements is currently in the buffer.
-    */
+   * True if at least one elements is currently in the buffer.
+   */
   @inline def nonEmpty: Boolean = writeIx != readIx
 
   /**
-    * The number of elements the buffer can hold without having to be resized.
-    */
+   * The number of elements the buffer can hold without having to be resized.
+   */
   @inline def currentCapacity: Int = array.length
 
   def append1(value: Byte): Boolean =
@@ -215,16 +215,16 @@ final private[borer] class ResizableByteRingBuffer(initialCapacity: Int, val max
   }
 
   /**
-    * Reads the next value from the buffer.
-    * Throws a NoSuchElementException if the buffer is empty.
-    */
+   * Reads the next value from the buffer.
+   * Throws a NoSuchElementException if the buffer is empty.
+   */
   def readByte(): Byte =
     if (nonEmpty) unsafeReadByte()
     else throw new NoSuchElementException
 
   /**
-    * Reads the next value from the buffer without any buffer underrun protection.
-    */
+   * Reads the next value from the buffer without any buffer underrun protection.
+   */
   def unsafeReadByte(): Byte = {
     val r = readIx
     readIx = r + 1

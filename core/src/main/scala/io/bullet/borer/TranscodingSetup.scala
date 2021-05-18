@@ -37,8 +37,8 @@ object TranscodingSetup {
   sealed trait DecodingApi[Config <: Reader.Config] extends CommonApi[Config] {
 
     /**
-      * Decodes an instance of [[T]] from the configured [[Input]] using the configured options.
-      */
+     * Decodes an instance of [[T]] from the configured [[Input]] using the configured options.
+     */
     def to[T: Decoder]: Sealed[T]
   }
 

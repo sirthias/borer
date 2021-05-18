@@ -25,10 +25,10 @@ import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
 /**
-  * More or less direct adaptation of
-  * https://github.com/hseeberger/akka-http-json/blob/7a700166e962ec77cdea1a222e219ec78ca1175c/akka-http-jsoniter-scala/src/test/scala/de/heikoseeberger/akkahttpjsoniterscala/JsoniterScalaSupportSpec.scala
-  * which is copyright by Heiko Seeberger and licensed under Apache License, Version 2.0.
-  */
+ * More or less direct adaptation of
+ * https://github.com/hseeberger/akka-http-json/blob/7a700166e962ec77cdea1a222e219ec78ca1175c/akka-http-jsoniter-scala/src/test/scala/de/heikoseeberger/akkahttpjsoniterscala/JsoniterScalaSupportSpec.scala
+ * which is copyright by Heiko Seeberger and licensed under Apache License, Version 2.0.
+ */
 object AkkaHttpSupportSpec extends TestSuite {
 
   final case class Foo(bar: String) {

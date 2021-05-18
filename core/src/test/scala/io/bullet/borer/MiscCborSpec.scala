@@ -10,15 +10,19 @@ package io.bullet.borer
 
 import utest._
 import io.bullet.borer.internal.Util._
+import io.bullet.borer.internal.unapplyOption
 
 object MiscCborSpec extends ByteArrayCborSpec {
 
   case class Foo(int: Int, string: String, doubleOpt: Option[java.lang.Double])
   case class Bar(foo: Foo, optFoo: Option[Foo], stringSeq: Seq[String])
 
-  // we cannot use `Codec.deriveForCaseClass` since we are in the same compilation module
-  implicit val fooCodec = Codec(Encoder.from(Foo.unapply _), Decoder.from(Foo.apply _))
-  implicit val barCodec = Codec(Encoder.from(Bar.unapply _), Decoder.from(Bar.apply _))
+  // derivation makes this easy but we don't want to depend on it here
+  implicit val fooCodec: Codec[Foo] =
+    Codec(Encoder.from(unapplyOption(Foo.unapply(_))), Decoder.from(Foo.apply(_, _, _)))
+
+  implicit val barCodec: Codec[Bar] =
+    Codec(Encoder.from(unapplyOption(Bar.unapply(_))), Decoder.from(Bar.apply(_, _, _)))
 
   val tests = Tests {
 
@@ -35,14 +39,14 @@ object MiscCborSpec extends ByteArrayCborSpec {
 
     "Zero-Member Case Class" - {
       case class Qux()
-      implicit val quxCodec = Codec(Encoder.from(Qux.unapply _), Decoder.from(Qux.apply _))
+      implicit val quxCodec: Codec[Qux] = Codec(Encoder.from(Qux.unapply _), Decoder.from(Qux.apply _))
 
       roundTrip("80", Qux())
     }
 
     "Single-Member Case Class" - {
       case class Qux(i: Int)
-      implicit val quxCodec = Codec(Encoder.from(Qux.unapply _), Decoder.from(Qux.apply _))
+      implicit val quxCodec: Codec[Qux] = Codec(Encoder.from(unapplyOption(Qux.unapply(_))), Decoder.from(Qux.apply(_)))
 
       roundTrip("182a", Qux(42))
     }
@@ -130,7 +134,7 @@ object MiscCborSpec extends ByteArrayCborSpec {
     "Nested Encodings" - {
       case class Qux(bytes: Array[Byte], foo: Foo)
 
-      implicit val quxCodec = Codec[Qux](
+      implicit val quxCodec: Codec[Qux] = Codec[Qux](
         encoder = { (w, x) =>
           w.writeArrayHeader(2)
             .writeTag(Tag.Other(2828))

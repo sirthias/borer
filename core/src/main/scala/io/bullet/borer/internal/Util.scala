@@ -110,9 +110,9 @@ private[borer] object Util {
   }
 
   /**
-    * Returns a positive number if the first `charsLen` characters of `chars` compare greater than `string`,
-    * zero if equal, and a negative number if less.
-    */
+   * Returns a positive number if the first `charsLen` characters of `chars` compare greater than `string`,
+   * zero if equal, and a negative number if less.
+   */
   def charsStringCompare(chars: Array[Char], charsLen: Int, string: String): Int = {
     val limit = math.min(charsLen, string.length)
     @tailrec def rec(ix: Int): Int =
@@ -124,9 +124,9 @@ private[borer] object Util {
   }
 
   /**
-    * Returns a positive number if the first `aLen` characters of `a` compare greater than `b`,
-    * zero if equal, and a negative number if less.
-    */
+   * Returns a positive number if the first `aLen` characters of `a` compare greater than `b`,
+   * zero if equal, and a negative number if less.
+   */
   def charsCharsCompare(a: Array[Char], aLen: Int, b: Array[Char]): Int = {
     val limit = math.min(aLen, b.length)
     @tailrec def rec(ix: Int): Int =

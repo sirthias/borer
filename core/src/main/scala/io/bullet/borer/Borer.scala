@@ -17,14 +17,14 @@ import scala.annotation.unchecked.uncheckedVariance
 case object Cbor extends Target {
 
   /**
-    * Entry point into the CBOR encoding mini-DSL.
-    */
+   * Entry point into the CBOR encoding mini-DSL.
+   */
   def encode[T: Encoder](value: T): EncodingSetup.Api[EncodingConfig] =
     new EncodingSetup.Impl(value, this, EncodingConfig.default, CborValidation.wrapper, CborRenderer)
 
   /**
-    * Entry point into the CBOR decoding mini-DSL.
-    */
+   * Entry point into the CBOR decoding mini-DSL.
+   */
   def decode[T](value: T)(implicit p: Input.Provider[T]): DecodingSetup.Api[DecodingConfig] =
     new DecodingSetup.Impl[T, p.Bytes, DecodingConfig](
       value,
@@ -34,8 +34,8 @@ case object Cbor extends Target {
       this)
 
   /**
-    * Entry point into the CBOR transcoding mini-DSL.
-    */
+   * Entry point into the CBOR transcoding mini-DSL.
+   */
   def transEncode[T: Encoder](value: T): TranscodingSetup.EncodingApi[TransEncodingConfig, TransDecodingConfig] =
     new TranscodingSetup.EncodingApiImpl(
       value,
@@ -46,8 +46,8 @@ case object Cbor extends Target {
       CborValidation.wrapper)
 
   /**
-    * Constructs a new [[Writer]] that writes CBOR to the given [[Output]].
-    */
+   * Constructs a new [[Writer]] that writes CBOR to the given [[Output]].
+   */
   def writer(
       output: Output,
       config: EncodingConfig = EncodingConfig.default,
@@ -55,8 +55,8 @@ case object Cbor extends Target {
     new Writer(output, receiverWrapper(CborRenderer(output), config), this, config)
 
   /**
-    * Constructs a new [[Reader]] that reads CBOR from the given [[Input]].
-    */
+   * Constructs a new [[Reader]] that reads CBOR from the given [[Input]].
+   */
   def reader[T](
       value: T,
       config: DecodingConfig = DecodingConfig.default,
@@ -65,13 +65,13 @@ case object Cbor extends Target {
     new InputReader(new CborParser(p(value), config)(p.byteAccess), null, receiverWrapper, config, this)
 
   /**
-    * @param bufferSize                  the buffer size used for configuring the respective [[Output]]
-    * @param compressFloatingPointValues set to false in order to always write floats as 32-bit values and doubles
-    *                                    as 64-bit values, even if they could safely be represented with fewer bits
-    * @param maxArrayLength the maximum array length to accept
-    * @param maxMapLength the maximum map length to accept
-    * @param maxNestingLevels the maximum number of nesting levels to accept
-    */
+   * @param bufferSize                  the buffer size used for configuring the respective [[Output]]
+   * @param compressFloatingPointValues set to false in order to always write floats as 32-bit values and doubles
+   *                                    as 64-bit values, even if they could safely be represented with fewer bits
+   * @param maxArrayLength the maximum array length to accept
+   * @param maxMapLength the maximum map length to accept
+   * @param maxNestingLevels the maximum number of nesting levels to accept
+   */
   final case class EncodingConfig(
       bufferSize: Int = 1024,
       allowBufferCaching: Boolean = true,
@@ -93,14 +93,14 @@ case object Cbor extends Target {
   }
 
   /**
-    * @param readIntegersAlsoAsFloatingPoint set to false to disable automatic conversion of integer to floating point values
-    * @param readDoubleAlsoAsFloat set to false to disable automatic conversion of [[Double]] to [[Float]] values
-    * @param maxTextStringLength the maximum text string length to accept
-    * @param maxByteStringLength the maximum byte string length to accept
-    * @param maxArrayLength the maximum array length to accept
-    * @param maxMapLength the maximum map length to accept
-    * @param maxNestingLevels the maximum number of nesting levels to accept
-    */
+   * @param readIntegersAlsoAsFloatingPoint set to false to disable automatic conversion of integer to floating point values
+   * @param readDoubleAlsoAsFloat set to false to disable automatic conversion of [[Double]] to [[Float]] values
+   * @param maxTextStringLength the maximum text string length to accept
+   * @param maxByteStringLength the maximum byte string length to accept
+   * @param maxArrayLength the maximum array length to accept
+   * @param maxMapLength the maximum map length to accept
+   * @param maxNestingLevels the maximum number of nesting levels to accept
+   */
   final case class DecodingConfig(
       readIntegersAlsoAsFloatingPoint: Boolean = true,
       readDoubleAlsoAsFloat: Boolean = false,
@@ -126,13 +126,13 @@ case object Cbor extends Target {
   }
 
   /**
-    * @param maxBufferSize                  the max number of transcoding elements (not bytes!) that can be buffered
-    * @param compressFloatingPointValues set to false in order to always write floats as 32-bit values and doubles
-    *                                    as 64-bit values, even if they could safely be represented with fewer bits
-    * @param maxArrayLength the maximum array length to accept
-    * @param maxMapLength the maximum map length to accept
-    * @param maxNestingLevels the maximum number of nesting levels to accept
-    */
+   * @param maxBufferSize                  the max number of transcoding elements (not bytes!) that can be buffered
+   * @param compressFloatingPointValues set to false in order to always write floats as 32-bit values and doubles
+   *                                    as 64-bit values, even if they could safely be represented with fewer bits
+   * @param maxArrayLength the maximum array length to accept
+   * @param maxMapLength the maximum map length to accept
+   * @param maxNestingLevels the maximum number of nesting levels to accept
+   */
   final case class TransEncodingConfig(
       maxBufferSize: Int = 16384,
       allowBufferCaching: Boolean = true,
@@ -155,12 +155,12 @@ case object Cbor extends Target {
   }
 
   /**
-    * @param readIntegersAlsoAsFloatingPoint set to false to disable automatic conversion of integer to floating point values
-    * @param readDoubleAlsoAsFloat set to false to disable automatic conversion of [[Double]] to [[Float]] values
-    * @param maxArrayLength the maximum array length to accept
-    * @param maxMapLength the maximum map length to accept
-    * @param maxNestingLevels the maximum number of nesting levels to accept
-    */
+   * @param readIntegersAlsoAsFloatingPoint set to false to disable automatic conversion of integer to floating point values
+   * @param readDoubleAlsoAsFloat set to false to disable automatic conversion of [[Double]] to [[Float]] values
+   * @param maxArrayLength the maximum array length to accept
+   * @param maxMapLength the maximum map length to accept
+   * @param maxNestingLevels the maximum number of nesting levels to accept
+   */
   final case class TransDecodingConfig(
       readIntegersAlsoAsFloatingPoint: Boolean = true,
       readDoubleAlsoAsFloat: Boolean = false,
@@ -185,14 +185,14 @@ case object Cbor extends Target {
 case object Json extends Target {
 
   /**
-    * Entry point into the JSON encoding mini-DSL.
-    */
+   * Entry point into the JSON encoding mini-DSL.
+   */
   def encode[T: Encoder](value: T): EncodingSetup.JsonApi[T, EncodingConfig] =
     new EncodingSetup.Impl(value, Json, EncodingConfig.default, Receiver.nopTransformer, JsonRenderer)
 
   /**
-    * Entry point into the JSON decoding mini-DSL.
-    */
+   * Entry point into the JSON decoding mini-DSL.
+   */
   def decode[T](value: T)(implicit p: Input.Provider[T]): DecodingSetup.Api[DecodingConfig] =
     new DecodingSetup.Impl[T, p.Bytes, DecodingConfig](
       value,
@@ -202,8 +202,8 @@ case object Json extends Target {
       this)
 
   /**
-    * Entry point into the JSON transcoding mini-DSL.
-    */
+   * Entry point into the JSON transcoding mini-DSL.
+   */
   def transEncode[T: Encoder](value: T): TranscodingSetup.EncodingApi[TransEncodingConfig, TransDecodingConfig] =
     new TranscodingSetup.EncodingApiImpl(
       value,
@@ -214,8 +214,8 @@ case object Json extends Target {
       Receiver.nopTransformer)
 
   /**
-    * Constructs a new [[Writer]] that writes JSON to the given [[Output]].
-    */
+   * Constructs a new [[Writer]] that writes JSON to the given [[Output]].
+   */
   def writer(
       output: Output,
       config: EncodingConfig = EncodingConfig.default,
@@ -223,8 +223,8 @@ case object Json extends Target {
     new Writer(output, receiverWrapper(JsonRenderer(output), config), null, config)
 
   /**
-    * Constructs a new [[Reader]] that reads JSON from the given [[Input]].
-    */
+   * Constructs a new [[Reader]] that reads JSON from the given [[Input]].
+   */
   def reader[T](
       value: T,
       config: DecodingConfig = DecodingConfig.default,
@@ -250,21 +250,21 @@ case object Json extends Target {
   }
 
   /**
-    * @param readIntegersAlsoAsFloatingPoint set to false to disable automatic conversion of integer to floating point values
-    * @param readDecimalNumbersOnlyAsNumberStrings set to true to disable the fast, immediate conversion of
-    *                                              JSON numbers to [[Double]] values where easily possible.
-    *                                              In rare cases this might be necessary to allow for maximum
-    *                                              possible precision when reading 32-bit [[Float]] values from JSON.
-    *                                              (see https://github.com/sirthias/borer/issues/20 for more info on this)
-    * @param maxNumberAbsExponent the maximum absolute exponent value to accept in JSON numbers
-    * @param maxStringLength the maximum string length to accept
-    *                        Note: For performance reasons this is a soft limit, that the parser will sometimes overstep.
-    *                        The only guarantee is that it will never accept Strings that are more than twice as long as
-    *                        the this limit.
-    * @param maxNumberMantissaDigits the maximum number of digits to accept before the exponent in JSON numbers
-    * @param initialCharbufferSize the initial size of the parser's Char buffer. Will grow to the max string length in
-    *                              the document rounded up to the next power of two
-    */
+   * @param readIntegersAlsoAsFloatingPoint set to false to disable automatic conversion of integer to floating point values
+   * @param readDecimalNumbersOnlyAsNumberStrings set to true to disable the fast, immediate conversion of
+   *                                              JSON numbers to [[Double]] values where easily possible.
+   *                                              In rare cases this might be necessary to allow for maximum
+   *                                              possible precision when reading 32-bit [[Float]] values from JSON.
+   *                                              (see https://github.com/sirthias/borer/issues/20 for more info on this)
+   * @param maxNumberAbsExponent the maximum absolute exponent value to accept in JSON numbers
+   * @param maxStringLength the maximum string length to accept
+   *                        Note: For performance reasons this is a soft limit, that the parser will sometimes overstep.
+   *                        The only guarantee is that it will never accept Strings that are more than twice as long as
+   *                        the this limit.
+   * @param maxNumberMantissaDigits the maximum number of digits to accept before the exponent in JSON numbers
+   * @param initialCharbufferSize the initial size of the parser's Char buffer. Will grow to the max string length in
+   *                              the document rounded up to the next power of two
+   */
   final case class DecodingConfig(
       readIntegersAlsoAsFloatingPoint: Boolean = true,
       readDecimalNumbersOnlyAsNumberStrings: Boolean = false,
@@ -293,10 +293,10 @@ case object Json extends Target {
   }
 
   /**
-    * @param maxBufferSize                  the max number of transcoding elements (not bytes!) that can be buffered
-    * @param compressFloatingPointValues set to false in order to always write floats as 32-bit values and doubles
-    *                                    as 64-bit values, even if they could safely be represented with fewer bits
-    */
+   * @param maxBufferSize                  the max number of transcoding elements (not bytes!) that can be buffered
+   * @param compressFloatingPointValues set to false in order to always write floats as 32-bit values and doubles
+   *                                    as 64-bit values, even if they could safely be represented with fewer bits
+   */
   final case class TransEncodingConfig(
       maxBufferSize: Int = 16384,
       allowBufferCaching: Boolean = true,
@@ -312,9 +312,9 @@ case object Json extends Target {
   }
 
   /**
-    * @param readIntegersAlsoAsFloatingPoint set to false to disable automatic conversion of integer to floating point values
-    * @param readDoubleAlsoAsFloat set to false to disable automatic conversion of [[Double]] to [[Float]] values
-    */
+   * @param readIntegersAlsoAsFloatingPoint set to false to disable automatic conversion of integer to floating point values
+   * @param readDoubleAlsoAsFloat set to false to disable automatic conversion of [[Double]] to [[Float]] values
+   */
   final case class TransDecodingConfig(
       readIntegersAlsoAsFloatingPoint: Boolean = true,
       readDoubleAlsoAsFloat: Boolean = false)
@@ -326,12 +326,12 @@ case object Json extends Target {
 }
 
 /**
-  * Super-type of the [[Cbor]] and [[Json]] objects.
-  *
-  * Used, for example, as the type of the `target` member of [[Reader]] and [[Writer]] instances,
-  * which allows custom logic to pick different (de)serialization approaches
-  * depending on whether the target is CBOR or JSON.
-  */
+ * Super-type of the [[Cbor]] and [[Json]] objects.
+ *
+ * Used, for example, as the type of the `target` member of [[Reader]] and [[Writer]] instances,
+ * which allows custom logic to pick different (de)serialization approaches
+ * depending on whether the target is CBOR or JSON.
+ */
 sealed abstract class Target {
 
   def encode[T: Encoder](value: T): EncodingSetup.Api[_]
@@ -342,8 +342,8 @@ sealed abstract class Target {
 }
 
 /**
-  * Main entry point into the CBOR API.
-  */
+ * Main entry point into the CBOR API.
+ */
 object Borer {
 
   sealed abstract class EncodingConfig extends Writer.Config {

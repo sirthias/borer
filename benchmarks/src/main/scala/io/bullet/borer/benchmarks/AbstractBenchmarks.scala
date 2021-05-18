@@ -18,12 +18,12 @@ import scala.io.Source
 import scala.util.Random
 
 /**
-  * Compares the performance of encoding operations.
-  *
-  * The following command will run the benchmarks with reasonable settings:
-  *
-  * > sbt "jmh:run -i 10 -wi 10 -f 2 -t 1 io.bullet.borer.benchmarks.*EncodingBenchmark"
-  */
+ * Compares the performance of encoding operations.
+ *
+ * The following command will run the benchmarks with reasonable settings:
+ *
+ * > sbt "jmh:run -i 10 -wi 10 -f 2 -t 1 io.bullet.borer.benchmarks.*EncodingBenchmark"
+ */
 @State(Scope.Thread)
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
@@ -44,12 +44,12 @@ import scala.util.Random
 abstract class EncodingBenchmark extends EncodingDecodingExampleData
 
 /**
-  * Compares the performance of decoding operations.
-  *
-  * The following command will run the benchmarks with reasonable settings:
-  *
-  * > sbt "jmh:run -i 10 -wi 10 -f 2 -t 1 io.bullet.borer.benchmarks.*DecodingBenchmark"
-  */
+ * Compares the performance of decoding operations.
+ *
+ * The following command will run the benchmarks with reasonable settings:
+ *
+ * > sbt "jmh:run -i 10 -wi 10 -f 2 -t 1 io.bullet.borer.benchmarks.*DecodingBenchmark"
+ */
 @State(Scope.Thread)
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
@@ -70,12 +70,12 @@ abstract class EncodingBenchmark extends EncodingDecodingExampleData
 abstract class DecodingBenchmark extends EncodingDecodingExampleData
 
 /**
-  * Compares the performance of encoding and decoding from and to the respective DOM representations.
-  *
-  * The following command will run the benchmarks with reasonable settings:
-  *
-  * > sbt "jmh:run -i 10 -wi 10 -f 2 -t 1 io.bullet.borer.benchmarks.*DomBenchmark"
-  */
+ * Compares the performance of encoding and decoding from and to the respective DOM representations.
+ *
+ * The following command will run the benchmarks with reasonable settings:
+ *
+ * > sbt "jmh:run -i 10 -wi 10 -f 2 -t 1 io.bullet.borer.benchmarks.*DomBenchmark"
+ */
 @State(Scope.Thread)
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)

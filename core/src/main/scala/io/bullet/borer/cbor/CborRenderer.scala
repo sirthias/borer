@@ -14,9 +14,9 @@ import io.bullet.borer._
 import io.bullet.borer.internal.{Renderer, Util}
 
 /**
-  * Encapsulates basic CBOR encoding logic.
-  * Has no internal state and can therefore be a singleton object.
-  */
+ * Encapsulates basic CBOR encoding logic.
+ * Has no internal state and can therefore be a singleton object.
+ */
 final private[borer] class CborRenderer(var out: Output) extends Renderer {
 
   def onNull(): Unit =

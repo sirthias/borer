@@ -17,17 +17,17 @@ import io.bullet.borer.internal.Util
 import scala.annotation.{nowarn, tailrec}
 
 /**
-  * Facilities for on-the-side logging of either encoding or decoding progress,
-  * which can be useful for debugging problems with the input or custom codec logic.
-  *
-  * Logging can be done either before or after the input validation step, depending on your needs.
-  * If unsure, go for after-validation logging, at least initially. (This is also the default.)
-  * For example, to log decoding progress to the console you can say:
-  *
-  * {{{
-  * Cbor.decode(inputBytes).withPrintLogging().to[MyType]
-  * }}}
-  */
+ * Facilities for on-the-side logging of either encoding or decoding progress,
+ * which can be useful for debugging problems with the input or custom codec logic.
+ *
+ * Logging can be done either before or after the input validation step, depending on your needs.
+ * If unsure, go for after-validation logging, at least initially. (This is also the default.)
+ * For example, to log decoding progress to the console you can say:
+ *
+ * {{{
+ * Cbor.decode(inputBytes).withPrintLogging().to[MyType]
+ * }}}
+ */
 object Logging {
 
   def transformer[Config](createLogger: LevelInfo => Logger): borer.Receiver.Transformer[Config] =
@@ -36,24 +36,24 @@ object Logging {
   trait LevelInfo {
 
     /**
-      * The zero-based nesting level of the current item.
-      */
+     * The zero-based nesting level of the current item.
+     */
     def level: Int
 
     /**
-      * The one-based index number of the current item within the current level.
-      */
+     * The one-based index number of the current item within the current level.
+     */
     def levelCount: Long
 
     /**
-      * The number of total items on the current level.
-      * -1 if the current level is unbounded.
-      */
+     * The number of total items on the current level.
+     * -1 if the current level is unbounded.
+     */
     def levelSize: Long
 
     /**
-      * The type of the current item.
-      */
+     * The type of the current item.
+     */
     def elementType: ElementType
 
     final def isUnbounded: Boolean = levelSize < 0
@@ -62,13 +62,13 @@ object Logging {
   sealed trait ElementType
 
   object ElementType {
-    final case object ArrayElement               extends ElementType
-    final case object UnboundedByteStringElement extends ElementType
-    final case object UnboundedTextStringElement extends ElementType
+    case object ArrayElement               extends ElementType
+    case object UnboundedByteStringElement extends ElementType
+    case object UnboundedTextStringElement extends ElementType
 
-    sealed trait MapEntry      extends ElementType
-    final case object MapKey   extends MapEntry
-    final case object MapValue extends MapEntry
+    sealed trait MapEntry extends ElementType
+    case object MapKey    extends MapEntry
+    case object MapValue  extends MapEntry
   }
 
   trait Logger {
@@ -100,8 +100,8 @@ object Logging {
   }
 
   /**
-    * A [[Logger]] which formats each incoming element to it's own log line.
-    */
+   * A [[Logger]] which formats each incoming element to it's own log line.
+   */
   abstract class LineFormatLogger extends Logger {
     protected var gutterWidth: Int = _
 
@@ -233,8 +233,8 @@ object Logging {
   }
 
   /**
-    * A [[LineFormatLogger]] that simply prints all lines to the console.
-    */
+   * A [[LineFormatLogger]] that simply prints all lines to the console.
+   */
   class PrintLogger(
       val info: LevelInfo,
       val maxShownByteArrayPrefixLen: Int,
@@ -253,8 +253,8 @@ object Logging {
   }
 
   /**
-    * A [[LineFormatLogger]] that appends all lines to a given [[JStringBuilder]].
-    */
+   * A [[LineFormatLogger]] that appends all lines to a given [[JStringBuilder]].
+   */
   class ToStringLogger(
       val info: LevelInfo,
       val stringBuilder: JStringBuilder,
@@ -288,9 +288,9 @@ object Logging {
   }
 
   /**
-    * A [[Receiver]] which forwards all incoming data item to another [[Receiver]] and,
-    * on the side, feeds a custom [[Logger]] with logging events.
-    */
+   * A [[Receiver]] which forwards all incoming data item to another [[Receiver]] and,
+   * on the side, feeds a custom [[Logger]] with logging events.
+   */
   final class Receiver(target: borer.Receiver, createLogger: LevelInfo => Logger)
       extends borer.Receiver with LevelInfo {
 

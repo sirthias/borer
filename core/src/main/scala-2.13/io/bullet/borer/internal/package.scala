@@ -14,4 +14,5 @@ package object internal {
 
   type XIterableOnceBound[+T] = IterableOnce[T]
 
+  def unapplyOption[P, T](f: P => Option[T]): P => Option[T] = f
 }

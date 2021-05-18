@@ -18,8 +18,8 @@ import scala.collection.mutable
 import scala.collection.compat._
 
 /**
-  * Stateful, mutable abstraction for reading a stream of CBOR or JSON data from the given `input`.
-  */
+ * Stateful, mutable abstraction for reading a stream of CBOR or JSON data from the given `input`.
+ */
 final class InputReader[Config <: Reader.Config](
     parser: Parser[_],
     directParser: io.bullet.borer.json.DirectJsonParser,
@@ -78,17 +78,17 @@ final class InputReader[Config <: Reader.Config](
   @inline def position: Input.Position = input.position(cursor)
 
   /**
-    * Checks whether the next data item is of the given type.
-    *
-    * Example: reader.has(DataItem.Int)
-    */
+   * Checks whether the next data item is of the given type.
+   *
+   * Example: reader.has(DataItem.Int)
+   */
   @inline def has(item: Int): Boolean = dataItem() == item
 
   /**
-    * Checks whether the next data item type is masked in the given bit mask.
-    *
-    * Example: reader.hasAnyOf(DataItem.Int | DataItem.Float)
-    */
+   * Checks whether the next data item type is masked in the given bit mask.
+   *
+   * Example: reader.hasAnyOf(DataItem.Int | DataItem.Float)
+   */
   @inline def hasAnyOf(mask: Int): Boolean = (dataItem() & mask) != 0
 
   @inline def apply[T: Decoder]: T = read[T]()
@@ -159,12 +159,12 @@ final class InputReader[Config <: Reader.Config](
   @inline def tryReadLong(value: Long): Boolean = clearIfTrue(hasLong(value))
 
   /**
-    * Returns one of the following 4 values:
-    * - Int.MaxValue if the next data item is not a Long
-    * - minus one a if the next data item is a Long < `value`
-    * - zero if the next data item is a Long == `value`
-    * - one if the next data item is a Long > `value`
-    */
+   * Returns one of the following 4 values:
+   * - Int.MaxValue if the next data item is not a Long
+   * - minus one a if the next data item is a Long < `value`
+   * - zero if the next data item is a Long == `value`
+   * - one if the next data item is a Long > `value`
+   */
   def longCompare(value: Long): Int =
     if (hasLong) {
       val long = if (hasInt) receptacle.intValue.toLong else receptacle.longValue
@@ -292,9 +292,9 @@ final class InputReader[Config <: Reader.Config](
   @inline def hasString: Boolean       = hasAnyOf(DI.String | DI.Chars | DI.Text | DI.TextStart)
 
   /**
-    * Tests the next data item for equality with the given [[String]].
-    * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to Chars data items!
-    */
+   * Tests the next data item for equality with the given [[String]].
+   * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to Chars data items!
+   */
   @inline def hasString(value: String): Boolean =
     dataItem() match {
       case DI.Chars               => Util.charsStringCompare(receptacle.charBufValue, receptacle.intValue, value) == 0
@@ -304,20 +304,20 @@ final class InputReader[Config <: Reader.Config](
     }
 
   /**
-    * Tests the next data item for equality with the given [[String]] and advances the cursor if so.
-    * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to Chars data items!
-    */
+   * Tests the next data item for equality with the given [[String]] and advances the cursor if so.
+   * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to Chars data items!
+   */
   @inline def tryReadString(value: String): Boolean = clearIfTrue(hasString(value))
 
   /**
-    * Returns one of the following 4 values:
-    * - Int.MinValue if the next data item is not a string
-    * - a negative value (!= Int.MinValue) a if the next data item is a string that compares as '<' to `value`
-    * - zero if the next data item is a string that compares as '==' to `value`
-    * - a positive value if the next data item is a string that compares as '>' to `value`
-    *
-    * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to Chars data items!
-    */
+   * Returns one of the following 4 values:
+   * - Int.MinValue if the next data item is not a string
+   * - a negative value (!= Int.MinValue) a if the next data item is a string that compares as '<' to `value`
+   * - zero if the next data item is a string that compares as '==' to `value`
+   * - a positive value if the next data item is a string that compares as '>' to `value`
+   *
+   * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to Chars data items!
+   */
   def stringCompare(value: String): Int =
     dataItem() match {
       case DI.Chars               => Util.charsStringCompare(receptacle.charBufValue, receptacle.intValue, value)
@@ -327,16 +327,16 @@ final class InputReader[Config <: Reader.Config](
     }
 
   /**
-    * Returns one of the following 4 values:
-    * - Int.MinValue if the next data item is not a string
-    * - a negative value (!= Int.MinValue) a if the next data item is a string that compares as '<' to `value`
-    * - zero if the next data item is a string that compares as '==' to `value`
-    * - a positive value if the next data item is a string that compares as '>' to `value`
-    *
-    * Advanced the cursor if the return value is zero.
-    *
-    * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to Chars data items!
-    */
+   * Returns one of the following 4 values:
+   * - Int.MinValue if the next data item is not a string
+   * - a negative value (!= Int.MinValue) a if the next data item is a string that compares as '<' to `value`
+   * - zero if the next data item is a string that compares as '==' to `value`
+   * - a positive value if the next data item is a string that compares as '>' to `value`
+   *
+   * Advanced the cursor if the return value is zero.
+   *
+   * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to Chars data items!
+   */
   def tryReadStringCompare(value: String): Int = {
     val result = stringCompare(value)
     if (result == 0) clearDataItem()
@@ -358,9 +358,9 @@ final class InputReader[Config <: Reader.Config](
   @inline def hasChars: Boolean = hasString
 
   /**
-    * Tests the next data item for equality with the given `Array[Char]`.
-    * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to Chars data items!
-    */
+   * Tests the next data item for equality with the given `Array[Char]`.
+   * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to Chars data items!
+   */
   @inline def hasChars(value: Array[Char]): Boolean =
     dataItem() match {
       case DI.Chars               => Util.charsCharsCompare(receptacle.charBufValue, receptacle.intValue, value) == 0
@@ -370,20 +370,20 @@ final class InputReader[Config <: Reader.Config](
     }
 
   /**
-    * Tests the next data item for equality with the given `Array[Char]` and advances the cursor if so.
-    * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to Chars data items!
-    */
+   * Tests the next data item for equality with the given `Array[Char]` and advances the cursor if so.
+   * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to Chars data items!
+   */
   @inline def tryReadChars(value: Array[Char]): Boolean = clearIfTrue(hasChars(value))
 
   /**
-    * Returns one of the following 4 values:
-    * - Int.MinValue if the next data item is not a string
-    * - a negative value (!= Int.MinValue) a if the next data item is a string that compares as '<' to `value`
-    * - zero if the next data item is a string that compares as '==' to `value`
-    * - a positive value if the next data item is a string that compares as '>' to `value`
-    *
-    * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to Chars data items!
-    */
+   * Returns one of the following 4 values:
+   * - Int.MinValue if the next data item is not a string
+   * - a negative value (!= Int.MinValue) a if the next data item is a string that compares as '<' to `value`
+   * - zero if the next data item is a string that compares as '==' to `value`
+   * - a positive value if the next data item is a string that compares as '>' to `value`
+   *
+   * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to Chars data items!
+   */
   def charsCompare(value: Array[Char]): Int =
     dataItem() match {
       case DI.Chars               => Util.charsCharsCompare(receptacle.charBufValue, receptacle.intValue, value)
@@ -393,16 +393,16 @@ final class InputReader[Config <: Reader.Config](
     }
 
   /**
-    * Returns one of the following 4 values:
-    * - Int.MinValue if the next data item is not a string
-    * - a negative value (!= Int.MinValue) a if the next data item is a string that compares as '<' to `value`
-    * - zero if the next data item is a string that compares as '==' to `value`
-    * - a positive value if the next data item is a string that compares as '>' to `value`
-    *
-    * Advanced the cursor if the return value is zero.
-    *
-    * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to Chars data items!
-    */
+   * Returns one of the following 4 values:
+   * - Int.MinValue if the next data item is not a string
+   * - a negative value (!= Int.MinValue) a if the next data item is a string that compares as '<' to `value`
+   * - zero if the next data item is a string that compares as '==' to `value`
+   * - a positive value if the next data item is a string that compares as '>' to `value`
+   *
+   * Advanced the cursor if the return value is zero.
+   *
+   * NOTE: This method causes text bytes (sized or unsized) to be buffered and converted to Chars data items!
+   */
   def tryReadCharsCompare(value: Array[Char]): Int = {
     val result = charsCompare(value)
     if (result == 0) clearDataItem()
@@ -433,8 +433,8 @@ final class InputReader[Config <: Reader.Config](
   @inline def hasUnsizedTextBytes: Boolean = hasTextStart
 
   /**
-    * If the current data item is an unsized Text item it'll be buffered and converted into a sized text item.
-    */
+   * If the current data item is an unsized Text item it'll be buffered and converted into a sized text item.
+   */
   def bufferUnsizedTextBytes[Bytes]()(implicit byteAccess: ByteAccess[Bytes]): this.type = {
     if (tryReadTextStart()) {
       var result = byteAccess.empty
@@ -446,8 +446,8 @@ final class InputReader[Config <: Reader.Config](
   }
 
   /**
-    * If the current data item is a sized or unsized Text item it'll be buffered and decoded into a Chars data item.
-    */
+   * If the current data item is a sized or unsized Text item it'll be buffered and decoded into a Chars data item.
+   */
   @tailrec def decodeTextBytes(): this.type =
     dataItem() match {
       case DI.Text =>
@@ -474,8 +474,8 @@ final class InputReader[Config <: Reader.Config](
   @inline def tryReadArrayHeader(length: Int): Boolean  = tryReadArrayHeader(length.toLong)
   @inline def tryReadArrayHeader(length: Long): Boolean = clearIfTrue(hasArrayHeader(length))
 
-  def readArrayStart(): this.type          = if (tryReadArrayStart()) this else unexpectedDataItem(expected = "Array Start")
-  @inline def hasArrayStart: Boolean       = has(DI.ArrayStart)
+  def readArrayStart(): this.type    = if (tryReadArrayStart()) this else unexpectedDataItem(expected = "Array Start")
+  @inline def hasArrayStart: Boolean = has(DI.ArrayStart)
   @inline def tryReadArrayStart(): Boolean = clearIfTrue(hasArrayStart)
 
   def readMapHeader(): Long =
@@ -541,11 +541,11 @@ final class InputReader[Config <: Reader.Config](
   }
 
   /**
-    * Skips the current (atomic) data item.
-    *
-    * CAUTION: If the data item is an Array/Map - Start/Header then this call will NOT skip the whole array or map,
-    * but only the starting data item! Use `skipElement` instead if you also want to skip complex elements!
-    */
+   * Skips the current (atomic) data item.
+   *
+   * CAUTION: If the data item is an Array/Map - Start/Header then this call will NOT skip the whole array or map,
+   * but only the starting data item! Use `skipElement` instead if you also want to skip complex elements!
+   */
   def skipDataItem(): this.type = {
     dataItem()
     clearDataItem()
@@ -553,9 +553,9 @@ final class InputReader[Config <: Reader.Config](
   }
 
   /**
-    * Moves the cursor beyond the current data element,
-    * thereby also skipping complex, potentially nested array or map structures.
-    */
+   * Moves the cursor beyond the current data element,
+   * thereby also skipping complex, potentially nested array or map structures.
+   */
   def skipElement(): this.type = {
 
     // for simplicity we go for stack-based recursion here

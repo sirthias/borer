@@ -43,7 +43,7 @@ object cats {
           case 0 if breakExpected || open == 2 => Ior.Left(r.read[A]())
           case 1 if breakExpected || open == 2 => Ior.Right(r.read[B]())
           case 2 if breakExpected || open == 3 => Ior.Both(r.read[A](), r.read[B]())
-          case x                               => r.unexpectedDataItem("Ior encoding", s"ArrayHeader($open) before Int $x")
+          case x => r.unexpectedDataItem("Ior encoding", s"ArrayHeader($open) before Int $x")
         }
       if (breakExpected) r.readBreak()
       result

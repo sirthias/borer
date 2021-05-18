@@ -9,15 +9,16 @@
 package io.bullet.borer
 
 /**
-  * Abstraction for the "undefined" value in CBOR-speak.
-  */
+ * Abstraction for the "undefined" value in CBOR-speak.
+ */
 case object Undefined {
 
-  implicit val codec = Codec[Undefined.type](
-    encoder = (w, _) => w.writeUndefined(),
-    decoder = { r =>
-      r.readUndefined()
-      Undefined
-    }
-  )
+  implicit val codec: Codec[Undefined.type] =
+    Codec[Undefined.type](
+      encoder = (w, _) => w.writeUndefined(),
+      decoder = { r =>
+        r.readUndefined()
+        Undefined
+      }
+    )
 }

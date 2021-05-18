@@ -9,9 +9,9 @@
 package io.bullet.borer
 
 /**
-  * The common interface of all types that consume CBOR data.
-  * (On the reading as well as the writing side)
-  */
+ * The common interface of all types that consume CBOR data.
+ * (On the reading as well as the writing side)
+ */
 abstract class Receiver {
 
   def onNull(): Unit

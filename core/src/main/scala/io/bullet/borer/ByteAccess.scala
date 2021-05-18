@@ -11,70 +11,70 @@ package io.bullet.borer
 import java.nio.ByteBuffer
 
 /**
-  * Type class for providing basic access to a `Bytes` abstraction,
-  * as well as construction of a respective [[Output]].
-  */
+ * Type class for providing basic access to a `Bytes` abstraction,
+ * as well as construction of a respective [[Output]].
+ */
 trait ByteAccess[Bytes] {
   type Out <: Output
 
   /**
-    * Returns an empty [[Bytes]] instance.
-    */
+   * Returns an empty [[Bytes]] instance.
+   */
   def empty: Bytes
 
   /**
-    * Returns true iff the given [[Bytes]] instance is empty.
-    */
+   * Returns true iff the given [[Bytes]] instance is empty.
+   */
   def isEmpty(bytes: Bytes): Boolean
 
   /**
-    * Returns the number of bytes contained in the given [[Bytes]] instance.
-    */
+   * Returns the number of bytes contained in the given [[Bytes]] instance.
+   */
   def sizeOf(bytes: Bytes): Long
 
   /**
-    * Converts the given byte array into a [[Bytes]] instance.
-    */
+   * Converts the given byte array into a [[Bytes]] instance.
+   */
   def fromByteArray(byteArray: Array[Byte]): Bytes
 
   /**
-    * Converts the given [[Bytes]] instance into a byte array.
-    */
+   * Converts the given [[Bytes]] instance into a byte array.
+   */
   def toByteArray(bytes: Bytes): Array[Byte]
 
   /**
-    * Copies the given [[Bytes]] instance into the given `byteArray` starting at the given index.
-    * Returns a [[Bytes]] instance holding all bytes that could not be written to the byte array
-    * due to capacity constraints or an empty [[Bytes]] instance, if the given byte array was
-    * large enough to hold all `bytes`.
-    */
+   * Copies the given [[Bytes]] instance into the given `byteArray` starting at the given index.
+   * Returns a [[Bytes]] instance holding all bytes that could not be written to the byte array
+   * due to capacity constraints or an empty [[Bytes]] instance, if the given byte array was
+   * large enough to hold all `bytes`.
+   */
   def copyToByteArray(bytes: Bytes, byteArray: Array[Byte], startIndex: Int): Bytes
 
   /**
-    * Copies the given [[Bytes]] instance into the given `byteBuffer`.
-    * Returns a [[Bytes]] instance holding all bytes that could not be written to the byteBuffer
-    * due to capacity constraints or an empty [[Bytes]] instance, if the given byteBuffer was
-    * large enough to hold all `bytes`.
-    */
+   * Copies the given [[Bytes]] instance into the given `byteBuffer`.
+   * Returns a [[Bytes]] instance holding all bytes that could not be written to the byteBuffer
+   * due to capacity constraints or an empty [[Bytes]] instance, if the given byteBuffer was
+   * large enough to hold all `bytes`.
+   */
   def copyToByteBuffer(bytes: Bytes, byteBuffer: ByteBuffer): Bytes
 
   /**
-    * Returns the concatenation of `a` and `b`.
-    */
+   * Returns the concatenation of `a` and `b`.
+   */
   def concat(a: Bytes, b: Bytes): Bytes
 
   /**
-    * Converts the given `value` of type [[B]] into a [[Bytes]] instance.
-    */
+   * Converts the given `value` of type [[B]] into a [[Bytes]] instance.
+   */
   def convert[B: ByteAccess](value: B): Bytes
 }
 
 object ByteAccess {
 
   /**
-    * The default [[ByteAccess]] for plain byte arrays.
-    */
-  implicit final object ForByteArray extends ByteAccess[Array[Byte]] {
+   * The default [[ByteAccess]] for plain byte arrays.
+   */
+  implicit object ForByteArray extends ByteAccess[Array[Byte]] {
     type Out = Output.ToByteArray
 
     @inline def empty = Array.emptyByteArray
@@ -134,9 +134,9 @@ object ByteAccess {
   }
 
   /**
-    * The default [[ByteAccess]] for [[ByteBuffer]].
-    */
-  implicit final object ForByteBuffer extends ByteAccess[ByteBuffer] {
+   * The default [[ByteAccess]] for [[ByteBuffer]].
+   */
+  implicit object ForByteBuffer extends ByteAccess[ByteBuffer] {
     type Out = Output.ToByteBuffer
 
     val empty = ByteBuffer.wrap(Array.emptyByteArray)

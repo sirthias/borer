@@ -10,14 +10,14 @@ package io.bullet.borer
 
 //#docs-quote-delimiter
 /**
-  * In order to enable an alternative [[Option]] codec, which
-  * encodes `None` to `null` and `Some` to an unwrapped value
-  * you can import the members of this object with
-  *
-  * {{{
-  * import io.bullet.borer.NullOptions._
-  * }}}
-  */
+ * In order to enable an alternative [[Option]] codec, which
+ * encodes `None` to `null` and `Some` to an unwrapped value
+ * you can import the members of this object with
+ *
+ * {{{
+ * import io.bullet.borer.NullOptions._
+ * }}}
+ */
 object NullOptions {
 
   implicit def encoder[T: Encoder]: Encoder[Option[T]] =

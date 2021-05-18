@@ -16,8 +16,8 @@ import io.bullet.borer.internal.Util._
 import scala.collection.immutable.{ListMap, TreeMap}
 
 /**
-  * Direct implementation of https://tools.ietf.org/html/rfc7049#appendix-A
-  */
+ * Direct implementation of https://tools.ietf.org/html/rfc7049#appendix-A
+ */
 abstract class AbstractCborSuiteSpec extends AbstractBorerSpec {
 
   import Encoder.ForEither.raw
