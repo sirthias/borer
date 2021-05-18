@@ -9,10 +9,10 @@
 package io.bullet.borer
 
 /**
-  * Abstraction for a "simple value" in CBOR-speak.
-  *
-  * @param value the value's code
-  */
+ * Abstraction for a "simple value" in CBOR-speak.
+ *
+ * @param value the value's code
+ */
 final case class SimpleValue(value: Int) {
   if (!SimpleValue.isLegal(value)) {
     throw new IllegalArgumentException(s"`value` must be in the range ${SimpleValue.legalRange}, but was $value")

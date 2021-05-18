@@ -11,25 +11,25 @@ package io.bullet.borer.internal
 import io.bullet.borer.{ByteAccess, DataItem, Input, Receiver}
 
 /**
-  * Common parent type of [[io.bullet.borer.cbor.CborParser]] and [[io.bullet.borer.json.JsonParser]]
-  */
+ * Common parent type of [[io.bullet.borer.cbor.CborParser]] and [[io.bullet.borer.json.JsonParser]]
+ */
 abstract private[borer] class Parser[Bytes] extends Input.PaddingProvider[Bytes] {
 
   /**
-    * The [[Input]] the parser is parsing from.
-    */
+   * The [[Input]] the parser is parsing from.
+   */
   def input: Input[Bytes]
 
   /**
-    * The index of the first byte of the value that was produced by the last call to `pull`.
-    */
+   * The index of the first byte of the value that was produced by the last call to `pull`.
+   */
   def valueIndex: Long
 
   /**
-    * Sends the next data item to the given [[Receiver]].
-    * The given [[Receiver]] receives exactly one call to one of its methods.
-    * The returned `Int` is the [[io.bullet.borer.DataItem]] code for the value the [[Receiver]] received.
-    */
+   * Sends the next data item to the given [[Receiver]].
+   * The given [[Receiver]] receives exactly one call to one of its methods.
+   * The returned `Int` is the [[io.bullet.borer.DataItem]] code for the value the [[Receiver]] received.
+   */
   def pull(receiver: Receiver): Int
 }
 

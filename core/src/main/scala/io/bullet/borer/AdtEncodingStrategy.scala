@@ -26,32 +26,32 @@ sealed abstract class AdtEncodingStrategy {
 object AdtEncodingStrategy {
 
   /**
-    * Default and recommended ADT encoding strategy.
-    * Encodes the ADT super type as a single-element map with the only member consisting of the type ID as key
-    * and the instance encoding as the value.
-    *
-    * Example:
-    *
-    * A `Dog` instance from this ADT:
-    *
-    * {{{
-    *   sealed trait Animal
-    *   case class Dog(age: Int, name: String)                      extends Animal
-    *   case class Cat(weight: Double, color: String, home: String) extends Animal
-    *   case class Mouse(tail: Boolean)                             extends Animal
-    * }}}
-    *
-    * would be encoded as such, for example:
-    *
-    * {{{
-    *   {
-    *     "Dog" :  {
-    *       "age": 2,
-    *       "name": "Lolle"
-    *      }
-    *   }
-    * }}}
-    */
+   * Default and recommended ADT encoding strategy.
+   * Encodes the ADT super type as a single-element map with the only member consisting of the type ID as key
+   * and the instance encoding as the value.
+   *
+   * Example:
+   *
+   * A `Dog` instance from this ADT:
+   *
+   * {{{
+   *   sealed trait Animal
+   *   case class Dog(age: Int, name: String)                      extends Animal
+   *   case class Cat(weight: Double, color: String, home: String) extends Animal
+   *   case class Mouse(tail: Boolean)                             extends Animal
+   * }}}
+   *
+   * would be encoded as such, for example:
+   *
+   * {{{
+   *   {
+   *     "Dog" :  {
+   *       "age": 2,
+   *       "name": "Lolle"
+   *      }
+   *   }
+   * }}}
+   */
   implicit object Default extends AdtEncodingStrategy {
 
     def writeAdtEnvelopeOpen(w: Writer, typeName: String): w.type =
@@ -80,35 +80,35 @@ object AdtEncodingStrategy {
   }
 
   /**
-    * Alternative ADT encoding strategy, which writes the type ID as an extra map member.
-    * The extra member will be the first member in the encoding.
-    * (But can be anywhere during decoding. The earlier the type member appears in the encoding map the better
-    * the decoding performance and the lesser the caching memory requirements will be.)
-    *
-    * Requires that all ADT sub types encode to a map.
-    * Less efficient (with regard to encoding/decoding process as well as encoded size) than the default strategy.
-    *
-    * Example:
-    *
-    * A `Dog` instance from this ADT:
-    *
-    * {{{
-    *   sealed trait Animal
-    *   case class Dog(age: Int, name: String)                      extends Animal
-    *   case class Cat(weight: Double, color: String, home: String) extends Animal
-    *   case class Mouse(tail: Boolean)                             extends Animal
-    * }}}
-    *
-    * would be encoded as such, for example:
-    *
-    * {{{
-    *   {
-    *     "_type": "Dog",
-    *     "age": 2,
-    *     "name": "Lolle"
-    *   }
-    * }}}
-    */
+   * Alternative ADT encoding strategy, which writes the type ID as an extra map member.
+   * The extra member will be the first member in the encoding.
+   * (But can be anywhere during decoding. The earlier the type member appears in the encoding map the better
+   * the decoding performance and the lesser the caching memory requirements will be.)
+   *
+   * Requires that all ADT sub types encode to a map.
+   * Less efficient (with regard to encoding/decoding process as well as encoded size) than the default strategy.
+   *
+   * Example:
+   *
+   * A `Dog` instance from this ADT:
+   *
+   * {{{
+   *   sealed trait Animal
+   *   case class Dog(age: Int, name: String)                      extends Animal
+   *   case class Cat(weight: Double, color: String, home: String) extends Animal
+   *   case class Mouse(tail: Boolean)                             extends Animal
+   * }}}
+   *
+   * would be encoded as such, for example:
+   *
+   * {{{
+   *   {
+   *     "_type": "Dog",
+   *     "age": 2,
+   *     "name": "Lolle"
+   *   }
+   * }}}
+   */
   def flat(typeMemberName: String = "_type", maxBufferSize: Int = 1024 * 1024): AdtEncodingStrategy =
     new AdtEncodingStrategy {
       if (!Util.isPowerOf2(maxBufferSize))
@@ -196,7 +196,7 @@ object AdtEncodingStrategy {
               // the start of ADT value
               if (unsized) stash.prependReceiver.onMapStart() else stash.prependReceiver.onMapHeader(mapSize - 1)
               r.receiveInto(stash.prependReceiver) // the type id
-              r.stash = stash                      // inject all our stashed elements before the next element from the parser
+              r.stash = stash // inject all our stashed elements before the next element from the parser
               unsized
             }
 

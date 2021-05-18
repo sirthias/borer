@@ -14,36 +14,36 @@ import io.bullet.borer.internal.{Renderer, Util}
 import scala.annotation.tailrec
 
 /**
-  * Encapsulates the basic JSON rendering logic.
-  * Also performs inline UTF-8 encoding to raw bytes.
-  *
-  * This [[Receiver]] only renders data items that can be directly represented in JSON, specifically
-  * - null
-  * - Boolean
-  * - Int
-  * - Long
-  * - PosOverLong
-  * - NegOverLong
-  * - Float
-  * - Double
-  * - String
-  * - Indefinite-Length Array
-  * - Indefinite-Length Map
-  *
-  * These data items are not supported and throw an exception upon reception:
-  * - undefined
-  * - Float16
-  * - Byte String
-  * - Byte String Stream
-  * - Text Byte String
-  * - Text Byte String Stream
-  * - Definite-Length Array
-  * - Definite-Length Map
-  * - Tag
-  * - Simple Value
-  *
-  * @see https://tools.ietf.org/html/rfc8259
-  */
+ * Encapsulates the basic JSON rendering logic.
+ * Also performs inline UTF-8 encoding to raw bytes.
+ *
+ * This [[Receiver]] only renders data items that can be directly represented in JSON, specifically
+ * - null
+ * - Boolean
+ * - Int
+ * - Long
+ * - PosOverLong
+ * - NegOverLong
+ * - Float
+ * - Double
+ * - String
+ * - Indefinite-Length Array
+ * - Indefinite-Length Map
+ *
+ * These data items are not supported and throw an exception upon reception:
+ * - undefined
+ * - Float16
+ * - Byte String
+ * - Byte String Stream
+ * - Text Byte String
+ * - Text Byte String Stream
+ * - Definite-Length Array
+ * - Definite-Length Map
+ * - Tag
+ * - Simple Value
+ *
+ * @see https://tools.ietf.org/html/rfc8259
+ */
 final private[borer] class JsonRenderer(var out: Output) extends Renderer {
 
   private[this] var level: Int           = _ // valid range: 0 - 63

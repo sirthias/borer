@@ -9,18 +9,18 @@
 package io.bullet.borer
 
 /**
-  * Wrapper for Float value that gets encoded to and decoded from 16-bit Half-Precision Floats (two-byte IEEE 754).
-  */
+ * Wrapper for Float value that gets encoded to and decoded from 16-bit Half-Precision Floats (two-byte IEEE 754).
+ */
 final case class Float16(value: Float)
 
 /**
-  * Logic for converting half-precision (16-bit) floats to and from bytes.
-  *
-  * Source: https://stackoverflow.com/questions/6162651
-  * (The author says it's public domain.)
-  *
-  * The documented author's "extensions" have been removed for clean round-tripping to and from Float.
-  */
+ * Logic for converting half-precision (16-bit) floats to and from bytes.
+ *
+ * Source: https://stackoverflow.com/questions/6162651
+ * (The author says it's public domain.)
+ *
+ * The documented author's "extensions" have been removed for clean round-tripping to and from Float.
+ */
 object Float16 {
 
   implicit val codec: Codec[Float16] = Codec(
@@ -29,8 +29,8 @@ object Float16 {
   )
 
   /**
-    * Hi-word of parameter value is ignored.
-    */
+   * Hi-word of parameter value is ignored.
+   */
   def shortToFloat(hbits: Int): Float = {
     var mant = hbits & 0x03FF // 10 bits mantissa
     var exp  = hbits & 0x7C00 // 5 bits exponent
@@ -53,8 +53,8 @@ object Float16 {
   }
 
   /**
-    * Result has only low-word set.
-    */
+   * Result has only low-word set.
+   */
   def floatToShort(value: Float): Int = {
     val fbits   = java.lang.Float.floatToIntBits(value)
     val sign    = fbits >>> 16 & 0x8000 // sign only

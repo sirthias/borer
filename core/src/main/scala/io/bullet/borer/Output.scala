@@ -13,10 +13,10 @@ import io.bullet.borer.output.{ToByteArrayOutput, ToByteBufferOutput, ToFileOutp
 import scala.annotation.tailrec
 
 /**
-  * Abstraction over serialization output.
-  *
-  * The implementation can be either mutable or immutable.
-  */
+ * Abstraction over serialization output.
+ *
+ * The implementation can be either mutable or immutable.
+ */
 trait Output { outer =>
   type Self <: Output { type Self <: outer.Self }
   type Result
@@ -45,20 +45,21 @@ object Output
 
   //#provider
   /**
-    * Responsible for providing an Output that produces instances of [[T]].
-    */
+   * Responsible for providing an Output that produces instances of [[T]].
+   */
   trait ToTypeProvider[T] {
     type Out <: Output { type Result = T }
     def apply(bufferSize: Int, allowBufferCaching: Boolean): Out
   }
 
   /**
-    * Responsible for providing an Output that outputs into the given value [[T]].
-    */
+   * Responsible for providing an Output that outputs into the given value [[T]].
+   */
   trait ToValueProvider[T] {
     type Out <: Output { type Result = T }
     def apply(value: T, bufferSize: Int, allowBufferCaching: Boolean): Out
   }
+
   //#provider
 
   implicit final class OutputOps(val underlying: Output) extends AnyVal {

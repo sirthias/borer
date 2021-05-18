@@ -21,18 +21,18 @@ private[borer] object CborValidation {
   trait Config {
 
     /**
-      * @return the maximum array length to accept
-      */
+     * @return the maximum array length to accept
+     */
     def maxArrayLength: Long
 
     /**
-      * @return the maximum map length to accept
-      */
+     * @return the maximum map length to accept
+     */
     def maxMapLength: Long
 
     /**
-      * @return the maximum number of nesting levels to accept
-      */
+     * @return the maximum number of nesting levels to accept
+     */
     def maxNestingLevels: Int
   }
 
@@ -40,12 +40,12 @@ private[borer] object CborValidation {
   def wrapper[C <: Config]: borer.Receiver.Transformer[C]        = _wrapper.asInstanceOf[borer.Receiver.Transformer[C]]
 
   /**
-    * A [[Receiver]] wrapping another [[Receiver]].
-    * Performs basic structural checks on the incoming data, e.g. ensures that BREAKs only appear where allowed,
-    * the input doesn't break off in the middle of an array or map, etc.
-    *
-    * Throws [[Borer.Error]] exceptions upon detecting any problem with the input.
-    */
+   * A [[Receiver]] wrapping another [[Receiver]].
+   * Performs basic structural checks on the incoming data, e.g. ensures that BREAKs only appear where allowed,
+   * the input doesn't break off in the middle of an array or map, etc.
+   *
+   * Throws [[Borer.Error]] exceptions upon detecting any problem with the input.
+   */
   final class Receiver(target: borer.Receiver, config: Config) extends borer.Receiver {
 
     import io.bullet.borer.{DataItem => DI}

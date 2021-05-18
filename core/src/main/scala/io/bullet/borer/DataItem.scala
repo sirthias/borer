@@ -9,8 +9,8 @@
 package io.bullet.borer
 
 /**
-  * A simple mapping of CBOR data item types to bits for efficient masking.
-  */
+ * A simple mapping of CBOR data item types to bits for efficient masking.
+ */
 object DataItem {
 
   object Shifts {

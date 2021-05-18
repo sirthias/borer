@@ -9,16 +9,16 @@
 package io.bullet.borer.derivation
 
 /**
-  * Allows for custom configuration of certain derivation behaviors.
-  *
-  * Customizations must be brought into implicit scope for activation, e.g.
-  *
-  * {{{
-  *   implicit val myConfig = DerivationConfig(
-  *     encodeCaseClassMemberDefaultValues = true
-  *   )
-  * }}}
-  */
+ * Allows for custom configuration of certain derivation behaviors.
+ *
+ * Customizations must be brought into implicit scope for activation, e.g.
+ *
+ * {{{
+ *   implicit val myConfig = DerivationConfig(
+ *     encodeCaseClassMemberDefaultValues = true
+ *   )
+ * }}}
+ */
 final case class DerivationConfig(
     encodeCaseClassMemberDefaultValues: Boolean = false
 )

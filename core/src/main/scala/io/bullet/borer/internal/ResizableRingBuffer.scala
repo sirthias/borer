@@ -9,13 +9,13 @@
 package io.bullet.borer.internal
 
 /**
-  * A mutable RingBuffer that can grow in size.
-  * Contrary to many other ring buffer implementations this one does not automatically overwrite the oldest
-  * elements, rather, if full, the buffer tries to grow and rejects further writes if max capacity is reached.
-  *
-  * @param initialCapacity the initial buffer size
-  * @param maxCapacity the maximum number of elements the buffer can hold.
-  */
+ * A mutable RingBuffer that can grow in size.
+ * Contrary to many other ring buffer implementations this one does not automatically overwrite the oldest
+ * elements, rather, if full, the buffer tries to grow and rejects further writes if max capacity is reached.
+ *
+ * @param initialCapacity the initial buffer size
+ * @param maxCapacity the maximum number of elements the buffer can hold.
+ */
 final private[borer] class ResizableRingBuffer[T](initialCapacity: Int, val maxCapacity: Int) {
   // automatically implies maxCapacity <= 0x40000000
   if (!Util.isPowerOf2(maxCapacity) || maxCapacity <= 0 || !Util.isPowerOf2(
@@ -38,29 +38,29 @@ final private[borer] class ResizableRingBuffer[T](initialCapacity: Int, val maxC
   }
 
   /**
-    * The number of elements currently in the buffer.
-    */
+   * The number of elements currently in the buffer.
+   */
   @inline def count: Int = writeIx - readIx
 
   /**
-    * True if no elements are currently in the buffer.
-    */
+   * True if no elements are currently in the buffer.
+   */
   @inline def isEmpty: Boolean = writeIx == readIx
 
   /**
-    * True if at least one elements is currently in the buffer.
-    */
+   * True if at least one elements is currently in the buffer.
+   */
   @inline def nonEmpty: Boolean = writeIx != readIx
 
   /**
-    * The number of elements the buffer can hold without having to be resized.
-    */
+   * The number of elements the buffer can hold without having to be resized.
+   */
   @inline def currentCapacity: Int = array.length
 
   /**
-    * Tries to write the given value into the buffer thereby potentially growing the backing array.
-    * Returns `true` if the write was successful and false if the buffer is full and cannot grow anymore.
-    */
+   * Tries to write the given value into the buffer thereby potentially growing the backing array.
+   * Returns `true` if the write was successful and false if the buffer is full and cannot grow anymore.
+   */
   def append(value: T): Boolean =
     if (count < currentCapacity) { // if we have space left we can simply write and be done
       val w = writeIx
@@ -70,9 +70,9 @@ final private[borer] class ResizableRingBuffer[T](initialCapacity: Int, val maxC
     } else grow() && append(value)
 
   /**
-    * Tries to write the given value into the buffer thereby potentially growing the backing array.
-    * Returns `true` if the write was successful and false if the buffer is full and cannot grow anymore.
-    */
+   * Tries to write the given value into the buffer thereby potentially growing the backing array.
+   * Returns `true` if the write was successful and false if the buffer is full and cannot grow anymore.
+   */
   def prepend(value: T): Boolean =
     if (count < currentCapacity) { // if we have space left we can simply write and be done
       val r = readIx - 1
@@ -82,16 +82,16 @@ final private[borer] class ResizableRingBuffer[T](initialCapacity: Int, val maxC
     } else grow() && prepend(value)
 
   /**
-    * Reads the next value from the buffer.
-    * Throws a NoSuchElementException if the buffer is empty.
-    */
+   * Reads the next value from the buffer.
+   * Throws a NoSuchElementException if the buffer is empty.
+   */
   def read(): T =
     if (nonEmpty) unsafeRead()
     else throw new NoSuchElementException
 
   /**
-    * Reads the next value from the buffer without any buffer underrun protection.
-    */
+   * Reads the next value from the buffer without any buffer underrun protection.
+   */
   def unsafeRead(): T = {
     val r = readIx
     readIx = r + 1
@@ -102,9 +102,9 @@ final private[borer] class ResizableRingBuffer[T](initialCapacity: Int, val maxC
   }
 
   /**
-    * Reads the next value from the buffer without any buffer underrun protection
-    * and without clearing the reference from the buffer!
-    */
+   * Reads the next value from the buffer without any buffer underrun protection
+   * and without clearing the reference from the buffer!
+   */
   def unsafeRead_NoZero(): T = {
     val r = readIx
     readIx = r + 1

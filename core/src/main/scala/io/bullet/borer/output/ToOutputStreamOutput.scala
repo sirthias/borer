@@ -43,10 +43,10 @@ trait ToOutputStreamOutput {
   }
 
   /**
-    * Default, mutable implementation for serializing to [[OutputStream]] instances.
-    *
-    * NOTE: The given [[OutputStream]] is NOT closed at the end of the encoding run!
-    */
+   * Default, mutable implementation for serializing to [[OutputStream]] instances.
+   *
+   * NOTE: The given [[OutputStream]] is NOT closed at the end of the encoding run!
+   */
   final class ToOutputStream(outputStream: OutputStream) extends ToOutputStreamBase(outputStream) {
     type Self   = ToOutputStream
     type Result = OutputStream

@@ -29,17 +29,17 @@ trait AkkaHttpCompat {
   type JsonDecodingSetup = DecodingSetup.Api[Json.DecodingConfig]
 
   /**
-    * Override with a parameterized call to the `borerUnmarshaller` method to apply a custom configuration.
-    */
+   * Override with a parameterized call to the `borerUnmarshaller` method to apply a custom configuration.
+   */
   implicit def borerFromEntityUnmarshaller[T: Decoder]: FromEntityUnmarshaller[T] = borerUnmarshaller()
 
   implicit final def borerFromMessageUnmarshaller[T: Decoder]: FromMessageUnmarshaller[T] =
     Unmarshaller.messageUnmarshallerFromEntityUnmarshaller(borerFromEntityUnmarshaller)
 
   /**
-    * Provides a [[FromEntityUnmarshaller]] for [[T]] given an implicit borer Decoder for [[T]].
-    * Supports both CBOR and JSON with the given MediaTypes.
-    */
+   * Provides a [[FromEntityUnmarshaller]] for [[T]] given an implicit borer Decoder for [[T]].
+   * Supports both CBOR and JSON with the given MediaTypes.
+   */
   final def borerUnmarshaller[T: Decoder](
       cborMediaType: MediaType = MediaTypes.`application/cbor`,
       jsonMediaType: MediaType = MediaTypes.`application/json`,
@@ -52,16 +52,16 @@ trait AkkaHttpCompat {
           httpEntity.contentType.mediaType match {
             case `cborMediaType` => FastFuture(configureCbor(Cbor.decode(bytes)).to[T].valueTry)
             case `jsonMediaType` => FastFuture(configureJson(Json.decode(bytes)).to[T].valueTry)
-            case _               => FastFuture.failed(Unmarshaller.UnsupportedContentTypeException(cborMediaType, jsonMediaType))
+            case _ => FastFuture.failed(Unmarshaller.UnsupportedContentTypeException(cborMediaType, jsonMediaType))
           }
         } else FastFuture.failed(Unmarshaller.NoContentException)
       }
     }
 
   /**
-    * Provides a [[FromEntityUnmarshaller]] for [[T]] given an implicit borer Decoder for [[T]].
-    * Supports only CBOR with the given MediaType.
-    */
+   * Provides a [[FromEntityUnmarshaller]] for [[T]] given an implicit borer Decoder for [[T]].
+   * Supports only CBOR with the given MediaType.
+   */
   final def borerCborUnmarshaller[T: Decoder](
       cborMediaType: MediaType = MediaTypes.`application/cbor`,
       configureCbor: CborDecodingSetup => CborDecodingSetup = identity): FromEntityUnmarshaller[T] =
@@ -77,9 +77,9 @@ trait AkkaHttpCompat {
     }
 
   /**
-    * Provides a [[FromEntityUnmarshaller]] for [[T]] given an implicit borer Decoder for [[T]].
-    * Supports only JSON with the given MediaType.
-    */
+   * Provides a [[FromEntityUnmarshaller]] for [[T]] given an implicit borer Decoder for [[T]].
+   * Supports only JSON with the given MediaType.
+   */
   final def borerJsonUnmarshaller[T: Decoder](
       jsonMediaType: MediaType = MediaTypes.`application/json`,
       configureJson: JsonDecodingSetup => JsonDecodingSetup = identity
@@ -100,20 +100,20 @@ trait AkkaHttpCompat {
   type JsonEncodingSetup = EncodingSetup.Api[Json.EncodingConfig]
 
   /**
-    * Override with a parameterized call to the `borerMarshaller` method to apply a custom configuration.
-    */
+   * Override with a parameterized call to the `borerMarshaller` method to apply a custom configuration.
+   */
   implicit def borerToEntityMarshaller[T: Encoder]: ToEntityMarshaller[T] = borerMarshaller()
 
   implicit final def borerToResponseMarshaller[T: Encoder]: ToResponseMarshaller[T] =
     Marshaller.liftMarshaller(borerToEntityMarshaller)
 
   /**
-    * Provides a [[ToEntityMarshaller]] for [[T]] given an implicit borer Encoder for [[T]].
-    * Supports both CBOR and JSON with the given MediaTypes.
-    * Content negotiation will determine, whether CBOR or JSON is produced.
-    * If the client accepts both formats with equal q-value the marshaller will produce
-    * whatever the `prefer` parameter specifies.
-    */
+   * Provides a [[ToEntityMarshaller]] for [[T]] given an implicit borer Encoder for [[T]].
+   * Supports both CBOR and JSON with the given MediaTypes.
+   * Content negotiation will determine, whether CBOR or JSON is produced.
+   * If the client accepts both formats with equal q-value the marshaller will produce
+   * whatever the `prefer` parameter specifies.
+   */
   final def borerMarshaller[T: Encoder](
       cborContentType: ContentType = MediaTypes.`application/cbor`,
       jsonContentType: ContentType = MediaTypes.`application/json`,
@@ -130,9 +130,9 @@ trait AkkaHttpCompat {
   }
 
   /**
-    * Provides a [[ToEntityMarshaller]] for [[T]] given an implicit borer Encoder for [[T]].
-    * Supports only CBOR with the given MediaType.
-    */
+   * Provides a [[ToEntityMarshaller]] for [[T]] given an implicit borer Encoder for [[T]].
+   * Supports only CBOR with the given MediaType.
+   */
   final def borerCborMarshaller[T: Encoder](
       cborContentType: ContentType = MediaTypes.`application/cbor`,
       configureCbor: CborEncodingSetup => CborEncodingSetup = identity): ToEntityMarshaller[T] =
@@ -141,9 +141,9 @@ trait AkkaHttpCompat {
     }
 
   /**
-    * Provides a [[ToEntityMarshaller]] for [[T]] given an implicit borer Encoder for [[T]].
-    * Supports only JSON with the given MediaType.
-    */
+   * Provides a [[ToEntityMarshaller]] for [[T]] given an implicit borer Encoder for [[T]].
+   * Supports only JSON with the given MediaType.
+   */
   final def borerJsonMarshaller[T: Encoder](
       jsonContentType: ContentType = MediaTypes.`application/json`,
       configureJson: JsonEncodingSetup => JsonEncodingSetup = identity
@@ -153,8 +153,8 @@ trait AkkaHttpCompat {
     }
 
   /**
-    * Override with a parameterized call to the `borerStreamUnmarshaller` method to apply a custom configuration.
-    */
+   * Override with a parameterized call to the `borerStreamUnmarshaller` method to apply a custom configuration.
+   */
   implicit def borerJsonStreamFromEntityUnmarshaller[T: Decoder]: FromEntityUnmarshaller[Source[T, NotUsed]] =
     borerStreamUnmarshaller(EntityStreamingSupport.json())
 
@@ -162,11 +162,11 @@ trait AkkaHttpCompat {
     Unmarshaller.messageUnmarshallerFromEntityUnmarshaller(borerJsonStreamFromEntityUnmarshaller)
 
   /**
-    * Provides a [[FromEntityUnmarshaller]] which produces streams of [[T]] given an implicit borer Decoder
-    * for [[T]]. Supports JSON or CSV, depending on the given [[EntityStreamingSupport]].
-    *
-    * @see https://doc.akka.io/api/akka-http/10.1.9/akka/http/scaladsl/common/EntityStreamingSupport.html
-    */
+   * Provides a [[FromEntityUnmarshaller]] which produces streams of [[T]] given an implicit borer Decoder
+   * for [[T]]. Supports JSON or CSV, depending on the given [[EntityStreamingSupport]].
+   *
+   * @see https://doc.akka.io/api/akka-http/10.1.9/akka/http/scaladsl/common/EntityStreamingSupport.html
+   */
   final def borerStreamUnmarshaller[T: Decoder](
       ess: EntityStreamingSupport): FromEntityUnmarshaller[Source[T, NotUsed]] =
     Unmarshaller.withMaterializer { implicit ec => implicit mat =>
@@ -187,8 +187,8 @@ trait AkkaHttpCompat {
     }
 
   /**
-    * Override with a parameterized call to the `borerStreamMarshaller` method to apply a custom configuration.
-    */
+   * Override with a parameterized call to the `borerStreamMarshaller` method to apply a custom configuration.
+   */
   implicit def borerJsonStreamToEntityMarshaller[T: ToEntityMarshaller: ClassTag]
       : ToEntityMarshaller[Source[T, NotUsed]] =
     borerStreamMarshaller[T](EntityStreamingSupport.json())
@@ -198,9 +198,9 @@ trait AkkaHttpCompat {
     Marshaller.liftMarshaller(borerJsonStreamToEntityMarshaller)
 
   /**
-    * Provides a [[ToEntityMarshaller]] for streams of [[T]] given an implicit borer Encoder for [[T]].
-    * Supports JSON or CSV, depending on the given [[EntityStreamingSupport]].
-    */
+   * Provides a [[ToEntityMarshaller]] for streams of [[T]] given an implicit borer Encoder for [[T]].
+   * Supports JSON or CSV, depending on the given [[EntityStreamingSupport]].
+   */
   final def borerStreamMarshaller[T](ess: EntityStreamingSupport)(
       implicit marshaller: ToEntityMarshaller[T],
       classTag: ClassTag[T]): ToEntityMarshaller[Source[T, NotUsed]] = {
@@ -243,8 +243,8 @@ trait AkkaHttpCompat {
 }
 
 /**
-  * Automatic to and from CBOR and/or JSON marshalling/unmarshalling using in-scope borer Encoders / Decoders.
-  */
+ * Automatic to and from CBOR and/or JSON marshalling/unmarshalling using in-scope borer Encoders / Decoders.
+ */
 object akkaHttp extends AkkaHttpCompat {
 
   private[compat] val byteArrayUnmarshaller: FromEntityUnmarshaller[Array[Byte]] =

@@ -34,7 +34,7 @@ private[derivation] object MacroSupport {
       Ordering.fromLessThan[(Key, T)] {
         case ((k @ Key.Long(x), a), (Key.Long(y), b))     => lessThan(java.lang.Long.compare(x, y), k, a, b)
         case ((k @ Key.String(x), a), (Key.String(y), b)) => lessThan(x compare y, k, a, b)
-        case ((x, _), _)                                  => x.isInstanceOf[Key.Long] // we sort LongKeys before StringKeys
+        case ((x, _), _) => x.isInstanceOf[Key.Long] // we sort LongKeys before StringKeys
       })
   }
 

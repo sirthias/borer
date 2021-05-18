@@ -16,8 +16,8 @@ import io.bullet.borer.{ByteAccess, _}
 object scodec {
 
   /**
-    * [[ByteAccess]] for [[ByteVector]].
-    */
+   * [[ByteAccess]] for [[ByteVector]].
+   */
   implicit final object ByteVectorByteAccess extends ByteAccess[ByteVector] {
 
     type Out = ByteVectorOutput
@@ -58,13 +58,13 @@ object scodec {
   }
 
   /**
-    * Encoding and Decoding for [[ByteVector]].
-    */
+   * Encoding and Decoding for [[ByteVector]].
+   */
   implicit val ByteVectorCodec = Codec[ByteVector](_ writeBytes _, _.readBytes())
 
   /**
-    * [[Input]] around [[ByteVector]].
-    */
+   * [[Input]] around [[ByteVector]].
+   */
   implicit final object ByteVectorProvider extends Input.Provider[ByteVector] {
     type Bytes = ByteVector
     type In    = FromByteVector
@@ -158,8 +158,8 @@ object scodec {
   }
 
   /**
-    * Mutable [[Output]] implementation for serializing to [[ByteVector]].
-    */
+   * Mutable [[Output]] implementation for serializing to [[ByteVector]].
+   */
   final class ByteVectorOutput(bufferSize: Int, allowBufferCaching: Boolean) extends Output {
     // The scodec ByteVector doesn't appear to come with an efficient builder for it,
     // so rather than wrapping each incoming Byte in an extra ByteVector instance we simply

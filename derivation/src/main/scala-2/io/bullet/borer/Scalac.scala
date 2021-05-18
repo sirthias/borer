@@ -38,9 +38,9 @@ object Scalac {
   }
 
   /**
-    * Type-checks the given code fragment and returns either the resulting code (as a String)
-    * or the compiler error message.
-    */
+   * Type-checks the given code fragment and returns either the resulting code (as a String)
+   * or the compiler error message.
+   */
   def typecheck(codeFragment: String): TypeCheck = macro Macro.typecheck
 
   private object Macro {
@@ -50,7 +50,7 @@ object Scalac {
 
       val fragment = codeFragment match {
         case Literal(Constant(x: String)) => x
-        case _                            => c.abort(c.enclosingPosition, "`codeFragment` argument must be a literal string")
+        case _ => c.abort(c.enclosingPosition, "`codeFragment` argument must be a literal string")
       }
 
       try {

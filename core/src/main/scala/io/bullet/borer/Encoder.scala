@@ -25,8 +25,8 @@ import scala.annotation.tailrec
 import scala.collection.LinearSeq
 
 /**
-  * Type class responsible for writing an instance of type [[T]] to a [[Writer]].
-  */
+ * Type class responsible for writing an instance of type [[T]] to a [[Writer]].
+ */
 trait Encoder[T] {
   def write(w: Writer, value: T): Writer
 }
@@ -34,49 +34,49 @@ trait Encoder[T] {
 object Encoder extends LowPrioEncoders {
 
   /**
-    * An [[Encoder]] that might change its encoding strategy if [[T]] has a default value.
-    */
+   * An [[Encoder]] that might change its encoding strategy if [[T]] has a default value.
+   */
   trait DefaultValueAware[T] extends Encoder[T] {
     def withDefaultValue(defaultValue: T): Encoder[T]
   }
 
   /**
-    * An [[Encoder]] that might not actually produce any output for certain values of [[T]]
-    * (e.g. because "not-present" already carries sufficient information).
-    */
+   * An [[Encoder]] that might not actually produce any output for certain values of [[T]]
+   * (e.g. because "not-present" already carries sufficient information).
+   */
   trait PossiblyWithoutOutput[T] extends Encoder[T] {
     def producesOutputFor(value: T): Boolean
   }
 
   /**
-    * Creates an [[Encoder]] from the given function.
-    */
+   * Creates an [[Encoder]] from the given function.
+   */
   def apply[T](implicit encoder: Encoder[T]): Encoder[T] = encoder
 
   /**
-    * Allows for somewhat concise [[Encoder]] definition for case classes, without any macro magic.
-    * Can be used e.g. like this:
-    *
-    * {{{
-    * case class Foo(int: Int, string: String, doubleOpt: Option[Double])
-    *
-    * val fooEncoder = Encoder.from(Foo.unapply _)
-    * }}}
-    *
-    * Encodes an instance as a simple array of values.
-    */
+   * Allows for somewhat concise [[Encoder]] definition for case classes, without any macro magic.
+   * Can be used e.g. like this:
+   *
+   * {{{
+   * case class Foo(int: Int, string: String, doubleOpt: Option[Double])
+   *
+   * val fooEncoder = Encoder.from(Foo.unapply _)
+   * }}}
+   *
+   * Encodes an instance as a simple array of values.
+   */
   def from[T, Unapplied](unapply: T => Option[Unapplied])(implicit tupleEnc: Encoder[Unapplied]): Encoder[T] =
     Encoder((w, x) => tupleEnc.write(w, unapply(x).get))
 
   /**
-    * Same as the other `from` overload above, but for nullary case classes (i.e. with an empty parameter list).
-    */
+   * Same as the other `from` overload above, but for nullary case classes (i.e. with an empty parameter list).
+   */
   def from[T](unapply: T => Boolean): Encoder[T] =
     Encoder((w, x) => if (unapply(x)) w.writeEmptyArray() else sys.error("Unapply unexpectedly failed: " + unapply))
 
   /**
-    * Creates a "unified" [[Encoder]] from two encoders that each target only a single data format.
-    */
+   * Creates a "unified" [[Encoder]] from two encoders that each target only a single data format.
+   */
   def targetSpecific[T](cbor: Encoder[T], json: Encoder[T]): Encoder[T] = { (w, x) =>
     if (w.target == Cbor) cbor.write(w, x)
     else json.write(w, x)
@@ -93,14 +93,14 @@ object Encoder extends LowPrioEncoders {
       }
 
     /**
-      * Creates a new [[Encoder]] which emits the flat, concatenated encoding of the underlying encoder and the given
-      * other one. Only works with encoders that encode to arrays or maps and both encoders must be of the same type,
-      * i.e. both encode to an array or both encode to a map.
-      * If the encoders are incompatible or produce elements that are not wrapped in an array or map each encoding
-      * attempt will fail with a [[Borer.Error.Unsupported]] exception.
-      *
-      * @param maxBufferSize the maximum size of the buffer for the encoding of the first encoder
-      */
+     * Creates a new [[Encoder]] which emits the flat, concatenated encoding of the underlying encoder and the given
+     * other one. Only works with encoders that encode to arrays or maps and both encoders must be of the same type,
+     * i.e. both encode to an array or both encode to a map.
+     * If the encoders are incompatible or produce elements that are not wrapped in an array or map each encoding
+     * attempt will fail with a [[Borer.Error.Unsupported]] exception.
+     *
+     * @param maxBufferSize the maximum size of the buffer for the encoding of the first encoder
+     */
     def concat(other: Encoder[A], maxBufferSize: Int = 16384): Encoder[A] =
       new Encoder.ConcatEncoder(underlying, other, maxBufferSize)
   }
@@ -214,6 +214,7 @@ object Encoder extends LowPrioEncoders {
           }
         } else this
     }
+
   //#option-encoder
 
   implicit def forIndexedSeq[T: Encoder, M[X] <: IndexedSeq[X]]: DefaultValueAware[M[T]] =
@@ -263,9 +264,9 @@ object Encoder extends LowPrioEncoders {
     }
 
   /**
-    * The default [[Encoder]] for [[Either]] is not automatically in scope,
-    * because there is no clear "standard" way of encoding instances of [[Either]].
-    */
+   * The default [[Encoder]] for [[Either]] is not automatically in scope,
+   * because there is no clear "standard" way of encoding instances of [[Either]].
+   */
   object ForEither {
 
     implicit def default[A: Encoder, B: Encoder]: Encoder[Either[A, B]] =
@@ -279,8 +280,8 @@ object Encoder extends LowPrioEncoders {
       }
 
     /**
-      * An [[Encoder]] that unpacks the either and writes its content without any wrapping or type information.
-      */
+     * An [[Encoder]] that unpacks the either and writes its content without any wrapping or type information.
+     */
     implicit def raw[A: Encoder, B: Encoder]: Encoder[Either[A, B]] =
       Encoder {
         case (w, Left(x))  => w ~ x
@@ -319,14 +320,14 @@ object Encoder extends LowPrioEncoders {
   }
 
   /**
-    * Creates a new [[Encoder]] which emits the flat, concatenated encoding of two other encoders.
-    * Only works with encoders that encode to arrays or maps and both encoders must be of the same type,
-    * i.e. both encode to an array or both encode to a map.
-    * If the encoders are incompatible or produce elements that are not wrapped in an array or map each encoding
-    * attempt will fail with a [[Borer.Error.Unsupported]] exception.
-    *
-    * @param maxBufferSize the maximum size of the buffer for the encoding of the first encoder
-    */
+   * Creates a new [[Encoder]] which emits the flat, concatenated encoding of two other encoders.
+   * Only works with encoders that encode to arrays or maps and both encoders must be of the same type,
+   * i.e. both encode to an array or both encode to a map.
+   * If the encoders are incompatible or produce elements that are not wrapped in an array or map each encoding
+   * attempt will fail with a [[Borer.Error.Unsupported]] exception.
+   *
+   * @param maxBufferSize the maximum size of the buffer for the encoding of the first encoder
+   */
   final class ConcatEncoder[T](encoder0: Encoder[T], encoder1: Encoder[T], maxBufferSize: Int = 16384)
       extends Encoder[T] {
     if (maxBufferSize <= 0 || !Util.isPowerOf2(maxBufferSize))
@@ -452,11 +453,11 @@ sealed abstract class LowPrioEncoders extends TupleEncoders {
 }
 
 /**
-  * An [[AdtEncoder]] is an [[Encoder]] which encodes its values with an envelope holding the value's type id.
-  *
-  * It doesn't change or add to the outside interface of [[Encoder]] but merely serves as a marker
-  * signaling that it takes on the responsibility of encoding the type id in addition to the value itself.
-  * This allows outside encoders calling an [[AdtEncoder]] to delegate this responsibility rather than performing
-  * the task themselves.
-  */
+ * An [[AdtEncoder]] is an [[Encoder]] which encodes its values with an envelope holding the value's type id.
+ *
+ * It doesn't change or add to the outside interface of [[Encoder]] but merely serves as a marker
+ * signaling that it takes on the responsibility of encoding the type id in addition to the value itself.
+ * This allows outside encoders calling an [[AdtEncoder]] to delegate this responsibility rather than performing
+ * the task themselves.
+ */
 trait AdtEncoder[T] extends Encoder[T]

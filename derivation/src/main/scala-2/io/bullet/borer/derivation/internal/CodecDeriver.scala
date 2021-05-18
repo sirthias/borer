@@ -154,7 +154,7 @@ abstract private[derivation] class CodecDeriver[C <: blackbox.Context](ctx: C) e
           case Literal(Constant(x: String)) => Key.String(x)
           case Literal(Constant(x: Int))    => Key.Long(x.toLong)
           case Literal(Constant(x: Long))   => Key.Long(x)
-          case x                            => c.abort(x.pos, s"The '@key' annotation only supports String or Int/Long literal arguments.")
+          case x => c.abort(x.pos, s"The '@key' annotation only supports String or Int/Long literal arguments.")
         })
       keyAnnos.lengthCompare(1) match {
         case -1 => Key.String(underlying.name.decodedName.toString)

@@ -19,11 +19,11 @@ import scala.util.hashing.MurmurHash3
 import java.lang.{StringBuilder => JStringBuilder}
 
 /**
-  * Simple Document Object Model (DOM) for CBOR.
-  *
-  * Practically all valid CBOR encodings can be decoded into this structure and vice versa.
-  * Provided as an alternative to plain [[Writer]]-based encoding and [[Reader]]-based decoding.
-  */
+ * Simple Document Object Model (DOM) for CBOR.
+ *
+ * Practically all valid CBOR encodings can be decoded into this structure and vice versa.
+ * Provided as an alternative to plain [[Writer]]-based encoding and [[Reader]]-based decoding.
+ */
 object Dom {
   import DataItem.{Shifts => DIS}
 
@@ -225,9 +225,9 @@ object Dom {
     }
 
     /**
-      * Attempts to transform this map element into a `HashMap[String, Element]` and either returns the
-      * result, if all keys are indeed `StringElem`s, or the first offending key element that is not a `StringElem`.
-      */
+     * Attempts to transform this map element into a `HashMap[String, Element]` and either returns the
+     * result, if all keys are indeed `StringElem`s, or the first offending key element that is not a `StringElem`.
+     */
     final def toStringKeyedMap: Either[Element, HashMap[String, Element]] = {
       val k = keys
       val v = values
@@ -478,11 +478,11 @@ object Dom {
   }
 
   /**
-    * A [[Dom.Transformer]] encapsulates the ability for arbitrary DOM transformations.
-    * The default implementation applies a NOP transformation, i.e. returns an identical DOM structure.
-    *
-    * Override some or all methods to customize the transformation logic.
-    */
+   * A [[Dom.Transformer]] encapsulates the ability for arbitrary DOM transformations.
+   * The default implementation applies a NOP transformation, i.e. returns an identical DOM structure.
+   *
+   * Override some or all methods to customize the transformation logic.
+   */
   trait Transformer extends (Element => Element) {
 
     def apply(elem: Element): Element =
@@ -541,25 +541,25 @@ object Dom {
   object Transformer {
 
     /**
-      * A [[Transformer]] that converts certain DOM elements of a given DOM structure that are not supported by the
-      * JSON renderer into alternative elements that can be represented in JSON.
-      *
-      * The elements that are not supported (and as such will still trigger errors during an attempted encoding to
-      * JSON) are:
-      *
-      * - Non-String Map Keys
-      * - Float.NaN, Float.PositiveInfinity, Float.NegativeInfinity
-      * - Double.NaN, Double.PositiveInfinity, Double.NegativeInfinity
-      * - Tags
-      *
-      * This transformer can be used, for example, for converting a CBOR document to JSON by first parsing the CBOR
-      * encoding into a [[Dom.Element]], then applying this transformer and then encoding the transformation result to
-      * JSON.
-      *
-      * NOTE: Since there is no single, standard way of representing the CBOR-only DOM elements in JSON this transformer
-      * provides merely one of many possible such implementations.
-      * Override the respective methods in order to customize the logic!
-      */
+     * A [[Transformer]] that converts certain DOM elements of a given DOM structure that are not supported by the
+     * JSON renderer into alternative elements that can be represented in JSON.
+     *
+     * The elements that are not supported (and as such will still trigger errors during an attempted encoding to
+     * JSON) are:
+     *
+     * - Non-String Map Keys
+     * - Float.NaN, Float.PositiveInfinity, Float.NegativeInfinity
+     * - Double.NaN, Double.PositiveInfinity, Double.NegativeInfinity
+     * - Tags
+     *
+     * This transformer can be used, for example, for converting a CBOR document to JSON by first parsing the CBOR
+     * encoding into a [[Dom.Element]], then applying this transformer and then encoding the transformation result to
+     * JSON.
+     *
+     * NOTE: Since there is no single, standard way of representing the CBOR-only DOM elements in JSON this transformer
+     * provides merely one of many possible such implementations.
+     * Override the respective methods in order to customize the logic!
+     */
     trait ToJsonSubset extends Transformer {
       val bytesEncoding: BaseEncoding = BaseEncoding.base64
 

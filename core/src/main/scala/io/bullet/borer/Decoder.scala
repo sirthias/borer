@@ -28,8 +28,8 @@ import scala.collection.mutable
 import scala.reflect.ClassTag
 
 /**
-  * Type class responsible for reading an instance of type [[T]] from a [[Reader]].
-  */
+ * Type class responsible for reading an instance of type [[T]] from a [[Reader]].
+ */
 trait Decoder[T] {
   def read(r: Reader): T
 }
@@ -42,13 +42,13 @@ object Decoder extends LowPrioDecoders {
   }
 
   /**
-    * Creates a [[Decoder]] from the given function.
-    */
+   * Creates a [[Decoder]] from the given function.
+   */
   def apply[T](implicit decoder: Decoder[T]): Decoder[T] = decoder
 
   /**
-    * Creates a "unified" [[Decoder]] from two decoders that each target only a single data format.
-    */
+   * Creates a "unified" [[Decoder]] from two decoders that each target only a single data format.
+   */
   def targetSpecific[T](cbor: Decoder[T], json: Decoder[T]): Decoder[T] = { r =>
     if (r.target == Cbor) cbor.read(r) else json.read(r)
   }
@@ -294,9 +294,9 @@ object Decoder extends LowPrioDecoders {
     constructForMap[A, B, HashMap[A, B]](HashMap.empty)
 
   /**
-    * The default [[Decoder]] for [[Either]] is not automatically in scope,
-    * because there is no clear "standard" way of encoding instances of [[Either]].
-    */
+   * The default [[Decoder]] for [[Either]] is not automatically in scope,
+   * because there is no clear "standard" way of encoding instances of [[Either]].
+   */
   object ForEither {
 
     implicit def default[A: Decoder, B: Decoder]: Decoder[Either[A, B]] =
@@ -380,13 +380,13 @@ sealed abstract class LowPrioDecoders extends TupleDecoders {
 }
 
 /**
-  * An [[AdtDecoder]] is a [[Decoder]] whose `read` method expects to read an envelope
-  * (holding the type id) around the actual value encoding.
-  *
-  * In order to be able to collapse several envelope levels into a single one, when several [[AdtDecoder]] instances
-  * call each other, this type also provides `read` overloads which don't read the type id envelope themselves
-  * but can receive the type id from the outside.
-  */
+ * An [[AdtDecoder]] is a [[Decoder]] whose `read` method expects to read an envelope
+ * (holding the type id) around the actual value encoding.
+ *
+ * In order to be able to collapse several envelope levels into a single one, when several [[AdtDecoder]] instances
+ * call each other, this type also provides `read` overloads which don't read the type id envelope themselves
+ * but can receive the type id from the outside.
+ */
 trait AdtDecoder[T] extends Decoder[T] {
 
   def read(r: Reader, typeId: Long): T

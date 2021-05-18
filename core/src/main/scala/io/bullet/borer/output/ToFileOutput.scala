@@ -20,8 +20,8 @@ trait ToFileOutput { this: ToOutputStreamOutput =>
   }
 
   /**
-    * Default, mutable implementation for serializing to a given [[File]].
-    */
+   * Default, mutable implementation for serializing to a given [[File]].
+   */
   final class ToFile(file: File, bufferSize: Int)
       extends ToOutputStreamBase(new BufferedOutputStream(new FileOutputStream(file), bufferSize)) {
     type Self   = ToFile

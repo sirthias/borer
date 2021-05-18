@@ -18,36 +18,36 @@ import io.bullet.borer.internal.{CharArrayCache, Parser, Util}
 import scala.annotation.{switch, tailrec}
 
 /**
-  * Encapsulates the basic JSON parsing logic.
-  * Also performs inline UTF-8 decoding from raw bytes.
-  *
-  * This [[Receiver]] only produces data items that can be directly represented in JSON, specifically
-  * - null
-  * - Boolean
-  * - Int
-  * - Long
-  * - Float (if a decimal number can be (easily) represented as a float)
-  * - Double (if a decimal number can be (easily) represented as a double)
-  * - NumberString (if a decimal number cannot easily be represented as a float or double)
-  * - String
-  * - Indefinite-Length Array
-  * - Indefinite-Length Map
-  *
-  * These data items are never produced:
-  * - undefined
-  * - Overlong
-  * - Float16
-  * - Byte String
-  * - Byte String Stream
-  * - Text Byte String
-  * - Text Byte String Stream
-  * - Definite-Length Array
-  * - Definite-Length Map
-  * - Tag
-  * - Simple Value
-  *
-  * @see https://tools.ietf.org/html/rfc8259
-  */
+ * Encapsulates the basic JSON parsing logic.
+ * Also performs inline UTF-8 decoding from raw bytes.
+ *
+ * This [[Receiver]] only produces data items that can be directly represented in JSON, specifically
+ * - null
+ * - Boolean
+ * - Int
+ * - Long
+ * - Float (if a decimal number can be (easily) represented as a float)
+ * - Double (if a decimal number can be (easily) represented as a double)
+ * - NumberString (if a decimal number cannot easily be represented as a float or double)
+ * - String
+ * - Indefinite-Length Array
+ * - Indefinite-Length Map
+ *
+ * These data items are never produced:
+ * - undefined
+ * - Overlong
+ * - Float16
+ * - Byte String
+ * - Byte String Stream
+ * - Text Byte String
+ * - Text Byte String Stream
+ * - Definite-Length Array
+ * - Definite-Length Map
+ * - Tag
+ * - Simple Value
+ *
+ * @see https://tools.ietf.org/html/rfc8259
+ */
 final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config: JsonParser.Config)(
     implicit byteAccess: ByteAccess[Bytes])
     extends Parser[Bytes] {
@@ -81,10 +81,10 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
     }
 
   /**
-    * Reads the next data item from the input and sends it to the given [[Receiver]].
-    * The given [[Receiver]] receives exactly one call to one of its methods.
-    * The returned `Int` is the [[DataItem]] code for the value the [[Receiver]] received.
-    */
+   * Reads the next data item from the input and sends it to the given [[Receiver]].
+   * The given [[Receiver]] receives exactly one call to one of its methods.
+   * The returned `Int` is the [[DataItem]] code for the value the [[Receiver]] received.
+   */
   def pull(receiver: Receiver): Int = {
 
     def appendChar(charCursor: Int, c: Char): Int = {

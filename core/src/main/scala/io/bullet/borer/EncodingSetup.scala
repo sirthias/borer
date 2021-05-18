@@ -21,47 +21,47 @@ object EncodingSetup {
   sealed trait Api[Config <: Borer.EncodingConfig] extends CommonApi[Config] {
 
     /**
-      * Short-cut for encoding to a plain byte array, throwing an exception in case of any failures.
-      */
+     * Short-cut for encoding to a plain byte array, throwing an exception in case of any failures.
+     */
     def toByteArray: Array[Byte]
 
     /**
-      * Short-cut for encoding to a plain byte array, wrapped in a [[Try]] for error handling.
-      */
+     * Short-cut for encoding to a plain byte array, wrapped in a [[Try]] for error handling.
+     */
     def toByteArrayTry: Try[Array[Byte]]
 
     /**
-      * Short-cut for encoding to a plain byte array, wrapped in an [[Either]] for error handling.
-      *
-      * NOTE: You can get a slightly more narrowly typed error by using `.to[Array[Byte]].resultEither` instead!
-      */
+     * Short-cut for encoding to a plain byte array, wrapped in an [[Either]] for error handling.
+     *
+     * NOTE: You can get a slightly more narrowly typed error by using `.to[Array[Byte]].resultEither` instead!
+     */
     def toByteArrayEither: Either[Borer.Error[Output], Array[Byte]]
 
     /**
-      * Short-cut for encoding to a [[ByteBuffer]], throwing an exception in case of any failures.
-      */
+     * Short-cut for encoding to a [[ByteBuffer]], throwing an exception in case of any failures.
+     */
     def toByteBuffer: ByteBuffer
 
     /**
-      * Short-cut for encoding to a [[ByteBuffer]], wrapped in a [[Try]] for error handling.
-      */
+     * Short-cut for encoding to a [[ByteBuffer]], wrapped in a [[Try]] for error handling.
+     */
     def toByteBufferTry: Try[ByteBuffer]
 
     /**
-      * Short-cut for encoding to a [[ByteBuffer]], wrapped in an [[Either]] for error handling.
-      *
-      * NOTE: You can get a slightly more narrowly typed error by using `.to[ByteBuffer].resultEither` instead!
-      */
+     * Short-cut for encoding to a [[ByteBuffer]], wrapped in an [[Either]] for error handling.
+     *
+     * NOTE: You can get a slightly more narrowly typed error by using `.to[ByteBuffer].resultEither` instead!
+     */
     def toByteBufferEither: Either[Borer.Error[Output], ByteBuffer]
 
     /**
-      * Encodes an instance of T to the given type `R` type using the configured options.
-      */
+     * Encodes an instance of T to the given type `R` type using the configured options.
+     */
     def to[R](implicit op: Output.ToTypeProvider[R]): Sealed[op.Out, R]
 
     /**
-      * Encodes an instance of T to the given `target` using the configured options.
-      */
+     * Encodes an instance of T to the given `target` using the configured options.
+     */
     def to[R](target: R)(implicit op: Output.ToValueProvider[R]): Sealed[op.Out, R]
   }
 
@@ -83,9 +83,9 @@ object EncodingSetup {
   sealed trait JsonApi[T, Config <: Borer.EncodingConfig] extends Api[Config] {
 
     /**
-      * Short-cut for encoding to a plain byte array, throwing an exception in case of any failures,
-      * and then immediately UTF-8 decoding into a [[String]].
-      */
+     * Short-cut for encoding to a plain byte array, throwing an exception in case of any failures,
+     * and then immediately UTF-8 decoding into a [[String]].
+     */
     @inline def toUtf8String: String
   }
 

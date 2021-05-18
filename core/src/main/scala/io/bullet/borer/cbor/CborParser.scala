@@ -16,8 +16,8 @@ import io.bullet.borer.internal.{Parser, Util}
 import scala.annotation.switch
 
 /**
-  * Encapsulates the basic CBOR decoding logic.
-  */
+ * Encapsulates the basic CBOR decoding logic.
+ */
 final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes], config: CborParser.Config)
     extends Parser[Bytes] {
 
@@ -26,10 +26,10 @@ final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes]
   def valueIndex: Long = _valueIndex
 
   /**
-    * Reads the next data item from the input and sends it to the given [[Receiver]].
-    * The given [[Receiver]] receives exactly one call to one of its methods.
-    * The returned `Int` is the [[DataItem]] code for the value the [[Receiver]] received.
-    */
+   * Reads the next data item from the input and sends it to the given [[Receiver]].
+   * The given [[Receiver]] receives exactly one call to one of its methods.
+   * The returned `Int` is the [[DataItem]] code for the value the [[Receiver]] received.
+   */
   def pull(receiver: Receiver): Int = {
 
     @inline def decodePositiveInteger(uLong: Long): Int = {
@@ -135,7 +135,7 @@ final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes]
         case 24 =>
           uLong.toInt match {
             case x if SimpleValue.isLegal(x) => receiver.onSimpleValue(x)
-            case x                           => failInvalidInput(s"Simple value must be in the range ${SimpleValue.legalRange}, but was $x")
+            case x => failInvalidInput(s"Simple value must be in the range ${SimpleValue.legalRange}, but was $x")
           }
           DataItem.SimpleValue
         case 25 =>

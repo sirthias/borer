@@ -20,9 +20,9 @@ object DeriveWith {
 }
 
 /**
-  * Heavily inspired by and some parts actually copied from Magnolia (https://github.com/propensive/magnolia),
-  * which is Copyright 2018 Jon Pretty, Propensive Ltd. and licensed under the Apache License, Version 2.0.
-  */
+ * Heavily inspired by and some parts actually copied from Magnolia (https://github.com/propensive/magnolia),
+ * which is Copyright 2018 Jon Pretty, Propensive Ltd. and licensed under the Apache License, Version 2.0.
+ */
 abstract class Deriver[C <: blackbox.Context](val c: C) {
   import c.universe._
 
@@ -117,13 +117,13 @@ abstract class Deriver[C <: blackbox.Context](val c: C) {
   }
 
   /**
-    * When generating type class instances for a whole type hierarchy this method returns all descendant nodes of
-    * an ADT super type that don't have implicit type class instances already available.
-    *
-    * The resulting list is already ordered in a way that allows intra-dependencies (i.e. between sub types) be resolved
-    * properly if the missing implicits are generated in order.
-    * (If there are circular dependencies a compiler error is automatically thrown.)
-    */
+   * When generating type class instances for a whole type hierarchy this method returns all descendant nodes of
+   * an ADT super type that don't have implicit type class instances already available.
+   *
+   * The resulting list is already ordered in a way that allows intra-dependencies (i.e. between sub types) be resolved
+   * properly if the missing implicits are generated in order.
+   * (If there are circular dependencies a compiler error is automatically thrown.)
+   */
   final protected def subsWithoutImplicitTypeclassInstances(
       node: AdtTypeNode,
       typeclass: TypeSymbol): List[AdtTypeNode] = {

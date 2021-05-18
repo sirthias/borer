@@ -22,8 +22,8 @@ trait ToByteArrayOutput {
   }
 
   /**
-    * Default, mutable implementation for serializing to plain byte arrays.
-    */
+   * Default, mutable implementation for serializing to plain byte arrays.
+   */
   final class ToByteArray(bufferSize: Int, allowBufferCaching: Boolean) extends Output {
 
     private[this] var currentChunkBuffer: Array[Byte] = _

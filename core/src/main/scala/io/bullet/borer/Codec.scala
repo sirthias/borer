@@ -9,18 +9,18 @@
 package io.bullet.borer
 
 /**
-  * A simple encapsulation of an [[Encoder]] and [[Decoder]] for the same type, as one entity.
-  *
-  * Sometimes it's easier to supply just a single implicit for a type, rather than two.
-  * As an alternative to writing a separate [[Encoder]] and [[Decoder]] for type [[A]]
-  * you can also write a [[Codec]] for [[A]].
-  * ([[Encoder]] and [[Decoder]] can be implicitly "unpacked" from a codec.)
-  *
-  * However, in order to not hinder composability Codecs should only ever be _supplied_, never consumed.
-  * So, if you write an encoder, decoder or codec for a generic type, which itself requires implicitly
-  * available encoders and/or decoders for certain type parameters (like `Encoder.forOption`, for example)
-  * then you should never require implicitly available Codecs, but rather Encoders and Decoders separately.
-  */
+ * A simple encapsulation of an [[Encoder]] and [[Decoder]] for the same type, as one entity.
+ *
+ * Sometimes it's easier to supply just a single implicit for a type, rather than two.
+ * As an alternative to writing a separate [[Encoder]] and [[Decoder]] for type [[A]]
+ * you can also write a [[Codec]] for [[A]].
+ * ([[Encoder]] and [[Decoder]] can be implicitly "unpacked" from a codec.)
+ *
+ * However, in order to not hinder composability Codecs should only ever be _supplied_, never consumed.
+ * So, if you write an encoder, decoder or codec for a generic type, which itself requires implicitly
+ * available encoders and/or decoders for certain type parameters (like `Encoder.forOption`, for example)
+ * then you should never require implicitly available Codecs, but rather Encoders and Decoders separately.
+ */
 final case class Codec[A](encoder: Encoder[A], decoder: Decoder[A]) {
 
   @inline def bimap[B](f: B => A, g: A => B): Codec[B] = Codec.bimap(f, g)(encoder, decoder)
@@ -32,27 +32,27 @@ final case class Codec[A](encoder: Encoder[A], decoder: Decoder[A]) {
 object Codec {
 
   /**
-    * Same as `apply` but with the parameter list marked as implicit.
-    */
+   * Same as `apply` but with the parameter list marked as implicit.
+   */
   @inline def of[A](implicit encoder: Encoder[A], decoder: Decoder[A]): Codec[A] =
     Codec(encoder, decoder)
 
   /**
-    * Constructs a `Codec[B]` from an `Encoder[A]`, a `Decoder[A]` and two functions.
-    */
+   * Constructs a `Codec[B]` from an `Encoder[A]`, a `Decoder[A]` and two functions.
+   */
   @inline def bimap[A, B](f: B => A, g: A => B)(implicit ea: Encoder[A], da: Decoder[A]): Codec[B] =
     Codec(ea contramap f, da map g)
 
   /**
-    * Creates a "unified" [[Codec]] from two codecs that each target only a single data format.
-    */
+   * Creates a "unified" [[Codec]] from two codecs that each target only a single data format.
+   */
   @inline def targetSpecific[T](cbor: Codec[T], json: Codec[T]): Codec[T] =
     Codec(Encoder.targetSpecific(cbor.encoder, json.encoder), Decoder.targetSpecific(cbor.decoder, json.decoder))
 
   /**
-    * The default [[Codec]] for [[Either]] is not automatically in scope,
-    * because there is no clear "standard" way of encoding instances of [[Either]].
-    */
+   * The default [[Codec]] for [[Either]] is not automatically in scope,
+   * because there is no clear "standard" way of encoding instances of [[Either]].
+   */
   object ForEither {
 
     implicit def default[A: Encoder: Decoder, B: Encoder: Decoder]: Codec[Either[A, B]] =

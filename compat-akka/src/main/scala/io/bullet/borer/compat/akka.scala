@@ -39,8 +39,8 @@ object akka {
   private def serializationSystem: actor.ActorSystem = Serialization.getCurrentTransportInformation().system
 
   /**
-    * [[ByteAccess]] for [[ByteString]].
-    */
+   * [[ByteAccess]] for [[ByteString]].
+   */
   implicit final object ByteStringByteAccess extends ByteAccess[ByteString] {
 
     type Out = ByteStringOutput
@@ -84,13 +84,13 @@ object akka {
   }
 
   /**
-    * Encoding and Decoding for [[ByteString]].
-    */
+   * Encoding and Decoding for [[ByteString]].
+   */
   implicit val ByteStringCodec = Codec[ByteString](_ writeBytes _, _.readBytes())
 
   /**
-    * [[Input]] around [[ByteString]].
-    */
+   * [[Input]] around [[ByteString]].
+   */
   implicit final object ByteStringProvider extends Input.Provider[ByteString] {
     type Bytes = ByteString
     type In    = FromByteString
@@ -184,8 +184,8 @@ object akka {
   }
 
   /**
-    * Mutable [[Output]] implementation for serializing to [[ByteString]].
-    */
+   * Mutable [[Output]] implementation for serializing to [[ByteString]].
+   */
   final class ByteStringOutput extends Output {
     private[this] var builder = ByteString.newBuilder
 
