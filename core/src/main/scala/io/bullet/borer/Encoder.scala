@@ -427,7 +427,6 @@ sealed abstract class LowPrioEncoders extends TupleEncoders {
 
   implicit final def forIterableOnce[T: Encoder, M[X] <: XIterableOnceBound[X]]: Encoder[M[T]] =
     new Encoder.DefaultValueAware[M[T]] { self =>
-
       def write(w: Writer, value: M[T]) =
         value match {
           case x: IndexedSeq[T] => w.writeIndexedSeq(x)
