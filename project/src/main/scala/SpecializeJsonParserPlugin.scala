@@ -8,7 +8,8 @@ object SpecializeJsonParserPlugin extends AutoPlugin {
   override def requires = plugins.JvmPlugin
 
   object autoImport {
-    val specializeJsonParser = taskKey[Seq[File]]("Generates sources for specializing JSON parsing from byte arrays when sun.misc.Unsafe is available")
+    val specializeJsonParser = taskKey[Seq[File]](
+      "Generates sources for specializing JSON parsing from byte arrays when sun.misc.Unsafe is available")
   }
   import autoImport._
 
@@ -30,11 +31,11 @@ object SpecializeJsonParserPlugin extends AutoPlugin {
       RewriteRule.ReplaceFirst("import io.bullet.borer.{ByteAccess, Input}", "import io.bullet.borer.Input"),
       RewriteRule.DeleteSection("trait FromByteArrayInput", "final private class FromByteArray"),
       RewriteRule.DeleteLast("}"),
-      RewriteRule.ReplaceFirst("private class FromByteArray(byteArray: Array[Byte]",
+      RewriteRule.ReplaceFirst(
+        "private class FromByteArray(byteArray: Array[Byte]",
         "private[borer] class DirectFromByteArrayInput(byteArray: Array[Byte], baa: io.bullet.borer.internal.Unsafe.LittleEndianByteArrayAccess"),
       RewriteRule.ReplaceAll("ByteArrayAccess.instance", "baa")
     ),
-
     FileRewrite(
       _ / "scala" / "io" / "bullet" / "borer" / "json" / "JsonParser.scala",
       _ / "scala" / "io" / "bullet" / "borer" / "json" / "DirectJsonParser.scala",
@@ -109,23 +110,23 @@ object SpecializeJsonParserPlugin extends AutoPlugin {
   }
 
   def generateSpecializedJsonParser(streams: TaskStreams, sourceDir: File, targetDir: File): Seq[File] = {
-    rewrites.map {
-      case FileRewrite(source, target, rules @ _*) =>
-        val sourceFile = source(sourceDir)
-        if (!sourceFile.exists()) sys.error(s"Cannot rewrite `$sourceFile`: file not found!")
-        val targetFile = target(targetDir)
-        if (!targetFile.exists()) {
-          val dropLen = sourceDir.toString.zip(targetDir.toString).takeWhile(t => t._1 == t._2).size
-          streams.log.info(s"Rewriting ../${sourceFile.toString.drop(dropLen)} to ../${targetFile.toString.drop(dropLen)}")
-          val fileContent = IO.read(sourceFile)
-          val rewritingResult = rules.foldLeft(Right(fileContent): Either[String, String]){
-            case (error @ Left(_), _) => error
-            case (Right(string), rule) => rule(string)
-          }
-          val rewrittenContent = rewritingResult.fold(err => sys.error(s"Error rewriting `$sourceFile`: $err"), identity)
-          IO.write(targetFile, rewrittenContent)
+    rewrites.map { case FileRewrite(source, target, rules @ _*) =>
+      val sourceFile = source(sourceDir)
+      if (!sourceFile.exists()) sys.error(s"Cannot rewrite `$sourceFile`: file not found!")
+      val targetFile = target(targetDir)
+      if (!targetFile.exists()) {
+        val dropLen = sourceDir.toString.zip(targetDir.toString).takeWhile(t => t._1 == t._2).size
+        streams.log.info(
+          s"Rewriting ../${sourceFile.toString.drop(dropLen)} to ../${targetFile.toString.drop(dropLen)}")
+        val fileContent = IO.read(sourceFile)
+        val rewritingResult = rules.foldLeft(Right(fileContent): Either[String, String]) {
+          case (error @ Left(_), _)  => error
+          case (Right(string), rule) => rule(string)
         }
-        targetFile
+        val rewrittenContent = rewritingResult.fold(err => sys.error(s"Error rewriting `$sourceFile`: $err"), identity)
+        IO.write(targetFile, rewrittenContent)
+      }
+      targetFile
     }
   }
 }

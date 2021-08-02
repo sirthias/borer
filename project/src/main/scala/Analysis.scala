@@ -21,8 +21,8 @@ object Analysis {
           s.substring(0, s.indexOf("ModelBenchmark"))
         }
         val method = model.benchmark.substring(model.benchmark.lastIndexOf('.') + 1)
-        val param = model.params.get.fileName
-        val score = model.primaryMetric.score
+        val param  = model.params.get.fileName
+        val score  = model.primaryMetric.score
         Score(libary, method, param, score)
       }
 
@@ -35,10 +35,10 @@ object Analysis {
       def showLibraryResult(library: String): Unit = {
         val libPerf = perf(library)
         val factors = borerPerf.map { case (param, borerScore) => param -> (borerScore / libPerf(param)) }
-        val avg = factors.map(_._2).sum / factors.size
+        val avg     = factors.map(_._2).sum / factors.size
         val mean = {
           val sorted = factors.sortBy(_._2)
-          val mid = factors.size / 2
+          val mid    = factors.size / 2
           if ((factors.size & 1) == 1) sorted(mid)._2
           else (sorted(mid)._2 + sorted(mid + 1)._2) / 2
         }
