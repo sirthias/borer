@@ -2,7 +2,7 @@ import sbt._
 
 def scala3   = "3.0.1"
 def scala213 = "2.13.6"
-def scala212 = "2.12.14"
+def scala212 = "2.12.15"
 
 lazy val allScalaVersions = Seq(scala212, scala213, scala3)
 lazy val scala2Only       = Seq(scala212, scala213)
