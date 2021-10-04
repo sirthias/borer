@@ -13,8 +13,6 @@ import io.bullet.borer.{Default, Nullable}
 import org.openjdk.jmh.annotations._
 import upickle.default._
 
-import scala.annotation.nowarn
-
 object UPickleCodecs {
   implicit val fooRW: ReadWriter[Foo] = macroRW
 
@@ -63,7 +61,7 @@ class UPickleDomBenchmark extends DomBenchmark {
   def decodeDom: ujson.Value = read[ujson.Value](new String(fileBytes, UTF_8))
 }
 
-@nowarn("cat=other-match-analysis")
+//@nowarn("cat=other-match-analysis")
 class UPickleModelBenchmark extends DomBenchmark {
 
   private var root: Product = _
