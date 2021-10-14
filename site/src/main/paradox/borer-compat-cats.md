@@ -1,7 +1,7 @@
 `borer-compat-cats`
 ===================
 
-The `borer-compat-circe` module provides default codecs for the following `cats.data._` data structures from the
+The `borer-compat-cats` module provides default codecs for the following `cats.data._` data structures from the
 [cats] `cats-core` package:
 
 - `Chain[A]`
