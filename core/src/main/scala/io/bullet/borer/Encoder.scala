@@ -107,7 +107,7 @@ object Encoder extends LowPrioEncoders {
 
   implicit def fromCodec[T](implicit codec: Codec[T]): Encoder[T] = codec.encoder
 
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   implicit val forNull: Encoder[Null]       = Encoder((w, _) => w.writeNull())
   implicit val forBoolean: Encoder[Boolean] = Encoder(_ writeBoolean _)
@@ -192,7 +192,7 @@ object Encoder extends LowPrioEncoders {
       w.writeBreak()
     }
 
-  //#option-encoder
+  // #option-encoder
   implicit def forOption[T: Encoder]: Encoder.DefaultValueAware[Option[T]] =
     new Encoder.DefaultValueAware[Option[T]] {
 
@@ -215,7 +215,7 @@ object Encoder extends LowPrioEncoders {
         } else this
     }
 
-  //#option-encoder
+  // #option-encoder
 
   implicit def forIndexedSeq[T: Encoder, M[X] <: IndexedSeq[X]]: DefaultValueAware[M[T]] =
     new DefaultValueAware[M[T]] {

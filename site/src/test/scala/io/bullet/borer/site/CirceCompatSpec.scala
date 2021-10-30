@@ -16,7 +16,7 @@ object CirceCompatSpec extends TestSuite {
   val tests = Tests {
 
     "Example" - {
-      //#example
+      // #example
       import io.circe.{Decoder, Encoder} // NOTE: circe (!) Encoders / Decoders
       import io.bullet.borer.Cbor
       import io.bullet.borer.compat.circe._ // the borer codec for the circe AST
@@ -35,7 +35,7 @@ object CirceCompatSpec extends TestSuite {
       bytes ==> hex"8363666f6f636261726362617a"
 
       deserializeFromCbor[List[String]](bytes) ==> value
-      //#example
+      // #example
     }
   }
 }

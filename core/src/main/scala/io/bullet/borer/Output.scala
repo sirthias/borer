@@ -18,7 +18,7 @@ import scala.annotation.tailrec
  * The implementation can be either mutable or immutable.
  */
 trait Output { outer =>
-  type Self <: Output //{ type Self <: outer.Self } // uncommenting this makes Scala 3 compiler get stuck in the typer
+  type Self <: Output // { type Self <: outer.Self } // uncommenting this makes Scala 3 compiler get stuck in the typer
   type Result
 
   def writeByte(byte: Byte): Self
@@ -43,7 +43,7 @@ trait Output { outer =>
 object Output
     extends ToByteArrayOutput with ToByteBufferOutput with ToFileOutput with ToOutputStreamOutput with ToUnitOutput {
 
-  //#provider
+  // #provider
   /**
    * Responsible for providing an Output that produces instances of [[T]].
    */
@@ -60,7 +60,7 @@ object Output
     def apply(value: T, bufferSize: Int, allowBufferCaching: Boolean): Out
   }
 
-  //#provider
+  // #provider
 
   implicit final class OutputOps(val underlying: Output) extends AnyVal {
     @inline def writeAsByte(i: Int): underlying.Self = underlying.writeByte(i.toByte)
