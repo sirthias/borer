@@ -512,7 +512,7 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
     elem match {
       case MapElem.Sized(_, keys, values)   => MapElem.Sized(f((keys zip values).toList): _*)
       case MapElem.Unsized(_, keys, values) => MapElem.Unsized(f((keys zip values).toList): _*)
-      case _ => throw new IllegalStateException
+      case _                                => throw new IllegalStateException
     }
 }
 

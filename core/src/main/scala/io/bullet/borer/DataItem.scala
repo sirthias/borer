@@ -40,7 +40,7 @@ object DataItem {
     final val EndOfInput   = 23
   }
 
-  //////////////////////////////// BASIC ////////////////////////////////
+  // ////////////////////////////// BASIC ////////////////////////////////
 
   final val Null         = 1 << Shifts.Null
   final val Undefined    = 1 << Shifts.Undefined
@@ -67,13 +67,13 @@ object DataItem {
   final val SimpleValue  = 1 << Shifts.SimpleValue
   final val EndOfInput   = 1 << Shifts.EndOfInput
 
-  //////////////////////////////// COMPOUND ////////////////////////////////
+  // ////////////////////////////// COMPOUND ////////////////////////////////
 
   final val None        = 0
   final val Complex     = ArrayHeader | ArrayStart | MapHeader | MapStart | BytesStart | TextStart
   final val AllButBreak = ((EndOfInput << 1) - 1) & ~Break
 
-  //////////////////////////////////////////////////////////////////////////
+  // ////////////////////////////////////////////////////////////////////////
 
   def stringify(mask: Int): String =
     if (mask != AllButBreak) {

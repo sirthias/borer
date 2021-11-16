@@ -18,13 +18,13 @@ object JsonSpecificsSpec extends TestSuite {
     "JSON specifics" - {
 
       "writeEmptyArray" - {
-        //#writeEmptyArray
+        // #writeEmptyArray
         import io.bullet.borer.Writer
 
         def writeEmptyArray(w: Writer): w.type =
           if (w.writingJson) w.writeArrayStart().writeBreak()
           else w.writeArrayHeader(0) // fixed-sized Arrays are not supported in JSON
-        //#writeEmptyArray
+        // #writeEmptyArray
 
         import io.bullet.borer._
 
@@ -38,14 +38,14 @@ object JsonSpecificsSpec extends TestSuite {
       }
 
       "writeArrayOpen-close" - {
-        //#writeArrayOpen-close
+        // #writeArrayOpen-close
         import io.bullet.borer.Writer
 
         def writeAsUnaryArray(w: Writer, s: String): w.type =
           w.writeArrayOpen(1) // automatically chooses the most efficient
             .writeString(s)
             .writeArrayClose() // way to write an array of size one
-        //#writeArrayOpen-close
+        // #writeArrayOpen-close
 
         import io.bullet.borer._
 
@@ -59,7 +59,7 @@ object JsonSpecificsSpec extends TestSuite {
       }
 
       "alternative base encoding" - {
-        //#alternative-base-encoding
+        // #alternative-base-encoding
         import io.bullet.borer.{Decoder, Encoder, Json}
         import io.bullet.borer.encodings.BaseEncoding
 
@@ -74,7 +74,7 @@ object JsonSpecificsSpec extends TestSuite {
         implicit val byteArrayDecoder = Decoder.forByteArray(BaseEncoding.zbase32)
 
         Json.encode(binaryData).toUtf8String ==> """"54s575a""""
-        //#alternative-base-encoding
+        // #alternative-base-encoding
       }
     }
   }
