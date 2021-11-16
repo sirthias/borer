@@ -14,7 +14,7 @@ import java.util
 import io.bullet.borer
 import io.bullet.borer.internal.Util
 
-import scala.annotation.{nowarn, tailrec}
+import scala.annotation.tailrec
 
 /**
  * Facilities for on-the-side logging of either encoding or decoding progress,
@@ -333,7 +333,6 @@ object Logging {
         } else -1             // unbounded something
       } else -1
 
-    @nowarn("cat=other-match-analysis")
     def elementType =
       if (_level >= 0) {
         val count = _levelCount(_level)
@@ -348,6 +347,7 @@ object Logging {
             case 1 => if ((count & 1) != 0) ElementType.MapKey else ElementType.MapValue
             case 2 => ElementType.UnboundedByteStringElement
             case 3 => ElementType.UnboundedTextStringElement
+            case _ => throw new IllegalStateException
           }
       } else ElementType.ArrayElement
 

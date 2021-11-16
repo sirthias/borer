@@ -10,9 +10,6 @@ package io.bullet.borer.internal
 
 import utest._
 
-import scala.annotation.nowarn
-
-@nowarn("cat=other-match-analysis")
 object ResizableRingBufferSpec extends TestSuite {
 
   def buffers = (0 to 7).map(bit => new ResizableRingBuffer[String](initialCapacity = 1, maxCapacity = 1 << bit))
@@ -58,7 +55,7 @@ object ResizableRingBufferSpec extends TestSuite {
               val next = ints.next().toString
               if (buf.append(next)) queue.enqueue(next)
             }
-          case 0 => // ignore
+          case _ => // ignore
         }
       }
     }

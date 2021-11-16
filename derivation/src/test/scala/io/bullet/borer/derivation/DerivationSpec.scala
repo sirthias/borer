@@ -11,7 +11,6 @@ package io.bullet.borer.derivation
 import io.bullet.borer._
 import utest._
 
-import scala.annotation.nowarn
 import scala.util.{Failure, Try}
 import scala.util.control.NonFatal
 
@@ -509,11 +508,11 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
       case ArrayElem.Unsized(x) => ArrayElem.Unsized(f(x))
     }
 
-  @nowarn("cat=other-match-analysis")
   def transform(elem: MapElem)(f: List[(Element, Element)] => List[(Element, Element)]): MapElem =
     elem match {
       case MapElem.Sized(_, keys, values)   => MapElem.Sized(f((keys zip values).toList): _*)
       case MapElem.Unsized(_, keys, values) => MapElem.Unsized(f((keys zip values).toList): _*)
+      case _ => throw new IllegalStateException
     }
 }
 

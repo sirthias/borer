@@ -18,6 +18,7 @@ import scala.util.control.NonFatal
 
 object Unsafe {
 
+  @nowarn
   final val UNSAFE: SMUnsafe = {
     try {
       SMUnsafe.getUnsafe
@@ -59,12 +60,13 @@ object Unsafe {
   final private val LONG_ARRAY_BASE_OFFSET =
     if (UNSAFE ne null) UNSAFE.arrayBaseOffset(classOf[Array[Long]]).toLong else 0L
 
-  @nowarn("cat=other-match-analysis")
+  //@nowarn("cat=other-match-analysis")
   def byteArrayAccess: ByteArrayAccess =
     if (UNSAFE ne null) {
       ByteOrder.nativeOrder() match {
         case ByteOrder.LITTLE_ENDIAN => new LittleEndianByteArrayAccess
         case ByteOrder.BIG_ENDIAN    => new BigEndianByteArrayAccess
+        case _ => throw new IllegalStateException
       }
     } else null
 
