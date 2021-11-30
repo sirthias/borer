@@ -64,7 +64,7 @@ abstract class Deriver[C <: blackbox.Context](val c: C) {
     def nodePath(suffix: List[AdtTypeNode] = Nil): List[AdtTypeNode] =
       if (isRoot) suffix else parent.get.nodePath(this :: suffix)
 
-    /////////////////// internal ////////////////////
+    // ///////////////// internal ////////////////////
 
     // write-once, before actually making it to the user
     private[this] var parent: Option[AdtTypeNode] = _

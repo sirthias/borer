@@ -17,7 +17,7 @@ object DomSpec extends TestSuite {
 
     "CBOR" - {
 
-      //#cbor
+      // #cbor
       import io.bullet.borer.Cbor
       import io.bullet.borer.Dom._
 
@@ -33,12 +33,12 @@ object DomSpec extends TestSuite {
       val decoded = Cbor.decode(encoded).to[Element].value
 
       decoded ==> dom
-      //#cbor
+      // #cbor
     }
 
     "JSON" - {
 
-      //#json
+      // #json
       import io.bullet.borer.Dom._
       import io.bullet.borer.Json
 
@@ -54,11 +54,11 @@ object DomSpec extends TestSuite {
       val decoded = Json.decode(encoded).to[Element].value
 
       decoded ==> dom
-      //#json
+      // #json
     }
 
     "JSON to CBOR" - {
-      //#json-to-cbor
+      // #json-to-cbor
       import io.bullet.borer.{Cbor, Json}
       import io.bullet.borer.Dom._
 
@@ -73,7 +73,7 @@ object DomSpec extends TestSuite {
 
       jsonToCbor("""{"foo":[42,"rocks"],"bar":26.8}""").get ==>
       hex"BF63666F6F9F182A65726F636B73FF63626172FB403ACCCCCCCCCCCDFF"
-      //#json-to-cbor
+      // #json-to-cbor
     }
   }
 }
