@@ -15,7 +15,7 @@ object StringNumbersSpec extends TestSuite {
   val tests = Tests {
 
     "Imports" - {
-      //#imports
+      // #imports
       import io.bullet.borer.{Decoder, Encoder}
 
       import Encoder.StringNumbers._  // enables number-as-strings encoding
@@ -25,7 +25,7 @@ object StringNumbersSpec extends TestSuite {
       import Decoder.StringNumbers._  // enables number-as-strings decoding
       import Decoder.StringBooleans._ // enables booleans-as-strings decoding
       import Decoder.StringNulls._    // enables null-as-strings decoding
-      //#imports
+      // #imports
 
       intEncoder.hashCode() ^
       intDecoder.hashCode() ^
@@ -36,7 +36,7 @@ object StringNumbersSpec extends TestSuite {
     }
 
     "Example" - {
-      //#example
+      // #example
       import io.bullet.borer.{Encoder, Json}
       import io.bullet.borer.derivation.MapBasedCodecs._
 
@@ -52,7 +52,7 @@ object StringNumbersSpec extends TestSuite {
       // note how the Int and Boolean are rendered as JSON strings
       Json.encode(dog).toUtf8String ==>
       """{"age":"2","male":"false","name":"Lolle"}"""
-      //#example
+      // #example
     }
   }
 }

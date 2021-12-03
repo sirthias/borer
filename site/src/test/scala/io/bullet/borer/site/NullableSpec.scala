@@ -15,7 +15,7 @@ object NullableSpec extends TestSuite {
   val tests = Tests {
 
     "Example" - {
-      //#example
+      // #example
       import io.bullet.borer.{Json, Nullable}
       import io.bullet.borer.derivation.MapBasedCodecs._
 
@@ -28,7 +28,7 @@ object NullableSpec extends TestSuite {
         .to[Dog]
         .value ==>
       Dog(age = 4, name = "") // the `Default[String]` provides an empty String
-      //#example
+      // #example
     }
   }
 }

@@ -15,16 +15,16 @@ object DerivationSpec extends TestSuite {
   case class Foo()
 
   {
-    //#import-array-based
+    // #import-array-based
     import io.bullet.borer.derivation.ArrayBasedCodecs._
-    //#import-array-based
+    // #import-array-based
     deriveEncoder[Foo]
   }
 
   {
-    //#import-map-based
+    // #import-map-based
     import io.bullet.borer.derivation.MapBasedCodecs._
-    //#import-map-based
+    // #import-map-based
     deriveEncoder[Foo]
   }
 
@@ -32,7 +32,7 @@ object DerivationSpec extends TestSuite {
 
     "Array-based" - {
 
-      //#array-based
+      // #array-based
       import io.bullet.borer.Json
       import io.bullet.borer.derivation.key
       import io.bullet.borer.derivation.ArrayBasedCodecs._
@@ -61,12 +61,12 @@ object DerivationSpec extends TestSuite {
       encodeAnimal(cat) ==> """["Cat",[8.5,"grey","sofa"]]"""
       encodeAnimal(dog) ==> """["TheDog",[2,"Rex"]]"""
       encodeAnimal(mouse) ==> """[42,true]"""
-      //#array-based
+      // #array-based
     }
 
     "Map-based" - {
 
-      //#map-based
+      // #map-based
       import io.bullet.borer.Json
       import io.bullet.borer.derivation.MapBasedCodecs._
 
@@ -82,20 +82,20 @@ object DerivationSpec extends TestSuite {
       // Json.encode(bar).toByteArray or
       Json.encode(bar).toUtf8String ==>
       """{"foo":{"int":42,"string":"yeah"},"d":1.234}"""
-      //#map-based
+      // #map-based
     }
 
     "Map-based details" - {
-      //#example-adt
+      // #example-adt
       sealed trait Animal
       case class Dog(age: Int, name: String)                      extends Animal
       case class Cat(weight: Double, color: String, home: String) extends Animal
       case class Fish(color: String)                              extends Animal
       case object Yeti                                            extends Animal
-      //#example-adt
+      // #example-adt
 
       {
-        //#adt-semi-automatic-codec-derivation
+        // #adt-semi-automatic-codec-derivation
         import io.bullet.borer.derivation.MapBasedCodecs._
 
         implicit val animalCodec = {
@@ -105,24 +105,24 @@ object DerivationSpec extends TestSuite {
           implicit val yetiCodec = deriveCodec[Yeti.type]
           deriveCodec[Animal]
         }
-        //#adt-semi-automatic-codec-derivation
+        // #adt-semi-automatic-codec-derivation
 
-        //#adt-default-encoding
+        // #adt-default-encoding
         import io.bullet.borer.Json
 
         val animal: Animal = Dog(2, "Rex")
 
         // Json.encode(animal).toByteArray or
         Json.encode(animal).toUtf8String ==> """{"Dog":{"age":2,"name":"Rex"}}"""
-        //#adt-default-encoding
+        // #adt-default-encoding
       }
 
       {
-        //#adt-fully-automatic-codec-derivation
+        // #adt-fully-automatic-codec-derivation
         import io.bullet.borer.derivation.MapBasedCodecs._
 
         implicit val animalCodec = deriveAllCodecs[Animal]
-        //#adt-fully-automatic-codec-derivation
+        // #adt-fully-automatic-codec-derivation
 
         import io.bullet.borer.Json
 
@@ -133,7 +133,7 @@ object DerivationSpec extends TestSuite {
       }
 
       {
-        //#flat-adt-encoding
+        // #flat-adt-encoding
         import io.bullet.borer.{AdtEncodingStrategy, Json}
         import io.bullet.borer.derivation.MapBasedCodecs._
 
@@ -147,11 +147,11 @@ object DerivationSpec extends TestSuite {
 
         // Json.encode(animal).toByteArray or
         Json.encode(animal).toUtf8String ==> """{"_type":"Dog","age":2,"name":"Rex"}"""
-        //#flat-adt-encoding
+        // #flat-adt-encoding
       }
 
       {
-        //#custom-override
+        // #custom-override
         import io.bullet.borer.{Codec, Json}
         import io.bullet.borer.derivation.MapBasedCodecs._
 
@@ -164,17 +164,17 @@ object DerivationSpec extends TestSuite {
         val animal: Animal = Fish("blue")
 
         Json.encode(animal).toUtf8String ==> """{"Fish":0}"""
-        //#custom-override
+        // #custom-override
       }
 
       {
-        //#adt-dog-cat-derivation
+        // #adt-dog-cat-derivation
         import io.bullet.borer.derivation.MapBasedCodecs._
 
         implicit val dogCodec    = deriveCodec[Dog]
         implicit val catCodec    = deriveCodec[Cat]
         implicit val animalCodec = deriveAllCodecs[Animal]
-        //#adt-dog-cat-derivation
+        // #adt-dog-cat-derivation
 
         // format: OFF
         //#animal-vs-dog
@@ -189,7 +189,7 @@ object DerivationSpec extends TestSuite {
     }
 
     "Default Value" - {
-      //#default-value
+      // #default-value
       import io.bullet.borer.Json
       import io.bullet.borer.derivation.MapBasedCodecs._
 
@@ -201,11 +201,11 @@ object DerivationSpec extends TestSuite {
         .decode("""{ "age": 4 }""" getBytes "UTF8")
         .to[Dog]
         .value ==> Dog(age = 4)
-      //#default-value
+      // #default-value
     }
 
     "Custom Member Name" - {
-      //#custom-member-name
+      // #custom-member-name
       import io.bullet.borer.Json
       import io.bullet.borer.derivation.key
       import io.bullet.borer.derivation.MapBasedCodecs._
@@ -216,11 +216,11 @@ object DerivationSpec extends TestSuite {
 
       Json.encode(Dog(1, "Lolle")).toUtf8String ==>
       """{"age":1,"the-name":"Lolle"}"""
-      //#custom-member-name
+      // #custom-member-name
     }
 
     "Recursive ADT" - {
-      //#recursive-adt
+      // #recursive-adt
       import io.bullet.borer.Codec
       import io.bullet.borer.derivation.MapBasedCodecs._
 
@@ -229,7 +229,7 @@ object DerivationSpec extends TestSuite {
       case class Node(left: TreeNode, right: TreeNode) extends TreeNode
 
       implicit lazy val codec: Codec[TreeNode] = deriveAllCodecs[TreeNode]
-      //#recursive-adt
+      // #recursive-adt
     }
   }
 }

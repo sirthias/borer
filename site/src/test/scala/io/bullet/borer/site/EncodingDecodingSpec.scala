@@ -20,7 +20,7 @@ object EncodingDecodingSpec extends TestSuite {
     "Encoding" - {
 
       "CBOR" - {
-        //#encoding-cbor
+        // #encoding-cbor
         import io.bullet.borer.Cbor
 
         val value = List("foo", "bar", "baz") // example value
@@ -29,11 +29,11 @@ object EncodingDecodingSpec extends TestSuite {
           Cbor.encode(value).toByteArray // throws on error
 
         bytes ==> hex"9f63666f6f636261726362617aff"
-        //#encoding-cbor
+        // #encoding-cbor
       }
 
       "JSON" - {
-        //#encoding-json
+        // #encoding-json
         import io.bullet.borer.Json
 
         val value = List("foo", "bar", "baz") // example value
@@ -48,7 +48,7 @@ object EncodingDecodingSpec extends TestSuite {
 
         json ==> """["foo","bar","baz"]"""
         bytes ==> json.getBytes("UTF8")
-        //#encoding-json
+        // #encoding-json
       }
     }
 
@@ -57,12 +57,12 @@ object EncodingDecodingSpec extends TestSuite {
       "CBOR" - {
         val bytes = hex"9f63666f6f636261726362617aff"
 
-        //#decoding-cbor
+        // #decoding-cbor
         import io.bullet.borer.Cbor
 
         val list: List[String] =
           Cbor.decode(bytes).to[List[String]].value // throws on error
-        //#decoding-cbor
+        // #decoding-cbor
 
         list ==> List("foo", "bar", "baz")
       }
@@ -70,12 +70,12 @@ object EncodingDecodingSpec extends TestSuite {
       "JSON" - {
         val bytes = """["foo","bar","baz"]""" getBytes "UTF8"
 
-        //#decoding-json
+        // #decoding-json
         import io.bullet.borer.Json
 
         val list: List[String] =
           Json.decode(bytes).to[List[String]].value // throws on error
-        //#decoding-json
+        // #decoding-json
 
         list ==> List("foo", "bar", "baz")
       }
@@ -87,7 +87,7 @@ object EncodingDecodingSpec extends TestSuite {
         val value = List("foo", "bar", "baz")
         val bytes = hex"9f63666f6f636261726362617aff"
 
-        //#try-cbor
+        // #try-cbor
         import io.bullet.borer.Cbor
 
         val encoded: Try[Array[Byte]] =
@@ -95,7 +95,7 @@ object EncodingDecodingSpec extends TestSuite {
 
         val decoded: Try[List[String]] =
           Cbor.decode(bytes).to[List[String]].valueTry
-        //#try-cbor
+        // #try-cbor
 
         encoded.get ==> bytes
         decoded.get ==> value
@@ -105,7 +105,7 @@ object EncodingDecodingSpec extends TestSuite {
         val value = List("foo", "bar", "baz")
         val bytes = """["foo","bar","baz"]""" getBytes "UTF8"
 
-        //#try-json
+        // #try-json
         import io.bullet.borer.Json
 
         val encoded: Try[Array[Byte]] =
@@ -113,7 +113,7 @@ object EncodingDecodingSpec extends TestSuite {
 
         val decoded: Try[List[String]] =
           Json.decode(bytes).to[List[String]].valueTry
-        //#try-json
+        // #try-json
 
         encoded.get ==> bytes
         decoded.get ==> value
@@ -126,7 +126,7 @@ object EncodingDecodingSpec extends TestSuite {
         val value = List("foo", "bar", "baz")
         val bytes = hex"9f63666f6f636261726362617aff"
 
-        //#either-cbor
+        // #either-cbor
         import io.bullet.borer._
 
         val encoded: Either[Borer.Error[Output], Array[Byte]] =
@@ -134,7 +134,7 @@ object EncodingDecodingSpec extends TestSuite {
 
         val decoded: Either[Borer.Error[Input.Position], List[String]] =
           Cbor.decode(bytes).to[List[String]].valueEither
-        //#either-cbor
+        // #either-cbor
 
         encoded.getOrElse(sys.error("fail")) ==> bytes
         decoded.getOrElse(sys.error("fail")) ==> value
@@ -144,7 +144,7 @@ object EncodingDecodingSpec extends TestSuite {
         val value = List("foo", "bar", "baz")
         val bytes = """["foo","bar","baz"]""" getBytes "UTF8"
 
-        //#either-json
+        // #either-json
         import io.bullet.borer._
 
         val encoded: Either[Borer.Error[Output], Array[Byte]] =
@@ -152,7 +152,7 @@ object EncodingDecodingSpec extends TestSuite {
 
         val decoded: Either[Borer.Error[Input.Position], List[String]] =
           Json.decode(bytes).to[List[String]].valueEither
-        //#either-json
+        // #either-json
 
         encoded.getOrElse(sys.error("fail")) ==> bytes
         decoded.getOrElse(sys.error("fail")) ==> value

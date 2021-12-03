@@ -15,7 +15,7 @@ object TranscodingSpec extends TestSuite {
   val tests = Tests {
 
     "example" - {
-      //#example
+      // #example
       import io.bullet.borer.Cbor
       import io.bullet.borer.Dom
       import io.bullet.borer.derivation.MapBasedCodecs._
@@ -71,7 +71,7 @@ object TranscodingSpec extends TestSuite {
           )
         )
       )
-      //#example
+      // #example
     }
   }
 }
