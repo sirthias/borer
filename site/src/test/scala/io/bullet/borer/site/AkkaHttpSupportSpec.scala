@@ -16,7 +16,7 @@ object AkkaHttpSupportSpec extends TestSuite {
 
     "example" - {
 
-      //#example
+      // #example
       import akka.http.scaladsl.server.Route
       import akka.http.scaladsl.server.Directives._
 
@@ -44,7 +44,7 @@ object AkkaHttpSupportSpec extends TestSuite {
             }
           }
         }
-      //#example
+      // #example
     }
   }
 }
