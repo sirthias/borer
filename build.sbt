@@ -1,7 +1,7 @@
 import sbt._
 
 def scala3   = "3.1.0"
-def scala213 = "2.13.7"
+def scala213 = "2.13.8"
 def scala212 = "2.12.15"
 
 lazy val allScalaVersions = Seq(scala212, scala213, scala3)
@@ -307,11 +307,11 @@ lazy val benchmarks = project
     scalaVersion   := scala213,
     publish / skip := true,
     libraryDependencies ++= Seq(
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"        % "2.12.0",
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros"      % "2.12.0" % Provided,
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"        % "2.12.1",
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros"      % "2.12.1" % Provided,
       "com.fasterxml.jackson.module"          %% "jackson-module-scala"       % "2.13.1",
       "com.fasterxml.jackson.module"           % "jackson-module-afterburner" % "2.13.1",
-      "com.lihaoyi"                           %% "upickle"                    % "1.4.3",
+      "com.lihaoyi"                           %% "upickle"                    % "1.4.4",
       "io.spray"                              %% "spray-json"                 % "1.3.6",
       `circe-core`.value,
       `circe-parser`.value,
