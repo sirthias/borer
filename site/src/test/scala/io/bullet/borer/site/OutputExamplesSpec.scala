@@ -19,7 +19,7 @@ object OutputExamplesSpec extends TestSuite {
 
       val filename = java.io.File.createTempFile("borer-OutputExamplesSpec", ".bin").getAbsolutePath
 
-      //#examples
+      // #examples
       import io.bullet.borer.Cbor
 
       val value = List("foo", "bar", "baz") // example value
@@ -35,7 +35,7 @@ object OutputExamplesSpec extends TestSuite {
       // relies on the `Output.ToValueProvider[File]` type class instance
       val file = new java.io.File(filename)
       Cbor.encode(value).to(file).result ==> file
-      //#examples
+      // #examples
 
       file.delete()
     }

@@ -192,7 +192,7 @@ object Encoder extends LowPrioEncoders {
       w.writeBreak()
     }
 
-  //#option-encoder
+  // #option-encoder
   implicit def forOption[T: Encoder]: Encoder.DefaultValueAware[Option[T]] =
     new Encoder.DefaultValueAware[Option[T]] {
 
@@ -215,7 +215,7 @@ object Encoder extends LowPrioEncoders {
         } else this
     }
 
-  //#option-encoder
+  // #option-encoder
 
   implicit def forIndexedSeq[T: Encoder, M[X] <: IndexedSeq[X]]: DefaultValueAware[M[T]] =
     new DefaultValueAware[M[T]] {

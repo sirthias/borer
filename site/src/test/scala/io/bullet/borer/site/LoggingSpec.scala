@@ -16,7 +16,7 @@ object LoggingSpec extends TestSuite {
 
     "Logging" - {
       def `only compiled, not actually run`() = {
-        //#example
+        // #example
         import io.bullet.borer.Cbor
         import io.bullet.borer.Codec.ForEither.default
 
@@ -31,7 +31,7 @@ object LoggingSpec extends TestSuite {
             .withPrintLogging() // just insert this line to enable logging
             .to[Map[String, Either[Int, Vector[String]]]]
             .value
-        //#example
+        // #example
       }
     }
   }
