@@ -16,7 +16,7 @@ object CustomCodecsSpec extends TestSuite {
 
     "From Unapply/Apply" - {
 
-      //#from-unapply-apply
+      // #from-unapply-apply
       import io.bullet.borer.{Codec, Decoder, Encoder}
 
       case class Color(name: String, value: Int)
@@ -29,7 +29,7 @@ object CustomCodecsSpec extends TestSuite {
         Encoder.from(Color.unapply _),
         Decoder.from(Color.apply _)
       )
-      //#from-unapply-apply
+      // #from-unapply-apply
 
       import io.bullet.borer.Json
       val color = Color("red", 0xFF0000)
@@ -40,7 +40,7 @@ object CustomCodecsSpec extends TestSuite {
 
     "Map/Contramap" - {
 
-      //#map-contramap
+      // #map-contramap
       import io.bullet.borer.{Decoder, Encoder}
 
       class Person(val name: String)
@@ -48,7 +48,7 @@ object CustomCodecsSpec extends TestSuite {
       // have `Person` be encoded as a simple CBOR/JSON text data item
       implicit val personEncoder = Encoder.forString.contramap[Person](_.name)
       implicit val personDecoder = Decoder.forString.map(new Person(_))
-      //#map-contramap
+      // #map-contramap
 
       import io.bullet.borer.Json
       val person = new Person("Fred")
@@ -59,7 +59,7 @@ object CustomCodecsSpec extends TestSuite {
 
     "Manual" - {
 
-      //#manual
+      // #manual
       import io.bullet.borer.{Decoder, Encoder}
 
       class Person(val name: String, val age: Int)
@@ -80,7 +80,7 @@ object CustomCodecsSpec extends TestSuite {
         )
         reader.readArrayClose(unbounded, person)
       }
-      //#manual
+      // #manual
 
       import io.bullet.borer.Json
       val person = new Person("Fred", 49)
@@ -92,7 +92,7 @@ object CustomCodecsSpec extends TestSuite {
     }
 
     "Lookahead" - {
-      //#lookahead
+      // #lookahead
       import io.bullet.borer.Decoder
 
       implicit val eitherStringIntDecoder: Decoder[Either[String, Int]] =
@@ -101,7 +101,7 @@ object CustomCodecsSpec extends TestSuite {
           else if (reader.hasInt) Right(reader.readInt())
           else reader.unexpectedDataItem(expected = "`String` or `Int`")
         }
-      //#lookahead
+      // #lookahead
 
       import io.bullet.borer.Json
       Json.decode("\"yeah\"" getBytes "UTF8").to[Either[String, Int]].value ==> Left("yeah")

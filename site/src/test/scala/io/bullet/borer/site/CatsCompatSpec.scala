@@ -16,7 +16,7 @@ object CatsCompatSpec extends TestSuite {
   val tests = Tests {
 
     "Example" - {
-      //#example
+      // #example
       import cats.data.Ior
       import io.bullet.borer.{Decoder, Encoder, Json}
 
@@ -43,7 +43,7 @@ object CatsCompatSpec extends TestSuite {
         Json.encode(value).toUtf8String ==>
         """[{"Left":{"a":1}},{"Right":{"b":"foo"}},{"Both":{"a":42,"b":"bar"}}]"""
       }
-      //#example
+      // #example
     }
   }
 }

@@ -122,7 +122,7 @@ object Input
     def position(cursor: Long): Input.Position = Input.Position(underlying, cursor)
   }
 
-  //#provider
+  // #provider
   /**
    * Responsible for converting an instance of [[T]]
    * to a respective [[Input]] instance.
@@ -132,7 +132,7 @@ object Input
     def byteAccess: ByteAccess[Bytes]
     def apply(value: T): Input[Bytes]
   }
-  //#provider
+  // #provider
 
   /**
    * The trivial provider for an already existing [[Input]].
