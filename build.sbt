@@ -1,6 +1,6 @@
 import sbt._
 
-def scala3   = "3.1.0"
+def scala3   = "3.1.1"
 def scala213 = "2.13.8"
 def scala212 = "2.12.15"
 
