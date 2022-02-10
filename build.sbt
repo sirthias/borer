@@ -1,6 +1,6 @@
 import sbt._
 
-def scala3   = "3.1.0"
+def scala3   = "3.1.1"
 def scala213 = "2.13.8"
 def scala212 = "2.12.15"
 
@@ -136,7 +136,7 @@ val `circe-core`        = Def.setting("io.circe"                %%% "circe-core"
 val `circe-parser`      = Def.setting("io.circe"                %%% "circe-parser"            % "0.14.1")
 val `circe-derivation`  = Def.setting("io.circe"                %%% "circe-derivation"        % "0.13.0-M5")
 val `scodec-bits`       = Def.setting("org.scodec"              %%% "scodec-bits"             % "1.1.30")
-val utest               = Def.setting("com.lihaoyi"             %%% "utest"                   % "0.7.10" % "test")
+val utest               = Def.setting("com.lihaoyi"             %%% "utest"                   % "0.7.11" % "test")
 val `scala-compiler`    = Def.setting("org.scala-lang"          %   "scala-compiler" % scalaVersion.value % "provided")
 val `scala-reflect`     = Def.setting("org.scala-lang"          %   "scala-reflect" % scalaVersion.value % "provided")
 // format: ON
@@ -307,11 +307,11 @@ lazy val benchmarks = project
     scalaVersion   := scala213,
     publish / skip := true,
     libraryDependencies ++= Seq(
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"        % "2.12.1",
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros"      % "2.12.1" % Provided,
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"        % "2.12.4",
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros"      % "2.12.4" % Provided,
       "com.fasterxml.jackson.module"          %% "jackson-module-scala"       % "2.13.1",
       "com.fasterxml.jackson.module"           % "jackson-module-afterburner" % "2.13.1",
-      "com.lihaoyi"                           %% "upickle"                    % "1.4.4",
+      "com.lihaoyi"                           %% "upickle"                    % "1.5.0",
       "io.spray"                              %% "spray-json"                 % "1.3.6",
       `circe-core`.value,
       `circe-parser`.value,
