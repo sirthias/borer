@@ -8,7 +8,6 @@
 
 package io.bullet.borer
 
-import io.bullet.borer.internal.unapplyOption
 import utest._
 
 object TranscodingSpec extends TestSuite {
@@ -18,10 +17,10 @@ object TranscodingSpec extends TestSuite {
 
   // derivation makes this easy but we don't want to depend on it here
   implicit val fooCodec: Codec[Foo] =
-    Codec(Encoder.from(unapplyOption(Foo.unapply(_))), Decoder.from(Foo.apply(_, _, _)))
+    Codec(Encoder.from(Foo.unapply(_)), Decoder.from(Foo.apply(_, _, _)))
 
   implicit val barCodec: Codec[Bar] =
-    Codec(Encoder.from(unapplyOption(Bar.unapply(_))), Decoder.from(Bar.apply(_, _, _)))
+    Codec(Encoder.from(Bar.unapply(_)), Decoder.from(Bar.apply(_, _, _)))
 
   val tests = Tests {
     import Dom._

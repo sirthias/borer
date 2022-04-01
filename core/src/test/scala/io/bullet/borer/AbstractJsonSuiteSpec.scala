@@ -9,7 +9,6 @@
 package io.bullet.borer
 
 import io.bullet.borer.internal.Util._
-import io.bullet.borer.internal.unapplyOption
 import utest._
 
 import java.math.BigInteger
@@ -291,9 +290,9 @@ abstract class AbstractJsonSuiteSpec extends AbstractBorerSpec {
       case class Bar(foo: Foo, optFoo: Option[Foo], stringSeq: Seq[String])
 
       implicit lazy val fooCodec: Codec[Foo] =
-        Codec(Encoder.from(unapplyOption(Foo.unapply(_))), Decoder.from(Foo.apply(_, _, _)))
+        Codec(Encoder.from(Foo.unapply(_)), Decoder.from(Foo.apply(_, _, _)))
       implicit lazy val barCodec: Codec[Bar] =
-        Codec(Encoder.from(unapplyOption(Bar.unapply(_))), Decoder.from(Bar.apply(_, _, _)))
+        Codec(Encoder.from(Bar.unapply(_)), Decoder.from(Bar.apply(_, _, _)))
 
       roundTrip(
         """[[[42,"foo",[]],[[43,"",[1.0]]],[]],[[-44,"árvíztűrő ütvefúrógép",[26.18]],[],["a","bravo","zulu"]],""" +
@@ -315,7 +314,7 @@ abstract class AbstractJsonSuiteSpec extends AbstractBorerSpec {
 
     "Single-Member Case Class" - {
       case class Qux(i: Int)
-      implicit val quxCodec: Codec[Qux] = Codec(Encoder.from(unapplyOption(Qux.unapply(_))), Decoder.from(Qux.apply(_)))
+      implicit val quxCodec: Codec[Qux] = Codec(Encoder.from(Qux.unapply(_)), Decoder.from(Qux.apply(_)))
 
       roundTrip("42", Qux(42))
     }

@@ -8,7 +8,7 @@
 
 package io.bullet.borer
 
-import io.bullet.borer.internal.{Util, XIterableOnce}
+import io.bullet.borer.internal.Util
 
 import scala.annotation.tailrec
 import scala.collection.LinearSeq
@@ -128,7 +128,7 @@ final class Writer(
     } else writeEmptyArray()
   }
 
-  def writeIterableOnce[T: Encoder](iterableOnce: XIterableOnce[T]): this.type = {
+  def writeIterableOnce[T: Encoder](iterableOnce: IterableOnce[T]): this.type = {
     val size = iterableOnce.knownSize
     if (size > 0) {
       writeArrayOpen(size)

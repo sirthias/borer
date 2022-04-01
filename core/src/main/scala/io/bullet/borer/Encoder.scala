@@ -19,7 +19,7 @@ import java.lang.{
 import java.math.{BigDecimal => JBigDecimal, BigInteger => JBigInteger}
 
 import io.bullet.borer.encodings.BaseEncoding
-import io.bullet.borer.internal.{ElementDeque, Util, XIterableOnce, XIterableOnceBound}
+import io.bullet.borer.internal.{ElementDeque, Util}
 
 import scala.annotation.tailrec
 import scala.collection.LinearSeq
@@ -425,7 +425,7 @@ object Encoder extends LowPrioEncoders {
 
 sealed abstract class LowPrioEncoders extends TupleEncoders {
 
-  implicit final def forIterableOnce[T: Encoder, M[X] <: XIterableOnceBound[X]]: Encoder[M[T]] =
+  implicit final def forIterableOnce[T: Encoder, M[X] <: IterableOnce[X]]: Encoder[M[T]] =
     new Encoder.DefaultValueAware[M[T]] { self =>
       def write(w: Writer, value: M[T]) =
         value match {
@@ -443,7 +443,7 @@ sealed abstract class LowPrioEncoders extends TupleEncoders {
         } else this
 
       private def isEmpty(value: M[T]): Boolean = {
-        val ks = (value: XIterableOnce[T]).knownSize
+        val ks = (value: IterableOnce[T]).knownSize
         ks == 0 || (ks < 0) && value.iterator.isEmpty
       }
     }

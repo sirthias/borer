@@ -8,7 +8,6 @@
 
 package io.bullet.borer
 
-import io.bullet.borer.internal.unapplyOption
 import utest._
 
 object NullableSpec extends ByteArrayJsonSpec {
@@ -18,10 +17,10 @@ object NullableSpec extends ByteArrayJsonSpec {
 
   // derivation makes this easy but we don't want to depend on it here
   implicit val fooCodec: Codec[Foo] =
-    Codec(Encoder.from(unapplyOption(Foo.unapply(_))), Decoder.from(Foo.apply(_, _)))
+    Codec(Encoder.from(Foo.unapply(_)), Decoder.from(Foo.apply(_, _)))
 
   implicit val barCodec: Codec[Bar] =
-    Codec(Encoder.from(unapplyOption(Bar.unapply(_))), Decoder.from(Bar.apply(_)))
+    Codec(Encoder.from(Bar.unapply(_)), Decoder.from(Bar.apply(_)))
 
   val tests = Tests {
 
