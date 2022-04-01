@@ -11,9 +11,7 @@ package io.bullet.borer
 import io.bullet.borer.encodings.BaseEncoding
 
 import scala.annotation.{implicitNotFound, switch, tailrec}
-import scala.collection.{immutable, mutable}
-import scala.collection.compat.immutable.ArraySeq
-import scala.collection.compat._
+import scala.collection.{immutable, mutable, Factory}
 import scala.collection.immutable.HashMap
 import scala.util.hashing.MurmurHash3
 import java.lang.{StringBuilder => JStringBuilder}
@@ -187,7 +185,7 @@ object Dom {
     if ((elems.length & 1) != 0) throw new IllegalArgumentException
 
     @inline final def size: Int                                        = elems.length >> 1
-    @inline final def elementsInterleaved: IndexedSeq[Element]         = ArraySeq.unsafeWrapArray(elems)
+    @inline final def elementsInterleaved: IndexedSeq[Element]         = immutable.ArraySeq.unsafeWrapArray(elems)
     @inline final def isEmpty                                          = false
     @inline final def get: (Int, Iterator[Element], Iterator[Element]) = (size, keys, values)
     @inline final def keys: Iterator[Element]                          = new MapElem.KVIterator(elems, 0)

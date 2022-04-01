@@ -111,7 +111,6 @@ lazy val releaseSettings = {
 val `akka-actor`        = Def.setting("com.typesafe.akka"       %%  "akka-actor-typed"        % "2.6.19")
 val `akka-stream`       = Def.setting("com.typesafe.akka"       %%  "akka-stream"             % "2.6.19")
 val `akka-http`         = Def.setting("com.typesafe.akka"       %%  "akka-http"               % "10.2.9")
-val `collection-compat` = Def.setting("org.scala-lang.modules"  %%% "scala-collection-compat" % "2.7.0")
 val `cats-core`         = Def.setting("org.typelevel"           %%% "cats-core"               % "2.7.0")
 val `circe-core`        = Def.setting("io.circe"                %%% "circe-core"              % "0.14.1")
 val `circe-parser`      = Def.setting("io.circe"                %%% "circe-parser"            % "0.14.1")
@@ -154,7 +153,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .settings(
     scalaVersion := scala213,
     moduleName := "borer-core",
-    libraryDependencies ++= Seq(`collection-compat`.value, utest.value),
+    libraryDependencies ++= Seq(utest.value),
 
     // point sbt-boilerplate to the common "project"
     Compile / boilerplateSource := baseDirectory.value.getParentFile / "src" / "main" / "boilerplate",
@@ -215,11 +214,7 @@ lazy val `compat-cats` = crossProject(JSPlatform, JVMPlatform)
   .settings(
     scalaVersion := scala213,
     moduleName := "borer-compat-cats",
-    libraryDependencies ++= Seq(
-      `collection-compat`.value,
-      `cats-core`.value,
-      utest.value
-    )
+    libraryDependencies ++= Seq(`cats-core`.value, utest.value)
   )
   .jsSettings(scalajsSettings: _*)
 
@@ -239,7 +234,6 @@ lazy val `compat-circe` = crossProject(JSPlatform, JVMPlatform)
     scalaVersion := scala213,
     moduleName := "borer-compat-circe",
     libraryDependencies ++= Seq(
-      `collection-compat`.value,
       `circe-core`.value,
       `circe-parser`.value % "test",
       `circe-derivation`.value % "test",
