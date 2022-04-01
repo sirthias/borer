@@ -17,8 +17,8 @@ object SpecializeJsonParserPlugin extends AutoPlugin {
     Seq(
       specializeJsonParser := generateSpecializedJsonParser(
         streams = streams.value,
-        sourceDir = sourceDirectory.value,
-        targetDir = target.value.getParentFile / "scala" / "src_managed"),
+        sourceDir = (specializeJsonParser / sourceDirectory).value,
+        targetDir = (specializeJsonParser / sourceManaged).value.getParentFile / "scala" / "src_managed"),
       sourceGenerators += specializeJsonParser
     )
   }
