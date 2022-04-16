@@ -117,7 +117,7 @@ final class Base32(name: String, alphabet: String) extends LookupBaseEncoding(na
         val c = chars(ix)
         def fail() =
           throw new IllegalArgumentException(s""""${Util
-            .show(chars)}" is not a valid $name encoding. '$c' at index $ix is not part of the $name alphabet.""")
+              .show(chars)}" is not a valid $name encoding. '$c' at index $ix is not part of the $name alphabet.""")
         if (c > 127) fail()
         val b = lookup(c.toInt)
         if (b < 0) fail()
