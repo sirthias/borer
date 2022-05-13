@@ -15,16 +15,15 @@ import io.bullet.borer.{ByteAccess, Input}
 
 trait FromInputStreamInput { this: FromByteArrayInput with FromIteratorInput =>
 
-  private object FromInputStreamProvider extends Input.Provider[InputStream] {
+  private object FromInputStreamProvider extends Input.Provider[InputStream]:
     type Bytes = Array[Byte]
     def byteAccess                = ByteAccess.ForByteArray
     def apply(value: InputStream) = fromInputStream(value)
-  }
 
   implicit def FromInputStreamProvider[T <: InputStream]: Input.Provider[T] =
     FromInputStreamProvider.asInstanceOf[Input.Provider[T]]
 
-  def fromInputStream(inputStream: InputStream, bufferSize: Int = 16384): Input[Array[Byte]] = {
+  def fromInputStream(inputStream: InputStream, bufferSize: Int = 16384): Input[Array[Byte]] =
     if (bufferSize < 256) throw new IllegalArgumentException(s"bufferSize must be >= 256 but was $bufferSize")
     val iterator: Iterator[Input[Array[Byte]]] =
       new Iterator[Input[Array[Byte]]] {
@@ -33,29 +32,25 @@ trait FromInputStreamInput { this: FromByteArrayInput with FromIteratorInput =>
         private[this] var bufSelect: Boolean            = _
         private[this] var nextInput: Input[Array[Byte]] = _
 
-        def hasNext = {
-          def tryReadNext() = {
+        def hasNext =
+          def tryReadNext() =
             val buf = if (bufSelect) bufA else bufB
-            nextInput = inputStream.read(buf) match {
+            nextInput = inputStream.read(buf) match
               case -1 => null
               case `bufferSize` =>
                 bufSelect = !bufSelect
                 fromByteArray(buf)
               case byteCount => fromByteArray(util.Arrays.copyOfRange(buf, 0, byteCount))
-            }
             nextInput ne null
-          }
           (nextInput ne null) || tryReadNext()
-        }
 
         def next() =
-          if (hasNext) {
+          if (hasNext)
             val result = nextInput
             nextInput = null
             result
-          } else throw new NoSuchElementException
+          else throw new NoSuchElementException
       }
     fromIterator(iterator)
-  }
 
 }

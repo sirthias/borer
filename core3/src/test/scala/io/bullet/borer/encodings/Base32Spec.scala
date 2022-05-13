@@ -12,7 +12,7 @@ import io.bullet.borer.internal.Util._
 import io.bullet.borer.TestUtils
 import utest._
 
-object Base32Spec extends TestSuite with TestUtils {
+object Base32Spec extends TestSuite with TestUtils:
 
   val tests = Tests {
 
@@ -45,8 +45,6 @@ object Base32Spec extends TestSuite with TestUtils {
   def roundtrip(string: String, expectedEncoding: String): Unit =
     roundtrip(string getBytes "UTF8", expectedEncoding)
 
-  def roundtrip(bytes: Array[Byte], expectedEncoding: String): Unit = {
+  def roundtrip(bytes: Array[Byte], expectedEncoding: String): Unit =
     new String(BaseEncoding.base32.encode(bytes)) ==> expectedEncoding
     BaseEncoding.base32.decode(expectedEncoding.toCharArray) ==> bytes
-  }
-}

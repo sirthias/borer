@@ -10,7 +10,7 @@ package io.bullet.borer
 
 import utest._
 
-object TranscodingSpec extends TestSuite {
+object TranscodingSpec extends TestSuite:
 
   case class Foo(int: Int, string: String, doubleOpt: Option[java.lang.Double])
   case class Bar(foo: Foo, optFoo: Option[Foo], stringSeq: Seq[String])
@@ -40,4 +40,3 @@ object TranscodingSpec extends TestSuite {
       ).getMessage.takeWhile(_ != '(') ==> "Expected String or Text Bytes but got Int "
     }
   }
-}

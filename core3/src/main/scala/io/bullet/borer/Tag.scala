@@ -15,12 +15,11 @@ import io.bullet.borer.internal.Util
  *
  * @param code the tag's code
  */
-sealed abstract class Tag(final val code: Long) {
+sealed abstract class Tag(final val code: Long):
 
   def @@[T](obj: T): TaggedValue[T] = TaggedValue(this, obj)
-}
 
-object Tag {
+object Tag:
 
   /**
    * The element following this tag is a date/time string that follows the standard format
@@ -169,19 +168,16 @@ object Tag {
    * A tag value whose semantics are unknown
    * to this encoder/decoder.
    */
-  final case class Other(value: Long) extends Tag(value) {
+  final case class Other(value: Long) extends Tag(value):
     Util.requireNonNegative(value, "value")
-  }
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   implicit val codec: Codec[Tag] = Codec[Tag](_ writeTag _, _.readTag())
-}
 
 final case class TaggedValue[T](tag: Tag, value: T)
 
-object TaggedValue {
+object TaggedValue:
 
   implicit def encoder[T: Encoder]: Encoder[TaggedValue[T]] = Encoder((w, x) => w ~ x.tag ~ x.value)
   implicit def decoder[T: Decoder]: Decoder[TaggedValue[T]] = Decoder(r => TaggedValue(r.readTag(), r[T]))
-}

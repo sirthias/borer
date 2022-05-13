@@ -12,7 +12,7 @@ import utest._
 
 import scala.collection.mutable.ListBuffer
 
-object Utf8Spec extends TestSuite with TestUtils {
+object Utf8Spec extends TestSuite with TestUtils:
 
   val tests = Tests {
 
@@ -51,7 +51,7 @@ object Utf8Spec extends TestSuite with TestUtils {
     }
 
     "stress" - {
-      for (len <- 1 to stressTextA.length) {
+      for (len <- 1 to stressTextA.length)
         encode(stressString(1, 0, len))
         encode(stressString(0, 1, len))
         encode(stressString(1, 1, len))
@@ -73,7 +73,6 @@ object Utf8Spec extends TestSuite with TestUtils {
         decode(stressString(2, 2, len))
         decode(stressString(1, 4, len))
         decode(stressString(4, 1, len))
-      }
     }
   }
 
@@ -85,7 +84,7 @@ object Utf8Spec extends TestSuite with TestUtils {
       "\uD835\uDD63 ÛΤ\uD835\uDDD98-⋿ꞑ\uD835\uDD20ǫժı\uD835\uDCF7\uD835\uDC20/\uD835\uDD6Féᴄō\uD835\uDD55\uD835" +
       "\uDC56п\uD835\uDE90 ȴỏġ\uD835\uDECA\uD801\uDC3D!!!"
 
-  def stressString(a: Int, b: Int, len: Int) = {
+  def stressString(a: Int, b: Int, len: Int) =
     val buf = new ListBuffer[Char]
     val bigChars =
       stressTextB
@@ -109,18 +108,14 @@ object Utf8Spec extends TestSuite with TestUtils {
         (x - 1) -> y
     }
     buf.mkString
-  }
 
-  def encode(string: String): Unit = {
+  def encode(string: String): Unit =
     val result   = Utf8.encode(string.toCharArray)
     val expected = string getBytes "UTF8"
     result ==> expected
-  }
 
-  def decode(string: String): Unit = {
+  def decode(string: String): Unit =
     val bytes    = string getBytes "UTF8"
     val result   = Utf8.decode(bytes)
     val expected = string.toCharArray
     result ==> expected
-  }
-}

@@ -19,7 +19,7 @@ import scala.annotation.switch
  * Encapsulates the basic CBOR decoding logic.
  */
 final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes], config: CborParser.Config)
-    extends Parser[Bytes] {
+    extends Parser[Bytes]:
 
   private[this] var _valueIndex: Long = _
 
@@ -30,75 +30,69 @@ final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes]
    * The given [[Receiver]] receives exactly one call to one of its methods.
    * The returned `Int` is the [[DataItem]] code for the value the [[Receiver]] received.
    */
-  def pull(receiver: Receiver): Int = {
+  def pull(receiver: Receiver): Int =
 
-    @inline def decodePositiveInteger(uLong: Long): Int = {
-      if (Util.isUnsignedInt(uLong)) {
+    @inline def decodePositiveInteger(uLong: Long): Int =
+      if (Util.isUnsignedInt(uLong))
         receiver.onInt(uLong.toInt)
         DataItem.Int
-      } else if (Util.isUnsignedLong(uLong)) {
+      else if (Util.isUnsignedLong(uLong))
         receiver.onLong(uLong)
         DataItem.Long
-      } else {
+      else
         receiver.onOverLong(negative = false, uLong)
         DataItem.OverLong
-      }
-    }
 
-    @inline def decodeNegativeInteger(uLong: Long): Int = {
-      if (Util.isUnsignedInt(uLong)) {
+    @inline def decodeNegativeInteger(uLong: Long): Int =
+      if (Util.isUnsignedInt(uLong))
         receiver.onInt((~uLong).toInt)
         DataItem.Int
-      } else if (Util.isUnsignedLong(uLong)) {
+      else if (Util.isUnsignedLong(uLong))
         receiver.onLong(~uLong)
         DataItem.Long
-      } else {
+      else
         receiver.onOverLong(negative = true, uLong)
         DataItem.OverLong
-      }
-    }
 
     @inline def decodeByteString(uLong: Long, indefiniteLength: Boolean): Int =
-      if (indefiniteLength) {
+      if (indefiniteLength)
         receiver.onBytesStart()
         DataItem.BytesStart
-      } else if (Util.isUnsignedLong(uLong)) {
+      else if (Util.isUnsignedLong(uLong))
         receiver.onBytes(input.readBytes(uLong, this))
         DataItem.Bytes
-      } else failOverflow("This decoder does not support byte strings with size >= 2^63")
+      else failOverflow("This decoder does not support byte strings with size >= 2^63")
 
     @inline def decodeTextString(uLong: Long, indefiniteLength: Boolean): Int =
-      if (indefiniteLength) {
+      if (indefiniteLength)
         receiver.onTextStart()
         DataItem.TextStart
-      } else if (Util.isUnsignedLong(uLong)) {
+      else if (Util.isUnsignedLong(uLong))
         receiver.onText(input.readBytes(uLong, this))
         DataItem.Text
-      } else failOverflow("This decoder does not support text strings with size >= 2^63")
+      else failOverflow("This decoder does not support text strings with size >= 2^63")
 
-    @inline def decodeArray(uLong: Long, indefiniteLength: Boolean): Int = {
-      if (indefiniteLength) {
+    @inline def decodeArray(uLong: Long, indefiniteLength: Boolean): Int =
+      if (indefiniteLength)
         receiver.onArrayStart()
         DataItem.ArrayStart
-      } else if (Util.isUnsignedLong(uLong)) {
+      else if (Util.isUnsignedLong(uLong))
         receiver.onArrayHeader(uLong)
         DataItem.ArrayHeader
-      } else failOverflow("This decoder does not support arrays with size >= 2^63")
-    }
+      else failOverflow("This decoder does not support arrays with size >= 2^63")
 
-    @inline def decodeMap(uLong: Long, indefiniteLength: Boolean): Int = {
-      if (indefiniteLength) {
+    @inline def decodeMap(uLong: Long, indefiniteLength: Boolean): Int =
+      if (indefiniteLength)
         receiver.onMapStart()
         DataItem.MapStart
-      } else if (Util.isUnsignedLong(uLong)) {
+      else if (Util.isUnsignedLong(uLong))
         receiver.onMapHeader(uLong)
         DataItem.MapHeader
-      } else failOverflow("This decoder does not support maps with size >= 2^63")
-    }
+      else failOverflow("This decoder does not support maps with size >= 2^63")
 
-    def decodeTag(uLong: Long): Int = {
+    def decodeTag(uLong: Long): Int =
       val tag =
-        uLong match {
+        uLong match
           case 0     => Tag.DateTimeString
           case 1     => Tag.EpochDateTime
           case 2     => Tag.PositiveBigNum
@@ -116,13 +110,11 @@ final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes]
           case 36    => Tag.TextMime
           case 55799 => Tag.MagicHeader
           case x     => Tag.Other(x)
-        }
       receiver.onTag(tag)
       DataItem.Tag
-    }
 
     @inline def decodeExtra(info: Int, uLong: Long): Int =
-      (info: @switch) match {
+      (info: @switch) match
         case 20 | 21 =>
           receiver.onBoolean(info == 21)
           DataItem.Boolean
@@ -133,10 +125,9 @@ final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes]
           receiver.onUndefined()
           DataItem.Undefined
         case 24 =>
-          uLong.toInt match {
+          uLong.toInt match
             case x if SimpleValue.isLegal(x) => receiver.onSimpleValue(x)
             case x => failInvalidInput(s"Simple value must be in the range ${SimpleValue.legalRange}, but was $x")
-          }
           DataItem.SimpleValue
         case 25 =>
           receiver.onFloat16(Float16.shortToFloat(uLong.toInt))
@@ -151,20 +142,19 @@ final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes]
           receiver.onBreak()
           DataItem.Break
         case x =>
-          if (SimpleValue.isLegal(x)) {
+          if (SimpleValue.isLegal(x))
             receiver.onSimpleValue(x)
             DataItem.SimpleValue
-          } else failUnsupported(s"CBOR major type 7 code $x is unsupported by this decoder")
-      }
+          else failUnsupported(s"CBOR major type 7 code $x is unsupported by this decoder")
 
     _valueIndex = -1
     val byte = input.readBytePadded(this)
-    if (_valueIndex < 0) {
+    if (_valueIndex < 0)
       _valueIndex = input.cursor - 1
       val majorType = byte << 24 >>> 29
       val info      = byte & 0x1F
       val uLong =
-        (info: @switch) match {
+        (info: @switch) match
           case 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 |
               23 =>
             info.toLong
@@ -175,9 +165,8 @@ final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes]
           case _ =>
             if (info == 31 && 2 <= majorType && majorType <= 5 || majorType == 7) 0L // handled specially
             else failInvalidInput(s"Additional info `$info` is invalid (major type `$majorType`)")
-        }
 
-      (majorType: @switch) match {
+      (majorType: @switch) match
         case 0 => decodePositiveInteger(uLong)
         case 1 => decodeNegativeInteger(uLong)
         case 2 => decodeByteString(uLong, info == 31)
@@ -186,18 +175,15 @@ final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes]
         case 5 => decodeMap(uLong, info == 31)
         case 6 => decodeTag(uLong)
         case 7 => decodeExtra(info, uLong)
-      }
-    } else {
+    else
       receiver.onEndOfInput()
       DataItem.EndOfInput
-    }
-  }
 
   def padByte() =
-    if (_valueIndex < 0) {
+    if (_valueIndex < 0)
       _valueIndex = 0
       0
-    } else failUnexpectedEOI("8-bit integer")
+    else failUnexpectedEOI("8-bit integer")
   def padDoubleByte(remaining: Int)        = failUnexpectedEOI("16-bit integer")
   def padQuadByte(remaining: Int)          = failUnexpectedEOI("32-bit integer")
   def padOctaByte(remaining: Int)          = failUnexpectedEOI("64-bit integer")
@@ -209,18 +195,15 @@ final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes]
   private def failUnsupported(msg: String)        = throw new Borer.Error.Unsupported(lastPos, msg)
 
   private def lastPos = input.position(_valueIndex)
-}
 
-object CborParser {
+object CborParser:
 
-  trait Config {
+  trait Config:
     def maxByteStringLength: Int
     def maxTextStringLength: Int
-  }
 
   private[this] val _creator: Parser.Creator[Any, CborParser.Config] =
     (input, byteAccess, config) => new CborParser(input, config)(byteAccess)
 
   def creator[Bytes, Conf <: CborParser.Config]: Parser.Creator[Bytes, Conf] =
     _creator.asInstanceOf[Parser.Creator[Bytes, Conf]]
-}

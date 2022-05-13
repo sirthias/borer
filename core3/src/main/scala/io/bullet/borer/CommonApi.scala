@@ -10,7 +10,7 @@ package io.bullet.borer
 
 import java.lang.{StringBuilder => JStringBuilder}
 
-trait CommonApi[Config] {
+trait CommonApi[Config]:
 
   /**
    * Configures the [[Config]] for this encoding/decoding run.
@@ -61,18 +61,16 @@ trait CommonApi[Config] {
    * Used, for example, for on-the-side [[Logging]].
    */
   def withTransformerAdded(transformer: Receiver.Transformer[Config]): this.type
-}
 
-private[borer] object CommonApi {
+private[borer] object CommonApi:
 
-  abstract class Impl[Config](defaultConfig: Config, defaultTransformer: Receiver.Transformer[Config]) {
+  abstract class Impl[Config](defaultConfig: Config, defaultTransformer: Receiver.Transformer[Config]):
     protected var config: Config                                    = defaultConfig
     protected var receiverTransformer: Receiver.Transformer[Config] = defaultTransformer
 
-    final def withConfig(config: Config): this.type = {
+    final def withConfig(config: Config): this.type =
       this.config = config
       this
-    }
 
     final def withPrintLogging(
         maxShownByteArrayPrefixLen: Int,
@@ -135,12 +133,9 @@ private[borer] object CommonApi {
     final def withLogging(createLogger: Logging.LevelInfo => Logging.Logger): this.type =
       withTransformerAdded(Logging.transformer(createLogger))
 
-    final def withTransformerAdded(transformer: Receiver.Transformer[Config]): this.type = {
+    final def withTransformerAdded(transformer: Receiver.Transformer[Config]): this.type =
       val prevTransformer = receiverTransformer
       receiverTransformer =
         if (prevTransformer eq Receiver.nopTransformer[Config]) transformer
         else (r: Receiver, conf: Config) => transformer(prevTransformer(r, conf), conf)
       this
-    }
-  }
-}

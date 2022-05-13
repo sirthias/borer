@@ -12,7 +12,7 @@ import io.bullet.borer._
 
 import scala.annotation.tailrec
 
-final private[borer] class ElementDeque(val maxBufferSize: Int, val next: ElementDeque = null) {
+final private[borer] class ElementDeque(val maxBufferSize: Int, val next: ElementDeque = null):
   import io.bullet.borer.DataItem.{Shifts => DIS}
 
   private[this] val byteBuffer = new ResizableByteRingBuffer(16, math.max(16, maxBufferSize))
@@ -99,14 +99,13 @@ final private[borer] class ElementDeque(val maxBufferSize: Int, val next: Elemen
   @inline def isEmpty: Boolean  = byteBuffer.isEmpty
   @inline def nonEmpty: Boolean = byteBuffer.nonEmpty
 
-  @inline def clear(): Unit = {
+  @inline def clear(): Unit =
     byteBuffer.clear()
     objBuffer.clear()
-  }
 
-  def pull(receiver: Receiver): Int = {
+  def pull(receiver: Receiver): Int =
     val shift = byteBuffer.unsafeReadByte()
-    shift match {
+    shift match
       case DIS.Null      => receiver.onNull()
       case DIS.Undefined => receiver.onUndefined()
       case DIS.Boolean   => receiver.onBoolean(if (byteBuffer.unsafeReadByte() != 0) true else false)
@@ -139,35 +138,31 @@ final private[borer] class ElementDeque(val maxBufferSize: Int, val next: Elemen
       case DIS.Tag         => receiver.onTag(objBuffer.unsafeRead().asInstanceOf[Tag])
       case DIS.SimpleValue => receiver.onSimpleValue(byteBuffer.unsafeReadQuadByte())
       case DIS.EndOfInput  => receiver.onEndOfInput()
-    }
     1 << shift.toInt
-  }
 
   def pullAll(receiver: Receiver): Unit = while (nonEmpty) pull(receiver)
 
   def dataItemValueFromEnd(offset: Int): AnyRef = objBuffer.peekFromEnd(offset)
 
-  def appendElementFrom(r: Reader): Int = {
+  def appendElementFrom(r: Reader): Int =
 
     // for simplicity we go for stack-based recursion here
     // if this ever becomes a problem we can upgrade to more costly heap-based recursion instead
-    def pullComplex(dataItem: Int, level: Int): Unit = {
+    def pullComplex(dataItem: Int, level: Int): Unit =
 
       @tailrec def pullN(remaining: Long): Unit =
-        if (remaining > 0) {
+        if (remaining > 0)
           val dataItem = r.receiveInto(appendReceiver)
           if ((dataItem & DataItem.Complex) != 0) pullComplex(dataItem, level + 1)
           pullN(remaining - 1)
-        }
 
-      @tailrec def pullUntilBreak(): Unit = {
+      @tailrec def pullUntilBreak(): Unit =
         val dataItem = r.receiveInto(appendReceiver)
         if ((dataItem & DataItem.Complex) != 0) pullComplex(dataItem, level + 1)
         if (dataItem != DataItem.Break) pullUntilBreak()
-      }
 
-      if (level < 100) {
-        dataItem match {
+      if (level < 100)
+        dataItem match
           case DataItem.ArrayHeader => pullN(byteBuffer.peekLastOctaByte())
 
           case DataItem.MapHeader =>
@@ -176,30 +171,23 @@ final private[borer] class ElementDeque(val maxBufferSize: Int, val next: Elemen
             else sys.error("Maps with more than 2^62 elements are not supported")
 
           case _ => pullUntilBreak()
-        }
-      } else sys.error("Structures with more than 100 nesting levels are not supported") // TODO: make configurable
-    }
+      else sys.error("Structures with more than 100 nesting levels are not supported") // TODO: make configurable
 
     val first = r.receiveInto(appendReceiver)
     if ((first & DataItem.Complex) != 0) pullComplex(first, 0)
     first
-  }
 
-  def dropLastStringDataItem(): Unit = {
+  def dropLastStringDataItem(): Unit =
     byteBuffer.dropLast(1)
     objBuffer.dropLast(1)
-  }
 
-  def dropLastTextDataItem(): Unit = {
+  def dropLastTextDataItem(): Unit =
     byteBuffer.dropLast(1)
     objBuffer.dropLast(2)
-  }
 
   def dropLastBreakDataItem(): Unit = byteBuffer.dropLast(1)
 
   private def ret(result: Boolean): Boolean = if (result) true else throw new ElementDeque.Overflow
-}
 
-private[borer] object ElementDeque {
+private[borer] object ElementDeque:
   class Overflow extends RuntimeException
-}

@@ -12,11 +12,11 @@ import io.bullet.borer.internal.ByteArrayAccess
 
 import scala.annotation.tailrec
 
-object Base16 extends BaseEncoding("base16", 4) {
+object Base16 extends BaseEncoding("base16", 4):
 
   def encode(bytes: Array[Byte]): Array[Char] = encode(bytes, upperCase = false)
 
-  def encode(bytes: Array[Byte], upperCase: Boolean): Array[Char] = {
+  def encode(bytes: Array[Byte], upperCase: Boolean): Array[Char] =
     val sl        = bytes.length
     val digitBase = if (upperCase) 7 else 39
 
@@ -33,15 +33,15 @@ object Base16 extends BaseEncoding("base16", 4) {
     @inline def hexDigit(i: Int) = (48 + i + (digitBase & ((9 - i) >> 31))).toChar
 
     @tailrec def encodeSlow(si: Int, di: Int): Array[Char] =
-      if (si < sl) {
+      if (si < sl)
         val b = bytes(si)
         result(di + 0) = hexDigit(b << 24 >>> 28)
         result(di + 1) = hexDigit(b & 0x0F)
         encodeSlow(si + 1, di + 2)
-      } else result
+      else result
 
     @tailrec def encodeFast(si: Int, di: Int): Array[Char] =
-      if (si < sl4) {
+      if (si < sl4)
         val quad = baa.quadByteBigEndian(bytes, si)
         result(di + 0) = hexDigit(quad << 0 >>> 28)
         result(di + 1) = hexDigit(quad << 4 >>> 28)
@@ -52,12 +52,11 @@ object Base16 extends BaseEncoding("base16", 4) {
         result(di + 6) = hexDigit(quad << 24 >>> 28)
         result(di + 7) = hexDigit(quad & 0x0F)
         encodeFast(si + 4, di + 8)
-      } else encodeSlow(si, di)
+      else encodeSlow(si, di)
 
     encodeFast(0, 0)
-  }
 
-  def decode(chars: Array[Char]): Array[Byte] = {
+  def decode(chars: Array[Char]): Array[Byte] =
     val sl = chars.length
 
     def failIllegalEncoding() =
@@ -68,7 +67,7 @@ object Base16 extends BaseEncoding("base16", 4) {
     val result = new Array[Byte](sl >> 1)
     val sl8    = sl - 8
 
-    def d(ix: Int): Int = {
+    def d(ix: Int): Int =
       val c = chars(ix)
       def fail() =
         throw new IllegalArgumentException(s""""${Util.show(chars)}" is not a valid $name encoding.
@@ -76,23 +75,20 @@ object Base16 extends BaseEncoding("base16", 4) {
       val cc = c - 48
       if (c < 0 || 102 < c || (((0x7E0000007E03FFL >> cc) & 1) == 0)) fail()
       (c & 0x1F) + ((c >> 6) * 0x19) - 0x10
-    }
 
     @tailrec def decodeSlow(si: Int, di: Int): Array[Byte] =
-      if (si < sl) {
+      if (si < sl)
         result(di) = (d(si) << 4 | d(si + 1)).toByte
         decodeSlow(si + 2, di + 1)
-      } else result
+      else result
 
     @tailrec def decodeFast(si: Int, di: Int): Array[Byte] =
-      if (si <= sl8) {
+      if (si <= sl8)
         result(di + 0) = (d(si + 0) << 4 | d(si + 1)).toByte
         result(di + 1) = (d(si + 2) << 4 | d(si + 3)).toByte
         result(di + 2) = (d(si + 4) << 4 | d(si + 5)).toByte
         result(di + 3) = (d(si + 6) << 4 | d(si + 7)).toByte
         decodeFast(si + 8, di + 4)
-      } else decodeSlow(si, di)
+      else decodeSlow(si, di)
 
     decodeFast(0, 0)
-  }
-}

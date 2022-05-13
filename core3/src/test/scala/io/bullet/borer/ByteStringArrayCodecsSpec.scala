@@ -10,7 +10,7 @@ package io.bullet.borer
 
 import utest._
 
-object ByteStringArrayCodecsSpec extends ByteArrayJsonSpec {
+object ByteStringArrayCodecsSpec extends ByteArrayJsonSpec:
 
   val tests = Tests {
 
@@ -65,4 +65,3 @@ object ByteStringArrayCodecsSpec extends ByteArrayJsonSpec {
     }
 
   }
-}

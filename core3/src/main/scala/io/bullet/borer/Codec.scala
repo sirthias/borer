@@ -23,15 +23,14 @@ import scala.deriving.Mirror
  * available encoders and/or decoders for certain type parameters (like `Encoder.forOption`, for example)
  * then you should never require implicitly available Codecs, but rather Encoders and Decoders separately.
  */
-final case class Codec[A](encoder: Encoder[A], decoder: Decoder[A]) {
+final case class Codec[A](encoder: Encoder[A], decoder: Decoder[A]):
 
   @inline def bimap[B](f: B => A, g: A => B): Codec[B] = Codec.bimap(f, g)(encoder, decoder)
 
   def withEncoder(encoder: Encoder[A]): Codec[A] = copy(encoder = encoder)
   def withDecoder(decoder: Decoder[A]): Codec[A] = copy(decoder = decoder)
-}
 
-object Codec {
+object Codec:
 
   /**
    * Same as `apply` but with the parameter list marked as implicit.
@@ -61,9 +60,7 @@ object Codec {
    * The default [[Codec]] for [[Either]] is not automatically in scope,
    * because there is no clear "standard" way of encoding instances of [[Either]].
    */
-  object ForEither {
+  object ForEither:
 
     implicit def default[A: Encoder: Decoder, B: Encoder: Decoder]: Codec[Either[A, B]] =
       Codec(Encoder.ForEither.default, Decoder.ForEither.default)
-  }
-}

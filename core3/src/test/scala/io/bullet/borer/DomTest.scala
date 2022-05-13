@@ -12,7 +12,7 @@ import utest._
 
 import scala.collection.immutable.HashMap
 
-object DomTest extends TestSuite {
+object DomTest extends TestSuite:
 
   val tests = Tests {
 
@@ -41,4 +41,3 @@ object DomTest extends TestSuite {
         ))
     }
   }
-}

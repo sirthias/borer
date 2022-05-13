@@ -16,7 +16,7 @@ package io.bullet.borer.internal
  * @param initialCapacity the initial buffer size
  * @param maxCapacity the maximum number of elements the buffer can hold.
  */
-final private[borer] class ResizableRingBuffer[T](initialCapacity: Int, val maxCapacity: Int) {
+final private[borer] class ResizableRingBuffer[T](initialCapacity: Int, val maxCapacity: Int):
   // automatically implies maxCapacity <= 0x40000000
   if (!Util.isPowerOf2(maxCapacity) || maxCapacity <= 0 || !Util.isPowerOf2(
       initialCapacity) || initialCapacity <= 0 || maxCapacity < initialCapacity)
@@ -32,10 +32,9 @@ final private[borer] class ResizableRingBuffer[T](initialCapacity: Int, val maxC
   private[this] var writeIx: Int = _
   private[this] var readIx: Int  = _
 
-  @inline def clear(): Unit = {
+  @inline def clear(): Unit =
     writeIx = 0
     readIx = 0
-  }
 
   /**
    * The number of elements currently in the buffer.
@@ -62,24 +61,24 @@ final private[borer] class ResizableRingBuffer[T](initialCapacity: Int, val maxC
    * Returns `true` if the write was successful and false if the buffer is full and cannot grow anymore.
    */
   def append(value: T): Boolean =
-    if (count < currentCapacity) { // if we have space left we can simply write and be done
+    if (count < currentCapacity) // if we have space left we can simply write and be done
       val w = writeIx
       array(w & mask) = value.asInstanceOf[AnyRef]
       writeIx = w + 1
       true
-    } else grow() && append(value)
+    else grow() && append(value)
 
   /**
    * Tries to write the given value into the buffer thereby potentially growing the backing array.
    * Returns `true` if the write was successful and false if the buffer is full and cannot grow anymore.
    */
   def prepend(value: T): Boolean =
-    if (count < currentCapacity) { // if we have space left we can simply write and be done
+    if (count < currentCapacity) // if we have space left we can simply write and be done
       val r = readIx - 1
       array(r & mask) = value.asInstanceOf[AnyRef]
       readIx = r
       true
-    } else grow() && prepend(value)
+    else grow() && prepend(value)
 
   /**
    * Reads the next value from the buffer.
@@ -92,24 +91,22 @@ final private[borer] class ResizableRingBuffer[T](initialCapacity: Int, val maxC
   /**
    * Reads the next value from the buffer without any buffer underrun protection.
    */
-  def unsafeRead(): T = {
+  def unsafeRead(): T =
     val r = readIx
     readIx = r + 1
     val ix  = r & mask
     val res = array(ix)
     array(ix) = null
     res.asInstanceOf[T]
-  }
 
   /**
    * Reads the next value from the buffer without any buffer underrun protection
    * and without clearing the reference from the buffer!
    */
-  def unsafeRead_NoZero(): T = {
+  def unsafeRead_NoZero(): T =
     val r = readIx
     readIx = r + 1
     array(r & mask).asInstanceOf[T]
-  }
 
   def peekNext: T =
     if (nonEmpty) array(readIx & mask).asInstanceOf[T]
@@ -142,4 +139,3 @@ final private[borer] class ResizableRingBuffer[T](initialCapacity: Int, val maxC
 
   override def toString: String =
     s"ResizableRingBuffer(len=${array.length}, size=$count, writeIx=$writeIx, readIx=$readIx)"
-}

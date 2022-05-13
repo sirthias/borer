@@ -18,7 +18,7 @@ import scala.collection.immutable.{ListMap, TreeMap}
 /**
  * Direct implementation of https://tools.ietf.org/html/rfc7049#appendix-A
  */
-abstract class AbstractCborSuiteSpec extends AbstractBorerSpec {
+abstract class AbstractCborSuiteSpec extends AbstractBorerSpec:
 
   import Encoder.ForEither.raw
 
@@ -218,4 +218,3 @@ abstract class AbstractCborSuiteSpec extends AbstractBorerSpec {
         Writer.Script(_ ~ MapStart ~ "Fun" ~ true ~ "Amt" ~ -2 ~ Break))
     }
   }
-}

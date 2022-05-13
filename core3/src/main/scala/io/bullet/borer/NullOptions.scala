@@ -18,7 +18,7 @@ package io.bullet.borer
  * import io.bullet.borer.NullOptions._
  * }}}
  */
-object NullOptions {
+object NullOptions:
 
   implicit def encoder[T: Encoder]: Encoder[Option[T]] =
     Encoder {
@@ -31,5 +31,4 @@ object NullOptions {
       if (r.tryReadNull()) None
       else Some(r.read[T]())
     }
-}
 //#docs-quote-delimiter

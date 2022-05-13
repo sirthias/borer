@@ -86,7 +86,7 @@ object SpecializeJsonParserPlugin extends AutoPlugin {
       def apply(string: String): Either[String, String] = {
         val ix = string.lastIndexOf(searchString)
         if (ix >= 0) Right(string.substring(0, ix) + string.substring(ix + searchString.length))
-        else Left(s"[DeleteLast] string `$searchString` not found")
+        else Right(string) //Left(s"[DeleteLast] string `$searchString` not found") //
       }
     }
     final case class DeleteSection(deletionStart: String, deletionEnd: String) extends RewriteRule {

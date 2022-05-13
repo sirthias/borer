@@ -12,7 +12,7 @@ import utest._
 import io.bullet.borer.internal.Util._
 import io.bullet.borer.TestUtils
 
-object ZBase32Spec extends TestSuite with TestUtils {
+object ZBase32Spec extends TestSuite with TestUtils:
 
   val tests = Tests {
 
@@ -104,8 +104,6 @@ object ZBase32Spec extends TestSuite with TestUtils {
   def decode(bitCount: Long, string: String): String =
     toHexString(BaseEncoding.zbase32.decode(bitCount, string.toCharArray))
 
-  def roundtrip(bitCount: Long, string: String, expectedEncoding: String): Unit = {
+  def roundtrip(bitCount: Long, string: String, expectedEncoding: String): Unit =
     encode(bitCount, string.getBytes("UTF8")) ==> expectedEncoding
     new String(BaseEncoding.zbase32.decode(bitCount, expectedEncoding.toCharArray), "UTF8") ==> string
-  }
-}

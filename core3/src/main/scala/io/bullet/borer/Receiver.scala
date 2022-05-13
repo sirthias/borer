@@ -12,7 +12,7 @@ package io.bullet.borer
  * The common interface of all types that consume CBOR data.
  * (On the reading as well as the writing side)
  */
-abstract class Receiver {
+abstract class Receiver:
 
   def onNull(): Unit
   def onUndefined(): Unit
@@ -48,16 +48,15 @@ abstract class Receiver {
   def onSimpleValue(value: Int): Unit
 
   def onEndOfInput(): Unit
-}
 
-object Receiver {
+object Receiver:
 
   type Transformer[Config] = (Receiver, Config) => Receiver
   private[this] val _nopTransformer: Transformer[Any] = (receiver, _) => receiver
 
   def nopTransformer[Config]: Transformer[Config] = _nopTransformer.asInstanceOf[Transformer[Config]]
 
-  abstract class WithDefault extends Receiver {
+  abstract class WithDefault extends Receiver:
     def onNull(): Unit                                   = default("`null`")
     def onUndefined(): Unit                              = default("`undefined`")
     def onBoolean(value: Boolean): Unit                  = default(s"the Boolean `$value`")
@@ -90,5 +89,3 @@ object Receiver {
     def onEndOfInput(): Unit              = default("`End Of Input`")
 
     protected def default(tpe: String): Unit
-  }
-}

@@ -14,7 +14,7 @@ import io.bullet.borer._
  * A [[Receiver]] which simply buffers all incoming data in fields of the appropriate type,
  * for easy querying from the outside.
  */
-final private[borer] class Receptacle extends Receiver with java.lang.Cloneable {
+final private[borer] class Receptacle extends Receiver with java.lang.Cloneable:
 
   private[this] var _bool: Boolean  = _
   private[this] var _int: Int       = _
@@ -47,10 +47,9 @@ final private[borer] class Receptacle extends Receiver with java.lang.Cloneable 
 
   def onLong(value: Long): Unit = _long = value
 
-  def onOverLong(negative: Boolean, value: Long): Unit = {
+  def onOverLong(negative: Boolean, value: Long): Unit =
     _bool = negative
     _long = value
-  }
 
   def onFloat16(value: Float): Unit = _float = value
 
@@ -60,10 +59,9 @@ final private[borer] class Receptacle extends Receiver with java.lang.Cloneable 
 
   def onNumberString(value: String): Unit = _obj = value
 
-  def onBytes[Bytes](value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Unit = {
+  def onBytes[Bytes](value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Unit =
     _obj = value
     _byteAccess = byteAccess.asInstanceOf[ByteAccess[Any]]
-  }
 
   def onBytesStart(): Unit = ()
 
@@ -71,15 +69,13 @@ final private[borer] class Receptacle extends Receiver with java.lang.Cloneable 
 
   def onChars(buffer: Array[Char]): Unit = onChars(buffer, buffer.length)
 
-  def onChars(buffer: Array[Char], length: Int): Unit = {
+  def onChars(buffer: Array[Char], length: Int): Unit =
     _obj = buffer
     _int = length
-  }
 
-  def onText[Bytes](value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Unit = {
+  def onText[Bytes](value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Unit =
     _obj = value
     _byteAccess = byteAccess.asInstanceOf[ByteAccess[Any]]
-  }
 
   def onTextStart(): Unit = ()
 
@@ -100,7 +96,7 @@ final private[borer] class Receptacle extends Receiver with java.lang.Cloneable 
   def onEndOfInput(): Unit = ()
 
   def pushInto(receiver: Receiver, dataItem: Int): Unit =
-    Integer.numberOfTrailingZeros(dataItem) match {
+    Integer.numberOfTrailingZeros(dataItem) match
       case DataItem.Shifts.Null         => receiver.onNull()
       case DataItem.Shifts.Undefined    => receiver.onUndefined()
       case DataItem.Shifts.Boolean      => receiver.onBoolean(_bool)
@@ -125,5 +121,3 @@ final private[borer] class Receptacle extends Receiver with java.lang.Cloneable 
       case DataItem.Shifts.Tag          => receiver.onTag(_obj.asInstanceOf[Tag])
       case DataItem.Shifts.SimpleValue  => receiver.onSimpleValue(_int)
       case DataItem.Shifts.EndOfInput   => receiver.onEndOfInput()
-    }
-}

@@ -13,13 +13,12 @@ import io.bullet.borer.internal.{ElementDeque, ElementDequeCache, Parser}
 import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 
-object TranscodingSetup {
+object TranscodingSetup:
 
   sealed trait EncodingApi[EncodingConfig <: Borer.TransEncodingConfig, DecodingConfig <: Reader.Config]
-      extends CommonApi[EncodingConfig] {
+      extends CommonApi[EncodingConfig]:
 
     def transDecode: DecodingApi[DecodingConfig]
-  }
 
   final private[borer] class EncodingApiImpl[A: Encoder, EC <: Borer.TransEncodingConfig, DC <: Reader.Config](
       value: A,
@@ -28,28 +27,25 @@ object TranscodingSetup {
       defaultEncWrapper: Receiver.Transformer[EC],
       defaultDecConfig: DC,
       defaultDecWrapper: Receiver.Transformer[DC])
-      extends CommonApi.Impl(defaultEncConfig, defaultEncWrapper) with EncodingApi[EC, DC] {
+      extends CommonApi.Impl(defaultEncConfig, defaultEncWrapper) with EncodingApi[EC, DC]:
 
     def transDecode: DecodingApi[DC] =
       new DecodingApiImpl(value, target, config, receiverTransformer, defaultDecConfig, defaultDecWrapper)
-  }
 
-  sealed trait DecodingApi[Config <: Reader.Config] extends CommonApi[Config] {
+  sealed trait DecodingApi[Config <: Reader.Config] extends CommonApi[Config]:
 
     /**
      * Decodes an instance of [[T]] from the configured [[Input]] using the configured options.
      */
     def to[T: Decoder]: Sealed[T]
-  }
 
-  sealed trait Sealed[T] {
+  sealed trait Sealed[T]:
 
     def value: T
 
     def valueTry: Try[T]
 
     def valueEither: Either[Borer.Error[Unit], T]
-  }
 
   final private[borer] class DecodingApiImpl[A: Encoder, EC <: Borer.TransEncodingConfig, DC <: Reader.Config](
       valueToEncode: A,
@@ -58,52 +54,47 @@ object TranscodingSetup {
       encWrapper: Receiver.Transformer[EC],
       defaultDecConfig: DC,
       defaultDecWrapper: Receiver.Transformer[DC])
-      extends CommonApi.Impl(defaultDecConfig, defaultDecWrapper) with DecodingApi[DC] with Sealed[AnyRef] {
+      extends CommonApi.Impl(defaultDecConfig, defaultDecWrapper) with DecodingApi[DC] with Sealed[AnyRef]:
 
     private[this] var prefixOnly: Boolean      = _
     private[this] var decoder: Decoder[AnyRef] = _
 
-    def withPrefixOnly: this.type = {
+    def withPrefixOnly: this.type =
       this.prefixOnly = true
       this
-    }
 
-    def to[T](implicit decoder: Decoder[T]): Sealed[T] = {
+    def to[T](implicit decoder: Decoder[T]): Sealed[T] =
       this.decoder = decoder.asInstanceOf[Decoder[AnyRef]]
       this.asInstanceOf[Sealed[T]]
-    }
 
     def value: AnyRef =
-      try {
+      try
         transcode()
-      } catch {
+      catch
         case e: Borer.Error[_] => throw e.withUnit
         case NonFatal(e)       => throw new Borer.Error.General((), e)
-      }
 
     def valueTry: Try[AnyRef] =
-      try {
+      try
         Success(transcode())
-      } catch {
+      catch
         case e: Borer.Error[_] => Failure(e.withUnit)
         case NonFatal(e)       => Failure(new Borer.Error.General((), e))
-      }
 
     def valueEither: Either[Borer.Error[Unit], AnyRef] =
-      try {
+      try
         Right(transcode())
-      } catch {
+      catch
         case e: Borer.Error[_] => Left(e.withUnit)
         case NonFatal(e)       => Left(new Borer.Error.General((), e))
-      }
 
-    private def transcode(): AnyRef = {
+    private def transcode(): AnyRef =
       val deque =
         if (encConfig.allowBufferCaching)
           ElementDequeCache.acquire(encConfig.maxBufferSize)
         else
           new ElementDeque(encConfig.maxBufferSize)
-      try {
+      try
         val writer = new Writer(null, encWrapper(deque.appendReceiver, encConfig), target, encConfig)
         writer
           .write(valueToEncode)
@@ -113,9 +104,5 @@ object TranscodingSetup {
         val value  = decoder.read(reader)
         if (!prefixOnly) reader.readEndOfInput()
         value
-      } finally {
+      finally
         if (encConfig.allowBufferCaching) ElementDequeCache.release(deque)
-      }
-    }
-  }
-}

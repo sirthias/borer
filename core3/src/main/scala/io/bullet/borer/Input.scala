@@ -19,7 +19,7 @@ import io.bullet.borer.input.{
 /**
  * Mutable abstraction wrapping some source of bytes to serve as parser input.
  */
-trait Input[Bytes] {
+trait Input[Bytes]:
 
   /**
    * The index of the next byte to be read.
@@ -104,34 +104,30 @@ trait Input[Bytes] {
    * Otherwise the given [[Input.PaddingProvider]] is called to perform the padding and its result returned.
    */
   def readBytes(length: Long, pp: Input.PaddingProvider[Bytes]): Bytes
-}
 
 object Input
     extends FromByteArrayInput with FromByteBufferInput with FromInputStreamInput with FromFileInput
-    with FromIteratorInput {
+    with FromIteratorInput:
 
-  abstract class PaddingProvider[Bytes] {
+  abstract class PaddingProvider[Bytes]:
     def padByte(): Byte
     def padDoubleByte(remaining: Int): Char
     def padQuadByte(remaining: Int): Int
     def padOctaByte(remaining: Int): Long
     def padBytes(rest: Bytes, missing: Long): Bytes
-  }
 
-  implicit final class InputOps[Bytes](val underlying: Input[Bytes]) extends AnyVal {
+  implicit final class InputOps[Bytes](val underlying: Input[Bytes]) extends AnyVal:
     def position(cursor: Long): Input.Position = Input.Position(underlying, cursor)
-  }
 
   // #provider
   /**
    * Responsible for converting an instance of [[T]]
    * to a respective [[Input]] instance.
    */
-  trait Provider[T] {
+  trait Provider[T]:
     type Bytes
     def byteAccess: ByteAccess[Bytes]
     def apply(value: T): Input[Bytes]
-  }
   // #provider
 
   /**
@@ -144,7 +140,5 @@ object Input
       def apply(value: Input[B]): Input[Bytes] = value
     }
 
-  final case class Position(input: Input[_], index: Long) {
+  final case class Position(input: Input[_], index: Long):
     override def toString = s"input position $index"
-  }
-}

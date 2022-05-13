@@ -11,7 +11,7 @@ package io.bullet.borer
 import utest._
 import io.bullet.borer.internal.Util._
 
-object MiscCborSpec extends ByteArrayCborSpec {
+object MiscCborSpec extends ByteArrayCborSpec:
 
   case class Foo(int: Int, string: String, doubleOpt: Option[java.lang.Double])
   case class Bar(foo: Foo, optFoo: Option[Foo], stringSeq: Seq[String])
@@ -148,4 +148,3 @@ object MiscCborSpec extends ByteArrayCborSpec {
       Cbor.decode(hex"80").to[Array[String]].value.getClass ==> classOf[Array[String]]
     }
   }
-}

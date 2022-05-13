@@ -28,26 +28,23 @@ import scala.deriving.Mirror
 /**
  * Type class responsible for writing an instance of type [[T]] to a [[Writer]].
  */
-trait Encoder[T] {
+trait Encoder[T]:
   def write(w: Writer, value: T): Writer
-}
 
-object Encoder extends LowPrioEncoders {
+object Encoder extends LowPrioEncoders:
 
   /**
    * An [[Encoder]] that might change its encoding strategy if [[T]] has a default value.
    */
-  trait DefaultValueAware[T] extends Encoder[T] {
+  trait DefaultValueAware[T] extends Encoder[T]:
     def withDefaultValue(defaultValue: T): Encoder[T]
-  }
 
   /**
    * An [[Encoder]] that might not actually produce any output for certain values of [[T]]
    * (e.g. because "not-present" already carries sufficient information).
    */
-  trait PossiblyWithoutOutput[T] extends Encoder[T] {
+  trait PossiblyWithoutOutput[T] extends Encoder[T]:
     def producesOutputFor(value: T): Boolean
-  }
 
   /**
    * Creates an [[Encoder]] from the given function.
@@ -69,15 +66,14 @@ object Encoder extends LowPrioEncoders {
     else json.write(w, x)
   }
 
-  implicit final class EncoderOps[A](val underlying: Encoder[A]) extends AnyVal {
+  implicit final class EncoderOps[A](val underlying: Encoder[A]) extends AnyVal:
     def contramap[B](f: B => A): Encoder[B]                     = Encoder((w, b) => underlying.write(w, f(b)))
     def contramapWithWriter[B](f: (Writer, B) => A): Encoder[B] = Encoder((w, b) => underlying.write(w, f(w, b)))
 
     def withDefaultValue(defaultValue: A): Encoder[A] =
-      underlying match {
+      underlying match
         case x: Encoder.DefaultValueAware[A] => x withDefaultValue defaultValue
         case x                               => x
-      }
 
     /**
      * Creates a new [[Encoder]] which emits the flat, concatenated encoding of the underlying encoder and the given
@@ -90,7 +86,6 @@ object Encoder extends LowPrioEncoders {
      */
     def concat(other: Encoder[A], maxBufferSize: Int = 16384): Encoder[A] =
       new Encoder.ConcatEncoder(underlying, other, maxBufferSize)
-  }
 
   implicit def fromCodec[T](implicit codec: Codec[T]): Encoder[T] = codec.encoder
 
@@ -128,7 +123,7 @@ object Encoder extends LowPrioEncoders {
 
   implicit val forJBigInteger: Encoder[JBigInteger] =
     Encoder { (w, x) =>
-      x.bitLength match {
+      x.bitLength match
         case n if n < 32        => w.writeInt(x.intValue)
         case n if n < 64        => w.writeLong(x.longValue)
         case 64 if x.signum > 0 => w.writeOverLong(negative = false, x.longValue)
@@ -140,20 +135,18 @@ object Encoder extends LowPrioEncoders {
           } else Tag.PositiveBigNum)
           w.writeBytes(bytes)
         case _ => w.writeNumberString(x.toString(10))
-      }
     }
 
   implicit val forBigInt: Encoder[BigInt] = forJBigInteger.contramap(_.bigInteger)
 
   implicit val forJBigDecimal: Encoder[JBigDecimal] =
     Encoder { (w, x) =>
-      if (w.writingCbor) {
+      if (w.writingCbor)
         if (x.scale != 0) w.writeTag(Tag.DecimalFraction).writeArrayHeader(2).writeInt(x.scale)
         w.write(x.unscaledValue)
-      } else {
+      else
         if (x.scale != 0) w.writeNumberString(x.toString)
         else w.write(x.unscaledValue)
-      }
     }
 
   implicit val forBigDecimal: Encoder[BigDecimal] = forJBigDecimal.contramap(_.bigDecimal)
@@ -184,22 +177,20 @@ object Encoder extends LowPrioEncoders {
     new Encoder.DefaultValueAware[Option[T]] {
 
       def write(w: Writer, value: Option[T]) =
-        value match {
+        value match
           case Some(x) => w.writeToArray(x)
           case None    => w.writeEmptyArray()
-        }
 
       def withDefaultValue(defaultValue: Option[T]): Encoder[Option[T]] =
-        if (defaultValue eq None) {
+        if (defaultValue eq None)
           new Encoder.PossiblyWithoutOutput[Option[T]] {
             def producesOutputFor(value: Option[T]) = value ne None
             def write(w: Writer, value: Option[T]) =
-              value match {
+              value match
                 case Some(x) => w.write(x)
                 case None    => w
-              }
           }
-        } else this
+        else this
     }
 
   // #option-encoder
@@ -209,12 +200,12 @@ object Encoder extends LowPrioEncoders {
       def write(w: Writer, value: M[T]) = w.writeIndexedSeq(value)
 
       def withDefaultValue(defaultValue: M[T]): Encoder[M[T]] =
-        if (defaultValue.isEmpty) {
+        if (defaultValue.isEmpty)
           new PossiblyWithoutOutput[M[T]] {
             def producesOutputFor(value: M[T]) = value.nonEmpty
             def write(w: Writer, value: M[T])  = if (value.nonEmpty) w.writeIndexedSeq(value) else w
           }
-        } else this
+        else this
     }
 
   implicit def forLinearSeq[T: Encoder, M[X] <: LinearSeq[X]]: DefaultValueAware[M[T]] =
@@ -222,12 +213,12 @@ object Encoder extends LowPrioEncoders {
       def write(w: Writer, value: M[T]) = w.writeLinearSeq(value)
 
       def withDefaultValue(defaultValue: M[T]): Encoder[M[T]] =
-        if (defaultValue.isEmpty) {
+        if (defaultValue.isEmpty)
           new PossiblyWithoutOutput[M[T]] {
             def producesOutputFor(value: M[T]) = value.nonEmpty
             def write(w: Writer, value: M[T])  = if (value.nonEmpty) w.writeLinearSeq(value) else w
           }
-        } else this
+        else this
     }
 
   implicit def forMap[A: Encoder, B: Encoder, M[X, Y] <: Map[X, Y]]: DefaultValueAware[M[A, B]] =
@@ -235,12 +226,12 @@ object Encoder extends LowPrioEncoders {
       def write(w: Writer, value: M[A, B]) = w.writeMap(value)
 
       def withDefaultValue(defaultValue: M[A, B]): Encoder[M[A, B]] =
-        if (defaultValue.isEmpty) {
+        if (defaultValue.isEmpty)
           new PossiblyWithoutOutput[M[A, B]] {
             def producesOutputFor(value: M[A, B]) = value.nonEmpty
             def write(w: Writer, value: M[A, B])  = if (value.nonEmpty) w.writeMap(value) else w
           }
-        } else this
+        else this
     }
 
   implicit def forArray[T: Encoder]: Encoder[Array[T]] =
@@ -256,15 +247,14 @@ object Encoder extends LowPrioEncoders {
    * The default [[Encoder]] for [[Either]] is not automatically in scope,
    * because there is no clear "standard" way of encoding instances of [[Either]].
    */
-  object ForEither {
+  object ForEither:
 
     implicit def default[A: Encoder, B: Encoder]: Encoder[Either[A, B]] =
       Encoder { (w, x) =>
         if (w.writingJson) w.writeArrayStart() else w.writeMapHeader(1)
-        x match {
+        x match
           case Left(a)  => w.writeInt(0).write(a)
           case Right(b) => w.writeInt(1).write(b)
-        }
         if (w.writingJson) w.writeBreak() else w
       }
 
@@ -276,12 +266,11 @@ object Encoder extends LowPrioEncoders {
         case (w, Left(x))  => w ~ x
         case (w, Right(x)) => w ~ x
       }
-  }
 
   private val _toStringEncoder: Encoder[Any] = Encoder((w, x) => w.writeString(x.toString))
   def toStringEncoder[T]: Encoder[T]         = _toStringEncoder.asInstanceOf[Encoder[T]]
 
-  object StringNumbers {
+  object StringNumbers:
     implicit def charEncoder: Encoder[Char]     = Encoder.toStringEncoder[Char]
     implicit def byteEncoder: Encoder[Byte]     = Encoder.toStringEncoder[Byte]
     implicit def shortEncoder: Encoder[Short]   = Encoder.toStringEncoder[Short]
@@ -297,16 +286,13 @@ object Encoder extends LowPrioEncoders {
     implicit def boxedLongEncoder: Encoder[JLong]     = forLong.asInstanceOf[Encoder[JLong]]
     implicit def boxedFloatEncoder: Encoder[JFloat]   = forFloat.asInstanceOf[Encoder[JFloat]]
     implicit def boxedDoubleEncoder: Encoder[JDouble] = forDouble.asInstanceOf[Encoder[JDouble]]
-  }
 
-  object StringBooleans {
+  object StringBooleans:
     implicit val booleanEncoder: Encoder[Boolean]       = Encoder((w, x) => w.writeString(if (x) "true" else "false"))
     implicit def boxedBooleanEncoder: Encoder[JBoolean] = forBoolean.asInstanceOf[Encoder[JBoolean]]
-  }
 
-  object StringNulls {
+  object StringNulls:
     implicit val nullEncoder: Encoder[Null] = Encoder((w, _) => w.writeString("null"))
-  }
 
   /**
    * Creates a new [[Encoder]] which emits the flat, concatenated encoding of two other encoders.
@@ -318,11 +304,11 @@ object Encoder extends LowPrioEncoders {
    * @param maxBufferSize the maximum size of the buffer for the encoding of the first encoder
    */
   final class ConcatEncoder[T](encoder0: Encoder[T], encoder1: Encoder[T], maxBufferSize: Int = 16384)
-      extends Encoder[T] {
+      extends Encoder[T]:
     if (maxBufferSize <= 0 || !Util.isPowerOf2(maxBufferSize))
       throw new IllegalArgumentException(s"maxBufferSize must be a positive power of two, but was $maxBufferSize")
 
-    def write(w: Writer, value: T): Writer = {
+    def write(w: Writer, value: T): Writer =
       val stash                    = new ElementDeque(maxBufferSize)
       val originalReceiver         = w.receiver
       var arrayOrMap               = 0             // 1 => array, 2 => map
@@ -332,29 +318,25 @@ object Encoder extends LowPrioEncoders {
 
       w.receiver = new Receiver.WithDefault {
 
-        override def onArrayHeader(length: Long): Unit = {
+        override def onArrayHeader(length: Long): Unit =
           arrayOrMap = 1
           len0 = length
           w.receiver = stash.appendReceiver
-        }
 
-        override def onArrayStart(): Unit = {
+        override def onArrayStart(): Unit =
           arrayOrMap = 1
           len0 = -1
           w.receiver = stash.appendReceiver
-        }
 
-        override def onMapHeader(length: Long): Unit = {
+        override def onMapHeader(length: Long): Unit =
           arrayOrMap = 2
           len0 = length
           w.receiver = stash.appendReceiver
-        }
 
-        override def onMapStart(): Unit = {
+        override def onMapStart(): Unit =
           arrayOrMap = 2
           len0 = -1
           w.receiver = stash.appendReceiver
-        }
 
         protected def default(t: String): Unit =
           unsupported(s"First Encoder produced $t but Encoder merging only supports 'to-Array' and 'to-Map' Encoders")
@@ -368,36 +350,36 @@ object Encoder extends LowPrioEncoders {
       w.receiver = new Receiver.WithDefault {
 
         override def onArrayHeader(length: Long): Unit =
-          if (arrayOrMap == 1) {
+          if (arrayOrMap == 1)
             w.receiver = originalReceiver
             len1 = length
             if (len0 >= 0 && len1 >= 0 && len0 + len1 >= 0) w.writeArrayHeader(len0 + len1) else w.writeArrayStart()
             stash.pullAll(originalReceiver)
-          } else unsupported("Cannot merge a 'to-Map' Encoder with a 'to-Array' Encoder")
+          else unsupported("Cannot merge a 'to-Map' Encoder with a 'to-Array' Encoder")
 
         override def onArrayStart(): Unit =
-          if (arrayOrMap == 1) {
+          if (arrayOrMap == 1)
             w.receiver = originalReceiver
             len1 = -1
             w.writeArrayStart()
             stash.pullAll(originalReceiver)
-          } else unsupported("Cannot merge a 'to-Map' Encoder with a 'to-Array' Encoder")
+          else unsupported("Cannot merge a 'to-Map' Encoder with a 'to-Array' Encoder")
 
         override def onMapHeader(length: Long): Unit =
-          if (arrayOrMap == 2) {
+          if (arrayOrMap == 2)
             w.receiver = originalReceiver
             len1 = length
             if (len0 >= 0 && len1 >= 0 && len0 + len1 >= 0) w.writeMapHeader(len0 + len1) else w.writeMapStart()
             stash.pullAll(originalReceiver)
-          } else unsupported("Cannot merge a 'to-Array' Encoder with a 'to-Map' Encoder")
+          else unsupported("Cannot merge a 'to-Array' Encoder with a 'to-Map' Encoder")
 
         override def onMapStart(): Unit =
-          if (arrayOrMap == 2) {
+          if (arrayOrMap == 2)
             w.receiver = originalReceiver
             len1 = -1
             w.writeMapStart()
             stash.pullAll(originalReceiver)
-          } else unsupported("Cannot merge a 'to-Array' Encoder with a 'to-Map' Encoder")
+          else unsupported("Cannot merge a 'to-Array' Encoder with a 'to-Map' Encoder")
 
         protected def default(t: String): Unit =
           unsupported(s"Second Encoder produced $t but Encoder merging only supports 'to-Array' and 'to-Map' Encoders")
@@ -408,37 +390,31 @@ object Encoder extends LowPrioEncoders {
       // if we dropped the terminating break before and encoder1 did not emit one, we need to manually append it
       if (len0 < 0 && len1 >= 0) w.writeBreak()
       w
-    }
-  }
-}
 
-sealed abstract class LowPrioEncoders {
+sealed abstract class LowPrioEncoders:
 
   implicit final def forIterableOnce[T: Encoder, M[X] <: IterableOnce[X]]: Encoder[M[T]] =
     new Encoder.DefaultValueAware[M[T]] { self =>
       def write(w: Writer, value: M[T]) =
-        value match {
+        value match
           case x: IndexedSeq[T] => w.writeIndexedSeq(x)
           case x: LinearSeq[T]  => w.writeLinearSeq(x)
           case x                => w.writeIterableOnce(x)
-        }
 
       def withDefaultValue(defaultValue: M[T]): Encoder[M[T]] =
-        if (isEmpty(defaultValue)) {
+        if (isEmpty(defaultValue))
           new Encoder.PossiblyWithoutOutput[M[T]] {
             def producesOutputFor(value: M[T]) = !isEmpty(value)
             def write(w: Writer, value: M[T])  = if (isEmpty(value)) w else self.write(w, value)
           }
-        } else this
+        else this
 
-      private def isEmpty(value: M[T]): Boolean = {
+      private def isEmpty(value: M[T]): Boolean =
         val ks = (value: IterableOnce[T]).knownSize
         ks == 0 || (ks < 0) && value.iterator.isEmpty
-      }
     }
 
   implicit final def forIterator[T: Encoder]: Encoder[Iterator[T]] = Encoder(_ writeIterator _)
-}
 
 /**
  * An [[AdtEncoder]] is an [[Encoder]] which encodes its values with an envelope holding the value's type id.

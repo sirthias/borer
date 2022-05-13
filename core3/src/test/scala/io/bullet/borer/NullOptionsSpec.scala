@@ -10,14 +10,13 @@ package io.bullet.borer
 
 import utest._
 
-object NullOptionsSpec extends ByteArrayJsonSpec {
+object NullOptionsSpec extends ByteArrayJsonSpec:
 
   case class Foo(int: Int, string: Option[String])
 
-  implicit val fooCodec: Codec[Foo] = {
+  implicit val fooCodec: Codec[Foo] =
     import NullOptions._
     Codec.forProduct[Foo]
-  }
 
   val tests = Tests {
 
@@ -26,4 +25,3 @@ object NullOptionsSpec extends ByteArrayJsonSpec {
       roundTrip("""[12,"foo"]""", Foo(12, Some("foo")))
     }
   }
-}

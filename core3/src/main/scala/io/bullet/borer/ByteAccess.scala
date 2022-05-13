@@ -14,7 +14,7 @@ import java.nio.ByteBuffer
  * Type class for providing basic access to a `Bytes` abstraction,
  * as well as construction of a respective [[Output]].
  */
-trait ByteAccess[Bytes] {
+trait ByteAccess[Bytes]:
   type Out <: Output
 
   /**
@@ -67,14 +67,13 @@ trait ByteAccess[Bytes] {
    * Converts the given `value` of type [[B]] into a [[Bytes]] instance.
    */
   def convert[B: ByteAccess](value: B): Bytes
-}
 
-object ByteAccess {
+object ByteAccess:
 
   /**
    * The default [[ByteAccess]] for plain byte arrays.
    */
-  implicit object ForByteArray extends ByteAccess[Array[Byte]] {
+  implicit object ForByteArray extends ByteAccess[Array[Byte]]:
     type Out = Output.ToByteArray
 
     @inline def empty = Array.emptyByteArray
@@ -87,56 +86,50 @@ object ByteAccess {
 
     @inline def toByteArray(bytes: Array[Byte]): Array[Byte] = bytes
 
-    def copyToByteArray(bytes: Array[Byte], byteArray: Array[Byte], startIndex: Int): Array[Byte] = {
+    def copyToByteArray(bytes: Array[Byte], byteArray: Array[Byte], startIndex: Int): Array[Byte] =
       val dstRemaining = byteArray.length - startIndex
-      if (bytes.length <= dstRemaining) {
+      if (bytes.length <= dstRemaining)
         System.arraycopy(bytes, 0, byteArray, startIndex, bytes.length)
         empty
-      } else {
+      else
         val rest = new Array[Byte](bytes.length - dstRemaining)
         System.arraycopy(bytes, 0, byteArray, startIndex, dstRemaining)
         System.arraycopy(bytes, dstRemaining, rest, 0, rest.length)
         rest
-      }
-    }
 
-    def copyToByteBuffer(bytes: Array[Byte], byteBuffer: ByteBuffer): Array[Byte] = {
+    def copyToByteBuffer(bytes: Array[Byte], byteBuffer: ByteBuffer): Array[Byte] =
       val dstRemaining = byteBuffer.remaining()
-      if (bytes.length <= dstRemaining) {
+      if (bytes.length <= dstRemaining)
         byteBuffer.put(bytes)
         empty
-      } else {
+      else
         val rest = new Array[Byte](bytes.length - dstRemaining)
         byteBuffer.put(bytes, 0, dstRemaining)
         System.arraycopy(bytes, dstRemaining, rest, 0, rest.length)
         rest
-      }
-    }
 
     def concat(a: Array[Byte], b: Array[Byte]): Array[Byte] =
-      if (a.length > 0) {
-        if (b.length > 0) {
+      if (a.length > 0)
+        if (b.length > 0)
           val len = a.length + b.length
-          if (len >= 0) {
+          if (len >= 0)
             val result = new Array[Byte](len)
             System.arraycopy(a, 0, result, 0, a.length)
             System.arraycopy(b, 0, result, a.length, b.length)
             result
-          } else sys.error("Cannot concatenate two byte arrays with a total size > 2^31 bytes")
-        } else a
-      } else b
+          else sys.error("Cannot concatenate two byte arrays with a total size > 2^31 bytes")
+        else a
+      else b
 
     @inline def convert[B](value: B)(implicit byteAccess: ByteAccess[B]): Array[Byte] =
-      value match {
+      value match
         case x: Array[Byte] => x
         case x              => byteAccess.toByteArray(x)
-      }
-  }
 
   /**
    * The default [[ByteAccess]] for [[ByteBuffer]].
    */
-  implicit object ForByteBuffer extends ByteAccess[ByteBuffer] {
+  implicit object ForByteBuffer extends ByteAccess[ByteBuffer]:
     type Out = Output.ToByteBuffer
 
     val empty = ByteBuffer.wrap(Array.emptyByteArray)
@@ -147,37 +140,34 @@ object ByteAccess {
 
     @inline def fromByteArray(byteArray: Array[Byte]): ByteBuffer = ByteBuffer.wrap(byteArray)
 
-    @inline def toByteArray(bytes: ByteBuffer): Array[Byte] = {
+    @inline def toByteArray(bytes: ByteBuffer): Array[Byte] =
       val byteArray = new Array[Byte](bytes.remaining)
       bytes.mark()
       bytes.get(byteArray, 0, byteArray.length)
       bytes.reset()
       byteArray
-    }
 
-    def copyToByteArray(bytes: ByteBuffer, byteArray: Array[Byte], startIndex: Int): ByteBuffer = {
+    def copyToByteArray(bytes: ByteBuffer, byteArray: Array[Byte], startIndex: Int): ByteBuffer =
       bytes.mark()
       bytes.get(byteArray, startIndex, byteArray.length - startIndex)
       bytes.reset()
       bytes
-    }
 
-    def copyToByteBuffer(bytes: ByteBuffer, byteBuffer: ByteBuffer): ByteBuffer = {
+    def copyToByteBuffer(bytes: ByteBuffer, byteBuffer: ByteBuffer): ByteBuffer =
       val srcRemaining = bytes.remaining
       val dstRemaining = byteBuffer.remaining
-      if (srcRemaining <= dstRemaining) {
+      if (srcRemaining <= dstRemaining)
         bytes.mark()
         byteBuffer.put(bytes)
         bytes.reset()
-      } else byteBuffer.put(bytes.slice.limit(dstRemaining).asInstanceOf[ByteBuffer])
+      else byteBuffer.put(bytes.slice.limit(dstRemaining).asInstanceOf[ByteBuffer])
       bytes
-    }
 
     def concat(a: ByteBuffer, b: ByteBuffer): ByteBuffer =
-      if (a.hasRemaining) {
-        if (b.hasRemaining) {
+      if (a.hasRemaining)
+        if (b.hasRemaining)
           val len = a.remaining + b.remaining
-          if (len >= 0) {
+          if (len >= 0)
             val result = ByteBuffer.allocate(len)
             a.mark()
             result.put(a)
@@ -187,14 +177,11 @@ object ByteAccess {
             b.reset()
             result.flip()
             result
-          } else sys.error("Cannot concatenate two ByteBuffers with a total size > 2^31 bytes")
-        } else a
-      } else b
+          else sys.error("Cannot concatenate two ByteBuffers with a total size > 2^31 bytes")
+        else a
+      else b
 
     @inline def convert[B](value: B)(implicit byteAccess: ByteAccess[B]): ByteBuffer =
-      value match {
+      value match
         case x: ByteBuffer => x
         case x             => fromByteArray(byteAccess.toByteArray(x))
-      }
-  }
-}

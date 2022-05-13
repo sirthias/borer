@@ -15,15 +15,14 @@ import io.bullet.borer.internal.{ElementDeque, Util}
 
 import scala.annotation.tailrec
 
-sealed abstract class AdtEncodingStrategy {
+sealed abstract class AdtEncodingStrategy:
   def writeAdtEnvelopeOpen(w: Writer, typeName: String): w.type
   def writeAdtEnvelopeClose(w: Writer, typeName: String): w.type
 
   def readAdtEnvelopeOpen(r: Reader, typeName: String): Boolean
   def readAdtEnvelopeClose(r: Reader, openResult: Boolean, typeName: String): Unit
-}
 
-object AdtEncodingStrategy {
+object AdtEncodingStrategy:
 
   /**
    * Default and recommended ADT encoding strategy.
@@ -52,7 +51,7 @@ object AdtEncodingStrategy {
    *   }
    * }}}
    */
-  implicit object Default extends AdtEncodingStrategy {
+  implicit object Default extends AdtEncodingStrategy:
 
     def writeAdtEnvelopeOpen(w: Writer, typeName: String): w.type =
       if (w.writingJson) w.writeMapStart()
@@ -61,23 +60,20 @@ object AdtEncodingStrategy {
     def writeAdtEnvelopeClose(w: Writer, typeName: String): w.type =
       if (w.writingJson) w.writeBreak() else w
 
-    def readAdtEnvelopeOpen(r: Reader, typeName: String) = {
+    def readAdtEnvelopeOpen(r: Reader, typeName: String) =
       def fail() = r.unexpectedDataItem(s"Single-entry Map for decoding an instance of type `$typeName`")
-      if (r.tryReadMapStart()) {
+      if (r.tryReadMapStart())
         true
-      } else if (r.tryReadMapHeader(1)) {
+      else if (r.tryReadMapHeader(1))
         false
-      } else fail()
-    }
+      else fail()
 
-    def readAdtEnvelopeClose(r: Reader, openResult: Boolean, typeName: String): Unit = {
+    def readAdtEnvelopeClose(r: Reader, openResult: Boolean, typeName: String): Unit =
       def fail() =
         r.unexpectedDataItem(
           s"Single-entry Map for decoding an instance of type `$typeName`",
           "at least one extra element")
       if (openResult && !r.tryReadBreak()) fail()
-    }
-  }
 
   /**
    * Alternative ADT encoding strategy, which writes the type ID as an extra map member.
@@ -116,7 +112,7 @@ object AdtEncodingStrategy {
 
       private lazy val typeMemberNameBytes = typeMemberName.getBytes(StandardCharsets.UTF_8)
 
-      def writeAdtEnvelopeOpen(w: Writer, typeName: String): w.type = {
+      def writeAdtEnvelopeOpen(w: Writer, typeName: String): w.type =
         val originalReceiver = w.receiver
         w.receiver = new borer.Receiver.WithDefault {
           private var longTypeId: Long     = _
@@ -124,71 +120,65 @@ object AdtEncodingStrategy {
           private var state: Int           = _ // 0 = initial, 1 = int type ID, 2 = long type ID, 3 = string type ID
 
           override def onInt(value: Int): Unit =
-            if (state == 0) {
+            if (state == 0)
               longTypeId = value.toLong
               state = 1
-            } else default(s"the Int `$value`")
+            else default(s"the Int `$value`")
 
           override def onLong(value: Long): Unit =
-            if (state == 0) {
+            if (state == 0)
               longTypeId = value
               state = 2
-            } else default(s"the Long `$value`")
+            else default(s"the Long `$value`")
 
           override def onString(value: String): Unit =
-            if (state == 0) {
+            if (state == 0)
               stringTypeId = value
               state = 3
-            } else default("a String")
+            else default("a String")
 
-          override def onMapHeader(length: Long): Unit = {
+          override def onMapHeader(length: Long): Unit =
             w.receiver = originalReceiver
             w.writeMapHeader(length + 1)
             writeTypeIdMember()
-          }
 
-          override def onMapStart(): Unit = {
+          override def onMapStart(): Unit =
             w.receiver = originalReceiver
             w.writeMapStart()
             writeTypeIdMember()
-          }
 
-          private def writeTypeIdMember(): Unit = {
+          private def writeTypeIdMember(): Unit =
             w.writeString(typeMemberName)
-            state match {
+            state match
               case 0 => throw new IllegalStateException // a `Map` type ID ?
               case 1 => w.writeInt(longTypeId.toInt)
               case 2 => w.writeLong(longTypeId)
               case 3 => w.writeString(stringTypeId)
-            }
-          }
           protected def default(t: String): Unit =
             throw new Borer.Error.Unsupported(
               w.output,
               s"AdtEncodingStrategy.flat requires all sub-types of `$typeName` be serialized as a Map but here it was $t")
         }
         w
-      }
 
       def writeAdtEnvelopeClose(w: Writer, typeName: String): w.type = w
 
-      def readAdtEnvelopeOpen(r: Reader, typeName: String): Boolean = {
+      def readAdtEnvelopeOpen(r: Reader, typeName: String): Boolean =
         def failNoMap() =
           r.unexpectedDataItem(s"Map for decoding an instance of type `$typeName`")
         def failNoTypeId() =
           r.unexpectedDataItem(s"Type-ID member `$typeMemberName` for decoding an instance of type `$typeName`")
 
-        def lastTextDataItemMatchesTypeMemberName(stash: ElementDeque) = {
+        def lastTextDataItemMatchesTypeMemberName(stash: ElementDeque) =
           val byteAccess = stash.dataItemValueFromEnd(-1).asInstanceOf[ByteAccess[AnyRef]]
           val bytes      = stash.dataItemValueFromEnd(-2)
           java.util.Arrays.equals(byteAccess.toByteArray(bytes), typeMemberNameBytes)
-        }
 
         val stash = new ElementDeque(maxBufferSize, r.stash)
 
         @tailrec def rec(remaining: Long, mapSize: Long): Boolean =
-          if (remaining != 0) {
-            def finish(): Boolean = {
+          if (remaining != 0)
+            def finish(): Boolean =
               // We have just read (and dropped) the typeMemberName element, the next element coming in from the parser
               // is the actual type id. Before letting the user code consume the stash we inject the artifical elements
               // making up the "regular" ADT envelope at the _beginning_ of the stash, in reverse order.
@@ -198,10 +188,9 @@ object AdtEncodingStrategy {
               r.receiveInto(stash.prependReceiver) // the type id
               r.stash = stash // inject all our stashed elements before the next element from the parser
               unsized
-            }
 
             // read and stash the next map entry key
-            stash.appendElementFrom(r) match {
+            stash.appendElementFrom(r) match
               case DataItem.String | DataItem.Chars if stash.dataItemValueFromEnd(-1) == typeMemberName =>
                 stash.dropLastStringDataItem()
                 finish()
@@ -215,17 +204,14 @@ object AdtEncodingStrategy {
               case _ => // the map entry is not the type id,
                 stash.appendElementFrom(r)  // so read and stash the map entry value
                 rec(remaining - 1, mapSize) // and recurse
-            }
-          } else failNoTypeId()
+          else failNoTypeId()
 
-        if (r.tryReadMapStart()) {
+        if (r.tryReadMapStart())
           rec(-1, -1)
-        } else if (r.hasMapHeader) {
+        else if (r.hasMapHeader)
           val mapSize = r.readMapHeader()
           rec(mapSize, mapSize)
-        } else failNoMap()
-      }
+        else failNoMap()
 
       def readAdtEnvelopeClose(r: Reader, openResult: Boolean, typeName: String): Unit = ()
     }
-}

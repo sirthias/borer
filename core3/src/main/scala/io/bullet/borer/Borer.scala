@@ -14,7 +14,7 @@ import io.bullet.borer.json._
 
 import scala.annotation.unchecked.uncheckedVariance
 
-case object Cbor extends Target {
+case object Cbor extends Target:
 
   /**
    * Entry point into the CBOR encoding mini-DSL.
@@ -79,18 +79,16 @@ case object Cbor extends Target {
       maxArrayLength: Long = Int.MaxValue,
       maxMapLength: Long = Int.MaxValue,
       maxNestingLevels: Int = 1000)
-      extends Borer.EncodingConfig with CborValidation.Config {
+      extends Borer.EncodingConfig with CborValidation.Config:
 
     Util.requireNonNegative(maxArrayLength, "maxArrayLength")
     Util.requireNonNegative(maxMapLength, "maxMapLength")
     Util.requireNonNegative(maxNestingLevels, "maxNestingLevels")
 
     if (bufferSize < 8) throw new IllegalArgumentException(s"bufferSize must be >= 8, but was $bufferSize")
-  }
 
-  object EncodingConfig {
+  object EncodingConfig:
     val default = EncodingConfig()
-  }
 
   /**
    * @param readIntegersAlsoAsFloatingPoint set to false to disable automatic conversion of integer to floating point values
@@ -109,7 +107,7 @@ case object Cbor extends Target {
       maxArrayLength: Long = Int.MaxValue,
       maxMapLength: Long = Int.MaxValue,
       maxNestingLevels: Int = 1000)
-      extends Borer.DecodingConfig with CborValidation.Config with CborParser.Config {
+      extends Borer.DecodingConfig with CborValidation.Config with CborParser.Config:
 
     Util.requireNonNegative(maxTextStringLength, "maxTextStringLength")
     Util.requireNonNegative(maxByteStringLength, "maxByteStringLength")
@@ -119,11 +117,9 @@ case object Cbor extends Target {
 
     if (maxMapLength > Long.MaxValue / 2)
       throw new IllegalArgumentException(s"maxMapLength must be <= ${Long.MaxValue / 2}, but was $maxMapLength")
-  }
 
-  object DecodingConfig {
+  object DecodingConfig:
     val default = DecodingConfig()
-  }
 
   /**
    * @param maxBufferSize                  the max number of transcoding elements (not bytes!) that can be buffered
@@ -140,7 +136,7 @@ case object Cbor extends Target {
       maxArrayLength: Long = Int.MaxValue,
       maxMapLength: Long = Int.MaxValue,
       maxNestingLevels: Int = 1000)
-      extends Borer.TransEncodingConfig with CborValidation.Config {
+      extends Borer.TransEncodingConfig with CborValidation.Config:
 
     Util.requireNonNegative(maxArrayLength, "maxArrayLength")
     Util.requireNonNegative(maxMapLength, "maxMapLength")
@@ -148,11 +144,9 @@ case object Cbor extends Target {
 
     if (!Util.isPowerOf2(maxBufferSize) || maxBufferSize < 16)
       throw new IllegalArgumentException(s"maxBufferSize must be a power of two >= 16, but was $maxBufferSize")
-  }
 
-  object TransEncodingConfig {
+  object TransEncodingConfig:
     val default = TransEncodingConfig()
-  }
 
   /**
    * @param readIntegersAlsoAsFloatingPoint set to false to disable automatic conversion of integer to floating point values
@@ -167,7 +161,7 @@ case object Cbor extends Target {
       maxArrayLength: Long = Int.MaxValue,
       maxMapLength: Long = Int.MaxValue,
       maxNestingLevels: Int = 1000)
-      extends Reader.Config with CborValidation.Config {
+      extends Reader.Config with CborValidation.Config:
 
     Util.requireNonNegative(maxArrayLength, "maxArrayLength")
     Util.requireNonNegative(maxMapLength, "maxMapLength")
@@ -175,14 +169,11 @@ case object Cbor extends Target {
 
     if (maxMapLength > Long.MaxValue / 2)
       throw new IllegalArgumentException(s"maxMapLength must be <= ${Long.MaxValue / 2}, but was $maxMapLength")
-  }
 
-  object TransDecodingConfig {
+  object TransDecodingConfig:
     val default = TransDecodingConfig()
-  }
-}
 
-case object Json extends Target {
+case object Json extends Target:
 
   /**
    * Entry point into the JSON encoding mini-DSL.
@@ -229,25 +220,22 @@ case object Json extends Target {
       value: T,
       config: DecodingConfig = DecodingConfig.default,
       receiverWrapper: Receiver.Transformer[DecodingConfig] = Receiver.nopTransformer)(
-      implicit p: Input.Provider[T]): Reader = {
+      implicit p: Input.Provider[T]): Reader =
     val directParser = io.bullet.borer.json.DirectParser(value, config)
     val parser       = if (directParser ne null) null else new JsonParser(p(value), config)(p.byteAccess)
     new InputReader(parser, directParser, receiverWrapper, config, Json)
-  }
 
   final case class EncodingConfig(
       bufferSize: Int = 1024,
       allowBufferCaching: Boolean = true
-  ) extends Borer.EncodingConfig {
+  ) extends Borer.EncodingConfig:
 
     def compressFloatingPointValues = false
 
     if (bufferSize < 8) throw new IllegalArgumentException(s"bufferSize must be >= 8, but was $bufferSize")
-  }
 
-  object EncodingConfig {
+  object EncodingConfig:
     val default = EncodingConfig()
-  }
 
   /**
    * @param readIntegersAlsoAsFloatingPoint set to false to disable automatic conversion of integer to floating point values
@@ -274,7 +262,7 @@ case object Json extends Target {
       initialCharbufferSize: Int = 2048,
       allowBufferCaching: Boolean = true,
       allowDirectParsing: Boolean = true)
-      extends Borer.DecodingConfig with JsonParser.Config {
+      extends Borer.DecodingConfig with JsonParser.Config:
 
     Util.requireRange(maxNumberAbsExponent, 1, 999, "maxNumberAbsExponent")
     Util.requirePositive(maxStringLength, "maxStringLength")
@@ -286,11 +274,9 @@ case object Json extends Target {
 
     // the JsonParser never produces Float values directly (only doubles), so this is necessary
     def readDoubleAlsoAsFloat = true
-  }
 
-  object DecodingConfig {
+  object DecodingConfig:
     val default = DecodingConfig()
-  }
 
   /**
    * @param maxBufferSize                  the max number of transcoding elements (not bytes!) that can be buffered
@@ -301,15 +287,13 @@ case object Json extends Target {
       maxBufferSize: Int = 16384,
       allowBufferCaching: Boolean = true,
       compressFloatingPointValues: Boolean = true)
-      extends Borer.TransEncodingConfig {
+      extends Borer.TransEncodingConfig:
 
     if (!Util.isPowerOf2(maxBufferSize) || maxBufferSize < 16)
       throw new IllegalArgumentException(s"maxBufferSize must be a power of two >= 16, but was $maxBufferSize")
-  }
 
-  object TransEncodingConfig {
+  object TransEncodingConfig:
     val default = TransEncodingConfig()
-  }
 
   /**
    * @param readIntegersAlsoAsFloatingPoint set to false to disable automatic conversion of integer to floating point values
@@ -320,10 +304,8 @@ case object Json extends Target {
       readDoubleAlsoAsFloat: Boolean = false)
       extends Reader.Config
 
-  object TransDecodingConfig {
+  object TransDecodingConfig:
     val default = TransDecodingConfig()
-  }
-}
 
 /**
  * Super-type of the [[Cbor]] and [[Json]] objects.
@@ -332,66 +314,58 @@ case object Json extends Target {
  * which allows custom logic to pick different (de)serialization approaches
  * depending on whether the target is CBOR or JSON.
  */
-sealed abstract class Target {
+sealed abstract class Target:
 
   def encode[T: Encoder](value: T): EncodingSetup.Api[_]
 
   def decode[T](input: T)(implicit w: Input.Provider[T]): DecodingSetup.Api[_]
 
   def transEncode[T: Encoder](value: T): TranscodingSetup.EncodingApi[_, _]
-}
 
 /**
  * Main entry point into the CBOR API.
  */
-object Borer {
+object Borer:
 
-  sealed abstract class EncodingConfig extends Writer.Config {
+  sealed abstract class EncodingConfig extends Writer.Config:
     def bufferSize: Int
     def allowBufferCaching: Boolean
-  }
 
-  sealed abstract class TransEncodingConfig extends Writer.Config {
+  sealed abstract class TransEncodingConfig extends Writer.Config:
     def maxBufferSize: Int
     def allowBufferCaching: Boolean
-  }
 
   sealed abstract class DecodingConfig extends Reader.Config
 
   sealed abstract class Error[+IO](private var _io: IO @uncheckedVariance, msg: String, cause: Throwable = null)
-      extends RuntimeException(msg, cause) {
+      extends RuntimeException(msg, cause):
 
     final override def getMessage = s"$msg (${_io})"
 
     final def io: IO = _io
 
-    private[borer] def withPosOf(reader: Reader): Error[Input.Position] = {
+    private[borer] def withPosOf(reader: Reader): Error[Input.Position] =
       val thiz = this.asInstanceOf[Error[Input.Position]]
       if (thiz._io.asInstanceOf[AnyRef] eq null) thiz._io = reader.position
       thiz
-    }
 
-    private[borer] def withOut(out: Output): Error[Output] = {
+    private[borer] def withOut(out: Output): Error[Output] =
       val thiz = this.asInstanceOf[Error[Output]]
       if (thiz._io eq null) thiz._io = out
       thiz
-    }
 
-    private[borer] def withUnit: Error[Unit] = {
+    private[borer] def withUnit: Error[Unit] =
       val thiz = this.asInstanceOf[Error[Unit]]
       thiz._io = ()
       thiz
-    }
-  }
 
-  object Error {
+  object Error:
 
     final class UnexpectedEndOfInput[IO](io: IO, expected: String)
         extends Error[IO](io, s"Expected $expected but got end of input")
 
-    final class InvalidInputData[IO](io: IO, msg: String) extends Error[IO](io, msg) {
+    final class InvalidInputData[IO](io: IO, msg: String) extends Error[IO](io, msg):
       def this(io: IO, expected: String, actual: String) = this(io, s"Expected $expected but got $actual")
-    }
 
     final class ValidationFailure[IO](io: IO, msg: String) extends Error[IO](io, msg)
 
@@ -400,5 +374,3 @@ object Borer {
     final class Overflow[IO](io: IO, msg: String) extends Error[IO](io, msg)
 
     final class General[IO](io: IO, cause: Throwable) extends Error[IO](io, cause.toString, cause)
-  }
-}

@@ -15,7 +15,7 @@ import utest._
 
 import scala.util.Random
 
-object FromInputStreamInputSpec extends TestSuite with TestUtils {
+object FromInputStreamInputSpec extends TestSuite with TestUtils:
 
   val random = new Random
 
@@ -30,15 +30,14 @@ object FromInputStreamInputSpec extends TestSuite with TestUtils {
       val inputStream = new InputStream {
         def read() = ???
         override def read(b: Array[Byte]) =
-          if (bytes.hasNext) {
-            val chunk = random.nextInt(4) match {
+          if (bytes.hasNext)
+            val chunk = random.nextInt(4) match
               case 0     => Array.emptyByteArray
               case 1 | 2 => bytes.take(b.length).toArray[Byte]
               case 3     => bytes.take(random.nextInt(b.length) + 1).toArray[Byte]
-            }
             System.arraycopy(chunk, 0, b, 0, chunk.length)
             chunk.length
-          } else -1
+          else -1
       }
 
       val input = Input.fromInputStream(inputStream, bufferSize = 300)
@@ -60,4 +59,3 @@ object FromInputStreamInputSpec extends TestSuite with TestUtils {
       input.readBytePadded(paddingProvider) ==> 42
     }
   }
-}

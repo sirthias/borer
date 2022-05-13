@@ -16,7 +16,7 @@ import utest._
 
 import scala.io.Source
 
-object FileSpec extends TestSuite {
+object FileSpec extends TestSuite:
 
   final case class Foo(
       string: String = "This is a really long text for testing writing to a file",
@@ -29,7 +29,7 @@ object FileSpec extends TestSuite {
 
     "small file" - {
       val tempFile = File.createTempFile("borer", ".json")
-      try {
+      try
         Json.encode(Foo()).to(tempFile).result ==> tempFile
 
         new String(Files.readAllBytes(tempFile.toPath), "UTF8") ==>
@@ -37,7 +37,7 @@ object FileSpec extends TestSuite {
 
         Json.decode(tempFile).to[Foo].value ==> Foo()
 
-      } finally tempFile.delete()
+      finally tempFile.delete()
     }
 
     "large file" - {
@@ -47,7 +47,7 @@ object FileSpec extends TestSuite {
       val dom = Json.decode(testFileBytes).withConfig(config).to[Dom.Element].value
 
       val tempFile = File.createTempFile("borer", ".json")
-      try {
+      try
         Json.encode(dom).to(tempFile).result ==> tempFile
 
         Json
@@ -56,7 +56,6 @@ object FileSpec extends TestSuite {
           .to[Dom.Element]
           .value ==> dom
 
-      } finally tempFile.delete()
+      finally tempFile.delete()
     }
   }
-}

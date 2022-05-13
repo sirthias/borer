@@ -10,7 +10,7 @@ package io.bullet.borer
 
 import utest._
 
-object ConcatEncoderSpec extends ByteArrayCborSpec {
+object ConcatEncoderSpec extends ByteArrayCborSpec:
   import Dom._
 
   val tests = Tests {
@@ -148,4 +148,3 @@ object ConcatEncoderSpec extends ByteArrayCborSpec {
   def select1stEncoder[A: Encoder, B]: Encoder[(A, B)] = Encoder((w, t) => w ~ t._1)
   def select2ndEncoder[A, B: Encoder]: Encoder[(A, B)] = Encoder((w, t) => w ~ t._2)
 
-}

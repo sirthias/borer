@@ -10,7 +10,7 @@ package io.bullet.borer
 
 import utest._
 
-object NullableSpec extends ByteArrayJsonSpec {
+object NullableSpec extends ByteArrayJsonSpec:
 
   case class Foo(int: Nullable[Int], string: Nullable[String])
   case class Bar(foo: Nullable[Option[Foo]])
@@ -31,4 +31,3 @@ object NullableSpec extends ByteArrayJsonSpec {
       roundTrip("""[12,"foo"]""", Bar(Some(Foo(12, "foo"))))
     }
   }
-}

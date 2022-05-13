@@ -11,7 +11,7 @@ package io.bullet.borer.internal
 import io.bullet.borer.Float16
 import utest._
 
-object UtilSpec extends TestSuite {
+object UtilSpec extends TestSuite:
 
   val tests = Tests {
 
@@ -45,13 +45,11 @@ object UtilSpec extends TestSuite {
 
       val (yes, no) = floats.partition(Util.canBeRepresentedAsFloat16)
 
-      def roundTrips(f: Float) = {
+      def roundTrips(f: Float) =
         val roundTripped = Float16.shortToFloat(Float16.floatToShort(f))
         f == roundTripped || f.isNaN && roundTripped.isNaN
-      }
 
       yes.forall(roundTrips) ==> true
       !no.exists(roundTrips) ==> true
     }
   }
-}

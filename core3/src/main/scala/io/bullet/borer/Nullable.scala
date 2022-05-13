@@ -12,7 +12,7 @@ import scala.language.implicitConversions
 
 final case class Default[+T](defaultValue: T)
 
-object Default {
+object Default:
   implicit val boolean: Default[Boolean] = Default(false)
   implicit val byte: Default[Byte]       = Default(0: Byte)
   implicit val short: Default[Short]     = Default(0: Short)
@@ -28,18 +28,16 @@ object Default {
 
   private[this] val optionDefault            = Default(None)
   implicit def option[T]: Default[Option[T]] = optionDefault
-}
 
-final case class Nullable[+T](value: T) { // extends AnyVal // FIXME: re-enable value class after fix of https://github.com/lampepfl/dotty/issues/11264
+final case class Nullable[+T](value: T): // extends AnyVal // FIXME: re-enable value class after fix of https://github.com/lampepfl/dotty/issues/11264
 
   // for efficient unapply
   def isEmpty = false
   def get: T  = value
 
   override def toString = s"Nullable($value)"
-}
 
-object Nullable extends LowPrioNullable {
+object Nullable extends LowPrioNullable:
 
   implicit def apply[T](value: T): Nullable[T]    = new Nullable(value)
   def unapply[T](value: Nullable[T]): Nullable[T] = value
@@ -48,21 +46,18 @@ object Nullable extends LowPrioNullable {
 
   implicit def optionEncoder[T: Encoder]: Encoder[Nullable[Option[T]]] =
     Encoder { (w, nullable) =>
-      nullable.value match {
+      nullable.value match
         case Some(x) => w.write(x)
         case None    => w.writeNull()
-      }
     }
 
   implicit def optionDecoder[T: Decoder]: Decoder[Nullable[Option[T]]] =
     Decoder(r => new Nullable(if (r.tryReadNull()) None else Some(r.read[T]())))
-}
 
-sealed abstract class LowPrioNullable {
+sealed abstract class LowPrioNullable:
 
   implicit def encoder[T: Encoder]: Encoder[Nullable[T]] =
     Encoder((w, x) => w.write(x.value))
 
   implicit def decoder[T: Decoder: Default]: Decoder[Nullable[T]] =
     Decoder(r => new Nullable(if (r.tryReadNull()) Default.of[T] else r.read[T]()))
-}

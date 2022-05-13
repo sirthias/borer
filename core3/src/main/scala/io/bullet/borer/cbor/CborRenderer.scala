@@ -17,7 +17,7 @@ import io.bullet.borer.internal.{Renderer, Util}
  * Encapsulates basic CBOR encoding logic.
  * Has no internal state and can therefore be a singleton object.
  */
-final private[borer] class CborRenderer(var out: Output) extends Renderer {
+final private[borer] class CborRenderer(var out: Output) extends Renderer:
 
   def onNull(): Unit =
     out = out.writeAsByte(0xF6)
@@ -86,14 +86,14 @@ final private[borer] class CborRenderer(var out: Output) extends Renderer {
     out = writeInteger(value.code, 0xC0)
 
   def onSimpleValue(value: Int): Unit =
-    out = if (!SimpleValue.isLegal(value)) {
+    out = if (!SimpleValue.isLegal(value))
       val msg = s"$value must be in the range ${SimpleValue.legalRange}, but was $value"
       throw new Borer.Error.InvalidInputData(out, msg)
-    } else writeInteger(value.toLong, 0xE0)
+    else writeInteger(value.toLong, 0xE0)
 
   def onEndOfInput(): Unit = () // no actual action here
 
-  private def writeInteger(value: Long, majorType: Int): Output = {
+  private def writeInteger(value: Long, majorType: Int): Output =
     var v = value
     (if (v > 23) {
        if (v >> 8 != 0) {
@@ -111,9 +111,6 @@ final private[borer] class CborRenderer(var out: Output) extends Renderer {
        v += majorType; out
      })
       .writeByte(v.toByte)
-  }
-}
 
-object CborRenderer extends (Output => CborRenderer) {
+object CborRenderer extends (Output => CborRenderer):
   def apply(out: Output) = new CborRenderer(out)
-}

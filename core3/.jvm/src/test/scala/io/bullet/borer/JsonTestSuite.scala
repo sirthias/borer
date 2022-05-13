@@ -14,7 +14,7 @@ import utest._
 
 import scala.io.Source
 
-object JsonTestSuite extends TestSuite {
+object JsonTestSuite extends TestSuite:
 
   val disabled: Set[String] = Set(
     "n_multidigit_number_then_00.json",
@@ -43,37 +43,30 @@ object JsonTestSuite extends TestSuite {
       for {
         (name, bytes) <- testFiles
         if name startsWith "y"
-      } {
-        Json.decode(bytes).withConfig(config).to[Dom.Element].valueEither match {
+      }
+        Json.decode(bytes).withConfig(config).to[Dom.Element].valueEither match
           case Right(_) => // ok
           case Left(e)  => throw new RuntimeException(s"Test `$name` did not parse as it should", e)
-        }
-      }
     }
 
     test("Reject") - {
       for {
         (name, bytes) <- testFiles
         if name startsWith "n"
-      } {
-        Json.decode(bytes).withConfig(config).to[Dom.Element].valueEither match {
+      }
+        Json.decode(bytes).withConfig(config).to[Dom.Element].valueEither match
           case Left(_)  => // ok
           case Right(x) => throw new RuntimeException(s"Test `$name` parsed even though it should have failed: $x")
-        }
-      }
     }
 
     test("Not Crash") - {
       for {
         (name, bytes) <- testFiles
         if name startsWith "i"
-      } {
-        Json.decode(bytes).withConfig(config).to[Dom.Element].valueEither match {
+      }
+        Json.decode(bytes).withConfig(config).to[Dom.Element].valueEither match
           case Right(_)                        => // everything else is fine
           case Left(e: Borer.Error.General[_]) => throw new RuntimeException(s"Test `$name` did fail unexpectedly", e)
           case Left(_)                         => // everything else is fine
-        }
-      }
     }
   }
-}

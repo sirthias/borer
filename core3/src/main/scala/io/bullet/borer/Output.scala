@@ -41,28 +41,26 @@ trait Output { outer =>
 }
 
 object Output
-    extends ToByteArrayOutput with ToByteBufferOutput with ToFileOutput with ToOutputStreamOutput with ToUnitOutput {
+    extends ToByteArrayOutput with ToByteBufferOutput with ToFileOutput with ToOutputStreamOutput with ToUnitOutput:
 
   // #provider
   /**
    * Responsible for providing an Output that produces instances of [[T]].
    */
-  trait ToTypeProvider[T] {
+  trait ToTypeProvider[T]:
     type Out <: Output { type Result = T }
     def apply(bufferSize: Int, allowBufferCaching: Boolean): Out
-  }
 
   /**
    * Responsible for providing an Output that outputs into the given value [[T]].
    */
-  trait ToValueProvider[T] {
+  trait ToValueProvider[T]:
     type Out <: Output { type Result = T }
     def apply(value: T, bufferSize: Int, allowBufferCaching: Boolean): Out
-  }
 
   // #provider
 
-  implicit final class OutputOps(val underlying: Output) extends AnyVal {
+  implicit final class OutputOps(val underlying: Output) extends AnyVal:
     @inline def writeAsByte(i: Int): underlying.Self = underlying.writeByte(i.toByte)
 
     @inline def writeAsByte(c: Char): underlying.Self           = underlying.writeByte(c.toByte)
@@ -74,16 +72,12 @@ object Output
     @inline def writeAsBytes(a: Char, b: Char, c: Char, d: Char): underlying.Self =
       underlying.writeBytes(a.toByte, b.toByte, c.toByte, d.toByte)
 
-    def writeStringAsAsciiBytes(s: String): underlying.Self = {
+    def writeStringAsAsciiBytes(s: String): underlying.Self =
       @tailrec def rec(out: underlying.Self, ix: Int): underlying.Self =
-        s.length - ix match {
+        s.length - ix match
           case 0 => out
           case 1 => writeAsByte(s.charAt(ix))
           case 2 => writeAsBytes(s.charAt(ix), s.charAt(ix + 1))
           case 3 => writeAsBytes(s.charAt(ix), s.charAt(ix + 1), s.charAt(ix + 2))
           case _ => rec(writeAsBytes(s.charAt(ix), s.charAt(ix + 1), s.charAt(ix + 2), s.charAt(ix + 3)), ix + 4)
-        }
       rec(underlying.asInstanceOf[underlying.Self], 0)
-    }
-  }
-}

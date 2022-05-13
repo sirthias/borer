@@ -10,7 +10,7 @@ package io.bullet.borer
 
 import utest._
 
-object LoggingSpec extends TestSuite {
+object LoggingSpec extends TestSuite:
   import Dom._
 
   val alphabet = ('A' to 'Z').mkString
@@ -202,7 +202,7 @@ object LoggingSpec extends TestSuite {
     }
   }
 
-  def roundTripLogEquals(element: Element, initialGutterWidth: Int = 5)(expectedLog: String): Unit = {
+  def roundTripLogEquals(element: Element, initialGutterWidth: Int = 5)(expectedLog: String): Unit =
     val log = new java.lang.StringBuilder
 
     val encoded =
@@ -237,5 +237,3 @@ object LoggingSpec extends TestSuite {
       .value ==> element
 
     log.toString ==> expectedLog
-  }
-}
