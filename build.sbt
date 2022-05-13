@@ -48,7 +48,10 @@ lazy val commonSettings = Seq(
           "-encoding", "UTF-8",
           "-feature",
           "-unchecked",
-          "-new-syntax",
+          "-old-syntax",
+          "-no-indent",
+          "-source:3.0-migration",
+          //"-rewrite",
           "-pagewidth:120",
           "-Xtarget:11",
           "-Xfatal-warnings",
@@ -166,8 +169,8 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   )
   .jsSettings(scalajsSettings: _*)
 
-lazy val `core3-jvm` = core.jvm.enablePlugins(SpecializeJsonParserPlugin)
-lazy val `core3-js`  = core.js
+lazy val `core3-jvm` = core3.jvm.enablePlugins(SpecializeJsonParserPlugin)
+lazy val `core3-js`  = core3.js
 lazy val core3 = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
@@ -177,9 +180,12 @@ lazy val core3 = crossProject(JSPlatform, JVMPlatform)
   .settings(
     scalaVersion := scala3,
     moduleName := "borer-core3",
-    libraryDependencies ++= Seq(munit.value),
+    libraryDependencies ++= Seq(utest.value),
   )
   .jvmSettings(
+    Compile / specializeJsonParser / sourceDirectory := baseDirectory.value.getParentFile / "src" / "main",
+    Compile / specializeJsonParser / sourceManaged := baseDirectory.value / "target" / "scala" / "src_managed" / "main",
+    Compile / managedSourceDirectories += (Compile / specializeJsonParser / sourceManaged).value
   )
   .jsSettings(scalajsSettings: _*)
 
