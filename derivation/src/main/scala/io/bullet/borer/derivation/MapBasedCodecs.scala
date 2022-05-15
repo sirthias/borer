@@ -286,7 +286,7 @@ object MapBasedCodecs {
             val maskIncomplete =
               if (arity <= 32) q"mask != ${(1 << arity) - 1}"
               else if (arity <= 64) q"mask != ${(1L << arity) - 1}"
-              else q"mask0 != -1 || mask1 != ${(1L << (arity - 64)) - 1}"
+              else q"mask0 != -1 || mask1 != ${(1L << arity - 64) - 1}"
 
             val maskAsParams =
               if (arity <= 32) q"mask: Int" :: Nil
@@ -306,7 +306,7 @@ object MapBasedCodecs {
 
             def readFields(start: Int, end: Int): Tree =
               if (start < end) {
-                val mid        = (start + end) >> 1
+                val mid        = start + end >> 1
                 val (key, p)   = keysAndParamsSorted(mid)
                 val methodName = TermName(s"readFields_${start}_$end")
                 val onMatch =
@@ -340,15 +340,15 @@ object MapBasedCodecs {
                 val testMaskDefs = {
                   def reqMask(iter: Iterator[CaseParam]) =
                     iter.foldLeft(0L) { (acc, p) =>
-                      if (p.defaultValueMethod.isDefined) acc | (1L << p.index) else acc
+                      if (p.defaultValueMethod.isDefined) acc | 1L << p.index else acc
                     }
                   if (arity <= 32) {
-                    q"val testMask = mask | ${literal(reqMask(params.iterator).toInt | (-1 << arity))}" :: Nil
+                    q"val testMask = mask | ${literal(reqMask(params.iterator).toInt | -1 << arity)}" :: Nil
                   } else if (arity <= 64) {
-                    q"val testMask = mask | ${literal(reqMask(params.iterator) | (-1L << arity))}" :: Nil
+                    q"val testMask = mask | ${literal(reqMask(params.iterator) | -1L << arity)}" :: Nil
                   } else {
                     q"val testMask0 = mask0 | ${literal(reqMask(params.iterator take 64))}" ::
-                    q"val testMask1 = mask1 | ${literal(reqMask(params.iterator drop 64) | (-1L << (arity - 64)))}" :: Nil
+                    q"val testMask1 = mask1 | ${literal(reqMask(params.iterator drop 64) | -1L << arity - 64)}" :: Nil
                   }
                 }
                 val testMaskTest = if (arity <= 64) q"testMask" else q"testMask0 & testMask1"

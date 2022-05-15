@@ -43,5 +43,5 @@ object Helpers {
     }
 
   private def oneBits(m0: Long, m1: Long): Iterator[Int] = oneBits(m0) ++ oneBits(m1).map(_ + 64)
-  private def oneBits(mask: Long): Iterator[Int] = Iterator.from(0).take(64).filter(i => ((mask >>> i) & 1) != 0)
+  private def oneBits(mask: Long): Iterator[Int]         = Iterator.from(0).take(64).filter(i => (mask >>> i & 1) != 0)
 }

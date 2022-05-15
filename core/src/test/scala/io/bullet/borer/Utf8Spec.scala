@@ -106,7 +106,7 @@ object Utf8Spec extends TestSuite with TestUtils {
         0 -> (x - 1)
       case ((x, y), (c, _)) =>
         buf += c
-        (x - 1) -> y
+        x - 1 -> y
     }
     buf.mkString
   }

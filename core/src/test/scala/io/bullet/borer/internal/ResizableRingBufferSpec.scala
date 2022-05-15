@@ -25,7 +25,7 @@ object ResizableRingBufferSpec extends TestSuite {
     "read back exactly the number of elems previously written" - {
       for {
         buf   <- buffers
-        count <- Array.tabulate(5)(x => ((x + 1) * 31) % buf.maxCapacity)
+        count <- Array.tabulate(5)(x => (x + 1) * 31 % buf.maxCapacity)
       } {
         val values = Array.tabulate(count)(_.toString)
         values.foreach(s => buf.append(s) ==> true)
@@ -37,10 +37,10 @@ object ResizableRingBufferSpec extends TestSuite {
 
     "pass a simple stress-test" - {
       for {
-        opCount <- Array.tabulate(5)(x => ((x + 5) * 31) % 50)
+        opCount <- Array.tabulate(5)(x => (x + 5) * 31 % 50)
         buf     <- buffers
       } {
-        val ops   = Array.tabulate(opCount)(x => ((x - 20) * 31) % 50)
+        val ops   = Array.tabulate(opCount)(x => (x - 20) * 31 % 50)
         val queue = collection.mutable.Queue[String]()
         val ints  = Iterator.from(0)
         ops foreach {

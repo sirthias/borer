@@ -30,7 +30,7 @@ object Base16 extends BaseEncoding("base16", 4) {
     val baa    = ByteArrayAccess.instance
     val sl4    = sl - 4
 
-    @inline def hexDigit(i: Int) = (48 + i + (digitBase & ((9 - i) >> 31))).toChar
+    @inline def hexDigit(i: Int) = (48 + i + (digitBase & 9 - i >> 31)).toChar
 
     @tailrec def encodeSlow(si: Int, di: Int): Array[Char] =
       if (si < sl) {
@@ -74,8 +74,8 @@ object Base16 extends BaseEncoding("base16", 4) {
         throw new IllegalArgumentException(s""""${Util.show(chars)}" is not a valid $name encoding.
                                               | '$c' at index $ix is not part of the $name alphabet.""".stripMargin)
       val cc = c - 48
-      if (c < 0 || 102 < c || (((0x7E0000007E03FFL >> cc) & 1) == 0)) fail()
-      (c & 0x1F) + ((c >> 6) * 0x19) - 0x10
+      if (c < 0 || 102 < c || (0x7E0000007E03FFL >> cc & 1) == 0) fail()
+      (c & 0x1F) + (c >> 6) * 0x19 - 0x10
     }
 
     @tailrec def decodeSlow(si: Int, di: Int): Array[Byte] =

@@ -121,7 +121,7 @@ object akka {
     def readDoubleByteBigEndian(): Char = {
       val c = _cursor
       _cursor = c + 2
-      ((byteString(c) << 8) | byteString(c + 1) & 0xFF).toChar
+      (byteString(c) << 8 | byteString(c + 1) & 0xFF).toChar
     }
 
     def readDoubleByteBigEndianPadded(pp: Input.PaddingProvider[ByteString]): Char = {

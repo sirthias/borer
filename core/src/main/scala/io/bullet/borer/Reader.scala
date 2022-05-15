@@ -153,7 +153,7 @@ final class InputReader[Config <: Reader.Config](
   @inline def hasLong: Boolean = hasAnyOf(DI.Int | DI.Long)
 
   @inline def hasLong(value: Long): Boolean =
-    hasInt && (receptacle.intValue.toLong == value) || hasLong && (receptacle.longValue == value)
+    hasInt && receptacle.intValue.toLong == value || hasLong && receptacle.longValue == value
   @inline def tryReadLong(value: Long): Boolean = clearIfTrue(hasLong(value))
 
   /**

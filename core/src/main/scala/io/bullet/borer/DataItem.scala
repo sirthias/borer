@@ -71,7 +71,7 @@ object DataItem {
 
   final val None        = 0
   final val Complex     = ArrayHeader | ArrayStart | MapHeader | MapStart | BytesStart | TextStart
-  final val AllButBreak = ((EndOfInput << 1) - 1) & ~Break
+  final val AllButBreak = (EndOfInput << 1) - 1 & ~Break
 
   //////////////////////////////////////////////////////////////////////////
 
@@ -80,7 +80,7 @@ object DataItem {
       Iterator
         .range(0, 25)
         .map { i =>
-          mask & (1 << i) match {
+          mask & 1 << i match {
             case None => ""
 
             case Null      => "Null"

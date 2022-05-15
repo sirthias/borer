@@ -96,7 +96,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
 
     def parseNull(): Int = {
       val quad = input.readQuadByteBigEndianPadded(this)
-      if ((quad >>> 8) == 0x00756C6C) { // "ull"
+      if (quad >>> 8 == 0x00756C6C) { // "ull"
         nextChar = nextCharAfterWhitespace(quad & 0xFF)
         receiver.onNull()
         DataItem.Null
@@ -112,7 +112,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
 
     def parseTrue(): Int = {
       val quad = input.readQuadByteBigEndianPadded(this)
-      if ((quad >>> 8) == 0x00727565) { // "rue"
+      if (quad >>> 8 == 0x00727565) { // "rue"
         nextChar = nextCharAfterWhitespace(quad & 0xFF)
         receiver.onBoolean(value = true)
         DataItem.Boolean
@@ -166,16 +166,16 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       digitCount match {
         case 0 => returnWith(firstDigit)
         case 1 => returnWith(firstDigit * 10 + (digs >>> 56))
-        case 2 => returnWith(longFrom4Digits((firstDigit << 32) | (digs >>> 56 << 16) | (digs << 8 >>> 56)))
+        case 2 => returnWith(longFrom4Digits(firstDigit << 32 | digs >>> 56 << 16 | digs << 8 >>> 56))
         case 3 =>
-          val m = (firstDigit << 48) | (digs >>> 56 << 32) | ((digs & 0x00FF000000000000L) >>> 32) | (digs << 16 >>> 56)
+          val m = firstDigit << 48 | digs >>> 56 << 32 | (digs & 0x00FF000000000000L) >>> 32 | digs << 16 >>> 56
           returnWith(longFrom4Digits(m))
-        case 4 => returnWith(longFrom8Digits((firstDigit << 32) | (digs >>> 32)))
-        case 5 => returnWith(longFrom8Digits((firstDigit << 40) | (digs >>> 24)))
-        case 6 => returnWith(longFrom8Digits((firstDigit << 48) | (digs >>> 16)))
-        case 7 => returnWith(longFrom8Digits((firstDigit << 56) | (digs >>> 8)))
+        case 4 => returnWith(longFrom8Digits(firstDigit << 32 | digs >>> 32))
+        case 5 => returnWith(longFrom8Digits(firstDigit << 40 | digs >>> 24))
+        case 6 => returnWith(longFrom8Digits(firstDigit << 48 | digs >>> 16))
+        case 7 => returnWith(longFrom8Digits(firstDigit << 56 | digs >>> 8))
         case 8 =>
-          parseSubsequentDigits(-longFrom8Digits((firstDigit << 56) | (digs >>> 8)) * 10 - (digs & 0xFFL), newLen)
+          parseSubsequentDigits(-longFrom8Digits(firstDigit << 56 | digs >>> 8) * 10 - (digs & 0xFFL), newLen)
       }
     }
 
@@ -202,14 +202,14 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
 
       @inline def v3 =
         value * 1000 - longFrom4Digits {
-          (digs >>> 56 << 32) | ((digs & 0x00FF000000000000L) >>> 32) | (digs << 16 >>> 56)
+          digs >>> 56 << 32 | (digs & 0x00FF000000000000L) >>> 32 | digs << 16 >>> 56
         }
 
       @inline def v4 =
         value * 10000 - longFrom4Digits {
-          val a = (digs >>> 48 << 32) | (digs << 16 >>> 48) // 0x00000a0b00000c0d
-          val b = a & 0x0000FF000000FF00L                   // 0x00000a0000000c00
-          val x = (a ^ b) | (b << 8)                        // 0x000a000b000c000d
+          val a = digs >>> 48 << 32 | digs << 16 >>> 48 // 0x00000a0b00000c0d
+          val b = a & 0x0000FF000000FF00L               // 0x00000a0000000c00
+          val x = a ^ b | b << 8                        // 0x000a000b000c000d
           x
         }
       @inline def v5 = value * 100000 - longFrom8Digits(digs >>> 24)
@@ -399,14 +399,14 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
             @inline def hd(c: Int): Int = HexDigits(c).toInt
 
             var q = input.readQuadByteBigEndianPadded(this)
-            var x = (hd(q >>> 24) << 12) | (hd(q << 8 >>> 24) << 8) | (hd(q << 16 >>> 24) << 4) | hd(q & 0xFF)
+            var x = hd(q >>> 24) << 12 | hd(q << 8 >>> 24) << 8 | hd(q << 16 >>> 24) << 4 | hd(q & 0xFF)
             if (x < 0) failIllegalEscapeSeq(-4)
 
             // we immediately check whether there is another `u` sequence following and decode that as well if so
             if (input.readDoubleByteBigEndianPadded(this) == 0x5C75) {
               q = input.readQuadByteBigEndianPadded(this)
               cc = appendChar(cc, x.toChar)
-              x = (hd(q >>> 24) << 12) | (hd(q << 8 >>> 24) << 8) | (hd(q << 16 >>> 24) << 4) | hd(q & 0xFF)
+              x = hd(q >>> 24) << 12 | hd(q << 8 >>> 24) << 8 | hd(q << 16 >>> 24) << 4 | hd(q & 0xFF)
               if (x < 0) failIllegalEscapeSeq(-4)
             } else unread(2)
             x.toChar
@@ -421,19 +421,19 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       val b2        = quad >> 24
       var cc        = charCursor
       def fail()    = failIllegalUtf8(-5)
-      val cp = (byteCount | 0x80) ^ (b2 & 0xC0) match {
+      val cp = (byteCount | 0x80) ^ b2 & 0xC0 match {
         case 1 =>
           if ((b1 & 0x1E) == 0) fail()
-          (b1 << 6) ^ b2 ^ 0xF80
+          b1 << 6 ^ b2 ^ 0xF80
         case 2 =>
           val b3 = quad << 8 >> 24
-          val c  = (b1 << 12) ^ (b2 << 6) ^ b3 ^ 0xFFFE1F80
-          if ((b1 == 0xE0 && (b2 & 0xE0) == 0x80) || (b3 & 0xC0) != 0x80 || ((c >> 11) == 0x1B)) fail()
+          val c  = b1 << 12 ^ b2 << 6 ^ b3 ^ 0xFFFE1F80
+          if (b1 == 0xE0 && (b2 & 0xE0) == 0x80 || (b3 & 0xC0) != 0x80 || c >> 11 == 0x1B) fail()
           c
         case 3 =>
           val b3 = quad << 8 >> 24
           val b4 = quad << 16 >> 24
-          val c  = (b1 << 18) ^ (b2 << 12) ^ (b3 << 6) ^ b4 ^ 0x381F80
+          val c  = b1 << 18 ^ b2 << 12 ^ b3 << 6 ^ b4 ^ 0x381F80
           if ((b3 & 0xC0) != 0x80 || (b4 & 0xC0) != 0x80 || c < 0x010000 || c > 0x10FFFF) fail()
           cc = appendChar(charCursor, (0xD7C0 + (c >> 10)).toChar) // high surrogate
           0xDC00 + (c & 0x3FF)                                     // low surrogate
@@ -517,7 +517,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
 
     def pushMap(): Int =
       if (level < 64) {
-        levelType = (levelType << 1) | 1
+        levelType = levelType << 1 | 1
         level += 1
         fetchNextChar()
         state = if (nextChar == '}') EXPECT_MAP_BREAK else EXPECT_MAP_KEY
@@ -617,7 +617,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
 
   def padDoubleByte(remaining: Int): Char = {
     cursorExtra += 2 - remaining
-    if (remaining < 1) '\uffff' else ((input.readByte() << 8) | 0xFF).toChar
+    if (remaining < 1) '\uffff' else (input.readByte() << 8 | 0xFF).toChar
   }
 
   def padQuadByte(remaining: Int): Int = {
@@ -712,16 +712,16 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
   // input is 0x0a0b0c0d0e0f0g0h where `abcdefgh` are the digits to be converted into a Long value
   private def longFrom8Digits(oct: Long) = {
     var x = oct * 266 // (x * 10) + (x << 8)
-    x = (x >> 8) & 0x00FF00FF00FF00FFL
+    x = x >> 8 & 0x00FF00FF00FF00FFL
     x = x * 65636 // (x * 100) + (x << 16)
-    x = (x >> 16) & 0x0000FFFF0000FFFFL
+    x = x >> 16 & 0x0000FFFF0000FFFFL
     x = x * 4294977296L // (x * 10000) + (x << 32)
     x >> 32
   }
 
   // same as above but for 4 digits 0x000a000b000c000d where `abcd` are the digits to be converted into a Long value
   @inline private def longFrom4Digits(x: Long) =
-    ((x * 281517932938216L) // (x * 1000) + ((x * 100) << 16) + ((x * 10) << 32) + (x << 48)
+    (x * 281517932938216L // (x * 1000) + ((x * 100) << 16) + ((x * 10) << 32) + (x << 48)
       >> 48)
 
   private def antePrecedingBytesAsAsciiString(len: Int): String = {

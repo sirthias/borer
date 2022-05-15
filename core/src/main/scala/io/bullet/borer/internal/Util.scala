@@ -53,10 +53,10 @@ private[borer] object Util {
   private[this] val _identityFunc = (x: Any) => x
   def identityFunc[T]: T => T     = _identityFunc.asInstanceOf[T => T]
 
-  @inline def isChar(x: Int): Boolean              = (x >> 16) == 0
-  @inline def isByte(x: Int): Boolean              = (x >> 7) == (x >> 31)
-  @inline def isShort(x: Int): Boolean             = (x >> 15) == (x >> 31)
-  @inline def isInt(x: Long): Boolean              = (x >> 31) == (x >> 63)
+  @inline def isChar(x: Int): Boolean              = x >> 16 == 0
+  @inline def isByte(x: Int): Boolean              = x >> 7 == x >> 31
+  @inline def isShort(x: Int): Boolean             = x >> 15 == x >> 31
+  @inline def isInt(x: Long): Boolean              = x >> 31 == x >> 63
   @inline def isUnsignedInt(uLong: Long): Boolean  = uLong >> 31 == 0
   @inline def isUnsignedLong(uLong: Long): Boolean = uLong >= 0
 
@@ -90,11 +90,11 @@ private[borer] object Util {
     val bits = java.lang.Float.floatToIntBits(value)
     // Float has 23 mantissa bits, Float16 has only 10
     // so the 13 lower bits of the mantissa must be zero
-    (bits & ((1 << 13) - 1)) == 0 && { // are the 13 lower bits of the mantissa zero?
-      val exp = (bits << 1) >>> 24 // move out sign bit and get 8 bit exponent
+    (bits & (1 << 13) - 1) == 0 && { // are the 13 lower bits of the mantissa zero?
+      val exp = bits << 1 >>> 24 // move out sign bit and get 8 bit exponent
       exp == 0 || exp == 0xFF || { // is exp a special value?
         val normalizedExp = exp - 127 // reverse exponent bias
-        (normalizedExp >> 4) == (normalizedExp >> 31) // does normalizedExp fit into 5 bits?
+        normalizedExp >> 4 == normalizedExp >> 31 // does normalizedExp fit into 5 bits?
       }
     }
   }

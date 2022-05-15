@@ -444,7 +444,7 @@ sealed abstract class LowPrioEncoders extends TupleEncoders {
 
       private def isEmpty(value: M[T]): Boolean = {
         val ks = (value: IterableOnce[T]).knownSize
-        ks == 0 || (ks < 0) && value.iterator.isEmpty
+        ks == 0 || ks < 0 && value.iterator.isEmpty
       }
     }
 

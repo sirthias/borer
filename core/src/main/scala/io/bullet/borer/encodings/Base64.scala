@@ -24,7 +24,7 @@ final class Base64(name: String, alphabet: String) extends LookupBaseEncoding(na
 
     if (sl > 1610612735) failOverflow()
 
-    val result = new Array[Char](((sl + 2) / 3) << 2)
+    val result = new Array[Char]((sl + 2) / 3 << 2)
     val baa    = ByteArrayAccess.instance
     val sl3    = sl - 3
 
@@ -83,7 +83,7 @@ final class Base64(name: String, alphabet: String) extends LookupBaseEncoding(na
         val c = chars(ix)
         def fail() =
           throw new IllegalArgumentException(s""""${Util
-            .show(chars)}" is not a valid $name encoding. '$c' at index $ix is not part of the $name alphabet.""")
+              .show(chars)}" is not a valid $name encoding. '$c' at index $ix is not part of the $name alphabet.""")
         if (c > 127) fail()
         val b = lookup(c.toInt)
         if (b < 0) fail()

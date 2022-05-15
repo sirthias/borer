@@ -141,13 +141,13 @@ final private[borer] class JsonRenderer(var out: Output) extends Renderer {
                         index += 1
                         if (index < value.length) {
                           codePoint = Character.toCodePoint(c, value.charAt(index))
-                          out.writeBytes((0xF0 | (codePoint >> 18)).toByte, (0x80 | ((codePoint >> 12) & 0x3F)).toByte)
+                          out.writeBytes((0xF0 | codePoint >> 18).toByte, (0x80 | codePoint >> 12 & 0x3F).toByte)
                         } else failValidation("Truncated UTF-16 surrogate pair at end of string")
                       } else failInvalidSurrogatePair(ix)
-                    } else out.writeAsByte(0xE0 | (codePoint >> 12))) // 3-byte UTF-8 codepoint
-                     .writeAsByte(0x80 | ((codePoint >> 6) & 0x3F))
-                 } else out.writeAsByte(0xC0 | (codePoint >> 6))) // 2-byte UTF-8 codepoint
-                  .writeAsByte(0x80 | (codePoint & 0x3F))
+                    } else out.writeAsByte(0xE0 | codePoint >> 12)) // 3-byte UTF-8 codepoint
+                     .writeAsByte(0x80 | codePoint >> 6 & 0x3F)
+                 } else out.writeAsByte(0xC0 | codePoint >> 6)) // 2-byte UTF-8 codepoint
+                  .writeAsByte(0x80 | codePoint & 0x3F)
               } else out.writeAsByte(c)
 
             case '\b' => writeEscaped(out, 'b')
@@ -180,13 +180,13 @@ final private[borer] class JsonRenderer(var out: Output) extends Renderer {
                         index += 1
                         if (index < length) {
                           codePoint = Character.toCodePoint(c, buffer(index))
-                          out.writeBytes((0xF0 | (codePoint >> 18)).toByte, (0x80 | ((codePoint >> 12) & 0x3F)).toByte)
+                          out.writeBytes((0xF0 | codePoint >> 18).toByte, (0x80 | codePoint >> 12 & 0x3F).toByte)
                         } else failValidation("Truncated UTF-16 surrogate pair at end of string")
                       } else failInvalidSurrogatePair(ix)
-                    } else out.writeAsByte(0xE0 | (codePoint >> 12))) // 3-byte UTF-8 codepoint
-                     .writeAsByte(0x80 | ((codePoint >> 6) & 0x3F))
-                 } else out.writeAsByte(0xC0 | (codePoint >> 6))) // 2-byte UTF-8 codepoint
-                  .writeAsByte(0x80 | (codePoint & 0x3F))
+                    } else out.writeAsByte(0xE0 | codePoint >> 12)) // 3-byte UTF-8 codepoint
+                     .writeAsByte(0x80 | codePoint >> 6 & 0x3F)
+                 } else out.writeAsByte(0xC0 | codePoint >> 6)) // 2-byte UTF-8 codepoint
+                  .writeAsByte(0x80 | codePoint & 0x3F)
               } else out.writeAsByte(c)
 
             case '\b' => writeEscaped(out, 'b')
@@ -237,7 +237,7 @@ final private[borer] class JsonRenderer(var out: Output) extends Renderer {
       out = if (sepRequired) out.writeAsBytes(separator, '{') else out.writeAsByte('{')
       level += 1
       if (level < 64) {
-        levelType = (levelType << 1) | 1
+        levelType = levelType << 1 | 1
         levelCount <<= 1
         sepRequired = false
       } else failUnsupported(out, "more than 64 JSON Array/Object nesting levels")
@@ -307,7 +307,7 @@ final private[borer] class JsonRenderer(var out: Output) extends Renderer {
   // fast branchless implementation returning the lower-case hex digit corresponding to the last 4 bits of the given Int
   @inline private def lowerHexDigit(int: Int): Int = {
     val i = int & 0x0F
-    48 + i + (39 & ((9 - i) >> 31))
+    48 + i + (39 & 9 - i >> 31)
   }
 
   private def failUnsupported(out: Output, what: String) =
@@ -322,6 +322,6 @@ final private[borer] class JsonRenderer(var out: Output) extends Renderer {
     throw new Borer.Error.ValidationFailure(out, msg)
 }
 
-object JsonRenderer extends (Output => JsonRenderer) {
+object JsonRenderer extends Output => JsonRenderer {
   def apply(out: Output) = new JsonRenderer(out)
 }

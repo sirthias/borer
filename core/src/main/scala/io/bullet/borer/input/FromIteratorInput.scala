@@ -105,7 +105,7 @@ trait FromIteratorInput {
       if (inputIterator.hasNext) {
         fetchNext(remaining)
         if (remaining < 1) current.readDoubleByteBigEndianPadded(this)
-        else ((previous.readByte() << 8) | current.readBytePadded(this) & 0xFF).toChar
+        else (previous.readByte() << 8 | current.readBytePadded(this) & 0xFF).toChar
       } else outerPaddingProvider.padDoubleByte(remaining)
 
     def readQuadByteBigEndian(): Int = current.readQuadByteBigEndian()
@@ -122,13 +122,13 @@ trait FromIteratorInput {
         remaining match {
           case 0 => current.readQuadByteBigEndianPadded(this)
           case 1 =>
-            (previous.readByte() << 24) |
-            (current.readDoubleByteBigEndianPadded(this) << 8) |
+            previous.readByte() << 24 |
+            current.readDoubleByteBigEndianPadded(this) << 8 |
             current.readBytePadded(this) & 0xFF
-          case 2 => (previous.readDoubleByteBigEndian() << 16) | current.readDoubleByteBigEndianPadded(this)
+          case 2 => previous.readDoubleByteBigEndian() << 16 | current.readDoubleByteBigEndianPadded(this)
           case 3 =>
-            (previous.readDoubleByteBigEndian() << 16) |
-            ((previous.readByte() & 0xFF) << 8) |
+            previous.readDoubleByteBigEndian() << 16 |
+            (previous.readByte() & 0xFF) << 8 |
             current.readBytePadded(this) & 0xFF
           case _ => throw new IllegalStateException
         }
@@ -148,34 +148,34 @@ trait FromIteratorInput {
         remaining match {
           case 0 => current.readOctaByteBigEndianPadded(this)
           case 1 =>
-            (previous.readByte().toLong << 56) |
-            ((current.readQuadByteBigEndianPadded(this) & 0xFFFFFFFFL) << 24) |
-            ((current.readDoubleByteBigEndianPadded(this) & 0xFFFFL) << 8) |
+            previous.readByte().toLong << 56 |
+            (current.readQuadByteBigEndianPadded(this) & 0xFFFFFFFFL) << 24 |
+            (current.readDoubleByteBigEndianPadded(this) & 0xFFFFL) << 8 |
             current.readBytePadded(this) & 0xFFL
           case 2 =>
-            (previous.readDoubleByteBigEndian().toLong << 48) |
-            ((current.readQuadByteBigEndianPadded(this) & 0xFFFFFFFFL) << 16) |
+            previous.readDoubleByteBigEndian().toLong << 48 |
+            (current.readQuadByteBigEndianPadded(this) & 0xFFFFFFFFL) << 16 |
             current.readDoubleByteBigEndianPadded(this) & 0xFFFFL
           case 3 =>
-            (previous.readDoubleByteBigEndian().toLong << 48) |
-            ((previous.readByte() & 0xFFL) << 40) |
-            ((current.readQuadByteBigEndianPadded(this) & 0xFFFFFFFFL) << 8) |
+            previous.readDoubleByteBigEndian().toLong << 48 |
+            (previous.readByte() & 0xFFL) << 40 |
+            (current.readQuadByteBigEndianPadded(this) & 0xFFFFFFFFL) << 8 |
             current.readBytePadded(this) & 0xFFL
           case 4 =>
-            (previous.readQuadByteBigEndian().toLong << 32) | (current.readQuadByteBigEndianPadded(this) & 0xFFFFFFFFL)
+            previous.readQuadByteBigEndian().toLong << 32 | current.readQuadByteBigEndianPadded(this) & 0xFFFFFFFFL
           case 5 =>
-            (previous.readQuadByteBigEndian().toLong << 32) |
-            ((previous.readByte() & 0xFFL) << 24) |
-            ((current.readDoubleByteBigEndianPadded(this) & 0xFFFFL) << 8) |
+            previous.readQuadByteBigEndian().toLong << 32 |
+            (previous.readByte() & 0xFFL) << 24 |
+            (current.readDoubleByteBigEndianPadded(this) & 0xFFFFL) << 8 |
             current.readBytePadded(this) & 0xFFL
           case 6 =>
-            (previous.readQuadByteBigEndian().toLong << 32) |
-            ((previous.readDoubleByteBigEndian() & 0xFFFFL) << 16) |
+            previous.readQuadByteBigEndian().toLong << 32 |
+            (previous.readDoubleByteBigEndian() & 0xFFFFL) << 16 |
             current.readDoubleByteBigEndianPadded(this) & 0xFFFFL
           case 7 =>
-            (previous.readQuadByteBigEndian().toLong << 32) |
-            ((previous.readDoubleByteBigEndian() & 0xFFFFL) << 16) |
-            ((previous.readByte() & 0xFFL) << 8) |
+            previous.readQuadByteBigEndian().toLong << 32 |
+            (previous.readDoubleByteBigEndian() & 0xFFFFL) << 16 |
+            (previous.readByte() & 0xFFL) << 8 |
             current.readBytePadded(this) & 0xFFL
           case _ => throw new IllegalStateException
         }

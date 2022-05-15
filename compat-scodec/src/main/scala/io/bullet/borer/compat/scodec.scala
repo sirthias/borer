@@ -95,7 +95,7 @@ object scodec {
     def readDoubleByteBigEndian(): Char = {
       val c = _cursor
       _cursor = c + 2
-      ((byteVector(c) << 8) | byteVector(c + 1) & 0xFF).toChar
+      (byteVector(c) << 8 | byteVector(c + 1) & 0xFF).toChar
     }
 
     def readDoubleByteBigEndianPadded(pp: Input.PaddingProvider[ByteVector]): Char = {

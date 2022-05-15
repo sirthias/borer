@@ -116,7 +116,7 @@ final private[borer] class ResizableRingBuffer[T](initialCapacity: Int, val maxC
     else throw new NoSuchElementException
 
   def peekFromEnd(offset: Int): T =
-    if (nonEmpty) array((writeIx + offset) & mask).asInstanceOf[T]
+    if (nonEmpty) array(writeIx + offset & mask).asInstanceOf[T]
     else throw new NoSuchElementException
 
   def dropNext(n: Int): Unit =
@@ -128,7 +128,7 @@ final private[borer] class ResizableRingBuffer[T](initialCapacity: Int, val maxC
     else throw new IllegalArgumentException("Cannot drop more elements than currently in the buffer")
 
   private def grow(): Boolean =
-    (array.length < maxCapacity) && {
+    array.length < maxCapacity && {
       val r        = readIx & mask
       val newArray = new Array[AnyRef](array.length << 1)
       System.arraycopy(array, r, newArray, 0, array.length - r)

@@ -149,10 +149,10 @@ abstract class Deriver[C <: blackbox.Context](val c: C) {
         blackSet: List[AdtTypeNode],
         result: List[AdtTypeNode]): List[AdtTypeNode] =
       remaining match {
-        case (n, links) :: tail if links.forall(_ containedIn result) =>
+        case n, links :: tail if links.forall(_ containedIn result) =>
           // we already have all links of the node in the result, to we can simply add the node itself
           topoSort(tail, blackSet, n :: result)
-        case (n, links) :: _ =>
+        case n, links :: _ =>
           // if the node has links that we haven't processed yet we need to pull these forward
           // but we need to be careful to detect unresolvable cycles, which we do via the "blackSet"
           if (!n.containedIn(blackSet)) {

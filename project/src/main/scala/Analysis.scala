@@ -34,7 +34,7 @@ object Analysis {
 
       def showLibraryResult(library: String): Unit = {
         val libPerf = perf(library)
-        val factors = borerPerf.map { case (param, borerScore) => param -> (borerScore / libPerf(param)) }
+        val factors = borerPerf.map { case (param, borerScore) => param -> borerScore / libPerf(param) }
         val avg     = factors.map(_._2).sum / factors.size
         val mean = {
           val sorted = factors.sortBy(_._2)

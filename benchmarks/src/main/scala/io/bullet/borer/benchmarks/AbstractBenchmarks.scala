@@ -143,7 +143,7 @@ sealed abstract class EncodingDecodingExampleData {
 
   lazy val foos: Map[String, Foo] = List
     .tabulate(100) { i =>
-      ("x" * i) -> Foo("y" * i, (i + 2.0) / (i + 1.0), i, i * 1000L, (0 to i).map(_ % 2 == 0).toList)
+      "x" * i -> Foo("y" * i, (i + 2.0) / (i + 1.0), i, i * 1000L, (0 to i).map(_ % 2 == 0).toList)
     }
     .toMap
 

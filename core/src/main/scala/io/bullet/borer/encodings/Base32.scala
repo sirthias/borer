@@ -24,7 +24,7 @@ final class Base32(name: String, alphabet: String) extends LookupBaseEncoding(na
 
     if (sl > 1342177279) failOverflow()
 
-    val result = new Array[Char](((sl + 4) / 5) << 3)
+    val result = new Array[Char]((sl + 4) / 5 << 3)
     val baa    = ByteArrayAccess.instance
     val sl5    = sl - 5
 
@@ -117,7 +117,7 @@ final class Base32(name: String, alphabet: String) extends LookupBaseEncoding(na
         val c = chars(ix)
         def fail() =
           throw new IllegalArgumentException(s""""${Util
-            .show(chars)}" is not a valid $name encoding. '$c' at index $ix is not part of the $name alphabet.""")
+              .show(chars)}" is not a valid $name encoding. '$c' at index $ix is not part of the $name alphabet.""")
         if (c > 127) fail()
         val b = lookup(c.toInt)
         if (b < 0) fail()

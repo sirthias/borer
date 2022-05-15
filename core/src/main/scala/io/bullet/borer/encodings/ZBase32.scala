@@ -84,7 +84,7 @@ object ZBase32 extends LookupBaseEncoding("z-base32", 5, "ybndrfg8ejkmcpqxot1uwi
 
     if ((sl << 2) + sl < bitCount) failBitCountMismatch()
 
-    val dlen   = ((bitCount + 7) >> 3).toInt
+    val dlen   = (bitCount + 7 >> 3).toInt
     val result = new Array[Byte](dlen)
     val baa    = ByteArrayAccess.instance
 
@@ -92,7 +92,7 @@ object ZBase32 extends LookupBaseEncoding("z-base32", 5, "ybndrfg8ejkmcpqxot1uwi
       val c = chars(ix)
       def fail() =
         throw new IllegalArgumentException(s""""${Util
-          .show(chars)}" is not a valid $name encoding. '$c' at index $ix is not part of the $name alphabet.""")
+            .show(chars)}" is not a valid $name encoding. '$c' at index $ix is not part of the $name alphabet.""")
       if (c > 127) fail()
       val b = lookup(c.toInt)
       if (b < 0) fail()

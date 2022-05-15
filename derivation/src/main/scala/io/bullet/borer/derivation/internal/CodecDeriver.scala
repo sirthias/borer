@@ -74,7 +74,7 @@ abstract private[derivation] class CodecDeriver[C <: blackbox.Context](ctx: C) e
 
     def rec(array: Array[(Key, AdtTypeNode)], comp: Key => Tree)(start: Int = 0, end: Int = array.length): Tree =
       if (start < end) {
-        val mid           = (start + end) >> 1
+        val mid           = start + end >> 1
         val (typeId, sub) = array(mid)
         val readTpe       = sub.nodePath().find(abstracts.contains).map(_.tpe) getOrElse sub.tpe
         val typeIdLit     = literal(typeId.value)

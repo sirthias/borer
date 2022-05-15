@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 private[borer] object ByteArrayCache {
 
-  private val cache = new AtomicReference[Array[Byte]]()
+  private val cache = new AtomicReference[Array[Byte]]
 
   def acquire(size: Int): Array[Byte] = {
     var buf = cache.getAndSet(null)
@@ -26,7 +26,7 @@ private[borer] object ByteArrayCache {
 
 private[borer] object CharArrayCache {
 
-  private val cache = new AtomicReference[Array[Char]]()
+  private val cache = new AtomicReference[Array[Char]]
 
   def acquire(size: Int): Array[Char] = {
     var buf = cache.getAndSet(null)
@@ -39,7 +39,7 @@ private[borer] object CharArrayCache {
 
 private[borer] object ByteBufferCache {
 
-  private val cache = new AtomicReference[ByteBuffer]()
+  private val cache = new AtomicReference[ByteBuffer]
 
   def acquire(size: Int): ByteBuffer = {
     var buf = cache.getAndSet(null)
@@ -55,7 +55,7 @@ private[borer] object ByteBufferCache {
 
 private[borer] object ElementDequeCache {
 
-  private val cache = new AtomicReference[ElementDeque]()
+  private val cache = new AtomicReference[ElementDeque]
 
   def acquire(maxBufferSize: Int): ElementDeque = {
     var deque = cache.getAndSet(null)

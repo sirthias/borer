@@ -242,7 +242,7 @@ object Dom {
     final def to[M[A, B] <: Map[A, B]](
         implicit fac: Factory[(Element, Element), M[Element, Element]]): M[Element, Element] = {
       val b = fac.newBuilder
-      b ++= (keys zip values)
+      b ++= keys zip values
       b.result()
     }
 
@@ -253,7 +253,7 @@ object Dom {
       @tailrec def rec(b: mutable.Builder[(String, Element), M[String, Element]]): Either[Element, M[String, Element]] =
         if (k.hasNext) {
           k.next() match {
-            case StringElem(x) => rec(b += (x -> v.next()))
+            case StringElem(x) => rec(b += x -> v.next())
             case x             => Left(x)
           }
         } else Right(b.result())
@@ -481,7 +481,7 @@ object Dom {
    *
    * Override some or all methods to customize the transformation logic.
    */
-  trait Transformer extends (Element => Element) {
+  trait Transformer extends Element => Element {
 
     def apply(elem: Element): Element =
       (elem.dataItemShift: @switch) match {

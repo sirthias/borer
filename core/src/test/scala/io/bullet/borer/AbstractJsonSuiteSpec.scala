@@ -277,7 +277,7 @@ abstract class AbstractJsonSuiteSpec extends AbstractBorerSpec {
 
     "Whitespace" - {
       val wschars    = " \t\n\r"
-      val random     = new Random()
+      val random     = new Random
       val wsCharIter = Iterator.continually(wschars.charAt(random.nextInt(wschars.length)))
       val wsStrings  = Iterator.continually(wsCharIter.take(random.nextInt(20)).mkString)
       def ws         = wsStrings.next()

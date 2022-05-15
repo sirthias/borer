@@ -8,7 +8,14 @@
 
 package io.bullet.borer
 
-import java.lang.{Boolean => JBoolean, Byte => JByte, Double => JDouble, Float => JFloat, Long => JLong, Short => JShort}
+import java.lang.{
+  Boolean => JBoolean,
+  Byte => JByte,
+  Double => JDouble,
+  Float => JFloat,
+  Long => JLong,
+  Short => JShort
+}
 import java.math.{BigDecimal => JBigDecimal, BigInteger => JBigInteger}
 import io.bullet.borer.encodings.BaseEncoding
 import io.bullet.borer.internal.Util
@@ -106,7 +113,7 @@ object Decoder extends LowPrioDecoders {
 
   def forChar(intDecoder: Decoder[Int]): Decoder[Char] =
     intDecoder.mapWithReader { (r, int) =>
-      if ((int >> 16) != 0) r.validationFailure(s"Cannot convert int value $int to Char")
+      if (int >> 16 != 0) r.validationFailure(s"Cannot convert int value $int to Char")
       int.toChar
     }
 
@@ -114,7 +121,7 @@ object Decoder extends LowPrioDecoders {
 
   def forByte(intDecoder: Decoder[Int]): Decoder[Byte] =
     intDecoder.mapWithReader { (r, int) =>
-      if ((int >> 8) != (int >> 31)) r.validationFailure(s"Cannot convert int value $int to Byte")
+      if (int >> 8 != int >> 31) r.validationFailure(s"Cannot convert int value $int to Byte")
       int.toByte
     }
 
@@ -122,7 +129,7 @@ object Decoder extends LowPrioDecoders {
 
   def forShort(intDecoder: Decoder[Int]): Decoder[Short] =
     intDecoder.mapWithReader { (r, int) =>
-      if ((int >> 16) != (int >> 31)) r.validationFailure(s"Cannot convert int value $int to Short")
+      if (int >> 16 != int >> 31) r.validationFailure(s"Cannot convert int value $int to Short")
       int.toShort
     }
 

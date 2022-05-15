@@ -148,7 +148,7 @@ final private[borer] class ResizableByteRingBuffer(initialCapacity: Int, val max
 
   @inline private def write2(a: Byte, b: Byte, ix: Int): Boolean = {
     array(ix & mask) = a
-    array((ix + 1) & mask) = b
+    array(ix + 1 & mask) = b
     true
   }
 
@@ -158,23 +158,23 @@ final private[borer] class ResizableByteRingBuffer(initialCapacity: Int, val max
       ByteArrayAccess.instance.setQuadByteBigEndian(array, masked, value)
     } else {
       array(masked) = (value >> 24).toByte
-      array((ix + 1) & mask) = (value >> 16).toByte
-      array((ix + 2) & mask) = (value >> 8).toByte
-      array((ix + 3) & mask) = (value >> 0).toByte
+      array(ix + 1 & mask) = (value >> 16).toByte
+      array(ix + 2 & mask) = (value >> 8).toByte
+      array(ix + 3 & mask) = (value >> 0).toByte
     }
     true
   }
 
   private def write5(byte: Byte, int: Int, ix: Int): Boolean = {
     array(ix & mask) = byte
-    val masked = (ix + 1) & mask
+    val masked = ix + 1 & mask
     if (masked <= array.length - 4) {
       ByteArrayAccess.instance.setQuadByteBigEndian(array, masked, int)
     } else {
       array(masked) = (int >> 24).toByte
-      array((ix + 2) & mask) = (int >> 16).toByte
-      array((ix + 3) & mask) = (int >> 8).toByte
-      array((ix + 4) & mask) = (int >> 0).toByte
+      array(ix + 2 & mask) = (int >> 16).toByte
+      array(ix + 3 & mask) = (int >> 8).toByte
+      array(ix + 4 & mask) = (int >> 0).toByte
     }
     true
   }
@@ -185,31 +185,31 @@ final private[borer] class ResizableByteRingBuffer(initialCapacity: Int, val max
       ByteArrayAccess.instance.setOctaByteBigEndian(array, masked, value)
     } else {
       array(masked) = (value >> 56).toByte
-      array((ix + 1) & mask) = (value >> 48).toByte
-      array((ix + 2) & mask) = (value >> 40).toByte
-      array((ix + 3) & mask) = (value >> 32).toByte
-      array((ix + 4) & mask) = (value >> 24).toByte
-      array((ix + 5) & mask) = (value >> 16).toByte
-      array((ix + 6) & mask) = (value >> 8).toByte
-      array((ix + 7) & mask) = (value >> 0).toByte
+      array(ix + 1 & mask) = (value >> 48).toByte
+      array(ix + 2 & mask) = (value >> 40).toByte
+      array(ix + 3 & mask) = (value >> 32).toByte
+      array(ix + 4 & mask) = (value >> 24).toByte
+      array(ix + 5 & mask) = (value >> 16).toByte
+      array(ix + 6 & mask) = (value >> 8).toByte
+      array(ix + 7 & mask) = (value >> 0).toByte
     }
     true
   }
 
   private def write9(byte: Byte, long: Long, ix: Int): Boolean = {
     array(ix & mask) = byte
-    val masked = (ix + 1) & mask
+    val masked = ix + 1 & mask
     if (masked <= array.length - 8) {
       ByteArrayAccess.instance.setOctaByteBigEndian(array, masked, long)
     } else {
       array(masked) = (long >> 56).toByte
-      array((ix + 2) & mask) = (long >> 48).toByte
-      array((ix + 3) & mask) = (long >> 40).toByte
-      array((ix + 4) & mask) = (long >> 32).toByte
-      array((ix + 5) & mask) = (long >> 24).toByte
-      array((ix + 6) & mask) = (long >> 16).toByte
-      array((ix + 7) & mask) = (long >> 8).toByte
-      array((ix + 8) & mask) = (long >> 0).toByte
+      array(ix + 2 & mask) = (long >> 48).toByte
+      array(ix + 3 & mask) = (long >> 40).toByte
+      array(ix + 4 & mask) = (long >> 32).toByte
+      array(ix + 5 & mask) = (long >> 24).toByte
+      array(ix + 6 & mask) = (long >> 16).toByte
+      array(ix + 7 & mask) = (long >> 8).toByte
+      array(ix + 8 & mask) = (long >> 0).toByte
     }
     true
   }
@@ -240,9 +240,9 @@ final private[borer] class ResizableByteRingBuffer(initialCapacity: Int, val max
     } else
       (
         array(ix) << 24
-        | (array((r + 1) & mask) & 0xFF) << 16
-        | (array((r + 2) & mask) & 0xFF) << 8
-        | (array((r + 3) & mask) & 0xFF) << 0
+        | (array(r + 1 & mask) & 0xFF) << 16
+        | (array(r + 2 & mask) & 0xFF) << 8
+        | (array(r + 3 & mask) & 0xFF) << 0
       )
   }
 
@@ -255,13 +255,13 @@ final private[borer] class ResizableByteRingBuffer(initialCapacity: Int, val max
     } else
       (
         array(ix).toLong << 56
-        | (array((r + 1) & mask) & 0xFFL) << 48
-        | (array((r + 2) & mask) & 0xFFL) << 40
-        | (array((r + 3) & mask) & 0xFFL) << 32
-        | (array((r + 4) & mask) & 0xFFL) << 24
-        | (array((r + 5) & mask) & 0xFFL) << 16
-        | (array((r + 6) & mask) & 0xFFL) << 8
-        | (array((r + 7) & mask) & 0xFFL) << 0
+        | (array(r + 1 & mask) & 0xFFL) << 48
+        | (array(r + 2 & mask) & 0xFFL) << 40
+        | (array(r + 3 & mask) & 0xFFL) << 32
+        | (array(r + 4 & mask) & 0xFFL) << 24
+        | (array(r + 5 & mask) & 0xFFL) << 16
+        | (array(r + 6 & mask) & 0xFFL) << 8
+        | (array(r + 7 & mask) & 0xFFL) << 0
       )
   }
 
@@ -274,13 +274,13 @@ final private[borer] class ResizableByteRingBuffer(initialCapacity: Int, val max
       } else
         (
           array(ix).toLong << 56
-          | (array((w + 1) & mask) & 0xFFL) << 48
-          | (array((w + 2) & mask) & 0xFFL) << 40
-          | (array((w + 3) & mask) & 0xFFL) << 32
-          | (array((w + 4) & mask) & 0xFFL) << 24
-          | (array((w + 5) & mask) & 0xFFL) << 16
-          | (array((w + 6) & mask) & 0xFFL) << 8
-          | (array((w + 7) & mask) & 0xFFL) << 0
+          | (array(w + 1 & mask) & 0xFFL) << 48
+          | (array(w + 2 & mask) & 0xFFL) << 40
+          | (array(w + 3 & mask) & 0xFFL) << 32
+          | (array(w + 4 & mask) & 0xFFL) << 24
+          | (array(w + 5 & mask) & 0xFFL) << 16
+          | (array(w + 6 & mask) & 0xFFL) << 8
+          | (array(w + 7 & mask) & 0xFFL) << 0
         )
     } else throw new NoSuchElementException
 
@@ -297,7 +297,7 @@ final private[borer] class ResizableByteRingBuffer(initialCapacity: Int, val max
     else throw new NoSuchElementException
 
   private def grow(): Boolean =
-    (array.length < maxCapacity) && {
+    array.length < maxCapacity && {
       val r        = readIx & mask
       val newArray = new Array[Byte](array.length << 1)
       System.arraycopy(array, r, newArray, 0, array.length - r)
