@@ -8,38 +8,34 @@
 
 package io.bullet.borer.encodings
 
+import io.bullet.borer.BorerSuite
 import io.bullet.borer.internal.Util._
-import io.bullet.borer.TestUtils
-import utest._
 
-object Base32Spec extends TestSuite with TestUtils:
+class Base32Spec extends BorerSuite:
 
-  val tests = Tests {
+  test("rfc examples") {
+    roundtrip("", "")
+    roundtrip("f", "MY======")
+    roundtrip("fo", "MZXQ====")
+    roundtrip("foo", "MZXW6===")
+    roundtrip("foob", "MZXW6YQ=")
+    roundtrip("fooba", "MZXW6YTB")
+    roundtrip("foobar", "MZXW6YTBOI======")
+  }
 
-    "rfc examples" - {
-      roundtrip("", "")
-      roundtrip("f", "MY======")
-      roundtrip("fo", "MZXQ====")
-      roundtrip("foo", "MZXW6===")
-      roundtrip("foob", "MZXW6YQ=")
-      roundtrip("fooba", "MZXW6YTB")
-      roundtrip("foobar", "MZXW6YTBOI======")
-    }
-
-    "roundtrip" - {
-      roundtrip(hex"", "")
-      roundtrip(hex"01", "AE======")
-      roundtrip(hex"1234", "CI2A====")
-      roundtrip(hex"234567", "ENCWO===")
-      roundtrip(hex"3456789a", "GRLHRGQ=")
-      roundtrip(hex"456789abcd", "IVTYTK6N")
-      roundtrip(hex"56789abcdef0", "KZ4JVPG66A======")
-      roundtrip(hex"6789abcdef0123", "M6E2XTPPAERQ====")
-      roundtrip(hex"789abcdef0123456", "PCNLZXXQCI2FM===")
-      roundtrip(hex"89abcdef0123456789", "RGV433YBENCWPCI=")
-      roundtrip(hex"9abcdef0123456789abc", "TK6N54ASGRLHRGV4")
-      roundtrip(hex"bcdef0123456789abcef01", "XTPPAERUKZ4JVPHPAE======")
-    }
+  test("roundtrip") {
+    roundtrip(hex"", "")
+    roundtrip(hex"01", "AE======")
+    roundtrip(hex"1234", "CI2A====")
+    roundtrip(hex"234567", "ENCWO===")
+    roundtrip(hex"3456789a", "GRLHRGQ=")
+    roundtrip(hex"456789abcd", "IVTYTK6N")
+    roundtrip(hex"56789abcdef0", "KZ4JVPG66A======")
+    roundtrip(hex"6789abcdef0123", "M6E2XTPPAERQ====")
+    roundtrip(hex"789abcdef0123456", "PCNLZXXQCI2FM===")
+    roundtrip(hex"89abcdef0123456789", "RGV433YBENCWPCI=")
+    roundtrip(hex"9abcdef0123456789abc", "TK6N54ASGRLHRGV4")
+    roundtrip(hex"bcdef0123456789abcef01", "XTPPAERUKZ4JVPHPAE======")
   }
 
   def roundtrip(string: String, expectedEncoding: String): Unit =

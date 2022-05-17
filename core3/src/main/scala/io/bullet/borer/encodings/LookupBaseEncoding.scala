@@ -18,4 +18,3 @@ abstract class LookupBaseEncoding(_name: String, _bitsPerChar: Int, alphabet: St
     java.util.Arrays.fill(array, -1: Byte)
     (0 until alphabetChars.length).foreach(i => array(alphabetChars(i).toInt) = i.toByte)
     array
-

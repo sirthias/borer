@@ -50,4 +50,3 @@ object BaseEncoding:
    * @see https://tools.ietf.org/html/rfc4648#section-5
    */
   val base64url = new Base64("base32", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_")
-

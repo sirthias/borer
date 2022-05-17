@@ -45,5 +45,5 @@ private[borer] object BasicProductCodec:
 
   private inline def decRec[T <: Tuple](r: Reader): T =
     inline erasedValue[T] match
-      case EmptyTuple => EmptyTuple.asInstanceOf[T]
+      case EmptyTuple   => EmptyTuple.asInstanceOf[T]
       case _: (t *: ts) => (r.read[t]()(summonInline[Decoder[t]]) *: decRec[ts](r)).asInstanceOf[T]

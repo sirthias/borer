@@ -10,11 +10,9 @@ package io.bullet.borer
 
 import java.nio.charset.StandardCharsets
 
-import utest._
-
 import scala.io.Source
 
-object FromInputIteratorFileSpec extends TestSuite with TestUtils:
+class FromInputIteratorFileSpec extends BorerSuite:
 
   val testFileBytes = Source.fromResource("large.json").mkString.getBytes(StandardCharsets.UTF_8)
 
@@ -22,15 +20,12 @@ object FromInputIteratorFileSpec extends TestSuite with TestUtils:
     .copy(maxNumberMantissaDigits = 99, maxNumberAbsExponent = 300, initialCharbufferSize = 8)
   val dom = Json.decode(testFileBytes).withConfig(config).to[Dom.Element].value
 
-  val tests = Tests {
-
-    "test file" - {
-      Json
-        .decode(chunkedInput(3, 2, 1, 0, 100, 71))
-        .withConfig(config)
-        .to[Dom.Element]
-        .value ==> dom
-    }
+  test("test file") {
+    Json
+      .decode(chunkedInput(3, 2, 1, 0, 100, 71))
+      .withConfig(config)
+      .to[Dom.Element]
+      .value ==> dom
   }
 
   def chunkedInput(chunkSizes: Int*): Iterator[Array[Byte]] =

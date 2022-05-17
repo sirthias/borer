@@ -120,24 +120,21 @@ object EncodingSetup:
 
     def result: Any =
       val renderer = rendererCreator(_output)
-      try
-        render(renderer).out.result()
+      try render(renderer).out.result()
       catch
         case e: Borer.Error[_] => throw e.withOut(renderer.out)
         case NonFatal(e)       => throw new Borer.Error.General(renderer.out, e)
 
     def resultTry: Try[Any] =
       val renderer = rendererCreator(_output)
-      try
-        Success(render(renderer).out.result())
+      try Success(render(renderer).out.result())
       catch
         case e: Borer.Error[_] => Failure(e.withOut(renderer.out))
         case NonFatal(e)       => Failure(new Borer.Error.General(renderer.out, e))
 
     def resultEither: Either[Borer.Error[Output], Any] =
       val renderer = rendererCreator(_output)
-      try
-        Right(render(renderer).out.result())
+      try Right(render(renderer).out.result())
       catch
         case e: Borer.Error[_] => Left(e.withOut(renderer.out))
         case NonFatal(e)       => Left(new Borer.Error.General(renderer.out, e))
@@ -146,16 +143,14 @@ object EncodingSetup:
 
     def outputTry: Try[Output] =
       val renderer = rendererCreator(_output)
-      try
-        Success(render(renderer).out)
+      try Success(render(renderer).out)
       catch
         case e: Borer.Error[_] => Failure(e.withOut(renderer.out))
         case NonFatal(e)       => Failure(new Borer.Error.General(renderer.out, e))
 
     def outputEither: Either[Borer.Error[Output], Output] =
       val renderer = rendererCreator(_output)
-      try
-        Right(render(renderer).out)
+      try Right(render(renderer).out)
       catch
         case e: Borer.Error[_] => Left(e.withOut(renderer.out))
         case NonFatal(e)       => Left(new Borer.Error.General(renderer.out, e))

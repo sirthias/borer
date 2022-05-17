@@ -12,11 +12,9 @@ import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
-import utest._
-
 import scala.io.Source
 
-object FileSpec extends TestSuite:
+class FileSpec extends BorerSuite:
 
   final case class Foo(
       string: String = "This is a really long text for testing writing to a file",
@@ -25,37 +23,34 @@ object FileSpec extends TestSuite:
 
   implicit val fooCodec: Codec[Foo] = Codec.forProduct[Foo]
 
-  val tests = Tests {
+  test("small file") {
+    val tempFile = File.createTempFile("borer", ".json")
+    try
+      Json.encode(Foo()).to(tempFile).result ==> tempFile
 
-    "small file" - {
-      val tempFile = File.createTempFile("borer", ".json")
-      try
-        Json.encode(Foo()).to(tempFile).result ==> tempFile
+      new String(Files.readAllBytes(tempFile.toPath), "UTF8") ==>
+      """["This is a really long text for testing writing to a file",42,0.0]"""
 
-        new String(Files.readAllBytes(tempFile.toPath), "UTF8") ==>
-        """["This is a really long text for testing writing to a file",42,0.0]"""
+      Json.decode(tempFile).to[Foo].value ==> Foo()
 
-        Json.decode(tempFile).to[Foo].value ==> Foo()
+    finally tempFile.delete()
+  }
 
-      finally tempFile.delete()
-    }
+  test("large file") {
+    val testFileBytes = Source.fromResource("large.json").mkString.getBytes(StandardCharsets.UTF_8)
+    val config = Json.DecodingConfig.default
+      .copy(maxNumberMantissaDigits = 99, maxNumberAbsExponent = 300, initialCharbufferSize = 8)
+    val dom = Json.decode(testFileBytes).withConfig(config).to[Dom.Element].value
 
-    "large file" - {
-      val testFileBytes = Source.fromResource("large.json").mkString.getBytes(StandardCharsets.UTF_8)
-      val config = Json.DecodingConfig.default
-        .copy(maxNumberMantissaDigits = 99, maxNumberAbsExponent = 300, initialCharbufferSize = 8)
-      val dom = Json.decode(testFileBytes).withConfig(config).to[Dom.Element].value
+    val tempFile = File.createTempFile("borer", ".json")
+    try
+      Json.encode(dom).to(tempFile).result ==> tempFile
 
-      val tempFile = File.createTempFile("borer", ".json")
-      try
-        Json.encode(dom).to(tempFile).result ==> tempFile
+      Json
+        .decode(Input.fromFile(tempFile, bufferSize = 256))
+        .withConfig(config)
+        .to[Dom.Element]
+        .value ==> dom
 
-        Json
-          .decode(Input.fromFile(tempFile, bufferSize = 256))
-          .withConfig(config)
-          .to[Dom.Element]
-          .value ==> dom
-
-      finally tempFile.delete()
-    }
+    finally tempFile.delete()
   }

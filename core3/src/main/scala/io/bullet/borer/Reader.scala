@@ -556,8 +556,7 @@ final class InputReader[Config <: Reader.Config](
             skipUntilBreak()
       else overflow("Structures more than 100 levels deep cannot be skipped") // TODO: make configurable
 
-    if (hasAnyOf(DI.Complex))
-      skipComplex(0)
+    if (hasAnyOf(DI.Complex)) skipComplex(0)
     else
       clearDataItem()
       this

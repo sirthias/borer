@@ -9,10 +9,9 @@
 package io.bullet.borer.input
 
 import io.bullet.borer._
-import utest._
 import io.bullet.borer.internal.Util._
 
-object FromIteratorInputSpec extends TestSuite with TestUtils:
+class FromIteratorInputSpec extends BorerSuite:
 
   val inputBytes =
     val bytes = new Array[Byte](1024)
@@ -21,19 +20,16 @@ object FromIteratorInputSpec extends TestSuite with TestUtils:
       bytes((i << 1) + 1) = (i >> 0).toByte
     bytes
 
-  val tests = Tests {
+  // verification: our "test suite" does indeed pass for a known-good Input implementation
+  test("FromByteArray")(testInput(Input.fromByteArray(inputBytes)))
 
-    // verification: our "test suite" does indeed pass for a known-good Input implementation
-    "FromByteArray" - testInput(Input.fromByteArray(inputBytes))
+  test("FromInputIterator - 100 byte chunks")(testInput(chunkIteratorInput(100)))
 
-    "FromInputIterator - 100 byte chunks" - testInput(chunkIteratorInput(100))
+  test("FromInputIterator - 10 byte chunks")(testInput(chunkIteratorInput(10)))
 
-    "FromInputIterator - 10 byte chunks" - testInput(chunkIteratorInput(10))
+  test("FromInputIterator - alternating 5 and 0 byte chunks")(testInput(chunkIteratorInput(5, 0)))
 
-    "FromInputIterator - alternating 5 and 0 byte chunks" - testInput(chunkIteratorInput(5, 0))
-
-    "FromInputIterator - mixed chunks" - testInput(chunkIteratorInput(5, 0, 11, 7, 2, 0, 0, 1, 23))
-  }
+  test("FromInputIterator - mixed chunks")(testInput(chunkIteratorInput(5, 0, 11, 7, 2, 0, 0, 1, 23)))
 
   def testInput(input: Input[Array[Byte]]): Unit =
     val pp = new FFPadder(input)

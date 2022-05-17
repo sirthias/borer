@@ -62,48 +62,42 @@ object DecodingSetup:
 
     def value: AnyRef =
       val reader = newReader()
-      try
-        decodeFrom(reader)
+      try decodeFrom(reader)
       catch
         case e: Borer.Error[_] => throw e.withPosOf(reader)
         case NonFatal(e)       => throw new Borer.Error.General(reader.position, e)
 
     def valueTry: Try[AnyRef] =
       val reader = newReader()
-      try
-        Success(decodeFrom(reader))
+      try Success(decodeFrom(reader))
       catch
         case e: Borer.Error[_] => Failure(e.withPosOf(reader))
         case NonFatal(e)       => Failure(new Borer.Error.General(reader.position, e))
 
     def valueEither: Either[Borer.Error[Input.Position], AnyRef] =
       val reader = newReader()
-      try
-        Right(decodeFrom(reader))
+      try Right(decodeFrom(reader))
       catch
         case e: Borer.Error[_] => Left(e.withPosOf(reader))
         case NonFatal(e)       => Left(new Borer.Error.General(reader.position, e))
 
     def valueAndInput: (AnyRef, Input[_]) =
       val reader = newReader()
-      try
-        decodeFrom(reader) -> reader.input
+      try decodeFrom(reader) -> reader.input
       catch
         case e: Borer.Error[_] => throw e.withPosOf(reader)
         case NonFatal(e)       => throw new Borer.Error.General(reader.position, e)
 
     def valueAndInputTry: Try[(AnyRef, Input[_])] =
       val reader = newReader()
-      try
-        Success(decodeFrom(reader) -> reader.input)
+      try Success(decodeFrom(reader) -> reader.input)
       catch
         case e: Borer.Error[_] => Failure(e.withPosOf(reader))
         case NonFatal(e)       => Failure(new Borer.Error.General(reader.position, e))
 
     def valueAndInputEither: Either[Borer.Error[Input.Position], (AnyRef, Input[_])] =
       val reader = newReader()
-      try
-        Right(decodeFrom(reader) -> reader.input)
+      try Right(decodeFrom(reader) -> reader.input)
       catch
         case e: Borer.Error[_] => Left(e.withPosOf(reader))
         case NonFatal(e)       => Left(new Borer.Error.General(reader.position, e))

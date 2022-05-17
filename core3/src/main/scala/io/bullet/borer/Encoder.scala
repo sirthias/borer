@@ -53,7 +53,7 @@ object Encoder extends LowPrioEncoders:
 
   /**
    * Creates an [[Encoder]] that encodes a product instance as a simple array of values.
-   * Used, for example, as the default 'given' encoder for tuples. 
+   * Used, for example, as the default 'given' encoder for tuples.
    */
   inline def forProduct[T <: Product](implicit m: Mirror.ProductOf[T]): Encoder[T] =
     io.bullet.borer.internal.BasicProductCodec.encoder[T]
@@ -144,9 +144,8 @@ object Encoder extends LowPrioEncoders:
       if (w.writingCbor)
         if (x.scale != 0) w.writeTag(Tag.DecimalFraction).writeArrayHeader(2).writeInt(x.scale)
         w.write(x.unscaledValue)
-      else
-        if (x.scale != 0) w.writeNumberString(x.toString)
-        else w.write(x.unscaledValue)
+      else if (x.scale != 0) w.writeNumberString(x.toString)
+      else w.write(x.unscaledValue)
     }
 
   implicit val forBigDecimal: Encoder[BigDecimal] = forJBigDecimal.contramap(_.bigDecimal)
@@ -241,7 +240,7 @@ object Encoder extends LowPrioEncoders:
       else rec(w.writeArrayHeader(x.length), 0)
     }
 
-  implicit inline def forTuple[T <: Tuple :Mirror.ProductOf]: Encoder[T] = Encoder.forProduct[T]
+  implicit inline def forTuple[T <: Tuple: Mirror.ProductOf]: Encoder[T] = Encoder.forProduct[T]
 
   /**
    * The default [[Encoder]] for [[Either]] is not automatically in scope,

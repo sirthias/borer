@@ -370,7 +370,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
             if (input.readDoubleByteBigEndianPadded(this) == 0x5C6E) // are we immediately followed by a \n ?
               cc = appendChar(cc, '\r')
               '\n'
-            else    // no, not a \r\n sequence
+            else        // no, not a \r\n sequence
               unread(2) // unread our failed test for /n
               '\r'
           case 'u' =>
@@ -419,7 +419,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
 
       // if the next byte is also an 8-bit character (which is not that unlikely) we decode that as well right away
       val nextByte = quad << (byteCount << 3) >> 24
-      if (nextByte >= 0)      // no 8-bit character
+      if (nextByte >= 0)        // no 8-bit character
         unread(unreadCount + 1) // "unread" also the nextByte
         cc
       else // nextByte is an 8-bit character, so recurse
@@ -468,7 +468,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
         if (stopChar == '"')
           val c = stopChar0 << 8 >>> 56 // the char after the '"' (or zero, if we haven't read it yet)
           nextChar = if (c <= 0x20) // c is whitespace or not yet read
-            unread(unreadCount + 1)   // move the cursor to the char after the '"'
+            unread(unreadCount + 1) // move the cursor to the char after the '"'
             nextCharAfterWhitespace()
           else
             unread(unreadCount)
@@ -637,7 +637,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
     def skip1(): Int =
       val c = input.readBytePadded(this) & 0xFF
       if (c <= 0x20) // 2nd char is also whitespace,
-        skip8()        // so there are probably (lots) more coming
+        skip8()      // so there are probably (lots) more coming
       else c
 
     if (nextChar <= 0x20) skip1() else nextChar

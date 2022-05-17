@@ -136,4 +136,3 @@ object Utf8:
       else decode1(si, di)
 
     decode8(0, 0)
-

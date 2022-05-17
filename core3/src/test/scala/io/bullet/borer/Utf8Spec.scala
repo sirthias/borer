@@ -8,72 +8,67 @@
 
 package io.bullet.borer
 
-import utest._
-
 import scala.collection.mutable.ListBuffer
 
-object Utf8Spec extends TestSuite with TestUtils:
+class Utf8Spec extends BorerSuite:
 
-  val tests = Tests {
+  test("encode") {
+    encode("")
+    encode("f")
+    encode("fo")
+    encode("foo")
+    encode("foob")
+    encode("fooba")
+    encode("foobar")
+    encode("foobarq")
+    encode("foobarqu")
+    encode("foobarqux")
 
-    "encode" - {
-      encode("")
-      encode("f")
-      encode("fo")
-      encode("foo")
-      encode("foob")
-      encode("fooba")
-      encode("foobar")
-      encode("foobarq")
-      encode("foobarqu")
-      encode("foobarqux")
+    encode("Weißabklärung")
+    encode("árvíztűrő ütvefúrógép")
+    encode("κόσμε")
+  }
 
-      encode("Weißabklärung")
-      encode("árvíztűrő ütvefúrógép")
-      encode("κόσμε")
-    }
+  test("decode") {
+    decode("")
+    decode("f")
+    decode("fo")
+    decode("foo")
+    decode("foob")
+    decode("fooba")
+    decode("foobar")
+    decode("foobarq")
+    decode("foobarqu")
+    decode("foobarqux")
 
-    "decode" - {
-      decode("")
-      decode("f")
-      decode("fo")
-      decode("foo")
-      decode("foob")
-      decode("fooba")
-      decode("foobar")
-      decode("foobarq")
-      decode("foobarqu")
-      decode("foobarqux")
+    decode("Weißabklärung")
+    decode("árvíztűrő ütvefúrógép")
+    decode("κόσμε")
+  }
 
-      decode("Weißabklärung")
-      decode("árvíztűrő ütvefúrógép")
-      decode("κόσμε")
-    }
+  test("stress") {
+    for (len <- 1 to stressTextA.length)
+      encode(stressString(1, 0, len))
+      encode(stressString(0, 1, len))
+      encode(stressString(1, 1, len))
+      encode(stressString(1, 2, len))
+      encode(stressString(2, 1, len))
+      encode(stressString(1, 3, len))
+      encode(stressString(3, 1, len))
+      encode(stressString(2, 2, len))
+      encode(stressString(1, 4, len))
+      encode(stressString(4, 1, len))
 
-    "stress" - {
-      for (len <- 1 to stressTextA.length)
-        encode(stressString(1, 0, len))
-        encode(stressString(0, 1, len))
-        encode(stressString(1, 1, len))
-        encode(stressString(1, 2, len))
-        encode(stressString(2, 1, len))
-        encode(stressString(1, 3, len))
-        encode(stressString(3, 1, len))
-        encode(stressString(2, 2, len))
-        encode(stressString(1, 4, len))
-        encode(stressString(4, 1, len))
-
-        decode(stressString(1, 0, len))
-        decode(stressString(0, 1, len))
-        decode(stressString(1, 1, len))
-        decode(stressString(1, 2, len))
-        decode(stressString(2, 1, len))
-        decode(stressString(1, 3, len))
-        decode(stressString(3, 1, len))
-        decode(stressString(2, 2, len))
-        decode(stressString(1, 4, len))
-        decode(stressString(4, 1, len))
-    }
+      decode(stressString(1, 0, len))
+      decode(stressString(0, 1, len))
+      decode(stressString(1, 1, len))
+      decode(stressString(1, 2, len))
+      decode(stressString(2, 1, len))
+      decode(stressString(1, 3, len))
+      decode(stressString(3, 1, len))
+      decode(stressString(2, 2, len))
+      decode(stressString(1, 4, len))
+      decode(stressString(4, 1, len))
   }
 
   val stressTextA = "This is a text to somewhat stress the borer UTF8-Encoding/Decoding logic!!!"

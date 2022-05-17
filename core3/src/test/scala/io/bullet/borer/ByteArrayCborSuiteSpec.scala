@@ -8,4 +8,4 @@
 
 package io.bullet.borer
 
-object ByteArrayCborSuiteSpec extends AbstractCborSuiteSpec with ByteArrayCborSpec
+class ByteArrayCborSuiteSpec extends AbstractCborSuiteSpec with ByteArrayCborSpec

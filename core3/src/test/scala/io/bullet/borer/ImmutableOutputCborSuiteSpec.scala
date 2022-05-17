@@ -10,7 +10,7 @@ package io.bullet.borer
 
 import java.util
 
-object ImmutableOutputCborSuiteSpec extends AbstractCborSuiteSpec:
+class ImmutableOutputCborSuiteSpec extends AbstractCborSuiteSpec:
 
   def encode[T: Encoder](value: T): String   = toHexString(Cbor.encode(value).to[Array[Byte]].result)
   def decode[T: Decoder](encoded: String): T = Cbor.decode(hexBytes(encoded)).to[T].value

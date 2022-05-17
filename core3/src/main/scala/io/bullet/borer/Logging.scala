@@ -276,8 +276,7 @@ object Logging:
    * A [[Receiver]] which forwards all incoming data item to another [[Receiver]] and,
    * on the side, feeds a custom [[Logger]] with logging events.
    */
-  final class Receiver(target: borer.Receiver, createLogger: LevelInfo => Logger)
-      extends borer.Receiver with LevelInfo:
+  final class Receiver(target: borer.Receiver, createLogger: LevelInfo => Logger) extends borer.Receiver with LevelInfo:
 
     private val logger = createLogger(this)
 
@@ -298,12 +297,12 @@ object Logging:
       if (_level >= 0)
         val count = _levelCount(_level)
         val size  = _levelSize(_level)
-        val rawCount = if (count >= 0)
-          if (size >= 0) count // bounded array
-          else count >> 1      // bounded map
-        else
-          if (size == 1) ~count >> 1 // unbounded map
-          else ~count                // unbounded array, bytes or text
+        val rawCount =
+          if (count >= 0)
+            if (size >= 0) count          // bounded array
+            else count >> 1               // bounded map
+          else if (size == 1) ~count >> 1 // unbounded map
+          else ~count                     // unbounded array, bytes or text
         rawCount + 1
       else 0
 
@@ -314,7 +313,7 @@ object Logging:
           val size = _levelSize(_level)
           if (size >= 0) size // bounded array
           else ~size >> 1     // bounded map
-        else -1             // unbounded something
+        else -1               // unbounded something
       else -1
 
     def elementType =

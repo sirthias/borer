@@ -29,7 +29,8 @@ object Default:
   private[this] val optionDefault            = Default(None)
   implicit def option[T]: Default[Option[T]] = optionDefault
 
-final case class Nullable[+T](value: T): // extends AnyVal // FIXME: re-enable value class after fix of https://github.com/lampepfl/dotty/issues/11264
+final case class Nullable[+T](
+    value: T): // extends AnyVal // FIXME: re-enable value class after fix of https://github.com/lampepfl/dotty/issues/11264
 
   // for efficient unapply
   def isEmpty = false

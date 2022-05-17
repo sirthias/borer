@@ -8,7 +8,14 @@
 
 package io.bullet.borer
 
-import java.lang.{Boolean as JBoolean, Byte as JByte, Double as JDouble, Float as JFloat, Long as JLong, Short as JShort}
+import java.lang.{
+  Boolean as JBoolean,
+  Byte as JByte,
+  Double as JDouble,
+  Float as JFloat,
+  Long as JLong,
+  Short as JShort
+}
 import java.math.{BigDecimal as JBigDecimal, BigInteger as JBigInteger}
 import io.bullet.borer.encodings.BaseEncoding
 import io.bullet.borer.internal.Util
@@ -38,11 +45,11 @@ object Decoder extends LowPrioDecoders:
 
   /**
    * Creates a [[Decoder]] that decodes a product instance from a simple array of values.
-   * Used, for example, as the default 'given' decoder for tuples. 
+   * Used, for example, as the default 'given' decoder for tuples.
    */
   inline def forProduct[T <: Product](implicit m: Mirror.ProductOf[T]): Decoder[T] =
     io.bullet.borer.internal.BasicProductCodec.decoder[T]
-  
+
   /**
    * Creates a "unified" [[Decoder]] from two decoders that each target only a single data format.
    */
@@ -80,8 +87,7 @@ object Decoder extends LowPrioDecoders:
   def forByteArray(jsonBaseEncoding: BaseEncoding): Decoder[Array[Byte]] =
     Decoder { r =>
       if (r.readingCbor)
-        if (r.hasByteArray)
-          r.readByteArray()
+        if (r.hasByteArray) r.readByteArray()
         else if (r.hasArrayHeader)
           val size = r.readArrayHeader()
           if (size > 0)
@@ -281,7 +287,7 @@ object Decoder extends LowPrioDecoders:
   implicit def forHashMap[A: Decoder, B: Decoder]: Decoder[HashMap[A, B]] =
     constructForMap[A, B, HashMap[A, B]](HashMap.empty)
 
-  implicit inline def forTuple[T <: Tuple :Mirror.ProductOf]: Decoder[T] = Decoder.forProduct[T]
+  implicit inline def forTuple[T <: Tuple: Mirror.ProductOf]: Decoder[T] = Decoder.forProduct[T]
 
   /**
    * The default [[Decoder]] for [[Either]] is not automatically in scope,

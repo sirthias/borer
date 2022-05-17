@@ -206,8 +206,7 @@ object AdtEncodingStrategy:
                 rec(remaining - 1, mapSize) // and recurse
           else failNoTypeId()
 
-        if (r.tryReadMapStart())
-          rec(-1, -1)
+        if (r.tryReadMapStart()) rec(-1, -1)
         else if (r.hasMapHeader)
           val mapSize = r.readMapHeader()
           rec(mapSize, mapSize)

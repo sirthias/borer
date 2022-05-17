@@ -170,8 +170,7 @@ private[borer] object CborValidation:
     def onBreak(): Unit =
       def failBreak() =
         if (level == 0)
-          if (isMasked(UNBOUNDED))
-            failInvalid("map entry value data item", "BREAK")
+          if (isMasked(UNBOUNDED)) failInvalid("map entry value data item", "BREAK")
           else
             val tpe = if (isMasked(MAP)) "map" else "array"
             failInvalid(s"${levelRemaining(level)} more data items of definite-length $tpe", "BREAK")
@@ -247,13 +246,12 @@ private[borer] object CborValidation:
         if (isMasked(UNBOUNDED))
           if (isMasked(MAP))
             if (remaining < -config.maxMapLength) overflow("map", config.maxMapLength) else ok()
-          else
-            if (remaining < -config.maxArrayLength) overflow("array", config.maxArrayLength) else ok()
-        else
-          if (remaining == 0)
-            exitLevel()
-            count() // level-entering items are only counted when the level is exited, not when they are entered
+          else if (remaining < -config.maxArrayLength) overflow("array", config.maxArrayLength)
           else ok()
+        else if (remaining == 0)
+          exitLevel()
+          count() // level-entering items are only counted when the level is exited, not when they are entered
+        else ok()
 
     private def enterLevel(remaining: Long, mask: Int): Unit =
       val l = level + 1
@@ -267,8 +265,7 @@ private[borer] object CborValidation:
         levelRemaining(l) = remaining
         levelMasks(l) = mask
         this.mask = mask
-      else
-        throw new Borer.Error.Overflow(null, s"Exceeded ${config.maxNestingLevels} maximum array/map nesting levels")
+      else throw new Borer.Error.Overflow(null, s"Exceeded ${config.maxNestingLevels} maximum array/map nesting levels")
 
     private def exitLevel(): Unit =
       val l = level - 1

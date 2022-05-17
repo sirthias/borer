@@ -11,7 +11,7 @@ package io.bullet.borer
 import java.nio.charset.StandardCharsets
 import java.nio.ByteBuffer
 
-object ByteBufferJsonSuiteSpec extends AbstractJsonSuiteSpec:
+class ByteBufferJsonSuiteSpec extends AbstractJsonSuiteSpec:
 
   def encode[T: Encoder](value: T): String =
     val byteBuffer = Json.encode(value).withConfig(Json.EncodingConfig(bufferSize = 8)).toByteBuffer

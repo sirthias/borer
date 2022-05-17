@@ -55,6 +55,7 @@ lazy val commonSettings = Seq(
           "-pagewidth:120",
           "-Xtarget:11",
           "-Xfatal-warnings",
+          // "-Xcheck-macros",
         )
       case x => sys.error(s"unsupported scala version: $x")
     }
@@ -64,6 +65,8 @@ lazy val commonSettings = Seq(
   Compile / doc / scalacOptions += "-no-link-warnings",
   sourcesInBase := false,
   Compile / unmanagedResources += baseDirectory.value.getParentFile.getParentFile / "LICENSE",
+
+  scalafmtOnCompile := true, // reformat main and test sources on compile
 
   // file headers
   headerLicense := Some(HeaderLicense.MPLv2("2019-2021", "Mathias Doenitz")),
@@ -75,10 +78,6 @@ lazy val commonSettings = Seq(
   Test / publishArtifact := false,
   pomIncludeRepository   := (_ ⇒ false),
   publishTo              := sonatypePublishToBundle.value,
-)
-
-lazy val scalafmtSettings = Seq(
-  scalafmtOnCompile := true, // reformat main and test sources on compile
 )
 
 lazy val scalajsSettings = Seq(
@@ -179,8 +178,8 @@ lazy val core3 = crossProject(JSPlatform, JVMPlatform)
   .settings(releaseSettings)
   .settings(
     scalaVersion := scala3,
-    moduleName := "borer-core3",
-    libraryDependencies ++= Seq(utest.value),
+    moduleName   := "borer-core3",
+    libraryDependencies ++= Seq(munit.value),
   )
   .jvmSettings(
     Compile / specializeJsonParser / sourceDirectory := baseDirectory.value.getParentFile / "src" / "main",

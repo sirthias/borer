@@ -8,16 +8,13 @@
 
 package io.bullet.borer
 
-import utest._
-
-object LoggingSpec extends TestSuite:
+class LoggingSpec extends BorerSuite:
   import Dom._
 
   val alphabet = ('A' to 'Z').mkString
 
-  val tests = Tests {
-
-    "simple values" - roundTripLogEquals(
+  test("simple values") {
+    roundTripLogEquals(
       ArrayElem.Sized(
         NullElem,
         UndefinedElem,
@@ -48,8 +45,10 @@ object LoggingSpec extends TestSuite:
         |      2| END
         |""".stripMargin
     }
+  }
 
-    "byte arrays" - roundTripLogEquals {
+  test("byte arrays") {
+    roundTripLogEquals {
       ArrayElem.Sized(
         ByteArrayElem(alphabet.take(8).getBytes),
         ByteArrayElem(alphabet.getBytes),
@@ -71,8 +70,10 @@ object LoggingSpec extends TestSuite:
         |    2| END
         |""".stripMargin
     }
+  }
 
-    "text arrays" - roundTripLogEquals {
+  test("text arrays") {
+    roundTripLogEquals {
       ArrayElem.Sized(
         StringElem(alphabet.take(8)),
         StringElem(alphabet),
@@ -94,8 +95,10 @@ object LoggingSpec extends TestSuite:
         |    2| END
         |""".stripMargin
     }
+  }
 
-    "arrays" - roundTripLogEquals {
+  test("arrays") {
+    roundTripLogEquals {
       ArrayElem.Sized(
         ArrayElem.Sized(IntElem(1), IntElem(2), IntElem(3)),
         ArrayElem.Sized(),
@@ -117,8 +120,10 @@ object LoggingSpec extends TestSuite:
         |    2| END
         |""".stripMargin
     }
+  }
 
-    "maps" - roundTripLogEquals {
+  test("maps") {
+    roundTripLogEquals {
       val tuples = "abc".map(c => c.toString -> StringElem(c.toString))
       MapElem.Sized("foo" -> IntElem(42), "emp\nty" -> MapElem.Sized.empty, "bar" -> MapElem.Unsized(tuples: _*))
     } {
@@ -140,8 +145,10 @@ object LoggingSpec extends TestSuite:
         |    2| END
         |""".stripMargin
     }
+  }
 
-    "long arrays and maps" - roundTripLogEquals {
+  test("long arrays and maps") {
+    roundTripLogEquals {
       ArrayElem.Sized(
         ArrayElem.Sized((0 to 20).map(IntElem.apply): _*),
         MapElem.Sized((0 to 20).map(IntElem.apply).zip(('A' to 'Z').map(x => StringElem(x.toString))): _*)

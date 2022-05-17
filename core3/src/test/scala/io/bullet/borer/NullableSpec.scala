@@ -8,9 +8,7 @@
 
 package io.bullet.borer
 
-import utest._
-
-object NullableSpec extends ByteArrayJsonSpec:
+class NullableSpec extends ByteArrayJsonSpec:
 
   case class Foo(int: Nullable[Int], string: Nullable[String])
   case class Bar(foo: Nullable[Option[Foo]])
@@ -19,15 +17,12 @@ object NullableSpec extends ByteArrayJsonSpec:
   implicit val fooCodec: Codec[Foo] = Codec.forProduct[Foo]
   implicit val barCodec: Codec[Bar] = Codec.forProduct[Bar]
 
-  val tests = Tests {
+  test("predefined default values") {
+    roundTrip("""[12,"foo"]""", Foo(12, "foo"))
+    verifyDecoding("""[null,null]""", Foo(0, ""))
+  }
 
-    "predefined default values" - {
-      roundTrip("""[12,"foo"]""", Foo(12, "foo"))
-      verifyDecoding("""[null,null]""", Foo(0, ""))
-    }
-
-    "options" - {
-      roundTrip("""null""", Bar(None))
-      roundTrip("""[12,"foo"]""", Bar(Some(Foo(12, "foo"))))
-    }
+  test("options") {
+    roundTrip("""null""", Bar(None))
+    roundTrip("""[12,"foo"]""", Bar(Some(Foo(12, "foo"))))
   }

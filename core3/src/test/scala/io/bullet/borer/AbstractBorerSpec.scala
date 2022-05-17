@@ -8,31 +8,29 @@
 
 package io.bullet.borer
 
-import utest._
-
-abstract class AbstractBorerSpec extends TestSuite with TestUtils:
+abstract class AbstractBorerSpec extends BorerSuite with TestUtils:
 
   def encode[T: Encoder](value: T): String
 
   def decode[T: Decoder](encoded: String): T
 
-  final def roundTrip[T: Encoder: Decoder](encoded: String, decodedValue: T): Unit =
+  final def roundTrip[T: Encoder: Decoder](encoded: String, decodedValue: T)(using munit.Location): Unit =
     roundTrip(encoded, decodedValue, decodedValue)
 
-  final def roundTrip[A: Decoder, B: Encoder](encoded: String, decodedValue: A, encodedValue: B): Unit =
+  final def roundTrip[A: Decoder, B: Encoder](encoded: String, decodedValue: A, encodedValue: B)(
+      using munit.Location): Unit =
     verifyEncoding(encodedValue, encoded)
     verifyDecoding(encoded, decodedValue)
 
-  final def verifyEncoding[T: Encoder](value: T, expectedEncoding: String): Unit =
+  final def verifyEncoding[T: Encoder](value: T, expectedEncoding: String)(using munit.Location): Unit =
     val encoded = encode(value)
     if (encoded != expectedEncoding)
-      throw new java.lang.AssertionError(s"`$value` encodes to `$encoded` rather than `$expectedEncoding`")
+      fail(s"`$value` encodes to `$encoded` rather than `$expectedEncoding`")
 
-  final def verifyDecoding[T: Decoder](encoded: String, expectedValue: T): Unit =
+  final def verifyDecoding[T: Decoder](encoded: String, expectedValue: T)(using munit.Location): Unit =
     val decoded = decode(encoded)
     if (!equals(decoded, expectedValue))
-      val msg = s"`$encoded` decodes to `${escape(decoded)}` rather than `${escape(expectedValue)}`"
-      throw new java.lang.AssertionError(msg)
+      fail(s"`$encoded` decodes to `${escape(decoded)}` rather than `${escape(expectedValue)}`")
 
   final def equals[T](a: T, b: T): Boolean =
     (a, b) match

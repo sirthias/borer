@@ -20,8 +20,7 @@ object Unsafe:
 
   @nowarn
   final val UNSAFE: SMUnsafe =
-    try
-      SMUnsafe.getUnsafe
+    try SMUnsafe.getUnsafe
     catch
       case NonFatal(_) =>
         try
@@ -39,8 +38,7 @@ object Unsafe:
               val constructor = classOf[SMUnsafe].getDeclaredConstructor()
               constructor.setAccessible(true)
               constructor.newInstance()
-            catch
-              case NonFatal(_) => null
+            catch case NonFatal(_) => null
 
   // the offset to the first element in a byte array.
   final private val BYTE_ARRAY_BASE_OFFSET =
