@@ -9,19 +9,18 @@
 package io.bullet.borer
 
 import java.lang.{
-  Boolean => JBoolean,
-  Byte => JByte,
-  Double => JDouble,
-  Float => JFloat,
-  Long => JLong,
-  Short => JShort
+  Boolean as JBoolean,
+  Byte as JByte,
+  Double as JDouble,
+  Float as JFloat,
+  Long as JLong,
+  Short as JShort
 }
-import java.math.{BigDecimal => JBigDecimal, BigInteger => JBigInteger}
-
+import java.math.{BigDecimal as JBigDecimal, BigInteger as JBigInteger}
 import io.bullet.borer.encodings.BaseEncoding
 import io.bullet.borer.internal.{ElementDeque, Util}
 
-import scala.annotation.tailrec
+import scala.annotation.{tailrec, threadUnsafe}
 import scala.collection.LinearSeq
 import scala.deriving.Mirror
 
@@ -47,6 +46,13 @@ object Encoder extends LowPrioEncoders:
     def producesOutputFor(value: T): Boolean
 
   /**
+   * An [[Encoder]] that lazily wraps another [[Encoder]].
+   * Useful, for example, for recursive definitions.
+   */
+  trait Lazy[T] extends Encoder[T]:
+    def delegate: Encoder[T]
+
+  /**
    * Creates an [[Encoder]] from the given function.
    */
   def apply[T](implicit encoder: Encoder[T]): Encoder[T] = encoder
@@ -66,14 +72,29 @@ object Encoder extends LowPrioEncoders:
     else json.write(w, x)
   }
 
-  implicit final class EncoderOps[A](val underlying: Encoder[A]) extends AnyVal:
+  extension [A](underlying: Encoder[A])
     def contramap[B](f: B => A): Encoder[B]                     = Encoder((w, b) => underlying.write(w, f(b)))
     def contramapWithWriter[B](f: (Writer, B) => A): Encoder[B] = Encoder((w, b) => underlying.write(w, f(w, b)))
 
     def withDefaultValue(defaultValue: A): Encoder[A] =
+      underlying.unwrap match
+        case x: DefaultValueAware[A] => x.withDefaultValue(defaultValue)
+        case x                       => x
+
+    def unwrap: Encoder[A] =
       underlying match
-        case x: Encoder.DefaultValueAware[A] => x withDefaultValue defaultValue
-        case x                               => x
+        case x: Lazy[A] => x.delegate.unwrap
+        case x          => x
+
+  extension [T](underlying: => Encoder[T])
+    /**
+     * Wraps an [[Encoder]] definition with lazy initialization.
+     */
+    def recursive: Encoder[T] =
+      new Lazy[T] {
+        @threadUnsafe lazy val delegate: Encoder[T] = underlying
+        def write(w: Writer, value: T): Writer      = delegate.write(w, value)
+      }
 
     /**
      * Creates a new [[Encoder]] which emits the flat, concatenated encoding of the underlying encoder and the given
@@ -84,7 +105,7 @@ object Encoder extends LowPrioEncoders:
      *
      * @param maxBufferSize the maximum size of the buffer for the encoding of the first encoder
      */
-    def concat(other: Encoder[A], maxBufferSize: Int = 16384): Encoder[A] =
+    def concat(other: Encoder[T], maxBufferSize: Int = 16384): Encoder[T] =
       new Encoder.ConcatEncoder(underlying, other, maxBufferSize)
 
   implicit def fromCodec[T](implicit codec: Codec[T]): Encoder[T] = codec.encoder

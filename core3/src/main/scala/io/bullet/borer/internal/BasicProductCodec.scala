@@ -16,7 +16,7 @@ import scala.Tuple.Size
 
 private[borer] object BasicProductCodec:
 
-  inline def encoder[T <: Product](implicit m: Mirror.ProductOf[T]): Encoder[T] =
+  inline def encoder[T <: Product](using m: Mirror.ProductOf[T]): Encoder[T] =
     type Fields = m.MirroredElemTypes
     inline erasedValue[Fields] match
       case _: EmptyTuple =>
@@ -32,7 +32,7 @@ private[borer] object BasicProductCodec:
       case _: (t *: ts) =>
         encRec[T, ts](w.write(x.productElement(n).asInstanceOf[t])(summonInline[Encoder[t]]), x, n + 1)
 
-  inline def decoder[T <: Product](implicit m: Mirror.ProductOf[T]): Decoder[T] =
+  inline def decoder[T <: Product](using m: Mirror.ProductOf[T]): Decoder[T] =
     type Fields = m.MirroredElemTypes
     inline erasedValue[Fields] match
       case _: EmptyTuple =>

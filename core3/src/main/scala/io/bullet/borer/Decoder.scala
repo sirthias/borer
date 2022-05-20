@@ -20,7 +20,7 @@ import java.math.{BigDecimal as JBigDecimal, BigInteger as JBigInteger}
 import io.bullet.borer.encodings.BaseEncoding
 import io.bullet.borer.internal.Util
 
-import scala.annotation.tailrec
+import scala.annotation.{tailrec, threadUnsafe}
 import scala.collection.immutable.{HashMap, ListMap, TreeMap}
 import scala.collection.{mutable, Factory}
 import scala.deriving.Mirror
@@ -35,8 +35,18 @@ trait Decoder[T]:
 object Decoder extends LowPrioDecoders:
   import io.bullet.borer.{DataItem => DI}
 
+  /**
+   * A [[Decoder]] that might change its encoding strategy if [[T]] has a default value.
+   */
   trait DefaultValueAware[T] extends Decoder[T]:
     def withDefaultValue(defaultValue: T): Decoder[T]
+
+  /**
+   * A [[Decoder]] that lazily wraps another [[Decoder]].
+   * Useful, for example, for recursive definitions.
+   */
+  trait Lazy[T] extends Decoder[T]:
+    def delegate: Decoder[T]
 
   /**
    * Creates a [[Decoder]] from the given function.
@@ -57,16 +67,31 @@ object Decoder extends LowPrioDecoders:
     if (r.target == Cbor) cbor.read(r) else json.read(r)
   }
 
-  implicit final class DecoderOps[A](val underlying: Decoder[A]) extends AnyVal:
+  extension [A](underlying: Decoder[A])
     def map[B](f: A => B): Decoder[B]                     = Decoder(r => f(underlying.read(r)))
     def mapWithReader[B](f: (Reader, A) => B): Decoder[B] = Decoder(r => f(r, underlying.read(r)))
 
     def withDefaultValue(defaultValue: A): Decoder[A] =
-      underlying match
+      underlying.unwrap match
         case x: Decoder.DefaultValueAware[A] => x withDefaultValue defaultValue
         case x                               => x
 
-  implicit def fromCodec[T](implicit codec: Codec[T]): Decoder[T] = codec.decoder
+    def unwrap: Decoder[A] =
+      underlying match
+        case x: Lazy[A] => x.delegate.unwrap
+        case x          => x
+
+  extension [T](underlying: => Decoder[T])
+    /**
+     * Wraps a [[Decoder]] definition with lazy initialization.
+     */
+    def recursive: Decoder[T] =
+      new Lazy[T] {
+        @threadUnsafe lazy val delegate: Decoder[T] = underlying
+        def read(r: Reader): T                      = delegate.read(r)
+      }
+
+  given fromCodec[T](using codec: Codec[T]): Decoder[T] = codec.decoder
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -95,11 +95,11 @@ class MiscCborSpec extends ByteArrayCborSpec:
       BigDecimal("3.141592653589793238462643383279502884197169399375105820974944592307816"))
   }
 
-  test("Array Header Mismatch Error") {
+  test("Array-Header Mismatch Error") {
     val encoded = Cbor.encode(Writer.Script(_.writeArrayHeader(0))).toByteArray
     val error   = Cbor.decode(encoded).to[Foo].valueEither.swap.getOrElse(null)
     error.asInstanceOf[Borer.Error.InvalidInputData[_]].getMessage ==>
-    "Expected Array Header (3) but got Array Header (0) (input position 0)"
+    "Expected Array-Header(3) but got Array-Header(0) (input position 0)"
   }
 
   test("Int Array") {

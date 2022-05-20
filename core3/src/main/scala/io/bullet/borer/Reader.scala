@@ -249,7 +249,7 @@ final class InputReader[Config <: Reader.Config](
   @inline def hasSizedBytes: Boolean = has(DI.Bytes)
 
   def readBytesStart(): this.type =
-    if (tryReadBytesStart()) this else unexpectedDataItem(expected = "Unbounded Bytes Start")
+    if (tryReadBytesStart()) this else unexpectedDataItem(expected = "Unbounded Bytes-Start")
   @inline def hasBytesStart: Boolean       = has(DI.BytesStart)
   @inline def tryReadBytesStart(): Boolean = clearIfTrue(hasBytesStart)
 
@@ -272,7 +272,7 @@ final class InputReader[Config <: Reader.Config](
       case DI.String    => ret(receptacle.stringValue)
       case DI.Text      => stringOf(readSizedTextBytes[Array[Byte]]())
       case DI.TextStart => stringOf(readUnsizedTextBytes[Array[Byte]]())
-      case _            => unexpectedDataItem(expected = "String or Text Bytes")
+      case _            => unexpectedDataItem(expected = "String or Text-Bytes")
   def readString(s: String): this.type = if (tryReadString(s)) this else unexpectedDataItem(expected = s""""$s"""")
   @inline def hasString: Boolean       = hasAnyOf(DI.String | DI.Chars | DI.Text | DI.TextStart)
 
@@ -331,7 +331,7 @@ final class InputReader[Config <: Reader.Config](
       case DI.String    => ret(receptacle.stringValue.toCharArray)
       case DI.Text      => Utf8.decode(readSizedTextBytes[Array[Byte]]())
       case DI.TextStart => Utf8.decode(readUnsizedTextBytes[Array[Byte]]())
-      case _            => unexpectedDataItem(expected = "String or Text Bytes")
+      case _            => unexpectedDataItem(expected = "String or Text-Bytes")
 
   def readChars(chars: Array[Char]): this.type =
     if (tryReadChars(chars)) this
@@ -391,16 +391,16 @@ final class InputReader[Config <: Reader.Config](
     dataItem() match
       case DI.Text      => readSizedTextBytes()
       case DI.TextStart => readUnsizedTextBytes()
-      case _            => unexpectedDataItem(expected = "Text Bytes")
+      case _            => unexpectedDataItem(expected = "Text-Bytes")
   @inline def hasTextBytes: Boolean = hasAnyOf(DI.Text | DI.TextStart)
 
   def readSizedTextBytes[Bytes]()(implicit byteAccess: ByteAccess[Bytes]): Bytes =
     if (hasSizedTextBytes) ret(receptacle.getBytes)
-    else unexpectedDataItem(expected = "Bounded Text Bytes")
+    else unexpectedDataItem(expected = "Bounded Text-Bytes")
   @inline def hasSizedTextBytes: Boolean = has(DI.Text)
 
   def readTextStart(): this.type =
-    if (tryReadTextStart()) this else unexpectedDataItem(expected = "Unbounded Text Start")
+    if (tryReadTextStart()) this else unexpectedDataItem(expected = "Unbounded Text-Start")
   @inline def hasTextStart: Boolean       = has(DI.TextStart)
   @inline def tryReadTextStart(): Boolean = clearIfTrue(hasTextStart)
 
@@ -437,18 +437,18 @@ final class InputReader[Config <: Reader.Config](
       val result = receptacle.longValue
       clearDataItem()
       result
-    else unexpectedDataItem(expected = "Array Header")
+    else unexpectedDataItem(expected = "Array-Header")
   @inline def hasArrayHeader: Boolean                 = has(DI.ArrayHeader)
   @inline def hasArrayHeader(length: Int): Boolean    = hasArrayHeader(length.toLong)
   @inline def hasArrayHeader(length: Long): Boolean   = hasArrayHeader && receptacle.longValue == length
   @inline def readArrayHeader(length: Int): this.type = readArrayHeader(length.toLong)
 
   @inline def readArrayHeader(length: Long): this.type =
-    if (tryReadArrayHeader(length)) this else unexpectedDataItem(expected = s"Array Header ($length)")
+    if (tryReadArrayHeader(length)) this else unexpectedDataItem(expected = s"Array-Header($length)")
   @inline def tryReadArrayHeader(length: Int): Boolean  = tryReadArrayHeader(length.toLong)
   @inline def tryReadArrayHeader(length: Long): Boolean = clearIfTrue(hasArrayHeader(length))
 
-  def readArrayStart(): this.type    = if (tryReadArrayStart()) this else unexpectedDataItem(expected = "Array Start")
+  def readArrayStart(): this.type    = if (tryReadArrayStart()) this else unexpectedDataItem(expected = "Array-Start")
   @inline def hasArrayStart: Boolean = has(DI.ArrayStart)
   @inline def tryReadArrayStart(): Boolean = clearIfTrue(hasArrayStart)
 
@@ -457,18 +457,18 @@ final class InputReader[Config <: Reader.Config](
       val result = receptacle.longValue
       clearDataItem()
       result
-    else unexpectedDataItem(expected = "Map Header")
+    else unexpectedDataItem(expected = "Map-Header")
   @inline def hasMapHeader: Boolean                 = has(DI.MapHeader)
   @inline def hasMapHeader(length: Int): Boolean    = hasMapHeader(length.toLong)
   @inline def hasMapHeader(length: Long): Boolean   = hasMapHeader && receptacle.longValue == length
   @inline def readMapHeader(length: Int): this.type = readMapHeader(length.toLong)
 
   @inline def readMapHeader(length: Long): this.type =
-    if (tryReadMapHeader(length)) this else unexpectedDataItem(expected = s"Map Header ($length)")
+    if (tryReadMapHeader(length)) this else unexpectedDataItem(expected = s"Map-Header($length)")
   @inline def tryReadMapHeader(length: Int): Boolean  = tryReadMapHeader(length.toLong)
   @inline def tryReadMapHeader(length: Long): Boolean = clearIfTrue(hasMapHeader(length))
 
-  def readMapStart(): this.type          = if (tryReadMapStart()) this else unexpectedDataItem(expected = "Map Start")
+  def readMapStart(): this.type          = if (tryReadMapStart()) this else unexpectedDataItem(expected = "Map-Start")
   @inline def hasMapStart: Boolean       = has(DI.MapStart)
   @inline def tryReadMapStart(): Boolean = clearIfTrue(hasMapStart)
 
@@ -498,7 +498,7 @@ final class InputReader[Config <: Reader.Config](
   @inline def tryReadSimpleValue(value: Int): Boolean = clearIfTrue(hasSimpleValue(value))
 
   @inline def hasEndOfInput: Boolean       = has(DI.EndOfInput)
-  @inline def readEndOfInput(): Unit       = if (!hasEndOfInput) unexpectedDataItem(expected = "End of Input")
+  @inline def readEndOfInput(): Unit       = if (!hasEndOfInput) unexpectedDataItem(expected = "End-of-Input")
   @inline def tryReadEndOfInput(): Boolean = hasEndOfInput
 
   @inline def read[T]()(implicit decoder: Decoder[T]): T = decoder.read(this)
@@ -583,8 +583,8 @@ final class InputReader[Config <: Reader.Config](
 
   def unexpectedDataItem(expected: String): Nothing =
     val actual = _dataItem match
-      case DI.ArrayHeader => s"Array Header (${receptacle.longValue})"
-      case DI.MapHeader   => s"Map Header (${receptacle.longValue})"
+      case DI.ArrayHeader => s"Array-Header(${receptacle.longValue})"
+      case DI.MapHeader   => s"Map-Header(${receptacle.longValue})"
       case DI.Tag         => "Tag: " + receptacle.tagValue
       case _              => DI.stringify(_dataItem)
     unexpectedDataItem(expected, actual)

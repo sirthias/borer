@@ -8,7 +8,14 @@
 
 package io.bullet.borer
 
-import java.lang.{Boolean => JBoolean, Byte => JByte, Double => JDouble, Float => JFloat, Long => JLong, Short => JShort}
+import java.lang.{
+  Boolean => JBoolean,
+  Byte => JByte,
+  Double => JDouble,
+  Float => JFloat,
+  Long => JLong,
+  Short => JShort
+}
 import java.math.{BigDecimal => JBigDecimal, BigInteger => JBigInteger}
 import io.bullet.borer.encodings.BaseEncoding
 import io.bullet.borer.internal.Util

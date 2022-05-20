@@ -8,6 +8,7 @@
 
 package io.bullet.borer
 
+import scala.annotation.threadUnsafe
 import scala.deriving.Mirror
 
 /**
@@ -35,8 +36,16 @@ object Codec:
   /**
    * Same as `apply` but with the parameter list marked as implicit.
    */
-  @inline def of[A](implicit encoder: Encoder[A], decoder: Decoder[A]): Codec[A] =
+  @inline def of[T](implicit encoder: Encoder[T], decoder: Decoder[T]): Codec[T] =
     Codec(encoder, decoder)
+
+  extension [T](underlying: => Codec[T])
+    /**
+     * Wraps a [[Codec]] definition with lazy initialization.
+     */
+    def recursive: Codec[T] =
+      @threadUnsafe lazy val delegate: Codec[T] = underlying
+      Codec(delegate.encoder.recursive, delegate.decoder.recursive)
 
   /**
    * Convenience constructor.

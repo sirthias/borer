@@ -14,6 +14,20 @@ import utest._
 import scala.util.{Failure, Try}
 import scala.util.control.NonFatal
 
+object ADT {
+  sealed trait Animal
+  case class Dog(age: Int, name: String)                                     extends Animal
+  @key("TheCAT") case class Cat(weight: Double, color: String, home: String) extends Animal
+  @key(42) case class Mouse(tail: Boolean)                                   extends Animal
+}
+
+object AdtWithKeyCollision {
+  sealed trait Animal
+  case class Dog(age: Int, name: String)                                  extends Animal
+  @key("Dog") case class Cat(weight: Double, color: String, home: String) extends Animal
+  @key(42) case class Mouse(tail: Boolean)                                extends Animal
+}
+
 abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
   import Dom._
 
@@ -514,20 +528,4 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
       case MapElem.Unsized(_, keys, values) => MapElem.Unsized(f((keys zip values).toList): _*)
       case _                                => throw new IllegalStateException
     }
-}
-
-// cannot be moved into the DerivationSpec class itself due to
-// https://github.com/scala/bug/issues/10035 not (yet) having been fixed in Scala 2.12
-object ADT {
-  sealed trait Animal
-  case class Dog(age: Int, name: String)                                     extends Animal
-  @key("TheCAT") case class Cat(weight: Double, color: String, home: String) extends Animal
-  @key(42) case class Mouse(tail: Boolean)                                   extends Animal
-}
-
-object AdtWithKeyCollision {
-  sealed trait Animal
-  case class Dog(age: Int, name: String)                                  extends Animal
-  @key("Dog") case class Cat(weight: Double, color: String, home: String) extends Animal
-  @key(42) case class Mouse(tail: Boolean)                                extends Animal
 }
