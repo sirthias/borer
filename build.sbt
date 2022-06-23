@@ -1,7 +1,7 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import sbt._
 
-def scala3   = "3.1.2"
+def scala3   = "3.1.3"
 def scala213 = "2.13.8"
 
 inThisBuild(
