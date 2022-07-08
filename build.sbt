@@ -113,12 +113,12 @@ lazy val releaseSettings = {
 val `akka-actor`        = Def.setting("com.typesafe.akka"       %%  "akka-actor-typed"        % "2.6.19")
 val `akka-stream`       = Def.setting("com.typesafe.akka"       %%  "akka-stream"             % "2.6.19")
 val `akka-http`         = Def.setting("com.typesafe.akka"       %%  "akka-http"               % "10.2.9")
-val `cats-core`         = Def.setting("org.typelevel"           %%% "cats-core"               % "2.7.0")
-val `circe-core`        = Def.setting("io.circe"                %%% "circe-core"              % "0.14.1")
-val `circe-parser`      = Def.setting("io.circe"                %%% "circe-parser"            % "0.14.1")
+val `cats-core`         = Def.setting("org.typelevel"           %%% "cats-core"               % "2.8.0")
+val `circe-core`        = Def.setting("io.circe"                %%% "circe-core"              % "0.14.2")
+val `circe-parser`      = Def.setting("io.circe"                %%% "circe-parser"            % "0.14.2")
 val `circe-derivation`  = Def.setting("io.circe"                %%% "circe-derivation"        % "0.13.0-M5")
-val `scodec-bits`       = Def.setting("org.scodec"              %%% "scodec-bits"             % "1.1.31")
-val utest               = Def.setting("com.lihaoyi"             %%% "utest"                   % "0.7.11" % Test)
+val `scodec-bits`       = Def.setting("org.scodec"              %%% "scodec-bits"             % "1.1.34")
+val utest               = Def.setting("com.lihaoyi"             %%% "utest"                   % "0.8.0" % Test)
 val munit               = Def.setting("org.scalameta"           %%% "munit"                   % "0.7.29" % Test)
 val macrolizer          = Def.setting("io.bullet"               %%% "macrolizer"              % "0.6.2-SNAPSHOT" % "compile-internal, test-internal")
 val `scala-compiler`    = Def.setting("org.scala-lang"          %   "scala-compiler" % scalaVersion.value % "provided")
@@ -325,8 +325,8 @@ lazy val benchmarks = project
     scalaVersion := scala213,
     publish / skip := true,
     libraryDependencies ++= Seq(
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"        % "2.13.21",
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros"      % "2.13.21" % Provided,
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"        % "2.13.35",
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros"      % "2.13.35" % Provided,
       "com.fasterxml.jackson.module"          %% "jackson-module-scala"       % "2.13.2",
       "com.fasterxml.jackson.module"           % "jackson-module-afterburner" % "2.13.2",
       "com.lihaoyi"                           %% "upickle"                    % "1.6.0",
