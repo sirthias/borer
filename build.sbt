@@ -100,7 +100,7 @@ val `circe-derivation`  = Def.setting("io.circe"                %%% "circe-deriv
 val `scodec-bits`       = Def.setting("org.scodec"              %%% "scodec-bits"             % "1.1.34")
 val utest               = Def.setting("com.lihaoyi"             %%% "utest"                   % "0.8.0" % Test)
 val munit               = Def.setting("org.scalameta"           %%% "munit"                   % "0.7.29" % Test)
-val macrolizer          = Def.setting("io.bullet"               %%% "macrolizer"              % "0.6.2-SNAPSHOT" % "compile-internal, test-internal")
+val macrolizer          = Def.setting("io.bullet"               %%% "macrolizer"              % "0.6.2" % "compile-internal, test-internal")
 val `scala-compiler`    = Def.setting("org.scala-lang"          %   "scala-compiler" % scalaVersion.value % "provided")
 val `scala-reflect`     = Def.setting("org.scala-lang"          %   "scala-reflect" % scalaVersion.value % "provided")
 // format: ON
