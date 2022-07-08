@@ -1,3 +1,12 @@
+Version 1.8.0 (2022-07-12)
+--------------------------
+
+- Implemented DOM rendering, improve DOM API (breaking)
+- Refactored Logging API and implementation for features and flexibility
+- Fixed StringNumbers, StringBooleans not working for boxed values (#567)
+- Enable StringNumber decoding also for BigInt and BigDecimal (#568)
+
+
 Version 1.7.2 (2021-04-29)
 --------------------------
 
