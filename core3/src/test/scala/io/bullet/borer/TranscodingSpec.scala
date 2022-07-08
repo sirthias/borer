@@ -34,5 +34,5 @@ class TranscodingSpec extends BorerSuite:
   test("Roundtrip") {
     intercept[Borer.Error.InvalidInputData[_]](
       Cbor.transEncode(Map(1 -> "yes")).transDecode.to[Map[String, String]].value
-    ).getMessage.takeWhile(_ != '(') ==> "Expected String or Text Bytes but got Int "
+    ).getMessage.takeWhile(_ != '(') ==> "Expected String or Text-Bytes but got Int "
   }
