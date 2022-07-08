@@ -19,9 +19,9 @@ import scala.collection.immutable.TreeMap
 object SprayCodecs {
   import spray.json.DefaultJsonProtocol._
 
-  implicit val fooFormat  = jsonFormat5(Foo.apply)
-  implicit val foosFormat = implicitly[RootJsonFormat[Map[String, Foo]]]
-  implicit val intsFormat = implicitly[RootJsonFormat[List[Int]]]
+  implicit val fooFormat: JsonFormat[Foo]               = jsonFormat5(Foo.apply)
+  implicit val foosFormat: JsonFormat[Map[String, Foo]] = implicitly[RootJsonFormat[Map[String, Foo]]]
+  implicit val intsFormat: JsonFormat[List[Int]]        = implicitly[RootJsonFormat[List[Int]]]
 }
 
 import SprayCodecs._
@@ -78,38 +78,38 @@ class SprayModelBenchmark extends DomBenchmark {
     // format: OFF
     val c = fileName match {
       case "australia-abc.json" =>
-        implicit val a = jsonFormat2(Australia.Geometry)
-        implicit val b = jsonFormat6(Australia.Properties)
-        implicit val c = jsonFormat1(Australia.Properties1)
-        implicit val d = jsonFormat5(Australia.Features)
-        implicit val e = jsonFormat2(Australia.Crs)
-        jsonFormat4(Australia.RootInterface)
+        implicit val a: JsonFormat[Australia.Geometry] = jsonFormat2(Australia.Geometry.apply)
+        implicit val b: JsonFormat[Australia.Properties] = jsonFormat6(Australia.Properties.apply)
+        implicit val c: JsonFormat[Australia.Properties1] = jsonFormat1(Australia.Properties1.apply)
+        implicit val d: JsonFormat[Australia.Features] = jsonFormat5(Australia.Features.apply)
+        implicit val e: JsonFormat[Australia.Crs] = jsonFormat2(Australia.Crs.apply)
+        jsonFormat4(Australia.RootInterface.apply)
 
       case "bitcoin.json" =>
-        implicit val a = jsonFormat2(Bitcoin.SpendingOutpoints)
-        implicit val b = jsonFormat8(Bitcoin.PrevOut)
-        implicit val c = jsonFormat4(Bitcoin.Inputs)
-        implicit val d = jsonFormat7(Bitcoin.Out)
-        implicit val e = jsonFormat13(Bitcoin.Txs)
-        jsonFormat1(Bitcoin.RootInterface)
+        implicit val a: JsonFormat[Bitcoin.SpendingOutpoints] = jsonFormat2(Bitcoin.SpendingOutpoints.apply)
+        implicit val b: JsonFormat[Bitcoin.PrevOut] = jsonFormat8(Bitcoin.PrevOut.apply)
+        implicit val c: JsonFormat[Bitcoin.Inputs] = jsonFormat4(Bitcoin.Inputs.apply)
+        implicit val d: JsonFormat[Bitcoin.Out] = jsonFormat7(Bitcoin.Out.apply)
+        implicit val e: JsonFormat[Bitcoin.Txs] = jsonFormat13(Bitcoin.Txs.apply)
+        jsonFormat1(Bitcoin.RootInterface.apply)
 
       case "doj-blog.json" =>
-        implicit val a = jsonFormat2(DojBlog.ResponseInfo)
-        implicit val b = jsonFormat3(DojBlog.Resultset)
-        implicit val c = jsonFormat3(DojBlog.Metadata)
-        implicit val d = jsonFormat2(DojBlog.Component)
-        implicit val e = jsonFormat13(DojBlog.Results)
-        jsonFormat2(DojBlog.RootInterface)
+        implicit val a: JsonFormat[DojBlog.ResponseInfo] = jsonFormat2(DojBlog.ResponseInfo.apply)
+        implicit val b: JsonFormat[DojBlog.Resultset] = jsonFormat3(DojBlog.Resultset.apply)
+        implicit val c: JsonFormat[DojBlog.Metadata] = jsonFormat3(DojBlog.Metadata.apply)
+        implicit val d: JsonFormat[DojBlog.Component] = jsonFormat2(DojBlog.Component.apply)
+        implicit val e: JsonFormat[DojBlog.Results] = jsonFormat13(DojBlog.Results.apply)
+        jsonFormat2(DojBlog.RootInterface.apply)
 
       case "eu-lobby-country.json" =>
-        implicit val a = jsonFormat0(EuLobbyCountry.Facets)
-        implicit val b = jsonFormat6(EuLobbyCountry.Results)
-        jsonFormat7(EuLobbyCountry.RootInterface)
+        implicit val a: JsonFormat[EuLobbyCountry.Facets] = jsonFormat0(EuLobbyCountry.Facets.apply)
+        implicit val b: JsonFormat[EuLobbyCountry.Results] = jsonFormat6(EuLobbyCountry.Results.apply)
+        jsonFormat7(EuLobbyCountry.RootInterface.apply)
 
       case "eu-lobby-financial.json" =>
-        implicit val a = jsonFormat0(EuLobbyFinancial.Facets)
-        implicit val b = jsonFormat8(EuLobbyFinancial.CustomIncomes)
-        implicit val c = new JsonFormat[EuLobbyFinancial.Results] {
+        implicit val a: JsonFormat[EuLobbyFinancial.Facets] = jsonFormat0(EuLobbyFinancial.Facets.apply)
+        implicit val b: JsonFormat[EuLobbyFinancial.CustomIncomes] = jsonFormat8(EuLobbyFinancial.CustomIncomes.apply)
+        implicit val c: JsonFormat[EuLobbyFinancial.Results] = new JsonFormat[EuLobbyFinancial.Results] {
           def write(obj: EuLobbyFinancial.Results) =
             JsObject(
               TreeMap(
@@ -185,11 +185,11 @@ class SprayModelBenchmark extends DomBenchmark {
             )
           }
         }
-        jsonFormat7(EuLobbyFinancial.RootInterface)
+        jsonFormat7(EuLobbyFinancial.RootInterface.apply)
 
       case "eu-lobby-repr.json" =>
-        implicit val a = jsonFormat0(EuLobbyRepr.Facets)
-        implicit val b = new JsonFormat[EuLobbyRepr.Results] {
+        implicit val a: JsonFormat[EuLobbyRepr.Facets] = jsonFormat0(EuLobbyRepr.Facets.apply)
+        implicit val b: JsonFormat[EuLobbyRepr.Results] = new JsonFormat[EuLobbyRepr.Results] {
           def write(obj: EuLobbyRepr.Results) =
             JsObject(
               TreeMap(
@@ -301,20 +301,20 @@ class SprayModelBenchmark extends DomBenchmark {
             )
           }
         }
-        jsonFormat7(EuLobbyRepr.RootInterface)
+        jsonFormat7(EuLobbyRepr.RootInterface.apply)
 
       case "github-events.json" =>
-        implicit val a = jsonFormat6(GithubEvents.Actor)
-        implicit val b = jsonFormat2(GithubEvents.Author)
-        implicit val c = jsonFormat1(GithubEvents.Self)
-        implicit val d = jsonFormat18(GithubEvents.Owner)
-        implicit val e = jsonFormat5(GithubEvents.Org)
-        implicit val f = jsonFormat8(GithubEvents.Links)
-        implicit val g = jsonFormat3(GithubEvents.Links1)
-        implicit val h = jsonFormat6(GithubEvents.Labels)
-        implicit val i = jsonFormat5(GithubEvents.License)
-        implicit val j = jsonFormat3(GithubEvents.Repo)
-        implicit val k = new JsonFormat[GithubEvents.Repo1] {
+        implicit val a: JsonFormat[GithubEvents.Actor] = jsonFormat6(GithubEvents.Actor.apply)
+        implicit val b: JsonFormat[GithubEvents.Author] = jsonFormat2(GithubEvents.Author.apply)
+        implicit val c: JsonFormat[GithubEvents.Self] = jsonFormat1(GithubEvents.Self.apply)
+        implicit val d: JsonFormat[GithubEvents.Owner] = jsonFormat18(GithubEvents.Owner.apply)
+        implicit val e: JsonFormat[GithubEvents.Org] = jsonFormat5(GithubEvents.Org.apply)
+        implicit val f: JsonFormat[GithubEvents.Links] = jsonFormat8(GithubEvents.Links.apply)
+        implicit val g: JsonFormat[GithubEvents.Links1] = jsonFormat3(GithubEvents.Links1.apply)
+        implicit val h: JsonFormat[GithubEvents.Labels] = jsonFormat6(GithubEvents.Labels.apply)
+        implicit val i: JsonFormat[GithubEvents.License] = jsonFormat5(GithubEvents.License.apply)
+        implicit val j: JsonFormat[GithubEvents.Repo] = jsonFormat3(GithubEvents.Repo.apply)
+        implicit val k: JsonFormat[GithubEvents.Repo1] = new JsonFormat[GithubEvents.Repo1] {
           def write(obj: GithubEvents.Repo1) =
             JsObject(
               TreeMap(
@@ -470,11 +470,11 @@ class SprayModelBenchmark extends DomBenchmark {
             )
           }
         }
-        implicit val l = jsonFormat10(GithubEvents.Comment)
-        implicit val m = jsonFormat19(GithubEvents.Comment1)
-        implicit val n = jsonFormat5(GithubEvents.Commits)
-        implicit val o = jsonFormat5(GithubEvents.CreateEvent)
-        implicit val p = new JsonFormat[GithubEvents.Forkee] {
+        implicit val l: JsonFormat[GithubEvents.Comment] = jsonFormat10(GithubEvents.Comment.apply)
+        implicit val m: JsonFormat[GithubEvents.Comment1] = jsonFormat19(GithubEvents.Comment1.apply)
+        implicit val n: JsonFormat[GithubEvents.Commits] = jsonFormat5(GithubEvents.Commits.apply)
+        implicit val o: JsonFormat[GithubEvents.CreateEvent] = jsonFormat5(GithubEvents.CreateEvent.apply)
+        implicit val p: JsonFormat[GithubEvents.Forkee] = new JsonFormat[GithubEvents.Forkee] {
           def write(obj: GithubEvents.Forkee) =
             JsObject(
               TreeMap(
@@ -632,10 +632,10 @@ class SprayModelBenchmark extends DomBenchmark {
             )
           }
         }
-        implicit val q = jsonFormat1(GithubEvents.ForkEvent[GithubEvents.Forkee])
-        implicit val r = jsonFormat5(GithubEvents.Head[GithubEvents.Repo1])
-        implicit val s = jsonFormat4(GithubEvents.PullRequest)
-        implicit val t = new JsonFormat[GithubEvents.PullRequest1[GithubEvents.Head[GithubEvents.Repo1]]] {
+        implicit val q: JsonFormat[GithubEvents.ForkEvent[GithubEvents.Forkee]] = jsonFormat1(GithubEvents.ForkEvent[GithubEvents.Forkee].apply)
+        implicit val r: JsonFormat[GithubEvents.Head[GithubEvents.Repo1]] = jsonFormat5(GithubEvents.Head[GithubEvents.Repo1].apply)
+        implicit val s: JsonFormat[GithubEvents.PullRequest] = jsonFormat4(GithubEvents.PullRequest.apply)
+        implicit val t: JsonFormat[GithubEvents.PullRequest1[GithubEvents.Head[GithubEvents.Repo1]]] = new JsonFormat[GithubEvents.PullRequest1[GithubEvents.Head[GithubEvents.Repo1]]] {
           def write(obj: GithubEvents.PullRequest1[GithubEvents.Head[GithubEvents.Repo1]]) =
             JsObject(
               TreeMap(
@@ -737,7 +737,8 @@ class SprayModelBenchmark extends DomBenchmark {
             )
           }
         }
-        implicit val u = new JsonFormat[GithubEvents.PullRequest2[GithubEvents.Head[GithubEvents.Repo1]]] {
+        implicit val u: JsonFormat[GithubEvents.PullRequest2[GithubEvents.Head[GithubEvents.Repo1]]] =
+          new JsonFormat[GithubEvents.PullRequest2[GithubEvents.Head[GithubEvents.Repo1]]] {
           def write(obj: GithubEvents.PullRequest2[GithubEvents.Head[GithubEvents.Repo1]]) =
             JsObject(
               TreeMap(
@@ -815,9 +816,9 @@ class SprayModelBenchmark extends DomBenchmark {
             )
           }
         }
-        implicit val v = jsonFormat3(GithubEvents.PullRequestEvent[GithubEvents.Head[GithubEvents.Repo1]])
-        implicit val w = jsonFormat3(GithubEvents.PullRequestReviewCommentEvent[GithubEvents.Head[GithubEvents.Repo1]])
-        implicit val x = new JsonFormat[GithubEvents.Issue] {
+        implicit val v: JsonFormat[GithubEvents.PullRequestEvent[GithubEvents.Head[GithubEvents.Repo1]]] = jsonFormat3(GithubEvents.PullRequestEvent[GithubEvents.Head[GithubEvents.Repo1]].apply)
+        implicit val w: JsonFormat[GithubEvents.PullRequestReviewCommentEvent[GithubEvents.Head[GithubEvents.Repo1]]] = jsonFormat3(GithubEvents.PullRequestReviewCommentEvent[GithubEvents.Head[GithubEvents.Repo1]].apply)
+        implicit val x: JsonFormat[GithubEvents.Issue] = new JsonFormat[GithubEvents.Issue] {
           def write(obj: GithubEvents.Issue) =
             JsObject(
               TreeMap(
@@ -877,7 +878,7 @@ class SprayModelBenchmark extends DomBenchmark {
             )
           }
         }
-        implicit val y = new JsonFormat[GithubEvents.Issue1] {
+        implicit val y: JsonFormat[GithubEvents.Issue1] = new JsonFormat[GithubEvents.Issue1] {
           def write(obj: GithubEvents.Issue1) =
             JsObject(
               TreeMap(
@@ -935,40 +936,40 @@ class SprayModelBenchmark extends DomBenchmark {
             )
           }
         }
-        implicit val z = jsonFormat3(GithubEvents.IssueCommentEvent)
-        implicit val A = jsonFormat2(GithubEvents.IssuesEvent)
-        implicit val B = jsonFormat7(GithubEvents.PushEvent)
-        implicit val C = jsonFormat1(GithubEvents.WatchEvent)
-        implicit val D = jsonFormat15(GithubEvents.RootInterface[GithubEvents.Head[GithubEvents.Repo1], GithubEvents.Forkee])
+        implicit val z: JsonFormat[GithubEvents.IssueCommentEvent] = jsonFormat3(GithubEvents.IssueCommentEvent.apply)
+        implicit val A: JsonFormat[GithubEvents.IssuesEvent] = jsonFormat2(GithubEvents.IssuesEvent.apply)
+        implicit val B: JsonFormat[GithubEvents.PushEvent] = jsonFormat7(GithubEvents.PushEvent.apply)
+        implicit val C: JsonFormat[GithubEvents.WatchEvent] = jsonFormat1(GithubEvents.WatchEvent.apply)
+        implicit val D: JsonFormat[GithubEvents.RootInterface[GithubEvents.Head[GithubEvents.Repo1], GithubEvents.Forkee]] = jsonFormat15(GithubEvents.RootInterface[GithubEvents.Head[GithubEvents.Repo1], GithubEvents.Forkee].apply)
         implicitly[RootJsonFormat[List[GithubEvents.RootInterface[GithubEvents.Head[GithubEvents.Repo1], GithubEvents.Forkee]]]]
 
       case "github-gists.json" =>
-        implicit val a = jsonFormat18(GithubGists.Owner)
-        implicit val b = jsonFormat5(GithubGists.FileData)
-        implicit val c = jsonFormat18(GithubGists.RootInterface)
+        implicit val a: JsonFormat[GithubGists.Owner] = jsonFormat18(GithubGists.Owner.apply)
+        implicit val b: JsonFormat[GithubGists.FileData] = jsonFormat5(GithubGists.FileData.apply)
+        implicit val c: JsonFormat[GithubGists.RootInterface] = jsonFormat18(GithubGists.RootInterface.apply)
         implicitly[RootJsonFormat[List[GithubGists.RootInterface]]]
 
       case "json-generator.json" =>
-        implicit val a = jsonFormat2(JsonGenerator.Friends)
-        implicit val b = jsonFormat2(JsonGenerator.Name)
-        implicit val c = jsonFormat22(JsonGenerator.RootInterface)
+        implicit val a: JsonFormat[JsonGenerator.Friends] = jsonFormat2(JsonGenerator.Friends.apply)
+        implicit val b: JsonFormat[JsonGenerator.Name] = jsonFormat2(JsonGenerator.Name.apply)
+        implicit val c: JsonFormat[JsonGenerator.RootInterface] = jsonFormat22(JsonGenerator.RootInterface.apply)
         implicitly[RootJsonFormat[List[JsonGenerator.RootInterface]]]
 
       case "meteorites.json" =>
-        implicit val a = jsonFormat2(Meteorites.Geolocation)
-        implicit val b = jsonFormat12(Meteorites.RootInterface)
+        implicit val a: JsonFormat[Meteorites.Geolocation] = jsonFormat2(Meteorites.Geolocation.apply)
+        implicit val b: JsonFormat[Meteorites.RootInterface] = jsonFormat12(Meteorites.RootInterface.apply)
         implicitly[RootJsonFormat[List[Meteorites.RootInterface]]]
 
       case "movies.json" =>
-        implicit val a = jsonFormat4(Movies.RootInterface)
+        implicit val a: JsonFormat[Movies.RootInterface] = jsonFormat4(Movies.RootInterface.apply)
         implicitly[RootJsonFormat[List[Movies.RootInterface]]]
 
       case "reddit-scala.json" =>
-        implicit val a = jsonFormat13(Reddit.Oembed)
-        implicit val b = jsonFormat2(Reddit.SecureMedia)
-        implicit val c = jsonFormat5(Reddit.MediaEmbed)
-        implicit val d = jsonFormat3(Reddit.Gildings)
-        implicit val e = new JsonFormat[Reddit.Data] {
+        implicit val a: JsonFormat[Reddit.Oembed] = jsonFormat13(Reddit.Oembed.apply)
+        implicit val b: JsonFormat[Reddit.SecureMedia] = jsonFormat2(Reddit.SecureMedia.apply)
+        implicit val c: JsonFormat[Reddit.MediaEmbed] = jsonFormat5(Reddit.MediaEmbed.apply)
+        implicit val d: JsonFormat[Reddit.Gildings] = jsonFormat3(Reddit.Gildings.apply)
+        implicit val e: JsonFormat[Reddit.Data] = new JsonFormat[Reddit.Data] {
           def write(obj: Reddit.Data) =
             JsObject(
               TreeMap(
@@ -1162,45 +1163,45 @@ class SprayModelBenchmark extends DomBenchmark {
             )
           }
         }
-        implicit val f = jsonFormat2(Reddit.Child[Reddit.Data])
-        implicit val g = jsonFormat5(Reddit.Data0[Reddit.Data])
-        jsonFormat2(Reddit.RootInterface[Reddit.Data])
+        implicit val f: JsonFormat[Reddit.Child[Reddit.Data]] = jsonFormat2(Reddit.Child[Reddit.Data].apply)
+        implicit val g: JsonFormat[Reddit.Data0[Reddit.Data]] = jsonFormat5(Reddit.Data0[Reddit.Data].apply)
+        jsonFormat2(Reddit.RootInterface[Reddit.Data].apply)
 
       case "rick-morty.json" =>
-        implicit val a = jsonFormat1(RickMorty.Rating)
-        implicit val b = jsonFormat2(RickMorty.Schedule)
-        implicit val c = jsonFormat3(RickMorty.Country)
-        implicit val d = jsonFormat3(RickMorty.Network)
-        implicit val e = jsonFormat2(RickMorty.Image)
-        implicit val f = jsonFormat3(RickMorty.Externals)
-        implicit val g = jsonFormat1(RickMorty.Self)
-        implicit val h = jsonFormat2(RickMorty.Links)
-        implicit val i = jsonFormat1(RickMorty.Links1)
-        implicit val j = jsonFormat12(RickMorty.Episodes)
-        implicit val k = jsonFormat1(RickMorty.Embedded)
-        jsonFormat21(RickMorty.RootInterface)
+        implicit val a: JsonFormat[RickMorty.Rating] = jsonFormat1(RickMorty.Rating.apply)
+        implicit val b: JsonFormat[RickMorty.Schedule] = jsonFormat2(RickMorty.Schedule.apply)
+        implicit val c: JsonFormat[RickMorty.Country] = jsonFormat3(RickMorty.Country.apply)
+        implicit val d: JsonFormat[RickMorty.Network] = jsonFormat3(RickMorty.Network.apply)
+        implicit val e: JsonFormat[RickMorty.Image] = jsonFormat2(RickMorty.Image.apply)
+        implicit val f: JsonFormat[RickMorty.Externals] = jsonFormat3(RickMorty.Externals.apply)
+        implicit val g: JsonFormat[RickMorty.Self] = jsonFormat1(RickMorty.Self.apply)
+        implicit val h: JsonFormat[RickMorty.Links] = jsonFormat2(RickMorty.Links.apply)
+        implicit val i: JsonFormat[RickMorty.Links1] = jsonFormat1(RickMorty.Links1.apply)
+        implicit val j: JsonFormat[RickMorty.Episodes] = jsonFormat12(RickMorty.Episodes.apply)
+        implicit val k: JsonFormat[RickMorty.Embedded] = jsonFormat1(RickMorty.Embedded.apply)
+        jsonFormat21(RickMorty.RootInterface.apply)
 
       case "temp-anomaly.json" =>
-        implicit val a = jsonFormat4(TempAnomaly.Description)
-        jsonFormat2(TempAnomaly.RootInterface)
+        implicit val a: JsonFormat[TempAnomaly.Description] = jsonFormat4(TempAnomaly.Description.apply)
+        jsonFormat2(TempAnomaly.RootInterface.apply)
 
       case "thai-cinemas.json" =>
-        implicit val a = jsonFormat4(ThaiCinemas.Group)
-        implicit val b = jsonFormat17(ThaiCinemas.Results)
-        jsonFormat4(ThaiCinemas.RootInterface)
+        implicit val a: JsonFormat[ThaiCinemas.Group] = jsonFormat4(ThaiCinemas.Group.apply)
+        implicit val b: JsonFormat[ThaiCinemas.Results] = jsonFormat17(ThaiCinemas.Results.apply)
+        jsonFormat4(ThaiCinemas.RootInterface.apply)
 
       case "turkish.json" =>
-        implicit val a = jsonFormat6(Turkish.Event)
-        implicit val b = jsonFormat2(Turkish.Result)
-        jsonFormat1(Turkish.RootInterface)
+        implicit val a: JsonFormat[Turkish.Event] = jsonFormat6(Turkish.Event.apply)
+        implicit val b: JsonFormat[Turkish.Result] = jsonFormat2(Turkish.Result.apply)
+        jsonFormat1(Turkish.RootInterface.apply)
 
       case "twitter_api_compact_response.json" | "twitter_api_response.json" =>
-        implicit val a = jsonFormat4(TwitterApiResponse.Urls)
-        implicit val b = jsonFormat1(TwitterApiResponse.Url)
-        implicit val c = jsonFormat5(TwitterApiResponse.UserMentions)
-        implicit val d = jsonFormat4(TwitterApiResponse.Entities)
-        implicit val e = jsonFormat4(TwitterApiResponse.Entities1)
-        implicit val f = new JsonFormat[TwitterApiResponse.User] {
+        implicit val a: JsonFormat[TwitterApiResponse.Urls] = jsonFormat4(TwitterApiResponse.Urls.apply)
+        implicit val b: JsonFormat[TwitterApiResponse.Url] = jsonFormat1(TwitterApiResponse.Url.apply)
+        implicit val c: JsonFormat[TwitterApiResponse.UserMentions] = jsonFormat5(TwitterApiResponse.UserMentions.apply)
+        implicit val d: JsonFormat[TwitterApiResponse.Entities] = jsonFormat4(TwitterApiResponse.Entities.apply)
+        implicit val e: JsonFormat[TwitterApiResponse.Entities1] = jsonFormat4(TwitterApiResponse.Entities1.apply)
+        implicit val f: JsonFormat[TwitterApiResponse.User] = new JsonFormat[TwitterApiResponse.User] {
           def write(obj: TwitterApiResponse.User) =
             JsObject(
               TreeMap(
@@ -1296,8 +1297,8 @@ class SprayModelBenchmark extends DomBenchmark {
             )
           }
         }
-        implicit val g = jsonFormat15(TwitterApiResponse.RetweetedStatus)
-        implicit val h = jsonFormat16(TwitterApiResponse.RootInterface)
+        implicit val g: JsonFormat[TwitterApiResponse.RetweetedStatus] = jsonFormat15(TwitterApiResponse.RetweetedStatus.apply)
+        implicit val h: JsonFormat[TwitterApiResponse.RootInterface] = jsonFormat16(TwitterApiResponse.RootInterface.apply)
         implicitly[RootJsonFormat[List[TwitterApiResponse.RootInterface]]]
     }
     c.asInstanceOf[RootJsonFormat[Product]]

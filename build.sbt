@@ -35,6 +35,7 @@ lazy val commonSettings = Seq(
     "-Xtarget:11",
     "-Xfatal-warnings",
     "-Xcheck-macros",
+    "-Xmax-inlines:128", // requires for compiling upickle benchmarks
   ),
   Compile / console / scalacOptions ~= (_ filterNot (o => o.contains("warn") || o.contains("Xlint"))),
   Test / console / scalacOptions := (Compile / console / scalacOptions).value,
@@ -92,9 +93,10 @@ val `akka-http`         = Def.setting("com.typesafe.akka"       %%  "akka-http" 
 val `cats-core`         = Def.setting("org.typelevel"           %%% "cats-core"               % "2.8.0")
 val `circe-core`        = Def.setting("io.circe"                %%% "circe-core"              % "0.14.2")
 val `circe-parser`      = Def.setting("io.circe"                %%% "circe-parser"            % "0.14.2")
+val `circe-generic`     = Def.setting("io.circe"                %%% "circe-generic"           % "0.14.2")
 val `scodec-bits`       = Def.setting("org.scodec"              %%% "scodec-bits"             % "1.1.34")
 val munit               = Def.setting("org.scalameta"           %%% "munit"                   % "0.7.29" % Test)
-val macrolizer          = Def.setting("io.bullet"               %%% "macrolizer"              % "0.6.2" % "compile-internal, test-internal")
+val macrolizer          = Def.setting("io.bullet"               %%% "macrolizer"              % "0.6.2-SNAPSHOT" % "compile-internal, test-internal")
 // format: ON
 
 /////////////////////// PROJECTS /////////////////////////
@@ -241,6 +243,7 @@ lazy val benchmarks = project
       "io.spray"                              %% "spray-json"                 % "1.3.6",
       `circe-core`.value,
       `circe-parser`.value,
+      `circe-generic`.value,
     )
   )
 

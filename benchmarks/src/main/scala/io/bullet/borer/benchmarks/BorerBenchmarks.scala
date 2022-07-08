@@ -14,18 +14,18 @@ import io.bullet.borer.derivation.MapBasedCodecs._
 
 object BorerCodecs {
 
-  implicit val intsEncoder = implicitly[Encoder[List[Int]]]
-  implicit val intsDecoder = implicitly[Decoder[List[Int]]]
+  implicit val intsEncoder: Encoder[List[Int]] = implicitly[Encoder[List[Int]]]
+  implicit val intsDecoder: Decoder[List[Int]] = implicitly[Decoder[List[Int]]]
 
   object Derived {
-    implicit val fooCodec    = deriveCodec[Foo]
-    implicit val foosEncoder = implicitly[Encoder[Map[String, Foo]]]
-    implicit val foosDecoder = implicitly[Decoder[Map[String, Foo]]]
+    implicit val fooCodec: Codec[Foo]                   = deriveCodec[Foo]
+    implicit val foosEncoder: Encoder[Map[String, Foo]] = implicitly[Encoder[Map[String, Foo]]]
+    implicit val foosDecoder: Decoder[Map[String, Foo]] = implicitly[Decoder[Map[String, Foo]]]
   }
 
   object Manual {
 
-    implicit val fooCodec = Codec[Foo](
+    implicit val fooCodec: Codec[Foo] = Codec[Foo](
       encoder = (w, x) => {
         w.writeMapStart()
           .writeString("string")
@@ -54,8 +54,8 @@ object BorerCodecs {
         foo
       }
     )
-    implicit val foosEncoder = implicitly[Encoder[Map[String, Foo]]]
-    implicit val foosDecoder = implicitly[Decoder[Map[String, Foo]]]
+    implicit val foosEncoder: Encoder[Map[String, Foo]] = implicitly[Encoder[Map[String, Foo]]]
+    implicit val foosDecoder: Decoder[Map[String, Foo]] = implicitly[Decoder[Map[String, Foo]]]
   }
 }
 
@@ -112,147 +112,147 @@ class BorerModelBenchmark extends DomBenchmark {
   implicit lazy val codec: Codec[Product] = {
     val c = fileName match {
       case "australia-abc.json" =>
-        implicit val a = deriveCodec[Australia.Geometry]
-        implicit val b = deriveCodec[Australia.Properties]
-        implicit val c = deriveCodec[Australia.Properties1]
-        implicit val d = deriveCodec[Australia.Features]
-        implicit val e = deriveCodec[Australia.Crs]
+        implicit val a: Codec[Australia.Geometry] = deriveCodec[Australia.Geometry]
+        implicit val b: Codec[Australia.Properties] = deriveCodec[Australia.Properties]
+        implicit val c: Codec[Australia.Properties1] = deriveCodec[Australia.Properties1]
+        implicit val d: Codec[Australia.Features] = deriveCodec[Australia.Features]
+        implicit val e: Codec[Australia.Crs] = deriveCodec[Australia.Crs]
         deriveCodec[Australia.RootInterface]
 
       case "bitcoin.json" =>
-        implicit val a = deriveCodec[Bitcoin.SpendingOutpoints]
-        implicit val b = deriveCodec[Bitcoin.PrevOut]
-        implicit val c = deriveCodec[Bitcoin.Inputs]
-        implicit val d = deriveCodec[Bitcoin.Out]
-        implicit val e = deriveCodec[Bitcoin.Txs]
+        implicit val a: Codec[Bitcoin.SpendingOutpoints] = deriveCodec[Bitcoin.SpendingOutpoints]
+        implicit val b: Codec[Bitcoin.PrevOut] = deriveCodec[Bitcoin.PrevOut]
+        implicit val c: Codec[Bitcoin.Inputs] = deriveCodec[Bitcoin.Inputs]
+        implicit val d: Codec[Bitcoin.Out] = deriveCodec[Bitcoin.Out]
+        implicit val e: Codec[Bitcoin.Txs] = deriveCodec[Bitcoin.Txs]
         deriveCodec[Bitcoin.RootInterface]
 
       case "doj-blog.json" =>
-        implicit val a = deriveCodec[DojBlog.ResponseInfo]
-        implicit val b = deriveCodec[DojBlog.Resultset]
-        implicit val c = deriveCodec[DojBlog.Metadata]
-        implicit val d = deriveCodec[DojBlog.Component]
-        implicit val e = deriveCodec[DojBlog.Results]
+        implicit val a: Codec[DojBlog.ResponseInfo] = deriveCodec[DojBlog.ResponseInfo]
+        implicit val b: Codec[DojBlog.Resultset] = deriveCodec[DojBlog.Resultset]
+        implicit val c: Codec[DojBlog.Metadata] = deriveCodec[DojBlog.Metadata]
+        implicit val d: Codec[DojBlog.Component] = deriveCodec[DojBlog.Component]
+        implicit val e: Codec[DojBlog.Results] = deriveCodec[DojBlog.Results]
         deriveCodec[DojBlog.RootInterface]
 
       case "eu-lobby-country.json" =>
-        implicit val a = deriveCodec[EuLobbyCountry.Facets]
-        implicit val b = deriveCodec[EuLobbyCountry.Results]
+        implicit val a: Codec[EuLobbyCountry.Facets] = deriveCodec[EuLobbyCountry.Facets]
+        implicit val b: Codec[EuLobbyCountry.Results] = deriveCodec[EuLobbyCountry.Results]
         deriveCodec[EuLobbyCountry.RootInterface]
 
       case "eu-lobby-financial.json" =>
-        implicit val a = deriveCodec[EuLobbyFinancial.Facets]
-        implicit val b = deriveCodec[EuLobbyFinancial.CustomIncomes]
-        implicit val c = deriveCodec[EuLobbyFinancial.Results]
+        implicit val a: Codec[EuLobbyFinancial.Facets] = deriveCodec[EuLobbyFinancial.Facets]
+        implicit val b: Codec[EuLobbyFinancial.CustomIncomes] = deriveCodec[EuLobbyFinancial.CustomIncomes]
+        implicit val c: Codec[EuLobbyFinancial.Results] = deriveCodec[EuLobbyFinancial.Results]
         deriveCodec[EuLobbyFinancial.RootInterface]
 
       case "eu-lobby-repr.json" =>
-        implicit val a = deriveCodec[EuLobbyRepr.Facets]
-        implicit val b = deriveCodec[EuLobbyRepr.Results]
+        implicit val a: Codec[EuLobbyRepr.Facets] = deriveCodec[EuLobbyRepr.Facets]
+        implicit val b: Codec[EuLobbyRepr.Results] = deriveCodec[EuLobbyRepr.Results]
         deriveCodec[EuLobbyRepr.RootInterface]
 
       case "github-events.json" =>
         import GithubEvents._
-        implicit val a = deriveCodec[Actor]
-        implicit val b = deriveCodec[Author]
-        implicit val c = deriveCodec[Self]
-        implicit val d = deriveCodec[Owner]
-        implicit val e = deriveCodec[Org]
-        implicit val f = deriveCodec[Links]
-        implicit val g = deriveCodec[Links1]
-        implicit val h = deriveCodec[Labels]
-        implicit val i = deriveCodec[License]
-        implicit val j = deriveCodec[Repo]
-        implicit val k = deriveCodec[Repo1]
-        implicit val l = deriveCodec[Comment]
-        implicit val m = deriveCodec[Comment1]
-        implicit val n = deriveCodec[Commits]
-        implicit val o = deriveCodec[CreateEvent]
-        implicit val p = deriveCodec[Forkee]
-        implicit val q = deriveCodec[ForkEvent[Forkee]]
-        implicit val r = deriveCodec[Head[Repo1]]
-        implicit val s = deriveCodec[PullRequest]
-        implicit val t = deriveCodec[PullRequest1[Head[Repo1]]]
-        implicit val u = deriveCodec[PullRequest2[Head[Repo1]]]
-        implicit val v = deriveCodec[PullRequestEvent[Head[Repo1]]]
-        implicit val w = deriveCodec[PullRequestReviewCommentEvent[Head[Repo1]]]
-        implicit val x = deriveCodec[Issue]
-        implicit val y = deriveCodec[Issue1]
-        implicit val z = deriveCodec[IssueCommentEvent]
-        implicit val A = deriveCodec[IssuesEvent]
-        implicit val B = deriveCodec[PushEvent]
-        implicit val C = deriveCodec[WatchEvent]
-        implicit val D = deriveCodec[RootInterface[Head[Repo1], Forkee]]
+        implicit val a: Codec[Actor] = deriveCodec[Actor]
+        implicit val b: Codec[Author] = deriveCodec[Author]
+        implicit val c: Codec[Self] = deriveCodec[Self]
+        implicit val d: Codec[Owner] = deriveCodec[Owner]
+        implicit val e: Codec[Org] = deriveCodec[Org]
+        implicit val f: Codec[Links] = deriveCodec[Links]
+        implicit val g: Codec[Links1] = deriveCodec[Links1]
+        implicit val h: Codec[Labels] = deriveCodec[Labels]
+        implicit val i: Codec[License] = deriveCodec[License]
+        implicit val j: Codec[Repo] = deriveCodec[Repo]
+        implicit val k: Codec[Repo1] = deriveCodec[Repo1]
+        implicit val l: Codec[Comment] = deriveCodec[Comment]
+        implicit val m: Codec[Comment1] = deriveCodec[Comment1]
+        implicit val n: Codec[Commits] = deriveCodec[Commits]
+        implicit val o: Codec[CreateEvent] = deriveCodec[CreateEvent]
+        implicit val p: Codec[Forkee] = deriveCodec[Forkee]
+        implicit val q: Codec[ForkEvent[Forkee]] = deriveCodec[ForkEvent[Forkee]]
+        implicit val r: Codec[Head[Repo1]] = deriveCodec[Head[Repo1]]
+        implicit val s: Codec[PullRequest] = deriveCodec[PullRequest]
+        implicit val t: Codec[PullRequest1[Head[Repo1]]] = deriveCodec[PullRequest1[Head[Repo1]]]
+        implicit val u: Codec[PullRequest2[Head[Repo1]]] = deriveCodec[PullRequest2[Head[Repo1]]]
+        implicit val v: Codec[PullRequestEvent[Head[Repo1]]] = deriveCodec[PullRequestEvent[Head[Repo1]]]
+        implicit val w: Codec[PullRequestReviewCommentEvent[Head[Repo1]]] = deriveCodec[PullRequestReviewCommentEvent[Head[Repo1]]]
+        implicit val x: Codec[Issue] = deriveCodec[Issue]
+        implicit val y: Codec[Issue1] = deriveCodec[Issue1]
+        implicit val z: Codec[IssueCommentEvent] = deriveCodec[IssueCommentEvent]
+        implicit val A: Codec[IssuesEvent] = deriveCodec[IssuesEvent]
+        implicit val B: Codec[PushEvent] = deriveCodec[PushEvent]
+        implicit val C: Codec[WatchEvent] = deriveCodec[WatchEvent]
+        implicit val D: Codec[RootInterface[Head[Repo1], Forkee]] = deriveCodec[RootInterface[Head[Repo1], Forkee]]
         Codec.of[List[RootInterface[Head[Repo1], Forkee]]]
 
       case "github-gists.json" =>
-        implicit val a = deriveCodec[GithubGists.Owner]
-        implicit val b = deriveCodec[GithubGists.FileData]
-        implicit val c = deriveCodec[GithubGists.RootInterface]
+        implicit val a: Codec[GithubGists.Owner] = deriveCodec[GithubGists.Owner]
+        implicit val b: Codec[GithubGists.FileData] = deriveCodec[GithubGists.FileData]
+        implicit val c: Codec[GithubGists.RootInterface] = deriveCodec[GithubGists.RootInterface]
         Codec.of[List[GithubGists.RootInterface]]
 
       case "json-generator.json" =>
-        implicit val a = deriveCodec[JsonGenerator.Friends]
-        implicit val b = deriveCodec[JsonGenerator.Name]
-        implicit val c = deriveCodec[JsonGenerator.RootInterface]
+        implicit val a: Codec[JsonGenerator.Friends] = deriveCodec[JsonGenerator.Friends]
+        implicit val b: Codec[JsonGenerator.Name] = deriveCodec[JsonGenerator.Name]
+        implicit val c: Codec[JsonGenerator.RootInterface] = deriveCodec[JsonGenerator.RootInterface]
         Codec.of[List[JsonGenerator.RootInterface]]
 
       case "meteorites.json" =>
-        implicit val a = deriveCodec[Meteorites.Geolocation]
-        implicit val b = deriveCodec[Meteorites.RootInterface]
+        implicit val a: Codec[Meteorites.Geolocation] = deriveCodec[Meteorites.Geolocation]
+        implicit val b: Codec[Meteorites.RootInterface] = deriveCodec[Meteorites.RootInterface]
         Codec.of[List[Meteorites.RootInterface]]
 
       case "movies.json" =>
-        implicit val a = deriveCodec[Movies.RootInterface]
+        implicit val a: Codec[Movies.RootInterface] = deriveCodec[Movies.RootInterface]
         Codec.of[List[Movies.RootInterface]]
 
       case "reddit-scala.json" =>
-        implicit val a = deriveCodec[Reddit.Oembed]
-        implicit val b = deriveCodec[Reddit.SecureMedia]
-        implicit val c = deriveCodec[Reddit.MediaEmbed]
-        implicit val d = deriveCodec[Reddit.Gildings]
-        implicit val e = deriveCodec[Reddit.Data]
-        implicit val f = deriveCodec[Reddit.Child[Reddit.Data]]
-        implicit val g = deriveCodec[Reddit.Data0[Reddit.Data]]
+        implicit val a: Codec[Reddit.Oembed] = deriveCodec[Reddit.Oembed]
+        implicit val b: Codec[Reddit.SecureMedia] = deriveCodec[Reddit.SecureMedia]
+        implicit val c: Codec[Reddit.MediaEmbed] = deriveCodec[Reddit.MediaEmbed]
+        implicit val d: Codec[Reddit.Gildings] = deriveCodec[Reddit.Gildings]
+        implicit val e: Codec[Reddit.Data] = deriveCodec[Reddit.Data]
+        implicit val f: Codec[Reddit.Child[Reddit.Data]] = deriveCodec[Reddit.Child[Reddit.Data]]
+        implicit val g: Codec[Reddit.Data0[Reddit.Data]] = deriveCodec[Reddit.Data0[Reddit.Data]]
         deriveCodec[Reddit.RootInterface[Reddit.Data]]
 
       case "rick-morty.json" =>
-        implicit val a = deriveCodec[RickMorty.Rating]
-        implicit val b = deriveCodec[RickMorty.Schedule]
-        implicit val c = deriveCodec[RickMorty.Country]
-        implicit val d = deriveCodec[RickMorty.Network]
-        implicit val e = deriveCodec[RickMorty.Image]
-        implicit val f = deriveCodec[RickMorty.Externals]
-        implicit val g = deriveCodec[RickMorty.Self]
-        implicit val h = deriveCodec[RickMorty.Links]
-        implicit val i = deriveCodec[RickMorty.Links1]
-        implicit val j = deriveCodec[RickMorty.Episodes]
-        implicit val k = deriveCodec[RickMorty.Embedded]
+        implicit val a: Codec[RickMorty.Rating] = deriveCodec[RickMorty.Rating]
+        implicit val b: Codec[RickMorty.Schedule] = deriveCodec[RickMorty.Schedule]
+        implicit val c: Codec[RickMorty.Country] = deriveCodec[RickMorty.Country]
+        implicit val d: Codec[RickMorty.Network] = deriveCodec[RickMorty.Network]
+        implicit val e: Codec[RickMorty.Image] = deriveCodec[RickMorty.Image]
+        implicit val f: Codec[RickMorty.Externals] = deriveCodec[RickMorty.Externals]
+        implicit val g: Codec[RickMorty.Self] = deriveCodec[RickMorty.Self]
+        implicit val h: Codec[RickMorty.Links] = deriveCodec[RickMorty.Links]
+        implicit val i: Codec[RickMorty.Links1] = deriveCodec[RickMorty.Links1]
+        implicit val j: Codec[RickMorty.Episodes] = deriveCodec[RickMorty.Episodes]
+        implicit val k: Codec[RickMorty.Embedded] = deriveCodec[RickMorty.Embedded]
         deriveCodec[RickMorty.RootInterface]
 
       case "temp-anomaly.json" =>
-        implicit val a = deriveCodec[TempAnomaly.Description]
+        implicit val a: Codec[TempAnomaly.Description] = deriveCodec[TempAnomaly.Description]
         deriveCodec[TempAnomaly.RootInterface]
 
       case "thai-cinemas.json" =>
-        implicit val a = deriveCodec[ThaiCinemas.Group]
-        implicit val b = deriveCodec[ThaiCinemas.Results]
+        implicit val a: Codec[ThaiCinemas.Group] = deriveCodec[ThaiCinemas.Group]
+        implicit val b: Codec[ThaiCinemas.Results] = deriveCodec[ThaiCinemas.Results]
         deriveCodec[ThaiCinemas.RootInterface]
 
       case "turkish.json" =>
-        implicit val a = deriveCodec[Turkish.Event]
-        implicit val b = deriveCodec[Turkish.Result]
+        implicit val a: Codec[Turkish.Event] = deriveCodec[Turkish.Event]
+        implicit val b: Codec[Turkish.Result] = deriveCodec[Turkish.Result]
         deriveCodec[Turkish.RootInterface]
 
       case "twitter_api_compact_response.json" | "twitter_api_response.json" =>
-        implicit val a = deriveCodec[TwitterApiResponse.Urls]
-        implicit val b = deriveCodec[TwitterApiResponse.Url]
-        implicit val c = deriveCodec[TwitterApiResponse.UserMentions]
-        implicit val d = deriveCodec[TwitterApiResponse.Entities]
-        implicit val e = deriveCodec[TwitterApiResponse.Entities1]
-        implicit val f = deriveCodec[TwitterApiResponse.User]
-        implicit val g = deriveCodec[TwitterApiResponse.RetweetedStatus]
-        implicit val h = deriveCodec[TwitterApiResponse.RootInterface]
+        implicit val a: Codec[TwitterApiResponse.Urls] = deriveCodec[TwitterApiResponse.Urls]
+        implicit val b: Codec[TwitterApiResponse.Url] = deriveCodec[TwitterApiResponse.Url]
+        implicit val c: Codec[TwitterApiResponse.UserMentions] = deriveCodec[TwitterApiResponse.UserMentions]
+        implicit val d: Codec[TwitterApiResponse.Entities] = deriveCodec[TwitterApiResponse.Entities]
+        implicit val e: Codec[TwitterApiResponse.Entities1] = deriveCodec[TwitterApiResponse.Entities1]
+        implicit val f: Codec[TwitterApiResponse.User] = deriveCodec[TwitterApiResponse.User]
+        implicit val g: Codec[TwitterApiResponse.RetweetedStatus] = deriveCodec[TwitterApiResponse.RetweetedStatus]
+        implicit val h: Codec[TwitterApiResponse.RootInterface] = deriveCodec[TwitterApiResponse.RootInterface]
         Codec.of[List[TwitterApiResponse.RootInterface]]
     }
     c.asInstanceOf[Codec[Product]]
