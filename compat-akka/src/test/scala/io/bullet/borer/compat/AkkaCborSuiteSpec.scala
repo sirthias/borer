@@ -11,7 +11,7 @@ package io.bullet.borer.compat
 import _root_.akka.util.ByteString
 import io.bullet.borer._
 
-object AkkaCborSuiteSpec extends AbstractCborSuiteSpec {
+class AkkaCborSuiteSpec extends AbstractCborSuiteSpec {
   import akka._
 
   def encode[T: Encoder](value: T): String   = toHexString(Cbor.encode(value).to[ByteString].result.toArray)

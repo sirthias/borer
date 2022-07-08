@@ -13,7 +13,7 @@ import java.nio.charset.StandardCharsets
 import _root_.akka.util.ByteString
 import io.bullet.borer._
 
-object AkkaJsonSuiteSpec extends AbstractJsonSuiteSpec {
+class AkkaJsonSuiteSpec extends AbstractJsonSuiteSpec {
   import akka._
 
   def encode[T: Encoder](value: T): String =
