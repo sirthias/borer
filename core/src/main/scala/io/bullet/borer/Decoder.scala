@@ -142,7 +142,10 @@ object Decoder extends LowPrioDecoders {
   implicit def forBoxedFloat: Decoder[JFloat]     = forFloat.asInstanceOf[Decoder[JFloat]]
   implicit def forBoxedDouble: Decoder[JDouble]   = forDouble.asInstanceOf[Decoder[JDouble]]
 
-  def forJBigInteger(maxCborByteArraySize: Int = 64, maxJsonNumberStringLength: Int = 64): Decoder[JBigInteger] =
+  def forJBigInteger(
+      maxCborByteArraySize: Int = 64,
+      maxJsonNumberStringLength: Int = 64,
+      acceptStrings: Boolean = false): Decoder[JBigInteger] =
     Decoder { r =>
       def fromByteArray() = {
         val byteArray = r.readByteArray()
@@ -151,20 +154,21 @@ object Decoder extends LowPrioDecoders {
             "ByteArray for decoding JBigInteger is longer than the configured max of " + maxCborByteArraySize + " bytes")
         } else new JBigInteger(1, byteArray)
       }
+      def fromString(numberString: String) =
+        if (numberString.length > maxJsonNumberStringLength) {
+          r.overflow(
+            "NumberString for decoding JBigInteger is longer than the configured max of " + maxJsonNumberStringLength + " characters")
+        } else new JBigInteger(numberString)
       r.dataItem() match {
         case DI.Int | DI.Long => JBigInteger.valueOf(r.readLong())
         case DI.OverLong =>
           def value = new JBigInteger(1, Util.toBigEndianBytes(r.readOverLong()))
           if (r.overLongNegative) value.not else value
-        case DI.NumberString =>
-          val numberString = r.readNumberString()
-          if (numberString.length > maxJsonNumberStringLength) {
-            r.overflow(
-              "NumberString for decoding JBigInteger is longer than the configured max of " + maxJsonNumberStringLength + " characters")
-          } else new JBigInteger(numberString)
-        case _ if r.tryReadTag(Tag.PositiveBigNum) => fromByteArray()
-        case _ if r.tryReadTag(Tag.NegativeBigNum) => fromByteArray().not
-        case _                                     => r.unexpectedDataItem(expected = "BigInteger")
+        case DI.NumberString if r.target == Json                   => fromString(r.readNumberString())
+        case _ if r.hasString && r.target == Json && acceptStrings => fromString(r.readString())
+        case _ if r.tryReadTag(Tag.PositiveBigNum)                 => fromByteArray()
+        case _ if r.tryReadTag(Tag.NegativeBigNum)                 => fromByteArray().not
+        case _                                                     => r.unexpectedDataItem(expected = "BigInteger")
       }
     }
 
@@ -175,19 +179,21 @@ object Decoder extends LowPrioDecoders {
   implicit def forJBigDecimal(
       maxCborBigIntMantissaByteArraySize: Int = 64,
       maxCborAbsExponent: Int = 999,
-      maxJsonNumberStringLength: Int = 64): Decoder[JBigDecimal] = {
+      maxJsonNumberStringLength: Int = 64,
+      acceptStrings: Boolean = false): Decoder[JBigDecimal] = {
     val bigIntMantissaDecoder = forJBigInteger(maxCborByteArraySize = maxCborBigIntMantissaByteArraySize)
     Decoder { r =>
       def fromBigInteger() = new JBigDecimal(_forJBigInteger.read(r))
+      def fromString(numberString: String) =
+        if (numberString.length > maxJsonNumberStringLength) {
+          r.overflow(
+            "NumberString for decoding JBigDecimal is longer than the configured max of " + maxJsonNumberStringLength + " characters")
+        } else new JBigDecimal(numberString)
       r.dataItem() match {
-        case DI.Int | DI.Long | DI.OverLong => fromBigInteger()
-        case DI.Double                      => JBigDecimal.valueOf(r.readDouble())
-        case DI.NumberString =>
-          val numberString = r.readNumberString()
-          if (numberString.length > maxJsonNumberStringLength) {
-            r.overflow(
-              "NumberString for decoding JBigDecimal is longer than the configured max of " + maxJsonNumberStringLength + " characters")
-          } else new JBigDecimal(numberString)
+        case DI.Int | DI.Long | DI.OverLong                                   => fromBigInteger()
+        case DI.Double                                                        => JBigDecimal.valueOf(r.readDouble())
+        case DI.NumberString if r.target == Json                              => fromString(r.readNumberString())
+        case _ if r.hasString && r.target == Json && acceptStrings            => fromString(r.readString())
         case _ if r.hasTag(Tag.PositiveBigNum) | r.hasTag(Tag.NegativeBigNum) => fromBigInteger()
         case _ if r.tryReadTag(Tag.DecimalFraction) =>
           if (r.hasArrayHeader) {
@@ -329,6 +335,11 @@ object Decoder extends LowPrioDecoders {
     implicit def boxedLongDecoder: Decoder[JLong]     = longDecoder.asInstanceOf[Decoder[JLong]]
     implicit def boxedFloatDecoder: Decoder[JFloat]   = floatDecoder.asInstanceOf[Decoder[JFloat]]
     implicit def boxedDoubleDecoder: Decoder[JDouble] = doubleDecoder.asInstanceOf[Decoder[JDouble]]
+
+    implicit val forJBigInteger: Decoder[JBigInteger] = Decoder.this.forJBigInteger(acceptStrings = true)
+    implicit val forBigInt: Decoder[BigInt]           = forJBigInteger.map(BigInt(_))
+    implicit val forJBigDecimal: Decoder[JBigDecimal] = Decoder.this.forJBigDecimal(acceptStrings = true)
+    implicit val forBigDecimal: Decoder[BigDecimal]   = forJBigDecimal.map(BigDecimal(_))
   }
 
   object StringBooleans {
