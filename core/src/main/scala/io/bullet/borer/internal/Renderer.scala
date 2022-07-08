@@ -13,6 +13,5 @@ import io.bullet.borer.{Output, Receiver}
 /**
  * Common parent type of [[io.bullet.borer.cbor.CborRenderer]] and [[io.bullet.borer.json.JsonRenderer]]
  */
-abstract private[borer] class Renderer extends Receiver {
+abstract private[borer] class Renderer extends Receiver:
   def out: Output
-}

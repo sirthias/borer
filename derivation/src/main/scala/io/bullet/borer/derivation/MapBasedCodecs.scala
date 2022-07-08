@@ -8,20 +8,19 @@
 
 package io.bullet.borer.derivation
 
-import io.bullet.borer._
-import io.bullet.borer.derivation.internal._
-import io.bullet.borer.deriver.DeriveWith
-
-import scala.reflect.macros.blackbox
+import io.bullet.borer.*
+import scala.deriving.*
+import scala.compiletime.*
+import scala.quoted.*
 
 /**
- * Derivation macros for map-based encodings.
+ * Derivation macros for array-based encodings.
  */
-object MapBasedCodecs {
+object MapBasedCodecs extends DerivationApi {
 
   /**
    * Macro that creates an [[Encoder]] for [[T]] provided that
-   * - [[T]] is a `case class`, `sealed abstract class` or `sealed trait`
+   * - [[T]] is a `case class`, `enum`, `sealed abstract class` or `sealed trait`
    * - [[Encoder]] instances for all members of [[T]] (if [[T]] is a `case class`)
    *   or all sub-types of [[T]] (if [[T]] is an ADT) are implicitly available
    *
@@ -29,12 +28,12 @@ object MapBasedCodecs {
    * The key for each member is a `String` holding the member's name.
    * This can be customized with the [[key]] annotation.
    */
-  def deriveEncoder[T]: Encoder[T] = macro Macros.encoder[T]
+  inline def deriveEncoder[T]: Encoder[T] = ${ Macros.encoder[T] }
 
   /**
    * Macro that creates an [[Encoder]] for [[T]] and all direct and indirect sub-types of [[T]],
    * which are concrete, i.e. not abstract.
-   * [[T]] must be a `sealed abstract class` or `sealed trait`.
+   * [[T]] must be an `enum`, `sealed abstract class` or `sealed trait`.
    *
    * It works by generating a code block such as this one:
    *
@@ -55,11 +54,11 @@ object MapBasedCodecs {
    * This means that you can specify your own custom Encoders for concrete sub-types or whole branches
    * of the sub-type hierarchy and they will be properly picked up rather than create conflicts.
    */
-  def deriveAllEncoders[T]: Encoder[T] = macro Macros.allEncoders[T]
+  inline def deriveAllEncoders[T]: Encoder[T] = ${ Macros.allEncoders[T] }
 
   /**
    * Macro that creates a [[Decoder]] for [[T]] provided that
-   * - [[T]] is a `case class`, `sealed abstract class` or `sealed trait`
+   * - [[T]] is a `case class`, `enum`, `sealed abstract class` or `sealed trait`
    * - [[Decoder]] instances for all members of [[T]] (if [[T]] is a `case class`)
    *   or all sub-types of [[T]] (if [[T]] is an ADT) are implicitly available
    *
@@ -67,12 +66,12 @@ object MapBasedCodecs {
    * The key for each member is a `String` holding the member's name.
    * This can be customized with the [[key]] annotation.
    */
-  def deriveDecoder[T]: Decoder[T] = macro Macros.decoder[T]
+  inline def deriveDecoder[T]: Decoder[T] = ${ Macros.decoder[T] }
 
   /**
    * Macro that creates a [[Decoder]] for [[T]] and all direct and indirect sub-types of [[T]],
    * which are concrete, i.e. not abstract.
-   * [[T]] must be a `sealed abstract class` or `sealed trait`.
+   * [[T]] must be an `enum`, `sealed abstract class` or `sealed trait`.
    *
    * It works by generating a code block such as this one:
    *
@@ -93,328 +92,480 @@ object MapBasedCodecs {
    * This means that you can specify your own custom Decoders for concrete sub-types or whole branches
    * of the sub-type hierarchy and they will be properly picked up rather than create conflicts.
    */
-  def deriveAllDecoders[T]: Decoder[T] = macro Macros.allDecoders[T]
+  inline def deriveAllDecoders[T]: Decoder[T] = ${ Macros.allDecoders[T] }
 
   /**
    * Macro that creates an [[Encoder]] and [[Decoder]] pair for [[T]].
-   * Convenience shortcut for `Codec(deriveEncoder[T], deriveDecoder[T])"`.
+   * Convenience shortcut for `Codec(deriveEncoder[T], deriveDecoder[T])`.
    */
-  def deriveCodec[T]: Codec[T] = macro Macros.codec[T]
+  inline def deriveCodec[T]: Codec[T] = Codec(deriveEncoder[T], deriveDecoder[T])
 
   /**
    * Macro that creates an [[Encoder]] and [[Decoder]] pair for [[T]] and all direct and indirect sub-types of [[T]].
-   * Convenience shortcut for `Codec(deriveAllEncoders[T], deriveAllDecoders[T])"`.
+   * Convenience shortcut for `Codec(deriveAllEncoders[T], deriveAllDecoders[T])`.
    */
-  def deriveAllCodecs[T]: Codec[T] = macro Macros.allCodecs[T]
+  inline def deriveAllCodecs[T]: Codec[T] = Codec(deriveAllEncoders[T], deriveAllDecoders[T])
 
-  private object Macros {
-    import MacroSupport._
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    def encoder[T: ctx.WeakTypeTag](ctx: blackbox.Context): ctx.Tree =
-      DeriveWith[T](ctx) {
-        new CodecDeriver[ctx.type](ctx) {
-          import c.universe._
+  private[derivation] object Macros {
 
-          def deriveForCaseObject(tpe: Type, module: ModuleSymbol) =
-            q"$encoderCompanion[${module.typeSignature}]((w, _) => w.writeEmptyMap())"
+    def encoder[T: Type](using quotes: Quotes): Expr[Encoder[T]] =
+      Derive[Encoder, T] {
+        import quotes.reflect.*
+
+        new Deriver[Encoder, T, quotes.type] {
+
+          def deriveForCaseObject(moduleTermSymbol: Symbol): Expr[Encoder[T]] =
+            '{ Encoder[T]((w, _) => w.writeEmptyMap()) }
 
           def deriveForCaseClass(
-              tpe: Type,
-              companion: ModuleSymbol,
-              params: List[CaseParam],
-              annotationTrees: List[Tree],
-              constructorIsPrivate: Boolean) = {
+              tpe: TypeRepr,
+              classSym: Symbol,
+              companion: Symbol,
+              fields: IArray[Field]): Expr[Encoder[T]] =
 
-            def encName(p: CaseParam, suffix: String = "") = TermName(s"e${p.index}$suffix")
+            val fieldEncoders   = fields.map(field => field.theType match { case '[t] => Expr.summon[Encoder[t]] })
+            val basicFieldFlags = fields.map(field => fieldEncoders(field.index).exists(isBasicDefaultEncoder))
+            val nonBasicFields  = fields.map(field => Option.when(!basicFieldFlags(field.index))(field))
 
-            val encodersForParams = params.map(p => p -> p.getImplicit(encoderType)).toMap
-            val (basicParams, nonBasicParams) =
-              params.partition(p => p.isBasicType && encodersForParams(p).exists(isDefinedOn(_, encoderCompanion)))
-            val fieldEncDefs = nonBasicParams.map { p =>
-              val paramType = p.paramType.tpe
-              val fieldEnc = encodersForParams(p).getOrElse {
-                error(s"Could not find implicit Encoder[$paramType] for parameter `${p.name}` of case class $tpe")
-              }
-              val fieldEncWithDefault = p.defaultValueMethod match {
-                case Some(x) => q"$fieldEnc.withDefaultValue($x)"
-                case None    => fieldEnc
-              }
-              q"private[this] val ${encName(p)} = $fieldEncWithDefault"
-            }
-            val nonBasicDefaultValues = nonBasicParams.flatMap { p =>
-              p.defaultValueMethod.map(defaultValue => q"val ${encName(p, "d")} = $defaultValue")
-            }
-            val basicFieldOutputFlags = basicParams.flatMap { p =>
-              p.defaultValueMethod.map { defaultValue =>
-                q"""val ${encName(p, "o")} = _derivationConfig.encodeCaseClassMemberDefaultValues ||
-                      (value.${p.name} != $defaultValue) || { count -= 1; false }"""
-              }
-            }
-            val nonBasicFieldOutputFlags = nonBasicParams.map { p =>
-              val tail = p.defaultValueMethod match {
-                case Some(_) => q"value.${p.name} != ${encName(p, "d")}"
-                case None    => q"true"
-              }
-              val pt = tq"$encoderCompanion.PossiblyWithoutOutput[${p.paramType.tpe}]"
-              q"""val ${encName(p, "o")} =
-                  (${encName(p)} match {
-                    case x: $pt => x producesOutputFor value.${p.name}
-                    case _      => _derivationConfig.encodeCaseClassMemberDefaultValues || $tail
-                  }) || { count -= 1; false }"""
-            }
-            val writeEntries = params.map { p =>
-              val key           = p.key()
-              val writeKey      = q"w.${TermName(s"write${key.productPrefix}")}(${literal(key.value)})"
-              val isBasic       = basicParams contains p
-              val method        = TermName(s"write${if (isBasic) p.paramType.tpe.dealias.toString else ""}")
-              val rawWriteEntry = q"$writeKey.$method(value.${p.name})"
-              if (isBasic) {
-                if (p.defaultValueMethod.isDefined) q"if (${encName(p, "o")}) $rawWriteEntry" else rawWriteEntry
-              } else q"if (${encName(p, "o")}) $rawWriteEntry(${encName(p)})"
-            }
-            val encoderName = TypeName(s"${tpe.typeSymbol.name.decodedName}Encoder")
+            withVal('{ summonInline[DerivationConfig] }) { derivationConfig =>
+              withOptVals(nonBasicFields) {
+                _.map { field =>
+                  field.theType match
+                    case '[t] =>
+                      Val.of[Encoder[t]] {
+                        val fieldEnc = fieldEncoders(field.index).map(_.asExprOf[Encoder[t]]).getOrElse {
+                          fail(s"Could not find implicit Encoder[${Type.show[t]}] " +
+                            s"for field `${field.name}` of case class `$theTname`")
+                        }
+                        field.defaultValue[t] match
+                          case Some(x) => '{ $fieldEnc.withDefaultValue($x) }
+                          case None    => fieldEnc
+                      }
+                }
+              } { fieldEncDefs =>
+                withOptVals(nonBasicFields) {
+                  _.flatMap(field => field.theType match { case '[t] => field.defaultValue[t].map(Val.of[t](_)) })
+                } { nonBasicDefaultValues =>
 
-            q"""final class $encoderName {
-                private[this] val _derivationConfig = implicitly[$borerPkg.derivation.DerivationConfig]
-                ..$nonBasicDefaultValues
-                ..$fieldEncDefs
-                def write(w: $writerType, value: $tpe): w.type = {
-                  var count = ${params.size}
-                  ..$basicFieldOutputFlags
-                  ..$nonBasicFieldOutputFlags
-                  def writeEntries(w: $writerType): w.type = {
-                    ..$writeEntries
-                    w
+                  def gen(
+                      w: Expr[Writer],
+                      value: Expr[T],
+                      count: Expr[Int],
+                      setCount: Quotes ?=> Expr[Int] => Expr[Unit])(using Quotes): Expr[Writer] =
+                    withVals(fields) { field =>
+                      field.theType match
+                        case '[t] =>
+                          Val.of[Boolean] {
+                            val fieldValue = select[t](value, field.name)
+                            val decCount   = setCount('{ $count - 1 })
+                            def defaultVal(expr: Option[Expr[t]])(using Quotes): Expr[Boolean] =
+                              expr match
+                                case Some(x) =>
+                                  '{
+                                    $derivationConfig.encodeCaseClassMemberDefaultValues
+                                    || $fieldValue != $x
+                                    || { $decCount; false }
+                                  }
+                                case None => Expr(true)
+
+                            if (basicFieldFlags(field.index)) {
+                              defaultVal(field.defaultValue[t])
+                            } else {
+                              '{
+                                val enc = ${ fieldEncDefs(field.index).get.as[Encoder[t]].get }.unwrap
+                                if (enc.isInstanceOf[Encoder.PossiblyWithoutOutput[t]])
+                                  enc.asInstanceOf[Encoder.PossiblyWithoutOutput[t]].producesOutputFor($fieldValue) || {
+                                    $decCount; false
+                                  }
+                                else ${ defaultVal(nonBasicDefaultValues(field.index).map(_.get.asExprOf[t])) }
+                              }
+                            }
+                          }
+                    } { fieldOutputFlags =>
+
+                      def writeEntriesBody(w: Expr[Writer])(using Quotes): Expr[Unit] =
+                        fields.iterator
+                          .map { field =>
+                            field.theType match
+                              case '[t] =>
+                                val writeKey = field.key match
+                                  case x: Long   => '{ $w.writeLong(${ Expr(x) }) }
+                                  case x: String => '{ $w.writeString(${ Expr(x) }) }
+                                val fieldValue = select[t](value, field.name)
+                                val encoder    = fieldEncDefs(field.index).map(_.get.asExprOf[Encoder[t]])
+                                val flag       = fieldOutputFlags(field.index).get.asExprOf[Boolean]
+                                '{ if ($flag) ${ writeField(writeKey, fieldValue, encoder) } }
+                          }
+                          .reduceLeftOption((a, b) => '{ $a; $b })
+                          .getOrElse('{ () })
+
+                      '{
+                        def writeEntries(w: Writer): Writer = {
+                          ${ writeEntriesBody('w) }
+                          w
+                        }
+
+                        if ($w.writingCbor) writeEntries($w.writeMapHeader($count))
+                        else writeEntries($w.writeMapStart()).writeBreak()
+                      }
+                    }
+                  end gen
+
+                  '{
+                    Encoder[T] { (w, value) =>
+                      var count = ${ Expr(fields.size) }
+                      ${ gen('w, 'value, 'count, x => '{ count = $x }) }
+                    }
                   }
-                  if (w.writingCbor) writeEntries(w.writeMapHeader(count))
-                  else writeEntries(w.writeMapStart()).writeBreak()
                 }
               }
+            }
+          end deriveForCaseClass
 
-              new $encoderType[$tpe] {
-                private[this] var inner: $encoderName = _
-                def write(w: $writerType, value: $tpe) = {
-                  if (inner eq null) inner = new $encoderName
-                  inner.write(w, value)
+          def deriveForSealedTrait(rootNode: AdtTypeNode): Expr[Encoder[T]] =
+            '{
+              new MapBasedAdtEncoder[T](summonInline[AdtEncodingStrategy]):
+                final protected def typeName = ${ Expr(rootNode.name) }
+                def write(w: Writer, value: T): Writer = {
+                  val self = this // work around for compiler crash (AssertionError) during macro expansion
+                  ${ deriveAdtEncoderBody(rootNode, 'self, 'w, 'value) }
                 }
-              }: $encoderType[$tpe]"""
-          }
-
-          def deriveForSealedTrait(node: AdtTypeNode) =
-            deriveAdtEncoder(
-              node,
-              x => q"""val typeName = ${node.tpe.toString}
-                val strategy = implicitly[$borerPkg.AdtEncodingStrategy]
-                strategy.writeAdtEnvelopeOpen(w, typeName)
-                $x
-                strategy.writeAdtEnvelopeClose(w, typeName)""")
+            }
         }
       }
 
-    def allEncoders[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
-      deriveAll(c)(isEncoder = true, "MapBasedCodecs", "deriveAllEncoders", "deriveEncoder")
+    def decoder[T: Type](using quotes: Quotes): Expr[Decoder[T]] =
+      Derive[Decoder, T] {
+        import quotes.reflect.*
 
-    def decoder[T: ctx.WeakTypeTag](ctx: blackbox.Context): ctx.Tree =
-      DeriveWith[T](ctx) {
-        new CodecDeriver[ctx.type](ctx) {
-          import c.universe._
+        new Deriver[Decoder, T, quotes.type]:
 
-          def deriveForCaseObject(tpe: Type, module: ModuleSymbol) =
-            q"$decoderCompanion(r => r.readMapClose(r.readMapOpen(0), $module))"
+          def deriveForCaseObject(moduleTermSymbol: Symbol): Expr[Decoder[T]] =
+            '{ Decoder[T](r => r.readMapClose(r.readMapOpen(0), ${ Ref(moduleTermSymbol).asExprOf[T] })) }
 
           def deriveForCaseClass(
-              tpe: Type,
-              companion: ModuleSymbol,
-              params: List[CaseParam],
-              annotationTrees: List[Tree],
-              constructorIsPrivate: Boolean) = {
-            if (constructorIsPrivate)
-              error(s"Cannot derive Decoder[$tpe] because the primary constructor of `$tpe` is private")
+              tpe: TypeRepr,
+              classSym: Symbol,
+              companion: Symbol,
+              fields: IArray[Field]): Expr[Decoder[T]] =
 
-            def decName(p: CaseParam) = TermName(s"d${p.index}")
-            def varName(p: CaseParam) = TermName(s"p${p.index}")
-            def expected(s: String)   = s"$s for decoding an instance of type `$tpe`"
-
-            val arity         = params.size
-            val keysAndParams = new Array[(Key, CaseParam)](arity)
-            params.foreach(p => keysAndParams(p.index) = p.key() -> p)
-            val keysAndParamsSorted = keysAndParams.clone()
-            sortAndVerifyNoCollisions(keysAndParamsSorted) { case (k, a, b) =>
-              c.abort(
-                ctx.enclosingPosition,
+            val arity         = fields.size
+            val keysAndFields = new Array[(Long | String, Field)](arity)
+            fields.foreach(x => keysAndFields(x.index) = x.key -> x)
+            val keysAndFieldsSorted = keysAndFields.clone()
+            sortAndVerifyNoCollisions(keysAndFieldsSorted) { case (k, a, b) =>
+              fail(
                 s"@key collision: parameters `${a.name}` and `${b.name}` " +
-                  s"of case class ADT `$tpe` share the same type id `${k.value}`")
+                  s"of case class `$theTname` share the same type id `$k`")
             }
+            val fieldKeyNames = Expr.ofList(keysAndFields.iterator.map(t => Expr(t._1.toString)).toList)
 
-            val decodersForParams = params.map(p => p -> p.getImplicit(decoderType)).toMap
-            val nonBasicParams =
-              params.filterNot(p => p.isBasicType && decodersForParams(p).exists(isDefinedOn(_, decoderCompanion)))
+            def gen(r: Expr[Reader], nonBasicDecoders: IArray[Option[Val]])(using Quotes): Expr[T] =
 
-            def readField(p: CaseParam) = {
-              val tpe = p.paramType.tpe.dealias
-              if (nonBasicParams contains p) q"r.read[$tpe]()(${decName(p)})" else q"r.${TermName(s"read$tpe")}()"
-            }
+              def failDup(key: Long | String) = key match
+                case x: Long   => '{ helpers.failDuplicateMapKey($r, ${ Expr(x) }, ${ Expr(theTname) }) }
+                case x: String => '{ helpers.failDuplicateMapKey($r, ${ Expr(x) }, ${ Expr(theTname) }) }
 
-            val fieldDecDefs = nonBasicParams.map { p =>
-              val paramType = p.paramType.tpe
-              val fieldDec = decodersForParams(p).getOrElse {
-                error(s"Could not find implicit Decoder[$paramType] for parameter `${p.name}` of case class $tpe")
-              }
-              val fieldDecWithDefault = p.defaultValueMethod match {
-                case Some(x) => q"$fieldDec.withDefaultValue($x)"
-                case None    => fieldDec
-              }
-              q"private[this] val ${decName(p)} = $fieldDecWithDefault"
-            }
+              def readObjectBody(
+                  remaining: Expr[Int],
+                  setRemaining: Quotes ?=> Expr[Int] => Expr[Unit],
+                  isMaskBitSet: Quotes ?=> Field => Expr[Boolean],
+                  setMaskBit: Quotes ?=> Field => Expr[Unit],
+                  isMaskComplete: Expr[Boolean],
+                  construct: Quotes ?=> Expr[T] => Expr[T])(using Quotes) =
 
-            val maskDef =
-              if (arity <= 32) q"var mask = 0" :: Nil
-              else if (arity <= 64) q"var mask = 0L" :: Nil
-              else if (arity <= 128) q"var mask0 = 0L" :: q"var mask1 = 0L" :: Nil
-              else error("Case classes mit > 128 fields are not supported")
+                def tryReadKey(key: Long | String)(using Quotes): Expr[Boolean] =
+                  key match
+                    case x: Long   => '{ $r.tryReadLong(${ Expr(x) }) }
+                    case x: String => '{ $r.tryReadString(${ Expr(x) }) }
+                def tryReadKeyCompare(key: Long | String)(using Quotes): Expr[Int] =
+                  key match
+                    case x: Long   => '{ $r.tryReadLongCompare(${ Expr(x) }) }
+                    case x: String => '{ $r.tryReadStringCompare(${ Expr(x) }) }
+                def defaultOrNull[A: Type](field: Field)(using Quotes): Expr[A] =
+                  field.defaultValue[A].getOrElse('{ null.asInstanceOf[A] })
 
-            def setMaskBit(p: CaseParam) =
-              if (arity <= 32) q"mask |= ${1 << p.index}"
-              else if (arity <= 64) q"mask |= ${1L << p.index}"
-              else q"${TermName(s"mask${p.index >> 6}")} |= ${1L << p.index}"
+                withVars(IArray.unsafeFromArray(keysAndFields)) { (key, field) =>
+                  field.theType match
+                    case '[t] =>
+                      Val.of[t] {
+                        '{
+                          if ($remaining != 0 && ${ tryReadKey(key) }) {
+                            ${ setMaskBit(field) }
+                            ${ setRemaining('{ $remaining - 1 }) }
+                            ${ readField[t](r, nonBasicDecoders(field.index).map(_.as[Decoder[t]].get)) }
+                          } else ${ defaultOrNull[t](field) }
+                        }
+                      }
+                } { fieldVars =>
+                  def readFields(start: Int, end: Int)(using Quotes): Expr[Unit] =
+                    if (start < end) {
+                      val mid          = (start + end) >> 1
+                      val (key, field) = keysAndFieldsSorted(mid)
+                      val readFieldAndSetFieldVar = field.theType match
+                        case '[t] =>
+                          val decoder = nonBasicDecoders(field.index).map(_.as[Decoder[t]].get)
+                          fieldVars(field.index).as[t].set(readField[t](r, decoder))
+                      val onMatch =
+                        '{
+                          if (${ isMaskBitSet(field) }) ${ failDup(key) }
+                          $readFieldAndSetFieldVar
+                          ${ setMaskBit(field) }
+                        }
+                      if (start < mid)
+                        '{
+                          def read(): Unit = {
+                            val cmp = ${ tryReadKeyCompare(key) }
+                            if (cmp < 0) ${ readFields(start, mid) }
+                            else if (cmp > 0) ${ readFields(mid + 1, end) }
+                            else $onMatch
+                          }
+                          read()
+                        }
+                      else '{ if (${ tryReadKeyCompare(key) } == 0) $onMatch else $r.skipTwoElements() }
+                    } else '{ $r.skipTwoElements() }
+                  end readFields
 
-            def maskBitSet(p: CaseParam) =
-              if (arity <= 32) q"(mask & ${1 << p.index}) != 0"
-              else if (arity <= 64) q"(mask & ${1L << p.index}) != 0"
-              else q"(${TermName(s"mask${p.index >> 6}")} & ${1L << p.index}) != 0"
+                  val fieldVarTerms = fieldVars.toList.map(_.get.asTerm)
 
-            val maskIncomplete =
-              if (arity <= 32) q"mask != ${(1 << arity) - 1}"
-              else if (arity <= 64) q"mask != ${(1L << arity) - 1}"
-              else q"mask0 != -1 || mask1 != ${(1L << (arity - 64)) - 1}"
-
-            val maskAsParams =
-              if (arity <= 32) q"mask: Int" :: Nil
-              else if (arity <= 64) q"mask: Long" :: Nil
-              else q"mask0: Long" :: q"mask1: Long" :: Nil
-
-            val maskAsArgs = if (arity <= 64) q"mask" :: Nil else q"mask0" :: q"mask1" :: Nil
-
-            val fieldVarDefs: List[Tree] = keysAndParams.map { case (key, p) =>
-              val defaultValue = p.defaultValueMethod.getOrElse(q"null.asInstanceOf[${p.paramType.tpe}]")
-              q"""var ${varName(p)} = if (rem != 0 && ${r("tryRead", key)}) {
-                  ${setMaskBit(p)}
-                  rem -= 1
-                  ${readField(p)}
-                } else $defaultValue"""
-            }.toList
-
-            def readFields(start: Int, end: Int): Tree =
-              if (start < end) {
-                val mid        = (start + end) >> 1
-                val (key, p)   = keysAndParamsSorted(mid)
-                val methodName = TermName(s"readFields_${start}_$end")
-                val onMatch =
-                  q"""if (${maskBitSet(p)}) failDuplicate(${literal(key.value)})
-                    ${varName(p)} = ${readField(p)}
-                    ${setMaskBit(p)}"""
-                if (start < mid) {
-                  q"""def $methodName(): scala.Unit = {
-                  val cmp = ${r("tryRead", key, "Compare")}
-                  if (cmp < 0) ${readFields(start, mid)}
-                  else if (cmp > 0) ${readFields(mid + 1, end)}
-                  else $onMatch
-                }
-                $methodName()"""
-                } else q"if (${r("tryRead", key, "Compare")} == 0) $onMatch else r.skipTwoElements()"
-              } else q"r.skipTwoElements()"
-
-            val typeName    = tpe.typeSymbol.name.decodedName.toString
-            val decoderName = TypeName(s"${typeName}Decoder")
-
-            val failMissingDef =
-              if (params.nonEmpty) {
-                q"""def failMissing(..$maskAsParams) = {
-                    $helpers.failMissing(r, ${literal(typeName)}, ..$maskAsArgs,
-                      Array(..${keysAndParams.iterator.map(t => literal(t._1.value.toString)).toList}))}"""
-              } else q"()"
-
-            val construct = {
-              val compApply = q"$companion.apply(..${params.map(varName)})"
-              if (params.nonEmpty) {
-                val testMaskDefs = {
-                  def reqMask(iter: Iterator[CaseParam]) =
-                    iter.foldLeft(0L) { (acc, p) =>
-                      if (p.defaultValueMethod.isDefined) acc | (1L << p.index) else acc
+                  '{
+                    while ($remaining > 0 || $remaining < 0 && ! $r.tryReadBreak()) {
+                      if (! $isMaskComplete) ${ readFields(0, arity) }
+                      else $r.skipTwoElements()
+                      ${ setRemaining('{ $remaining - 1 }) }
                     }
-                  if (arity <= 32) {
-                    q"val testMask = mask | ${literal(reqMask(params.iterator).toInt | (-1 << arity))}" :: Nil
-                  } else if (arity <= 64) {
-                    q"val testMask = mask | ${literal(reqMask(params.iterator) | (-1L << arity))}" :: Nil
-                  } else {
-                    q"val testMask0 = mask0 | ${literal(reqMask(params.iterator take 64))}" ::
-                    q"val testMask1 = mask1 | ${literal(reqMask(params.iterator drop 64) | (-1L << (arity - 64)))}" :: Nil
+                    ${ construct(companionApply(companion, typeArgs(tpe), fieldVarTerms).asExprOf[T]) }
                   }
                 }
-                val testMaskTest = if (arity <= 64) q"testMask" else q"testMask0 & testMask1"
-                val testMaskArgs = if (arity <= 64) q"testMask" :: Nil else q"testMask0" :: q"testMask1" :: Nil
-                q"""..$testMaskDefs
-                  if ($testMaskTest == -1) $compApply
-                  else failMissing(..$testMaskArgs)"""
-              } else compApply
-            }
+              end readObjectBody
 
-            q"""final class $decoderName {
-                ..$fieldDecDefs
-                def read(r: $readerType): $tpe = {
-                  def failDuplicate(k: Any) =
-                    throw new $borerPkg.Borer.Error.InvalidInputData(r.position,
-                      StringContext("Duplicate map key `", ${expected("` encountered during")}).s(k))
-                  $failMissingDef
-                  def readObject(remaining: scala.Int): $tpe = {
-                    var rem = remaining
-                    ..$maskDef
-                    ..$fieldVarDefs
-                    while (rem > 0 || rem < 0 && !r.tryReadBreak()) {
-                      if ($maskIncomplete) {
-                        ..${readFields(0, arity)}
-                      } else r.skipTwoElements()
-                      rem -= 1
-                    }
-                    $construct
+              def readObjectBody32(count: Expr[Int])(using Quotes): Expr[T] =
+                val reqMask: Int = fields.foldLeft(0) { (acc, field) =>
+                  if (field.hasDefaultValue) acc | (1 << field.index) else acc
+                }
+
+                '{
+                  var rem: Int  = $count
+                  var mask: Int = 0
+                  ${
+                    readObjectBody(
+                      remaining = 'rem,
+                      setRemaining = x => '{ rem = $x },
+                      isMaskBitSet = field => '{ (mask & ${ Expr(1 << field.index) }) != 0 },
+                      setMaskBit = field => '{ mask |= ${ Expr(1 << field.index) } },
+                      isMaskComplete = '{ mask == ${ Expr((1 << arity) - 1) } },
+                      construct = { compApply =>
+                        '{
+                          val testMask    = mask | ${ Expr(reqMask | (-1 << arity)) }
+                          def failMissing = helpers.failMissing($r, ${ Expr(theTname) }, testMask, $fieldKeyNames)
+                          if (testMask == -1) $compApply else failMissing
+                        }
+                      }
+                    )
                   }
-                  if (r.tryReadMapStart()) readObject(-1)
-                  else if (r.hasMapHeader) {
-                    val mapLength = r.readMapHeader()
-                    if (mapLength > Int.MaxValue) r.overflow("Maps with more than 2^31 entries are not supported")
-                    readObject(mapLength.toInt)
-                  } else r.unexpectedDataItem(${expected("Map Start or Map Header")})
                 }
+              end readObjectBody32
+
+              def readObjectBody64(count: Expr[Int])(using Quotes) =
+                val reqMask: Long = fields.foldLeft(0L) { (acc, field) =>
+                  if (field.hasDefaultValue) acc | (1L << field.index) else acc
+                }
+
+                '{
+                  var rem: Int   = $count
+                  var mask: Long = 0L
+                  ${
+                    readObjectBody(
+                      remaining = 'rem,
+                      setRemaining = x => '{ rem = $x },
+                      isMaskBitSet = field => '{ (mask & ${ Expr(1L << field.index) }) != 0 },
+                      setMaskBit = field => '{ mask |= ${ Expr(1L << field.index) } },
+                      isMaskComplete = '{ mask == ${ Expr((1L << arity) - 1) } },
+                      construct = { compApply =>
+                        '{
+                          val testMask    = mask | ${ Expr(reqMask | (-1L << arity)) }
+                          def failMissing = helpers.failMissing($r, ${ Expr(theTname) }, testMask, $fieldKeyNames)
+                          if (testMask == -1L) $compApply else failMissing
+                        }
+                      }
+                    )
+                  }
+                }
+              end readObjectBody64
+
+              def readObjectBody128(count: Expr[Int])(using Quotes) =
+                def reqMask(fieldIter: Iterator[Field]): Long =
+                  fieldIter.foldLeft(0L) { (acc, field) =>
+                    if (field.hasDefaultValue) acc | (1L << field.index) else acc
+                  }
+
+                '{
+                  var rem: Int    = $count
+                  var mask0: Long = 0L
+                  var mask1: Long = 0L
+                  ${
+                    readObjectBody(
+                      remaining = 'rem,
+                      setRemaining = x => '{ rem = $x },
+                      isMaskBitSet = field =>
+                        '{ (${ if (field.index < 64) 'mask0 else 'mask1 } & ${ Expr(1L << field.index) }) != 0 },
+                      setMaskBit = field =>
+                        val bit = Expr(1L << field.index)
+                        if (field.index < 64) '{ mask0 |= $bit }
+                        else '{ mask1 |= $bit }
+                      ,
+                      isMaskComplete = '{ mask0 == -1 && mask1 == ${ Expr((1L << (arity - 64)) - 1) } },
+                      construct = { compApply =>
+                        '{
+                          val testMask0 = mask0 | ${ Expr(reqMask(fields.iterator.take(64))) }
+                          val testMask1 = mask1 | ${ Expr(reqMask(fields.iterator.drop(64)) | (-1L << (arity - 64))) }
+                          def failMissing =
+                            helpers.failMissing($r, ${ Expr(theTname) }, testMask0, testMask1, $fieldKeyNames)
+                          if ((testMask0 & testMask1) == -1L) $compApply else failMissing
+                        }
+                      }
+                    )
+                  }
+                }
+              end readObjectBody128
+
+              '{
+                def readObject(count: Int): T = ${
+                  if (fields.nonEmpty) {
+                    if (arity <= 32) readObjectBody32('count)
+                    else if (arity <= 64) readObjectBody64('count)
+                    else if (arity <= 128) readObjectBody128('count)
+                    else fail("Case classes mit > 128 fields are not supported")
+                  } else
+                    '{
+                      if (count < 0) $r.readBreak()
+                      ${ companionApply(companion, typeArgs(tpe), Nil).asExprOf[T] }
+                    }
+                }
+
+                if ($r.tryReadMapStart()) readObject(-1)
+                else if ($r.hasMapHeader) {
+                  val mapLength = $r.readMapHeader()
+                  if (mapLength > Int.MaxValue) $r.overflow("Maps with more than 2^31 entries are not supported")
+                  readObject(mapLength.toInt)
+                } else
+                  $r.unexpectedDataItem(${
+                    Expr(s"Map Start or Map Header for decoding an instance of type `$theTname`")
+                  })
               }
+            end gen
 
-              new $decoderType[$tpe] {
-                private[this] var inner: $decoderName = _
-                def read(r: $readerType): $tpe = {
-                  if (inner eq null) inner = new $decoderName
-                  inner.read(r)
-                }
-              }: $decoderType[$tpe]"""
-          }
+            withOptVals(fields) { field =>
+              field.theType match
+                case '[t] =>
+                  Expr
+                    .summon[Decoder[t]]
+                    .orElse(fail(
+                      s"Could not find implicit Decoder[${Type.show[t]}] for field `${field.name}` of case class `$theTname`"))
+                    .filterNot(isBasicDefaultDecoder)
+                    .map { fieldDec =>
+                      Val.of[Decoder[t]] {
+                        field.defaultValue[t] match
+                          case Some(x) => '{ $fieldDec.withDefaultValue($x) }
+                          case None    => fieldDec
+                      }
+                    }
+            } { nonBasicDecoders =>
+              '{ Decoder[T](r => ${ gen('r, nonBasicDecoders) }) }
+            }
+          end deriveForCaseClass
 
-          def deriveForSealedTrait(node: AdtTypeNode) =
-            deriveAdtDecoder(
-              node,
-              q"private[this] val strategy = implicitly[$borerPkg.AdtEncodingStrategy]",
-              x => q"""val typeName = ${node.tpe.toString}
-                val opening = strategy.readAdtEnvelopeOpen(r, typeName)
-                val result = $x
-                strategy.readAdtEnvelopeClose(r, opening, typeName)
-                result""")
+          def deriveForSealedTrait(rootNode: AdtTypeNode): Expr[Decoder[T]] =
+            val methodBody = sealedTraitMethodBody(rootNode)
+
+            def read0(self: Expr[DerivedAdtDecoder[T]], r: Expr[Reader])(using Quotes) =
+              methodBody.derive(
+                self,
+                r,
+                identity,
+                {
+                  case x: Long   => '{ $r.tryReadLongCompare(${ Expr(x) }) }
+                  case x: String => '{ $r.tryReadStringCompare(${ Expr(x) }) }
+                })
+
+            def read1(self: Expr[DerivedAdtDecoder[T]], r: Expr[Reader], typeId: Expr[Long])(using Quotes) =
+              import java.lang.Long.compare as longCompare
+              methodBody.derive(
+                self,
+                r,
+                _.filter(_._1.isInstanceOf[Long]),
+                tid => '{ longCompare($typeId, ${ Expr(tid.asInstanceOf[Long]) }) })
+
+            def read2(self: Expr[DerivedAdtDecoder[T]], r: Expr[Reader], typeId: Expr[String])(using Quotes) =
+              methodBody.derive(
+                self,
+                r,
+                _.filter(_._1.isInstanceOf[String]),
+                tid => '{ $typeId.compareTo(${ Expr(tid.asInstanceOf[String]) }) })
+
+            '{
+              new MapBasedAdtDecoder[T]:
+                private val strategy = summonInline[AdtEncodingStrategy]
+
+                def read(r: Reader): T =
+                  val self    = this // work around for compiler crash (AssertionError) during macro expansion
+                  val opening = strategy.readAdtEnvelopeOpen(r, ${ Expr(rootNode.name) })
+                  val result  = ${ read0('self, 'r) }
+                  strategy.readAdtEnvelopeClose(r, opening, ${ Expr(rootNode.name) })
+                  result
+
+                def read(r: Reader, typeId: Long): T =
+                  val self = this // work around for compiler crash (AssertionError) during macro expansion
+                  ${ read1('self, 'r, 'typeId) }
+
+                def read(r: Reader, typeId: String): T =
+                  val self = this // work around for compiler crash (AssertionError) during macro expansion
+                  ${ read2('self, 'r, 'typeId) }
+
+                def failExpectedTypeId(r: Reader) =
+                  r.unexpectedDataItem(${ Expr(s"type id key for subtype of `$theTname`") })
+            }
+      }
+
+    def allEncoders[T: Type](using Quotes): Expr[Encoder[T]] =
+      Derive.deriveAll[Encoder, T]("allEncoders", "deriveEncoder") {
+        new Derive.MacroCall[Encoder] {
+          def apply[A: Type](using Quotes) = '{ deriveEncoder[A] }
         }
       }
 
-    def allDecoders[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
-      deriveAll(c)(isEncoder = false, "MapBasedCodecs", "deriveAllDecoders", "deriveDecoder")
-
-    def codec[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
-      codecMacro(c)("MapBasedCodecs", "deriveEncoder", "deriveDecoder")
-
-    def allCodecs[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
-      codecMacro(c)("MapBasedCodecs", "deriveAllEncoders", "deriveAllDecoders")
+    def allDecoders[T: Type](using Quotes): Expr[Decoder[T]] =
+      Derive.deriveAll[Decoder, T]("allDecoders", "deriveDecoder") {
+        new Derive.MacroCall[Decoder] {
+          def apply[A: Type](using Quotes) = '{ deriveDecoder[A] }
+        }
+      }
   }
+
+  abstract class MapBasedAdtEncoder[T](strategy: AdtEncodingStrategy) extends DerivedAdtEncoder[T] {
+
+    protected def typeName: String
+
+    final def writeAdtValue[A](w: Writer, typeId: Long, value: A)(using encoder: Encoder[A]): Writer =
+      encoder match {
+        case enc: AdtEncoder[A] => enc.write(w, value)
+        case enc =>
+          strategy.writeAdtEnvelopeOpen(w, typeName)
+          enc.write(w.writeLong(typeId), value)
+          strategy.writeAdtEnvelopeClose(w, typeName)
+      }
+
+    final def writeAdtValue[A](w: Writer, typeId: String, value: A)(using encoder: Encoder[A]): Writer =
+      encoder match {
+        case enc: AdtEncoder[A] => enc.write(w, value)
+        case enc =>
+          strategy.writeAdtEnvelopeOpen(w, typeName)
+          enc.write(w.writeString(typeId), value)
+          strategy.writeAdtEnvelopeClose(w, typeName)
+      }
+  }
+
+  abstract class MapBasedAdtDecoder[T] extends DerivedAdtDecoder[T]
 }

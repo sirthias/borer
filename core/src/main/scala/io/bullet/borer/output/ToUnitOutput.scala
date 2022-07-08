@@ -11,13 +11,13 @@ package io.bullet.borer.output
 import io.bullet.borer.{ByteAccess, Output}
 import io.bullet.borer.Output.ToTypeProvider
 
-trait ToUnitOutput {
+trait ToUnitOutput:
 
   /**
    * Simple NOP output that doesn't actually write anything and always produces `Unit`.
    * Useful for running an encoding purely for its side effects, e.g. logging or validation.
    */
-  implicit object ToUnitProvider extends ToTypeProvider[Unit] with Output {
+  implicit object ToUnitProvider extends ToTypeProvider[Unit] with Output:
     type Out = this.type
     def apply(bufferSize: Int, allowBufferCaching: Boolean) = this
 
@@ -31,5 +31,3 @@ trait ToUnitOutput {
     def writeBytes[Bytes: ByteAccess](bytes: Bytes)    = this
 
     def result(): Unit = ()
-  }
-}

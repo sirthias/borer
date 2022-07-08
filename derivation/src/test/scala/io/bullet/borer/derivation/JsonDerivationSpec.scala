@@ -12,7 +12,7 @@ import java.nio.charset.StandardCharsets
 
 import io.bullet.borer.{Decoder, Dom, Encoder, Json}
 
-object JsonDerivationSpec extends DerivationSpec(Json) {
+class JsonDerivationSpec extends DerivationSpec(Json) {
   import Dom._
 
   def encode[T: Encoder](value: T): String =

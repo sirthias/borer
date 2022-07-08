@@ -8,6 +8,9 @@
 
 package io.bullet.borer
 
+import scala.annotation.threadUnsafe
+import scala.deriving.Mirror
+
 /**
  * A simple encapsulation of an [[Encoder]] and [[Decoder]] for the same type, as one entity.
  *
@@ -21,21 +24,34 @@ package io.bullet.borer
  * available encoders and/or decoders for certain type parameters (like `Encoder.forOption`, for example)
  * then you should never require implicitly available Codecs, but rather Encoders and Decoders separately.
  */
-final case class Codec[A](encoder: Encoder[A], decoder: Decoder[A]) {
+final case class Codec[A](encoder: Encoder[A], decoder: Decoder[A]):
 
   @inline def bimap[B](f: B => A, g: A => B): Codec[B] = Codec.bimap(f, g)(encoder, decoder)
 
   def withEncoder(encoder: Encoder[A]): Codec[A] = copy(encoder = encoder)
   def withDecoder(decoder: Decoder[A]): Codec[A] = copy(decoder = decoder)
-}
 
-object Codec {
+object Codec:
 
   /**
    * Same as `apply` but with the parameter list marked as implicit.
    */
-  @inline def of[A](implicit encoder: Encoder[A], decoder: Decoder[A]): Codec[A] =
+  @inline def of[T](implicit encoder: Encoder[T], decoder: Decoder[T]): Codec[T] =
     Codec(encoder, decoder)
+
+  extension [T](underlying: => Codec[T])
+    /**
+     * Wraps a [[Codec]] definition with lazy initialization.
+     */
+    def recursive: Codec[T] =
+      @threadUnsafe lazy val delegate: Codec[T] = underlying
+      Codec(delegate.encoder.recursive, delegate.decoder.recursive)
+
+  /**
+   * Convenience constructor.
+   */
+  inline def forProduct[T <: Product](implicit m: Mirror.ProductOf[T]): Codec[T] =
+    Codec(Encoder.forProduct[T], Decoder.forProduct[T])
 
   /**
    * Constructs a `Codec[B]` from an `Encoder[A]`, a `Decoder[A]` and two functions.
@@ -53,9 +69,7 @@ object Codec {
    * The default [[Codec]] for [[Either]] is not automatically in scope,
    * because there is no clear "standard" way of encoding instances of [[Either]].
    */
-  object ForEither {
+  object ForEither:
 
     implicit def default[A: Encoder: Decoder, B: Encoder: Decoder]: Codec[Either[A, B]] =
       Codec(Encoder.ForEither.default, Decoder.ForEither.default)
-  }
-}

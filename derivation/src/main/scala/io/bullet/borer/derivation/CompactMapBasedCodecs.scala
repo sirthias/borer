@@ -8,19 +8,19 @@
 
 package io.bullet.borer.derivation
 
-import io.bullet.borer._
-import io.bullet.borer.derivation.internal._
-
-import scala.reflect.macros.blackbox
+import io.bullet.borer.*
+import scala.deriving.*
+import scala.compiletime.*
+import scala.quoted.*
 
 /**
  * Same as [[MapBasedCodecs]], but with "compact", i.e. unwrapped, encodings for unary case classes.
  */
-object CompactMapBasedCodecs {
+object CompactMapBasedCodecs extends DerivationApi {
 
   /**
    * Macro that creates an [[Encoder]] for [[T]] provided that
-   * - [[T]] is a `case class`, `sealed abstract class` or `sealed trait`
+   * - [[T]] is a `case class`, `enum`, `sealed abstract class` or `sealed trait`
    * - [[Encoder]] instances for all members of [[T]] (if [[T]] is a `case class`)
    *   or all sub-types of [[T]] (if [[T]] is an ADT) are implicitly available
    *
@@ -29,14 +29,14 @@ object CompactMapBasedCodecs {
    * This can be customized with the [[key]] annotation.
    *
    * NOTE: If `T` is unary (i.e. only has a single member) then the member value is written in an unwrapped form,
-   * * i.e. without the map container.
+   * i.e. without the map container.
    */
-  def deriveEncoder[T]: Encoder[T] = macro Macros.encoder[T]
+  inline def deriveEncoder[T]: Encoder[T] = ${ Macros.encoder[T] }
 
   /**
    * Macro that creates an [[Encoder]] for [[T]] and all direct and indirect sub-types of [[T]],
    * which are concrete, i.e. not abstract.
-   * [[T]] must be a `sealed abstract class` or `sealed trait`.
+   * [[T]] must be an `enum`, `sealed abstract class` or `sealed trait`.
    *
    * It works by generating a code block such as this one:
    *
@@ -57,11 +57,11 @@ object CompactMapBasedCodecs {
    * This means that you can specify your own custom Encoders for concrete sub-types or whole branches
    * of the sub-type hierarchy and they will be properly picked up rather than create conflicts.
    */
-  def deriveAllEncoders[T]: Encoder[T] = macro Macros.allEncoders[T]
+  inline def deriveAllEncoders[T]: Encoder[T] = ${ Macros.allEncoders[T] }
 
   /**
    * Macro that creates a [[Decoder]] for [[T]] provided that
-   * - [[T]] is a `case class`, `sealed abstract class` or `sealed trait`
+   * - [[T]] is a `case class`, `enum`, `sealed abstract class` or `sealed trait`
    * - [[Decoder]] instances for all members of [[T]] (if [[T]] is a `case class`)
    *   or all sub-types of [[T]] (if [[T]] is an ADT) are implicitly available
    *
@@ -69,15 +69,15 @@ object CompactMapBasedCodecs {
    * The key for each member is a `String` holding the member's name.
    * This can be customized with the [[key]] annotation.
    *
-   * NOTE: If `T` is unary (i.e. only has a single member) then the member value is expected in an unwrapped form,
-   * * i.e. without the map container.
+   * NOTE: If `T` is unary (i.e. only has a single member) then the member value is written in an unwrapped form,
+   * i.e. without the map container.
    */
-  def deriveDecoder[T]: Decoder[T] = macro Macros.decoder[T]
+  inline def deriveDecoder[T]: Decoder[T] = ${ Macros.decoder[T] }
 
   /**
    * Macro that creates a [[Decoder]] for [[T]] and all direct and indirect sub-types of [[T]],
    * which are concrete, i.e. not abstract.
-   * [[T]] must be a `sealed abstract class` or `sealed trait`.
+   * [[T]] must be an `enum`, `sealed abstract class` or `sealed trait`.
    *
    * It works by generating a code block such as this one:
    *
@@ -98,50 +98,50 @@ object CompactMapBasedCodecs {
    * This means that you can specify your own custom Decoders for concrete sub-types or whole branches
    * of the sub-type hierarchy and they will be properly picked up rather than create conflicts.
    */
-  def deriveAllDecoders[T]: Decoder[T] = macro Macros.allDecoders[T]
+  inline def deriveAllDecoders[T]: Decoder[T] = ${ Macros.allDecoders[T] }
 
   /**
    * Macro that creates an [[Encoder]] and [[Decoder]] pair for [[T]].
-   * Convenience shortcut for `Codec(deriveEncoder[T], deriveDecoder[T])"`.
+   * Convenience shortcut for `Codec(deriveEncoder[T], deriveDecoder[T])`.
    */
-  def deriveCodec[T]: Codec[T] = macro Macros.codec[T]
+  inline def deriveCodec[T]: Codec[T] = Codec(deriveEncoder[T], deriveDecoder[T])
 
   /**
    * Macro that creates an [[Encoder]] and [[Decoder]] pair for [[T]] and all direct and indirect sub-types of [[T]].
-   * Convenience shortcut for `Codec(deriveAllEncoders[T], deriveAllDecoders[T])"`.
+   * Convenience shortcut for `Codec(deriveAllEncoders[T], deriveAllDecoders[T])`.
    */
-  def deriveAllCodecs[T]: Codec[T] = macro Macros.allCodecs[T]
+  inline def deriveAllCodecs[T]: Codec[T] = Codec(deriveAllEncoders[T], deriveAllDecoders[T])
 
-  private object Macros {
-    import MacroSupport._
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    def encoder[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
-      forwardToArrayBasedOrMapBasedDependingOnArity[T](c)("deriveEncoder")
+  private[derivation] object Macros:
 
-    def allEncoders[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
-      deriveAll(c)(isEncoder = true, "CompactMapBasedCodecs", "deriveAllEncoders", "deriveEncoder")
+    def encoder[T: Type](using quotes: Quotes): Expr[Encoder[T]] =
+      if (isUnaryCaseClass[T]) ArrayBasedCodecs.Macros.encoder[T]
+      else MapBasedCodecs.Macros.encoder[T]
 
-    def decoder[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
-      forwardToArrayBasedOrMapBasedDependingOnArity[T](c)("deriveDecoder")
+    def decoder[T: Type](using quotes: Quotes): Expr[Decoder[T]] =
+      if (isUnaryCaseClass[T]) ArrayBasedCodecs.Macros.decoder[T]
+      else MapBasedCodecs.Macros.decoder[T]
 
-    def allDecoders[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
-      deriveAll(c)(isEncoder = false, "CompactMapBasedCodecs", "deriveAllDecoders", "deriveDecoder")
+    def allEncoders[T: Type](using Quotes): Expr[Encoder[T]] =
+      Derive.deriveAll[Encoder, T]("allEncoders", "deriveEncoder") {
+        new Derive.MacroCall[Encoder] {
+          def apply[A: Type](using Quotes) = '{ deriveEncoder[A] }
+        }
+      }
 
-    def codec[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
-      codecMacro(c)("CompactMapBasedCodecs", "deriveEncoder", "deriveDecoder")
+    def allDecoders[T: Type](using Quotes): Expr[Decoder[T]] =
+      Derive.deriveAll[Decoder, T]("allDecoders", "deriveDecoder") {
+        new Derive.MacroCall[Decoder] {
+          def apply[A: Type](using Quotes) = '{ deriveDecoder[A] }
+        }
+      }
 
-    def allCodecs[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
-      codecMacro(c)("CompactMapBasedCodecs", "deriveAllEncoders", "deriveAllDecoders")
+    private def isUnaryCaseClass[T: Type](using quotes: Quotes): Boolean =
+      import quotes.reflect.*
+      val tpe = TypeRepr.of[T].dealias.widen
+      tpe.typeSymbol.flags.is(Flags.Case) && tpe.classSymbol.exists(_.caseFields.lengthCompare(1) == 0)
 
-    private def forwardToArrayBasedOrMapBasedDependingOnArity[T: c.WeakTypeTag](c: blackbox.Context)(
-        macroName: String): c.Tree = {
-      import c.universe._
-      val tpe        = weakTypeOf[T].dealias
-      val borerPkg   = c.mirror.staticPackage("_root_.io.bullet.borer")
-      val iter       = tpe.decls.collect { case m: MethodSymbol if m.isCaseAccessor => m.asMethod }.iterator
-      val isUnary    = iter.hasNext && { iter.next(); !iter.hasNext }
-      val objectName = if (isUnary) "ArrayBasedCodecs" else "MapBasedCodecs"
-      q"$borerPkg.derivation.${TermName(objectName)}.${TermName(macroName)}[$tpe]"
-    }
-  }
+  end Macros
 }

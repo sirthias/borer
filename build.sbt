@@ -2,7 +2,6 @@ import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import sbt._
 
 def scala3   = "3.1.3"
-def scala213 = "2.13.8"
 
 inThisBuild(
   List(
@@ -23,43 +22,20 @@ inThisBuild(
 )
 
 lazy val commonSettings = Seq(
-  scalacOptions ++= {
-    CrossVersion.partialVersion(scalaVersion.value).map(_._1) match {
-      case Some(2) =>
-        Seq(
-          "-deprecation",
-          "-encoding", "UTF-8",
-          "-feature",
-          "-unchecked",
-          "-language:_",
-          "-target:jvm-1.8",
-          "-Xlint:_,-missing-interpolator",
-          "-Ywarn-dead-code",
-          "-Ywarn-numeric-widen",
-          "-Ybackend-parallelism", "8",
-          "-Ywarn-unused:imports,-patvars,-privates,-locals,-implicits,-explicits",
-          "-Ycache-macro-class-loader:last-modified",
-          "-Xfatal-warnings",
-          "-Vimplicits",
-          "-Vtype-diffs",
-        )
-      case Some(3) =>
-        Seq(
-          "-deprecation",
-          "-encoding", "UTF-8",
-          "-feature",
-          "-unchecked",
-          "-indent",
-          //"-source:future",
-          //"-explain",
-          "-pagewidth:120",
-          "-Xtarget:11",
-          "-Xfatal-warnings",
-          "-Xcheck-macros",
-        )
-      case x => sys.error(s"unsupported scala version: $x")
-    }
-  },
+  scalaVersion := scala3,
+  scalacOptions ++= Seq(
+    "-deprecation",
+    "-encoding", "UTF-8",
+    "-feature",
+    "-unchecked",
+    "-indent",
+    //"-source:future",
+    //"-explain",
+    "-pagewidth:120",
+    "-Xtarget:11",
+    "-Xfatal-warnings",
+    "-Xcheck-macros",
+  ),
   Compile / console / scalacOptions ~= (_ filterNot (o => o.contains("warn") || o.contains("Xlint"))),
   Test / console / scalacOptions := (Compile / console / scalacOptions).value,
   Compile / doc / scalacOptions += "-no-link-warnings",
@@ -116,27 +92,20 @@ val `akka-http`         = Def.setting("com.typesafe.akka"       %%  "akka-http" 
 val `cats-core`         = Def.setting("org.typelevel"           %%% "cats-core"               % "2.8.0")
 val `circe-core`        = Def.setting("io.circe"                %%% "circe-core"              % "0.14.2")
 val `circe-parser`      = Def.setting("io.circe"                %%% "circe-parser"            % "0.14.2")
-val `circe-derivation`  = Def.setting("io.circe"                %%% "circe-derivation"        % "0.13.0-M5")
 val `scodec-bits`       = Def.setting("org.scodec"              %%% "scodec-bits"             % "1.1.34")
-val utest               = Def.setting("com.lihaoyi"             %%% "utest"                   % "0.8.0" % Test)
 val munit               = Def.setting("org.scalameta"           %%% "munit"                   % "0.7.29" % Test)
-val macrolizer          = Def.setting("io.bullet"               %%% "macrolizer"              % "0.6.2-SNAPSHOT" % "compile-internal, test-internal")
-val `scala-compiler`    = Def.setting("org.scala-lang"          %   "scala-compiler" % scalaVersion.value % "provided")
-val `scala-reflect`     = Def.setting("org.scala-lang"          %   "scala-reflect" % scalaVersion.value % "provided")
+val macrolizer          = Def.setting("io.bullet"               %%% "macrolizer"              % "0.6.2" % "compile-internal, test-internal")
 // format: ON
 
 /////////////////////// PROJECTS /////////////////////////
 
 lazy val borer = (project in file("."))
   .aggregate(`core-jvm`, `core-js`)
-  .aggregate(`core3-jvm`, `core3-js`)
   .aggregate(`compat-akka`)
   .aggregate(`compat-cats-jvm`, `compat-cats-js`)
   .aggregate(`compat-circe-jvm`, `compat-circe-js`)
   .aggregate(`compat-scodec-jvm`, `compat-scodec-js`)
   .aggregate(`derivation-jvm`, `derivation-js`)
-  .aggregate(`derivation3-jvm`, `derivation3-js`)
-  .aggregate(deriver)
   .aggregate(benchmarks)
   .aggregate(site)
   .settings(commonSettings)
@@ -151,36 +120,11 @@ lazy val `core-js`  = core.js
 lazy val core = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
-  .enablePlugins(AutomateHeaderPlugin, BoilerplatePlugin)
-  .settings(commonSettings)
-  .settings(releaseSettings)
-  .settings(
-    scalaVersion := scala213,
-    moduleName := "borer-core",
-    libraryDependencies ++= Seq(utest.value),
-
-    // point sbt-boilerplate to the common "project"
-    Compile / boilerplateSource := baseDirectory.value.getParentFile / "src" / "main" / "boilerplate",
-    Compile / sourceManaged := baseDirectory.value.getParentFile / "target" / "scala" / "src_managed" / "main"
-  )
-  .jvmSettings(
-    Compile / specializeJsonParser / sourceDirectory := baseDirectory.value.getParentFile / "src" / "main",
-    Compile / specializeJsonParser / sourceManaged := baseDirectory.value / "target" / "scala" / "src_managed" / "main",
-    Compile / managedSourceDirectories += (Compile / specializeJsonParser / sourceManaged).value
-  )
-  .jsSettings(scalajsSettings: _*)
-
-lazy val `core3-jvm` = core3.jvm.enablePlugins(SpecializeJsonParserPlugin)
-lazy val `core3-js`  = core3.js
-lazy val core3 = crossProject(JSPlatform, JVMPlatform)
-  .withoutSuffixFor(JVMPlatform)
-  .crossType(CrossType.Pure)
   .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings)
   .settings(releaseSettings)
   .settings(
-    scalaVersion := scala3,
-    moduleName   := "borer-core3",
+    moduleName   := "borer-core",
     libraryDependencies ++= Seq(munit.value),
   )
   .jvmSettings(
@@ -197,13 +141,12 @@ lazy val `compat-akka` = project
   .settings(commonSettings)
   .settings(releaseSettings)
   .settings(
-    scalaVersion := scala213,
     moduleName := "borer-compat-akka",
     libraryDependencies ++= Seq(
       `akka-actor`.value % "provided",
       `akka-stream`.value % "provided",
-      `akka-http`.value % "provided",
-      utest.value)
+      `akka-http`.value % "provided" cross CrossVersion.for3Use2_13,
+      munit.value)
   )
 
 lazy val `compat-cats-jvm` = `compat-cats`.jvm
@@ -219,9 +162,8 @@ lazy val `compat-cats` = crossProject(JSPlatform, JVMPlatform)
   .settings(commonSettings)
   .settings(releaseSettings)
   .settings(
-    scalaVersion := scala213,
     moduleName := "borer-compat-cats",
-    libraryDependencies ++= Seq(`cats-core`.value, utest.value)
+    libraryDependencies ++= Seq(`cats-core`.value, munit.value)
   )
   .jsSettings(scalajsSettings: _*)
 
@@ -238,13 +180,11 @@ lazy val `compat-circe` = crossProject(JSPlatform, JVMPlatform)
   .settings(commonSettings)
   .settings(releaseSettings)
   .settings(
-    scalaVersion := scala213,
     moduleName := "borer-compat-circe",
     libraryDependencies ++= Seq(
       `circe-core`.value,
       `circe-parser`.value % "test",
-      `circe-derivation`.value % "test",
-      utest.value
+      munit.value
     )
   )
   .jsSettings(scalajsSettings: _*)
@@ -262,20 +202,17 @@ lazy val `compat-scodec` = crossProject(JSPlatform, JVMPlatform)
   .settings(commonSettings)
   .settings(releaseSettings)
   .settings(
-    scalaVersion := scala213,
     moduleName := "borer-compat-scodec",
     libraryDependencies ++= Seq(
       `scodec-bits`.value % "provided",
-      utest.value
+      munit.value
     )
   )
   .jsSettings(scalajsSettings: _*)
 
 lazy val `derivation-jvm` = derivation.jvm
-  .dependsOn(deriver)
   .dependsOn(`core-jvm` % "compile->compile;test->test")
-lazy val `derivation-js`  = derivation.js
-  .dependsOn(deriver)
+lazy val `derivation-js` = derivation.js
   .dependsOn(`core-js` % "compile->compile;test->test")
 lazy val derivation = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
@@ -284,45 +221,16 @@ lazy val derivation = crossProject(JSPlatform, JVMPlatform)
   .settings(commonSettings)
   .settings(releaseSettings)
   .settings(
-    scalaVersion := scala213,
-    moduleName := "borer-derivation",
-    libraryDependencies ++= Seq(`scala-compiler`.value, `scala-reflect`.value, macrolizer.value),
-  )
-  .jsSettings(scalajsSettings: _*)
-
-lazy val `derivation3-jvm` = derivation3.jvm
-  .dependsOn(`core3-jvm` % "compile->compile;test->test")
-lazy val `derivation3-js` = derivation3.js
-  .dependsOn(`core3-js` % "compile->compile;test->test")
-lazy val derivation3 = crossProject(JSPlatform, JVMPlatform)
-  .withoutSuffixFor(JVMPlatform)
-  .crossType(CrossType.Pure)
-  .enablePlugins(AutomateHeaderPlugin)
-  .settings(commonSettings)
-  .settings(releaseSettings)
-  .settings(
-    scalaVersion := scala3,
-    moduleName   := "borer-derivation3",
+    moduleName   := "borer-derivation",
     libraryDependencies ++= Seq(macrolizer.value, munit.value),
   )
   .jsSettings(scalajsSettings: _*)
-
-lazy val deriver = project
-  .enablePlugins(AutomateHeaderPlugin)
-  .settings(commonSettings)
-  .settings(releaseSettings)
-  .settings(
-    scalaVersion := scala213,
-    moduleName := "borer-deriver",
-    libraryDependencies ++= Seq(`scala-compiler`.value, `scala-reflect`.value),
-  )
 
 lazy val benchmarks = project
   .enablePlugins(AutomateHeaderPlugin, JmhPlugin, BenchmarkResultsPlugin)
   .dependsOn(`core-jvm`, `derivation-jvm`)
   .settings(commonSettings)
   .settings(
-    scalaVersion := scala213,
     publish / skip := true,
     libraryDependencies ++= Seq(
       "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"        % "2.13.35",
@@ -333,7 +241,6 @@ lazy val benchmarks = project
       "io.spray"                              %% "spray-json"                 % "1.3.6",
       `circe-core`.value,
       `circe-parser`.value,
-      `circe-derivation`.value,
     )
   )
 
@@ -347,9 +254,13 @@ lazy val site = project
   )
   .settings(commonSettings)
   .settings(
-    scalaVersion   := scala213,
     publish / skip := true,
-    libraryDependencies ++= Seq(`akka-actor`.value, `akka-stream`.value, `akka-http`.value, utest.value),
+    libraryDependencies ++= Seq(
+      `akka-actor`.value,
+      `akka-stream`.value,
+      `akka-http`.value.cross(CrossVersion.for3Use2_13),
+      munit.value
+    ),
     com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo := scmInfo.value.get.connection.drop("scm:git:".length),
     ghpagesNoJekyll                               := true,
     ParadoxMaterialThemePlugin.paradoxMaterialThemeSettings(Compile),

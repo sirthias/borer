@@ -8,8 +8,7 @@
 
 package io.bullet.borer.derivation
 
-import io.bullet.borer._
-import utest._
+import io.bullet.borer.*
 
 import scala.util.{Failure, Try}
 import scala.util.control.NonFatal
@@ -176,32 +175,266 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
 
   def recursiveBoxEncoded: String
 
-  val tests = Tests {
+  // "array-based"
+  {
+    import ArrayBasedCodecs._
+    given Codec[Empty] = deriveCodec[Empty]
+    given Codec[Color] = deriveCodec[Color]
+    given Codec[Foo]   = deriveCodec[Foo]
 
-    "array-based" - {
-      import ArrayBasedCodecs._
-      implicit val emptyCodec = deriveCodec[Empty]
-      implicit val colorCodec = deriveCodec[Color]
-      implicit val fooCodec   = deriveCodec[Foo]
+    test("<array-based> size match") {
+      val encoded = encode(foo)
+      decode[Element](encoded) ==> arrayBasedFooDom
+      decode[Foo](encoded) ==> foo
+    }
 
-      "size match" - {
-        val encoded = encode(foo)
-        decode[Element](encoded) ==> arrayBasedFooDom
-        decode[Foo](encoded) ==> foo
+    test("<array-based> decoding w/ missing elements") {
+      val dom     = transform(arrayBasedFooDom)(_.tail)
+      val encoded = encode(dom)
+      decode[Element](encoded) ==> dom
+      tryDecode[Foo](encoded).failed.get.getMessage ==> arrayBasedMissingElemErrorMsg
+    }
+
+    test("<array-based> ADT") {
+      import ADT._
+
+      implicit val dogCodec: Codec[Dog]       = deriveCodec[Dog]
+      implicit val catCodec: Codec[Cat]       = deriveCodec[Cat]
+      implicit val mouseCodec: Codec[Mouse]   = deriveCodec[Mouse]
+      implicit val animalCodec: Codec[Animal] = deriveCodec[Animal]
+
+      val animals: List[Animal] = List(
+        Dog(12, "Fred"),
+        Cat(weight = 1.0, color = "none", home = "there"),
+        Dog(4, "Lolle"),
+        Mouse(true)
+      )
+
+      val encoded = encode(animals)
+      decode[Element](encoded) ==> arrayBasedAnimalsDom
+      decode[List[Animal]](encoded) ==> animals
+    }
+
+    test("<array-based> ADT Key Collision") {
+      import AdtWithKeyCollision._
+
+      implicit val dogCodec: Codec[Dog]     = deriveCodec[Dog]
+      implicit val catCodec: Codec[Cat]     = deriveCodec[Cat]
+      implicit val mouseCodec: Codec[Mouse] = deriveCodec[Mouse]
+
+      compileErrors("deriveEncoder[Animal]") ==>
+      """|error: @key collision: sub types `Cat` and `Dog` of ADT `Animal` share the same type id `Dog`
+         |  sealed trait Animal
+         |              ^""".stripMargin
+    }
+
+    test("<array-based> Diamond") {
+      sealed trait A
+      sealed trait B       extends A
+      sealed trait C       extends A
+      case class D(a: Int) extends B with C
+
+      given d: Codec[D] = deriveCodec[D]
+      deriveCodec[A]
+    }
+
+    test("<array-based> Case Objects") {
+      sealed trait CaseObjectAdt
+      case class Err(reason: String) extends CaseObjectAdt
+      case object Ok                 extends CaseObjectAdt
+
+      implicit val errCodec: Codec[Err]           = deriveCodec[Err]
+      implicit val okCodec: Codec[Ok.type]        = deriveCodec[Ok.type]
+      implicit val adtCodec: Codec[CaseObjectAdt] = deriveCodec[CaseObjectAdt]
+
+      val values: List[CaseObjectAdt] = List(Err("foo"), Ok)
+      val encoded                     = encode(values)
+      decode[Element](encoded) ==> arrayBasedCaseObjectAdtDom
+      decode[List[CaseObjectAdt]](encoded) ==> values
+    }
+
+    test("<array-based> Basic Type with custom Codec") {
+      case class Bar(i: Int, s: String)
+
+      import Encoder.StringNumbers._
+      import Decoder.StringNumbers._
+      implicit val barCodec: Codec[Bar] = deriveCodec[Bar]
+
+      val bar     = Bar(42, "bar")
+      val encoded = encode(bar)
+      decode[Element](encoded) ==> arrayBasedBarDom
+      decode[Bar](encoded) ==> bar
+    }
+  }
+
+  // map-based
+  {
+    import MapBasedCodecs._
+    given Codec[Empty]   = deriveCodec[Empty]
+    given Codec[Color]   = deriveCodec[Color]
+    given Codec[Foo]     = deriveCodec[Foo]
+    given Codec[Hundred] = deriveCodec[Hundred]
+
+    def sizeMatch[T: Encoder: Decoder](value: T, domNoDefaults: MapElem, dom: MapElem): Unit = {
+      encode(value) ==> encode(domNoDefaults)
+      decode[T](encode(dom)) ==> value
+    }
+
+    def sizeMatchUnordered[T: Encoder: Decoder](value: T, dom: MapElem): Unit = {
+      val unorderedDom = transform(dom)(_.toMap.toList)
+      val encoded      = encode(unorderedDom)
+      decode[Element](encoded) ==> unorderedDom
+      decode[T](encoded) ==> value
+    }
+
+    def missingMembersWithDefaultValue[T: Encoder: Decoder](value: T, dom: MapElem): Unit = {
+      val partialDom = transform(dom)(_.filter(_._1 != StringElem("int")))
+      val encoded    = encode(partialDom)
+      decode[Element](encoded) ==> partialDom
+      decode[T](encoded) ==> value
+    }
+
+    def missingMembersWithoutDefaultValue[T: Encoder: Decoder](dom: MapElem, missingKey: String): Unit = {
+      val partialDom = transform(dom)(_.filter(_._1 != StringElem(missingKey)))
+      val encoded    = encode(partialDom)
+      decode[Element](encoded) ==> partialDom
+
+      val errorMsg = s"""Cannot decode `.*` instance due to missing map key "$missingKey".*"""
+      assertMatch(tryDecode[T](encoded)) {
+        case Failure(e) if e.getMessage matches errorMsg => // ok
       }
+    }
 
-      "decoding w/ missing elements" - {
-        val dom     = transform(arrayBasedFooDom)(_.tail)
-        val encoded = encode(dom)
-        decode[Element](encoded) ==> dom
-        assertMatch(tryDecode[Foo](encoded)) {
-          case Failure(e) if e.getMessage == arrayBasedMissingElemErrorMsg => // ok
-        }
+    def dupMemberBeforeFillCompletion[T: Encoder: Decoder](dom: MapElem, memberIx: Int, key: String): Unit = {
+      val badDom  = transform(dom)(x => x.take(memberIx) ::: x.drop(memberIx - 1))
+      val encoded = encode(badDom)
+      decode[Element](encoded) ==> badDom
+
+      assertMatch(tryDecode[T](encoded)) {
+        case Failure(e) if e.getMessage startsWith s"Duplicate map key `$key` encountered" => // ok
       }
+    }
 
-      "ADT" - {
-        import ADT._
+    def dupMemberAfterFillCompletion[T: Encoder: Decoder](value: T, dom: MapElem, memberIx: Int): Unit = {
+      val badDom  = transform(dom)(x => x :+ x(memberIx))
+      val encoded = encode(badDom)
+      decode[Element](encoded) ==> badDom
+      decode[T](encoded)
+    }
 
+    def extraMemberBeforeFillCompletion[T: Encoder: Decoder](value: T, dom: MapElem, ix: Int): Unit = {
+      val extraMember = StringElem("yeah") -> StringElem("xxx")
+      val fatDom      = transform(dom)(x => (x.take(ix) :+ extraMember) ++ x.drop(ix))
+      val encoded     = encode(fatDom)
+      decode[Element](encoded) ==> fatDom
+      decode[T](encoded) ==> value
+    }
+
+    def extraMemberAfterFillCompletion[T: Encoder: Decoder](value: T, dom: MapElem): Unit = {
+      val extraMember = StringElem("extra") -> StringElem("xxx")
+      val fatDom      = transform(dom)(_ :+ extraMember)
+      val encoded     = encode(fatDom)
+      decode[Element](encoded) ==> fatDom
+      decode[T](encoded) ==> value
+    }
+
+    def complexExtraMemberBeforeFC[T: Encoder: Decoder](value: T, dom: MapElem, ix: Int): Unit = {
+      val extraMember = StringElem("extra") -> dom
+      val fatDom      = transform(dom)(x => (x.take(ix) :+ extraMember) ++ x.drop(ix))
+      val encoded     = encode(fatDom)
+      decode[Element](encoded) ==> fatDom
+      decode[T](encoded) ==> value
+    }
+
+    def complexExtraMemberAfterFC[T: Encoder: Decoder](value: T, dom: MapElem): Unit = {
+      val extraMember = StringElem("extra") -> dom
+      val fatDom      = transform(dom)(_ :+ extraMember)
+      val encoded     = encode(fatDom)
+      decode[Element](encoded) ==> fatDom
+      decode[T](encoded) ==> value
+    }
+
+    // FORMAT: OFF
+    test("Foo - size match") { sizeMatch(foo, mapBasedFooDomNoDefaults, mapBasedFooDom) }
+    test("Foo - size match unordered") { sizeMatchUnordered(foo, mapBasedFooDom) }
+    test("Foo - missing member w/ default value") { missingMembersWithDefaultValue(foo, mapBasedFooDom) }
+    test("Foo - missing member w/o default value") { missingMembersWithoutDefaultValue[Foo](mapBasedFooDom, "long") }
+    test("Foo - duplicate member before fill completion") { dupMemberBeforeFillCompletion[Foo](mapBasedFooDom, 3, "short") }
+    test("Foo - duplicate member after fill completion") { dupMemberAfterFillCompletion(foo, mapBasedFooDom, 5) }
+    test("Foo - extra member before fill completion") { extraMemberBeforeFillCompletion(foo, mapBasedFooDom, 3) }
+    test("Foo - extra member after fill completion") { extraMemberAfterFillCompletion(foo, mapBasedFooDom) }
+    test("Foo - complex extra member before fill completion") { complexExtraMemberBeforeFC(foo, mapBasedFooDom, 3) }
+    test("Foo - complex extra member after fill completion") { complexExtraMemberAfterFC(foo, mapBasedFooDom) }
+
+    test("Hundred - size match") { sizeMatch(hundred, mapBased100DomNoDefaults, mapBased100Dom) }
+    test("Hundred - size match unordered") { sizeMatchUnordered(hundred, mapBased100Dom) }
+    test("Hundred - missing member w/ default value") { missingMembersWithDefaultValue(hundred, mapBased100Dom) }
+    test("Hundred - missing lo member w/o default value") { missingMembersWithoutDefaultValue[Hundred](mapBased100Dom, "x47") }
+    test("Hundred - missing hi member w/o default value") { missingMembersWithoutDefaultValue[Hundred](mapBased100Dom, "x91") }
+    test("Hundred - duplicate lo member before fill completion") { dupMemberBeforeFillCompletion[Hundred](mapBased100Dom, 29, "x28") }
+    test("Hundred - duplicate hi member before fill completion") { dupMemberBeforeFillCompletion[Hundred](mapBased100Dom, 73, "x72") }
+    test("Hundred - extra lo member before fill completion") { extraMemberBeforeFillCompletion(hundred, mapBased100Dom, 13) }
+    test("Hundred - extra hi member before fill completion") { extraMemberBeforeFillCompletion(hundred, mapBased100Dom, 97) }
+    test("Hundred - extra member after fill completion") { extraMemberAfterFillCompletion(hundred, mapBased100Dom) }
+    test("Hundred - complex extra lo member before fill completion") { complexExtraMemberBeforeFC(hundred, mapBased100Dom, 61) }
+    test("Hundred - complex extra hi member before fill completion") { complexExtraMemberBeforeFC(hundred, mapBased100Dom, 65) }
+    test("Hundred - complex extra member after fill completion") { complexExtraMemberAfterFC(hundred, mapBased100Dom) }
+    // FORMAT: ON
+
+    test("<map-based> Option with default value None") {
+      case class Qux0(int: Int)
+      case class Qux(int: Int, optDouble: Option[Double] = None)
+
+      implicit val qux0Codec = deriveCodec[Qux0]
+      implicit val quxCodec  = deriveCodec[Qux]
+
+      val qux0        = Qux0(42)
+      val quxWithNone = Qux(42)
+      val quxWithSome = Qux(42, Some(3.45))
+
+      val quxWithSomeEncoded = encode(quxWithSome)
+      decode[Qux](quxWithSomeEncoded) ==> quxWithSome
+
+      val qux0Encoded        = encode(qux0)
+      val quxWithNoneEncoded = encode(quxWithNone)
+
+      qux0Encoded ==> quxWithNoneEncoded
+      decode[Qux](quxWithNoneEncoded) ==> quxWithNone
+    }
+
+    test("<map-based> List with default value Nil") {
+      case class Qux0(int: Int)
+      case class Qux(int: Int, optList: List[Float] = Nil)
+
+      implicit val qux0Codec = deriveCodec[Qux0]
+      implicit val quxCodec  = deriveCodec[Qux]
+
+      val qux0       = Qux0(42)
+      val quxWithNil = Qux(42)
+      val quxWithNel = Qux(42, List(3.45f))
+
+      val quxWithNelEncoded = encode(quxWithNel)
+      decode[Qux](quxWithNelEncoded) ==> quxWithNel
+
+      val qux0Encoded       = encode(qux0)
+      val quxWithNilEncoded = encode(quxWithNil)
+
+      qux0Encoded ==> quxWithNilEncoded
+      decode[Qux](quxWithNilEncoded) ==> quxWithNil
+    }
+
+    test("<map-based> Recursive Case Class") {
+      case class Box(x: Option[Box] = None)
+      object Box {
+        given Codec[Box] = deriveCodec[Box].recursive
+      }
+      roundTrip(recursiveBoxEncoded, Box(Some(Box(Some(Box())))))
+    }
+
+    test("<map-based> ADT") {
+      import ADT._
+
+      try {
         implicit val dogCodec    = deriveCodec[Dog]
         implicit val catCodec    = deriveCodec[Cat]
         implicit val mouseCodec  = deriveCodec[Mouse]
@@ -215,304 +448,59 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
         )
 
         val encoded = encode(animals)
-        decode[Element](encoded) ==> arrayBasedAnimalsDom
+        decode[Element](encoded) ==> mapBasedAnimalsDom
         decode[List[Animal]](encoded) ==> animals
-      }
-
-      "ADT Key Collision" - {
-        import AdtWithKeyCollision._
-
-        implicit val dogCodec   = deriveCodec[Dog]
-        implicit val catCodec   = deriveCodec[Cat]
-        implicit val mouseCodec = deriveCodec[Mouse]
-
-        Scalac
-          .typecheck("deriveEncoder[Animal]")
-          .assertErrorMsgMatches(
-            "@key collision: sub types `io.bullet.borer.derivation.AdtWithKeyCollision.Cat` and " +
-              "`io.bullet.borer.derivation.AdtWithKeyCollision.Dog` of ADT " +
-              "`io.bullet.borer.derivation.AdtWithKeyCollision.Animal` share the same type id `Dog`"
-          )
-      }
-
-      "Diamond" - {
-        sealed trait A
-        sealed trait B       extends A
-        sealed trait C       extends A
-        case class D(a: Int) extends B with C
-
-        implicit val d = deriveCodec[D]
-        implicit val a = deriveCodec[A]
-      }
-
-      "Case Objects" - {
-        sealed trait CaseObjectAdt
-        case class Err(reason: String) extends CaseObjectAdt
-        case object Ok                 extends CaseObjectAdt
-
-        implicit val errCodec = deriveCodec[Err]
-        implicit val okCodec  = deriveCodec[Ok.type]
-        implicit val adtCodec = deriveCodec[CaseObjectAdt]
-
-        val values: List[CaseObjectAdt] = List(Err("foo"), Ok)
-        val encoded                     = encode(values)
-        decode[Element](encoded) ==> arrayBasedCaseObjectAdtDom
-        decode[List[CaseObjectAdt]](encoded) ==> values
-      }
-
-      "Basic Type with custom Codec" - {
-        case class Bar(i: Int, s: String)
-
-        import Encoder.StringNumbers._
-        import Decoder.StringNumbers._
-        implicit val barCodec = deriveCodec[Bar]
-
-        val bar     = Bar(42, "bar")
-        val encoded = encode(bar)
-        decode[Element](encoded) ==> arrayBasedBarDom
-        decode[Bar](encoded) ==> bar
+      } catch {
+        case NonFatal(e) if target == Json =>
+          e.getMessage ==> "JSON does not support integer values as a map key (Output.ToByteArray index 124)"
       }
     }
 
-    "map-based" - {
-      import MapBasedCodecs._
-      implicit val emptyCodec   = deriveCodec[Empty]
-      implicit val colorCodec   = deriveCodec[Color]
-      implicit val fooCodec     = deriveCodec[Foo]
-      implicit val hundredCodec = deriveCodec[Hundred]
+    test("<map-based> ADT Key Collision") {
+      import AdtWithKeyCollision._
 
-      def sizeMatch[T: Encoder: Decoder](value: T, domNoDefaults: MapElem, dom: MapElem): Unit = {
-        encode(value) ==> encode(domNoDefaults)
-        decode[T](encode(dom)) ==> value
-      }
+      compileErrors("deriveEncoder[Animal]") ==>
+      """error: @key collision: sub types `Cat` and `Dog` of ADT `Animal` share the same type id `Dog`
+        |  sealed trait Animal
+        |              ^""".stripMargin
+    }
 
-      def sizeMatchUnordered[T: Encoder: Decoder](value: T, dom: MapElem): Unit = {
-        val unorderedDom = transform(dom)(_.toMap.toList)
-        val encoded      = encode(unorderedDom)
-        decode[Element](encoded) ==> unorderedDom
-        decode[T](encoded) ==> value
-      }
+    test("<map-based> Diamond") {
+      sealed trait A
+      sealed trait B       extends A
+      sealed trait C       extends A
+      case class D(a: Int) extends B with C
 
-      def missingMembersWithDefaultValue[T: Encoder: Decoder](value: T, dom: MapElem): Unit = {
-        val partialDom = transform(dom)(_.filter(_._1 != StringElem("int")))
-        val encoded    = encode(partialDom)
-        decode[Element](encoded) ==> partialDom
-        decode[T](encoded) ==> value
-      }
+      implicit val d = deriveCodec[D]
+      implicit val a = deriveCodec[A]
+    }
 
-      def missingMembersWithoutDefaultValue[T: Encoder: Decoder](dom: MapElem, missingKey: String): Unit = {
-        val partialDom = transform(dom)(_.filter(_._1 != StringElem(missingKey)))
-        val encoded    = encode(partialDom)
-        decode[Element](encoded) ==> partialDom
+    test("<map-based> Case Objects") {
+      sealed trait CaseObjectAdt
+      case class Err(reason: String) extends CaseObjectAdt
+      case object Ok                 extends CaseObjectAdt
 
-        val errorMsg = s"""Cannot decode `.*` instance due to missing map key "$missingKey".*"""
-        assertMatch(tryDecode[T](encoded)) {
-          case Failure(e) if e.getMessage matches errorMsg => // ok
-        }
-      }
+      implicit val errCodec = deriveCodec[Err]
+      implicit val okCodec  = deriveCodec[Ok.type]
+      implicit val adtCodec = deriveCodec[CaseObjectAdt]
 
-      def dupMemberBeforeFillCompletion[T: Encoder: Decoder](dom: MapElem, memberIx: Int, key: String): Unit = {
-        val badDom  = transform(dom)(x => x.take(memberIx) ::: x.drop(memberIx - 1))
-        val encoded = encode(badDom)
-        decode[Element](encoded) ==> badDom
+      val values: List[CaseObjectAdt] = List(Err("foo"), Ok)
+      val encoded                     = encode(values)
+      decode[Element](encoded) ==> mapBasedCaseObjectAdtDom
+      decode[List[CaseObjectAdt]](encoded) ==> values
+    }
 
-        assertMatch(tryDecode[T](encoded)) {
-          case Failure(e) if e.getMessage startsWith s"Duplicate map key `$key` encountered" => // ok
-        }
-      }
+    test("<map-based> Basic Type with custom Codec") {
+      case class Bar(i: Int, s: String)
 
-      def dupMemberAfterFillCompletion[T: Encoder: Decoder](value: T, dom: MapElem, memberIx: Int): Unit = {
-        val badDom  = transform(dom)(x => x :+ x(memberIx))
-        val encoded = encode(badDom)
-        decode[Element](encoded) ==> badDom
-        decode[T](encoded)
-      }
+      import Encoder.StringNumbers._
+      import Decoder.StringNumbers._
+      implicit val barCodec = deriveCodec[Bar]
 
-      def extraMemberBeforeFillCompletion[T: Encoder: Decoder](value: T, dom: MapElem, ix: Int): Unit = {
-        val extraMember = StringElem("yeah") -> StringElem("xxx")
-        val fatDom      = transform(dom)(x => (x.take(ix) :+ extraMember) ++ x.drop(ix))
-        val encoded     = encode(fatDom)
-        decode[Element](encoded) ==> fatDom
-        decode[T](encoded) ==> value
-      }
-
-      def extraMemberAfterFillCompletion[T: Encoder: Decoder](value: T, dom: MapElem): Unit = {
-        val extraMember = StringElem("extra") -> StringElem("xxx")
-        val fatDom      = transform(dom)(_ :+ extraMember)
-        val encoded     = encode(fatDom)
-        decode[Element](encoded) ==> fatDom
-        decode[T](encoded) ==> value
-      }
-
-      def complexExtraMemberBeforeFC[T: Encoder: Decoder](value: T, dom: MapElem, ix: Int): Unit = {
-        val extraMember = StringElem("extra") -> dom
-        val fatDom      = transform(dom)(x => (x.take(ix) :+ extraMember) ++ x.drop(ix))
-        val encoded     = encode(fatDom)
-        decode[Element](encoded) ==> fatDom
-        decode[T](encoded) ==> value
-      }
-
-      def complexExtraMemberAfterFC[T: Encoder: Decoder](value: T, dom: MapElem): Unit = {
-        val extraMember = StringElem("extra") -> dom
-        val fatDom      = transform(dom)(_ :+ extraMember)
-        val encoded     = encode(fatDom)
-        decode[Element](encoded) ==> fatDom
-        decode[T](encoded) ==> value
-      }
-
-      "Foo" - {
-        "size match" - sizeMatch(foo, mapBasedFooDomNoDefaults, mapBasedFooDom)
-        "size match unordered" - sizeMatchUnordered(foo, mapBasedFooDom)
-        "missing member w/ default value" - missingMembersWithDefaultValue(foo, mapBasedFooDom)
-        "missing member w/o default value" - missingMembersWithoutDefaultValue[Foo](mapBasedFooDom, "long")
-        "duplicate member before fill completion" - dupMemberBeforeFillCompletion[Foo](mapBasedFooDom, 3, "short")
-        "duplicate member after fill completion" - dupMemberAfterFillCompletion(foo, mapBasedFooDom, 5)
-        "extra member before fill completion" - extraMemberBeforeFillCompletion(foo, mapBasedFooDom, 3)
-        "extra member after fill completion" - extraMemberAfterFillCompletion(foo, mapBasedFooDom)
-        "complex extra member before fill completion" - complexExtraMemberBeforeFC(foo, mapBasedFooDom, 3)
-        "complex extra member after fill completion" - complexExtraMemberAfterFC(foo, mapBasedFooDom)
-      }
-
-      "Hundred" - {
-        "size match" - sizeMatch(hundred, mapBased100DomNoDefaults, mapBased100Dom)
-        "size match unordered" - sizeMatchUnordered(hundred, mapBased100Dom)
-        "missing member w/ default value" - missingMembersWithDefaultValue(hundred, mapBased100Dom)
-        "missing lo member w/o default value" - missingMembersWithoutDefaultValue[Hundred](mapBased100Dom, "x47")
-        "missing hi member w/o default value" - missingMembersWithoutDefaultValue[Hundred](mapBased100Dom, "x91")
-        "duplicate lo member before fill completion" - dupMemberBeforeFillCompletion[Hundred](mapBased100Dom, 29, "x28")
-        "duplicate hi member before fill completion" - dupMemberBeforeFillCompletion[Hundred](mapBased100Dom, 73, "x72")
-        "extra lo member before fill completion" - extraMemberBeforeFillCompletion(hundred, mapBased100Dom, 13)
-        "extra hi member before fill completion" - extraMemberBeforeFillCompletion(hundred, mapBased100Dom, 97)
-        "extra member after fill completion" - extraMemberAfterFillCompletion(hundred, mapBased100Dom)
-        "complex extra lo member before fill completion" - complexExtraMemberBeforeFC(hundred, mapBased100Dom, 61)
-        "complex extra hi member before fill completion" - complexExtraMemberBeforeFC(hundred, mapBased100Dom, 65)
-        "complex extra member after fill completion" - complexExtraMemberAfterFC(hundred, mapBased100Dom)
-      }
-
-      "Option with default value None" - {
-        case class Qux0(int: Int)
-        case class Qux(int: Int, optDouble: Option[Double] = None)
-
-        implicit val qux0Codec = deriveCodec[Qux0]
-        implicit val quxCodec  = deriveCodec[Qux]
-
-        val qux0        = Qux0(42)
-        val quxWithNone = Qux(42)
-        val quxWithSome = Qux(42, Some(3.45))
-
-        val quxWithSomeEncoded = encode(quxWithSome)
-        decode[Qux](quxWithSomeEncoded) ==> quxWithSome
-
-        val qux0Encoded        = encode(qux0)
-        val quxWithNoneEncoded = encode(quxWithNone)
-
-        qux0Encoded ==> quxWithNoneEncoded
-        decode[Qux](quxWithNoneEncoded) ==> quxWithNone
-      }
-
-      "List with default value Nil" - {
-        case class Qux0(int: Int)
-        case class Qux(int: Int, optList: List[Float] = Nil)
-
-        implicit val qux0Codec = deriveCodec[Qux0]
-        implicit val quxCodec  = deriveCodec[Qux]
-
-        val qux0       = Qux0(42)
-        val quxWithNil = Qux(42)
-        val quxWithNel = Qux(42, List(3.45f))
-
-        val quxWithNelEncoded = encode(quxWithNel)
-        decode[Qux](quxWithNelEncoded) ==> quxWithNel
-
-        val qux0Encoded       = encode(qux0)
-        val quxWithNilEncoded = encode(quxWithNil)
-
-        qux0Encoded ==> quxWithNilEncoded
-        decode[Qux](quxWithNilEncoded) ==> quxWithNil
-      }
-
-      "Recursive Case Class" - {
-        case class Box(x: Option[Box] = None)
-        object Box {
-          implicit val codec: Codec[Box] = deriveCodec[Box]
-        }
-        roundTrip(recursiveBoxEncoded, Box(Some(Box(Some(Box())))))
-      }
-
-      "ADT" - {
-        import ADT._
-
-        try {
-          implicit val dogCodec    = deriveCodec[Dog]
-          implicit val catCodec    = deriveCodec[Cat]
-          implicit val mouseCodec  = deriveCodec[Mouse]
-          implicit val animalCodec = deriveCodec[Animal]
-
-          val animals: List[Animal] = List(
-            Dog(12, "Fred"),
-            Cat(weight = 1.0, color = "none", home = "there"),
-            Dog(4, "Lolle"),
-            Mouse(true)
-          )
-
-          val encoded = encode(animals)
-          decode[Element](encoded) ==> mapBasedAnimalsDom
-          decode[List[Animal]](encoded) ==> animals
-        } catch {
-          case NonFatal(e) if target == Json =>
-            e.getMessage ==> "JSON does not support integer values as a map key (Output.ToByteArray index 124)"
-        }
-      }
-
-      "ADT Key Collision" - {
-        import AdtWithKeyCollision._
-
-        Scalac
-          .typecheck("deriveEncoder[Animal]")
-          .assertErrorMsgMatches(
-            "@key collision: sub types `io.bullet.borer.derivation.AdtWithKeyCollision.Cat` and " +
-              "`io.bullet.borer.derivation.AdtWithKeyCollision.Dog` of ADT " +
-              "`io.bullet.borer.derivation.AdtWithKeyCollision.Animal` share the same type id `Dog`"
-          )
-      }
-
-      "Diamond" - {
-        sealed trait A
-        sealed trait B       extends A
-        sealed trait C       extends A
-        case class D(a: Int) extends B with C
-
-        implicit val d = deriveCodec[D]
-        implicit val a = deriveCodec[A]
-      }
-
-      "Case Objects" - {
-        sealed trait CaseObjectAdt
-        case class Err(reason: String) extends CaseObjectAdt
-        case object Ok                 extends CaseObjectAdt
-
-        implicit val errCodec = deriveCodec[Err]
-        implicit val okCodec  = deriveCodec[Ok.type]
-        implicit val adtCodec = deriveCodec[CaseObjectAdt]
-
-        val values: List[CaseObjectAdt] = List(Err("foo"), Ok)
-        val encoded                     = encode(values)
-        decode[Element](encoded) ==> mapBasedCaseObjectAdtDom
-        decode[List[CaseObjectAdt]](encoded) ==> values
-      }
-
-      "Basic Type with custom Codec" - {
-        case class Bar(i: Int, s: String)
-
-        import Encoder.StringNumbers._
-        import Decoder.StringNumbers._
-        implicit val barCodec = deriveCodec[Bar]
-
-        val bar     = Bar(42, "bar")
-        val encoded = encode(bar)
-        decode[Element](encoded) ==> mapBasedBarDom
-        decode[Bar](encoded) ==> bar
-      }
+      val bar     = Bar(42, "bar")
+      val encoded = encode(bar)
+      decode[Element](encoded) ==> mapBasedBarDom
+      decode[Bar](encoded) ==> bar
     }
   }
 

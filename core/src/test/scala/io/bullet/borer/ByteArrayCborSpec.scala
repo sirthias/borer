@@ -8,9 +8,8 @@
 
 package io.bullet.borer
 
-trait ByteArrayCborSpec extends AbstractBorerSpec {
+trait ByteArrayCborSpec extends AbstractBorerSpec:
 
   def encode[T: Encoder](value: T): String = toHexString(Cbor.encode(value).toByteArray)
 
   def decode[T: Decoder](encoded: String): T = Cbor.decode(hexBytes(encoded)).to[T].value
-}

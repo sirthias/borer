@@ -11,7 +11,7 @@ package io.bullet.borer
 /**
  * Abstraction for the "undefined" value in CBOR-speak.
  */
-case object Undefined {
+case object Undefined:
 
   implicit val codec: Codec[Undefined.type] =
     Codec[Undefined.type](
@@ -21,4 +21,3 @@ case object Undefined {
         Undefined
       }
     )
-}

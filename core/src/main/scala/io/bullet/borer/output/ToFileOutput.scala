@@ -14,22 +14,19 @@ import io.bullet.borer.Output.ToValueProvider
 
 trait ToFileOutput { this: ToOutputStreamOutput =>
 
-  implicit object ToFileProvider extends ToValueProvider[File] {
+  implicit object ToFileProvider extends ToValueProvider[File]:
     type Out = ToFile
     def apply(file: File, bufferSize: Int, allowBufferCaching: Boolean) = new ToFile(file, bufferSize)
-  }
 
   /**
    * Default, mutable implementation for serializing to a given [[File]].
    */
   final class ToFile(file: File, bufferSize: Int)
-      extends ToOutputStreamBase(new BufferedOutputStream(new FileOutputStream(file), bufferSize)) {
+      extends ToOutputStreamBase(new BufferedOutputStream(new FileOutputStream(file), bufferSize)):
     type Self   = ToFile
     type Result = File
 
-    def result(): File = {
+    def result(): File =
       outputStream.close()
       file
-    }
-  }
 }

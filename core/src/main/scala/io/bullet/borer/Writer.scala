@@ -20,7 +20,7 @@ final class Writer(
     val output: Output, // CAUTION: `null` in case of transcoding!
     private[borer] var receiver: Receiver,
     val target: Target,
-    config: Writer.Config) {
+    config: Writer.Config):
 
   @inline def writingJson: Boolean = target eq Json
   @inline def writingCbor: Boolean = target eq Cbor
@@ -49,19 +49,17 @@ final class Writer(
   def writeOverLong(negative: Boolean, value: Long): this.type = { receiver.onOverLong(negative, value); this }
   def writeFloat16(value: Float): this.type                    = { receiver.onFloat16(value); this }
 
-  def writeFloat(value: Float): this.type = {
-    if (config.compressFloatingPointValues && Util.canBeRepresentedAsFloat16(value)) {
+  def writeFloat(value: Float): this.type =
+    if (config.compressFloatingPointValues && Util.canBeRepresentedAsFloat16(value))
       receiver.onFloat16(value)
-    } else receiver.onFloat(value)
+    else receiver.onFloat(value)
     this
-  }
 
-  def writeDouble(value: Double): this.type = {
-    if (config.compressFloatingPointValues && Util.canBeRepresentedAsFloat(value)) {
+  def writeDouble(value: Double): this.type =
+    if (config.compressFloatingPointValues && Util.canBeRepresentedAsFloat(value))
       writeFloat(value.toFloat)
-    } else receiver.onDouble(value)
+    else receiver.onDouble(value)
     this
-  }
 
   def writeNumberString(value: String): this.type = { receiver.onNumberString(value); this }
 
@@ -104,78 +102,69 @@ final class Writer(
 
   def writeEmptyMap(): this.type = if (writingJson) writeMapStart().writeBreak() else writeMapHeader(0)
 
-  def writeIndexedSeq[T: Encoder](x: IndexedSeq[T]): this.type = {
+  def writeIndexedSeq[T: Encoder](x: IndexedSeq[T]): this.type =
     @tailrec def rec(ix: Int): Unit =
-      if (ix < x.size) {
+      if (ix < x.size)
         write(x(ix))
         rec(ix + 1)
-      }
     writeArrayOpen(x.size)
     rec(0)
     writeArrayClose()
-  }
 
-  def writeLinearSeq[T: Encoder](x: LinearSeq[T]): this.type = {
+  def writeLinearSeq[T: Encoder](x: LinearSeq[T]): this.type =
     @tailrec def rec(x: LinearSeq[T]): Unit =
-      if (x.nonEmpty) {
+      if (x.nonEmpty)
         write(x.head)
         rec(x.tail)
-      }
-    if (writingJson || x.nonEmpty) {
+    if (writingJson || x.nonEmpty)
       writeArrayStart()
       rec(x)
       writeBreak()
-    } else writeEmptyArray()
-  }
+    else writeEmptyArray()
 
-  def writeIterableOnce[T: Encoder](iterableOnce: IterableOnce[T]): this.type = {
+  def writeIterableOnce[T: Encoder](iterableOnce: IterableOnce[T]): this.type =
     val size = iterableOnce.knownSize
-    if (size > 0) {
+    if (size > 0)
       writeArrayOpen(size)
       val iterator = iterableOnce.iterator
       while (iterator.hasNext) write(iterator.next())
       writeArrayClose()
-    } else if (size < 0) writeIterator(iterableOnce.iterator)
+    else if (size < 0) writeIterator(iterableOnce.iterator)
     else writeEmptyArray()
-  }
 
   def writeIterator[T: Encoder](iterator: Iterator[T]): this.type =
-    if (iterator.hasNext) {
+    if (iterator.hasNext)
       writeArrayStart()
       while (iterator.hasNext) write(iterator.next())
       writeBreak()
-    } else writeEmptyArray()
+    else writeEmptyArray()
 
-  def writeBytesIterator[Bytes: ByteAccess](iterator: Iterator[Bytes]): this.type = {
+  def writeBytesIterator[Bytes: ByteAccess](iterator: Iterator[Bytes]): this.type =
     writeBytesStart()
     while (iterator.hasNext) writeBytes(iterator.next())
     writeBreak()
-  }
 
-  def writeStringIterator(iterator: Iterator[String]): this.type = {
+  def writeStringIterator(iterator: Iterator[String]): this.type =
     writeTextStart()
     while (iterator.hasNext) writeString(iterator.next())
     writeBreak()
-  }
 
   def writeMap[A: Encoder, B: Encoder](x: Map[A, B]): this.type =
-    if (x.nonEmpty) {
+    if (x.nonEmpty)
       val iterator = x.iterator
       def writeEntries(): Unit =
-        while (iterator.hasNext) {
+        while (iterator.hasNext)
           val (k, v) = iterator.next()
           write(k).write(v)
-        }
-      if (writingJson) {
+      if (writingJson)
         writeMapStart()
         writeEntries()
         writeBreak()
-      } else {
+      else
         writeMapHeader(x.size)
         writeEntries()
         this
-      }
-    } else writeEmptyMap()
+    else writeEmptyMap()
 
   def writeMapMember[A: Encoder, B: Encoder](key: A, value: B): this.type =
     write(key).write(value)
@@ -191,20 +180,18 @@ final class Writer(
 
   def writeMapClose(): this.type =
     if (target eq Json) writeBreak() else this
-}
 
-object Writer {
+object Writer:
 
-  trait Config {
+  trait Config:
     def compressFloatingPointValues: Boolean
-  }
 
   /**
    * Simple encapsulation of encoding logic in a stand-alone object.
    */
   final case class Script(encode: Writer => Writer)
 
-  object Script {
+  object Script:
     val Undefined  = Script(_.writeUndefined())
     val BytesStart = Script(_.writeBytesStart())
     val TextStart  = Script(_.writeTextStart())
@@ -213,5 +200,3 @@ object Writer {
     val Break      = Script(_.writeBreak())
 
     implicit val encoder: Encoder[Script] = Encoder((w, x) => x.encode(w))
-  }
-}

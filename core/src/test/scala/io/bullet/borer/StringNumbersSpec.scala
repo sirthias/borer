@@ -8,25 +8,19 @@
 
 package io.bullet.borer
 
-import utest._
-
-object StringNumbersSpec extends ByteArrayJsonSpec {
+class StringNumbersSpec extends ByteArrayJsonSpec:
   import Decoder.StringNumbers._
   import Decoder.StringBooleans._
 
-  val tests = Tests {
-
-    "Issue 567" - {
-      verifyDecoding(""""42"""", java.lang.Integer.valueOf(42))
-      verifyDecoding(""""true"""", java.lang.Boolean.valueOf(true))
-    }
-
-    "BigInt" - {
-      verifyDecoding(""""42"""", BigInt(42))
-    }
-
-    "BigDecimal" - {
-      verifyDecoding(""""42.18"""", BigDecimal("42.18"))
-    }
+  test("Issue 567") {
+    verifyDecoding(""""42"""", java.lang.Integer.valueOf(42))
+    verifyDecoding(""""true"""", java.lang.Boolean.valueOf(true))
   }
-}
+
+  test("BigInt") {
+    verifyDecoding(""""42"""", BigInt(42))
+  }
+
+  test("BigDecimal") {
+    verifyDecoding(""""42.18"""", BigDecimal("42.18"))
+  }

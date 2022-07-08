@@ -8,14 +8,13 @@
 
 package io.bullet.borer.encodings
 
-abstract class BaseEncoding(val name: String, val bitsPerChar: Int) {
+abstract class BaseEncoding(val name: String, val bitsPerChar: Int):
 
   def encode(bytes: Array[Byte]): Array[Char]
 
   def decode(chars: Array[Char]): Array[Byte]
-}
 
-object BaseEncoding {
+object BaseEncoding:
 
   /**
    * @see http://philzimmermann.com/docs/human-oriented-base-32-encoding.txt
@@ -51,5 +50,3 @@ object BaseEncoding {
    * @see https://tools.ietf.org/html/rfc4648#section-5
    */
   val base64url = new Base64("base32", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_")
-
-}

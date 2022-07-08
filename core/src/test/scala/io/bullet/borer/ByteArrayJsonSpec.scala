@@ -10,7 +10,7 @@ package io.bullet.borer
 
 import java.nio.charset.StandardCharsets
 
-trait ByteArrayJsonSpec extends AbstractBorerSpec {
+trait ByteArrayJsonSpec extends AbstractBorerSpec:
 
   def encode[T: Encoder](value: T): String = Json.encode(value).toUtf8String
 
@@ -20,4 +20,3 @@ trait ByteArrayJsonSpec extends AbstractBorerSpec {
       .withConfig(Json.DecodingConfig.default.copy(maxNumberAbsExponent = 300, initialCharbufferSize = 8))
       .to[T]
       .value
-}

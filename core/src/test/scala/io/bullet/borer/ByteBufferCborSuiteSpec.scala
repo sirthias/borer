@@ -10,13 +10,11 @@ package io.bullet.borer
 
 import java.nio.ByteBuffer
 
-object ByteBufferCborSuiteSpec extends AbstractCborSuiteSpec {
+class ByteBufferCborSuiteSpec extends AbstractCborSuiteSpec:
 
-  def encode[T: Encoder](value: T): String = {
+  def encode[T: Encoder](value: T): String =
     val byteBuffer = Cbor.encode(value).withConfig(Cbor.EncodingConfig(bufferSize = 8)).toByteBuffer
     toHexString(ByteAccess.ForByteBuffer.toByteArray(byteBuffer))
-  }
 
   def decode[T: Decoder](encoded: String): T =
     Cbor.decode(ByteBuffer.wrap(hexBytes(encoded))).to[T].value
-}

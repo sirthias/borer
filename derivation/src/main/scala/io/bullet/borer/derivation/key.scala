@@ -9,6 +9,7 @@
 package io.bullet.borer.derivation
 
 import scala.annotation.StaticAnnotation
+import scala.annotation.meta.field
 
 /**
  * Annotation allowing for customizing
@@ -68,4 +69,5 @@ import scala.annotation.StaticAnnotation
  *   case class Cat(name: String, age: Int, @key("weight") kilos: Option[Double])
  * }}}
  */
+@field
 final class key(val value: Any) extends StaticAnnotation

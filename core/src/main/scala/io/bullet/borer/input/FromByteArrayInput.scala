@@ -11,84 +11,72 @@ package io.bullet.borer.input
 import io.bullet.borer.{ByteAccess, Input}
 import io.bullet.borer.internal.ByteArrayAccess
 
-trait FromByteArrayInput {
+trait FromByteArrayInput:
 
-  implicit object FromByteArrayProvider extends Input.Provider[Array[Byte]] {
+  implicit object FromByteArrayProvider extends Input.Provider[Array[Byte]]:
     type Bytes = Array[Byte]
     def byteAccess                = ByteAccess.ForByteArray
     def apply(value: Array[Byte]) = fromByteArray(value)
-  }
 
   def fromByteArray(value: Array[Byte]): Input[Array[Byte]] = new FromByteArray(value)
 
-  final private class FromByteArray(byteArray: Array[Byte]) extends Input[Array[Byte]] {
+  final private class FromByteArray(byteArray: Array[Byte]) extends Input[Array[Byte]]:
     private[this] var _cursor: Int = _
 
     def cursor: Long = _cursor.toLong
 
-    def unread(numberOfBytes: Int): this.type = {
+    def unread(numberOfBytes: Int): this.type =
       _cursor -= numberOfBytes
       this
-    }
 
-    def readByte(): Byte = {
+    def readByte(): Byte =
       val c = _cursor
       _cursor = c + 1
       byteArray(c)
-    }
 
     def readBytePadded(pp: Input.PaddingProvider[Array[Byte]]): Byte =
       if (_cursor >= byteArray.length) pp.padByte() else readByte()
 
-    def readDoubleByteBigEndian(): Char = {
+    def readDoubleByteBigEndian(): Char =
       val c = _cursor
       _cursor = c + 2
       ByteArrayAccess.instance.doubleByteBigEndian(byteArray, c)
-    }
 
-    def readDoubleByteBigEndianPadded(pp: Input.PaddingProvider[Array[Byte]]): Char = {
+    def readDoubleByteBigEndianPadded(pp: Input.PaddingProvider[Array[Byte]]): Char =
       val remaining = byteArray.length - _cursor
       if (remaining >= 2) readDoubleByteBigEndian()
       else pp.padDoubleByte(remaining)
-    }
 
-    def readQuadByteBigEndian(): Int = {
+    def readQuadByteBigEndian(): Int =
       val c = _cursor
       _cursor = c + 4
       ByteArrayAccess.instance.quadByteBigEndian(byteArray, c)
-    }
 
-    def readQuadByteBigEndianPadded(pp: Input.PaddingProvider[Array[Byte]]): Int = {
+    def readQuadByteBigEndianPadded(pp: Input.PaddingProvider[Array[Byte]]): Int =
       val remaining = byteArray.length - _cursor
       if (remaining >= 4) readQuadByteBigEndian()
       else pp.padQuadByte(remaining)
-    }
 
-    def readOctaByteBigEndian(): Long = {
+    def readOctaByteBigEndian(): Long =
       val c = _cursor
       _cursor = c + 8
       ByteArrayAccess.instance.octaByteBigEndian(byteArray, c)
-    }
 
-    def readOctaByteBigEndianPadded(pp: Input.PaddingProvider[Array[Byte]]): Long = {
+    def readOctaByteBigEndianPadded(pp: Input.PaddingProvider[Array[Byte]]): Long =
       val remaining = byteArray.length - _cursor
       if (remaining >= 8) readOctaByteBigEndian()
       else pp.padOctaByte(remaining)
-    }
 
-    def readBytes(length: Long, pp: Input.PaddingProvider[Array[Byte]]): Array[Byte] = {
+    def readBytes(length: Long, pp: Input.PaddingProvider[Array[Byte]]): Array[Byte] =
       val remaining = (byteArray.length - _cursor).toLong
       val len       = math.min(remaining, length).toInt
       val bytes =
-        if (len > 0) {
+        if (len > 0)
           val result = new Array[Byte](len)
           val c      = _cursor
           _cursor = c + len
           System.arraycopy(byteArray, c, result, 0, len)
           result
-        } else Array.emptyByteArray
+        else Array.emptyByteArray
       if (length <= remaining) bytes
       else pp.padBytes(bytes, length - remaining)
-    }
-  }
-}

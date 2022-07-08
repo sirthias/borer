@@ -8,29 +8,23 @@
 
 package io.bullet.borer.encodings
 
-import io.bullet.borer.TestUtils
-import utest._
+import io.bullet.borer.BorerSuite
 
-object Base32HexSpec extends TestSuite with TestUtils {
+class Base32HexSpec extends BorerSuite:
 
-  val tests = Tests {
-
-    "rfc examples" - {
-      roundtrip("", "")
-      roundtrip("f", "CO======")
-      roundtrip("fo", "CPNG====")
-      roundtrip("foo", "CPNMU===")
-      roundtrip("foob", "CPNMUOG=")
-      roundtrip("fooba", "CPNMUOJ1")
-      roundtrip("foobar", "CPNMUOJ1E8======")
-    }
+  test("rfc examples") {
+    roundtrip("", "")
+    roundtrip("f", "CO======")
+    roundtrip("fo", "CPNG====")
+    roundtrip("foo", "CPNMU===")
+    roundtrip("foob", "CPNMUOG=")
+    roundtrip("fooba", "CPNMUOJ1")
+    roundtrip("foobar", "CPNMUOJ1E8======")
   }
 
   def roundtrip(string: String, expectedEncoding: String): Unit =
     roundtrip(string getBytes "UTF8", expectedEncoding)
 
-  def roundtrip(bytes: Array[Byte], expectedEncoding: String): Unit = {
+  def roundtrip(bytes: Array[Byte], expectedEncoding: String): Unit =
     new String(BaseEncoding.base32hex.encode(bytes)) ==> expectedEncoding
     BaseEncoding.base32hex.decode(expectedEncoding.toCharArray) ==> bytes
-  }
-}

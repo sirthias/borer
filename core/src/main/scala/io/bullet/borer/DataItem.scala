@@ -11,9 +11,9 @@ package io.bullet.borer
 /**
  * A simple mapping of CBOR data item types to bits for efficient masking.
  */
-object DataItem {
+object DataItem:
 
-  object Shifts {
+  object Shifts:
     final val Null         = 0
     final val Undefined    = 1
     final val Boolean      = 2
@@ -38,7 +38,6 @@ object DataItem {
     final val Tag          = 21
     final val SimpleValue  = 22
     final val EndOfInput   = 23
-  }
 
   //////////////////////////////// BASIC ////////////////////////////////
 
@@ -76,11 +75,11 @@ object DataItem {
   //////////////////////////////////////////////////////////////////////////
 
   def stringify(mask: Int): String =
-    if (mask != AllButBreak) {
+    if (mask != AllButBreak)
       Iterator
         .range(0, 25)
         .map { i =>
-          mask & (1 << i) match {
+          mask & (1 << i) match
             case None => ""
 
             case Null      => "Null"
@@ -115,14 +114,11 @@ object DataItem {
             case SimpleValue => "Simple Value"
 
             case EndOfInput => "End of Input"
-          }
         }
         .filter(_.nonEmpty)
         .take(java.lang.Integer.bitCount(mask))
-        .toList match {
+        .toList match
         case Nil      => "none"
         case x :: Nil => x
         case x        => x.init.mkString("", ", ", " or " + x.last)
-      }
-    } else "Any DataItem except BREAK"
-}
+    else "Any DataItem except BREAK"

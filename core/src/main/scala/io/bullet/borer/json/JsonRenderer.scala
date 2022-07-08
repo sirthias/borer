@@ -44,7 +44,7 @@ import scala.annotation.tailrec
  *
  * @see https://tools.ietf.org/html/rfc8259
  */
-final private[borer] class JsonRenderer(var out: Output) extends Renderer {
+final private[borer] class JsonRenderer(var out: Output) extends Renderer:
 
   private[this] var level: Int           = _ // valid range: 0 - 63
   private[this] var levelType: Long      = _ // keeps the type of each level as a bit map: 0 -> Array, 1 -> Map
@@ -52,71 +52,70 @@ final private[borer] class JsonRenderer(var out: Output) extends Renderer {
   private[this] var sepRequired: Boolean = _ // whether a separator required before the next element
 
   def onNull(): Unit =
-    if (isNotMapKey) {
+    if (isNotMapKey)
       out = count(sep(out).writeAsBytes('n', 'u', 'l', 'l'))
-    } else failCannotBeMapKey("null")
+    else failCannotBeMapKey("null")
 
   def onUndefined(): Unit =
     failUnsupported(out, "the `undefined` value")
 
   def onBoolean(value: Boolean): Unit =
-    if (isNotMapKey) {
+    if (isNotMapKey)
       out = count {
         if (value) (if (sepRequired) out.writeAsByte(separator) else out).writeAsBytes('t', 'r', 'u', 'e')
         else
           (if (sepRequired) out.writeAsBytes(separator, 'f') else out.writeAsByte('f')).writeAsBytes('a', 'l', 's', 'e')
       }
-    } else failCannotBeMapKey("boolean values")
+    else failCannotBeMapKey("boolean values")
 
   def onInt(value: Int): Unit =
     onLong(value.toLong)
 
   def onLong(value: Long): Unit =
-    if (isNotMapKey) {
+    if (isNotMapKey)
       out = count(writeLong(sep(out), value))
-    } else failCannotBeMapKey("integer values")
+    else failCannotBeMapKey("integer values")
 
   def onOverLong(negative: Boolean, value: Long): Unit =
-    if (isNotMapKey) {
+    if (isNotMapKey)
       out = count {
-        def writeOverLong(o: Output, v: Long) = {
+        def writeOverLong(o: Output, v: Long) =
           val q = (v >>> 1) / 5           // value / 10
           val r = v - (q << 3) - (q << 1) // value - 10*q
           writeLong(o, q).writeAsByte('0' + r.toInt)
-        }
-        if (negative) {
+        if (negative)
           val v = value + 1
           if (v == 0) out.writeStringAsAsciiBytes("-18446744073709551616")
           else writeOverLong(if (sepRequired) out.writeAsBytes(separator, '-') else out.writeAsByte('-'), v)
-        } else writeOverLong(if (sepRequired) out.writeAsByte(separator) else out, value)
+        else writeOverLong(if (sepRequired) out.writeAsByte(separator) else out, value)
       }
-    } else failCannotBeMapKey("an Overlong")
+    else failCannotBeMapKey("an Overlong")
 
   def onFloat16(value: Float): Unit =
     failUnsupported(out, "Float16 values")
 
   def onFloat(value: Float): Unit =
-    if (isNotMapKey) {
-      if (!value.isNaN) {
-        if (!value.isInfinity) {
+    if (isNotMapKey)
+      if (!value.isNaN)
+        if (!value.isInfinity)
           out = count(sep(out).writeStringAsAsciiBytes(Util.floatToString(value)))
-        } else failUnsupported(out, "`Infinity` floating point values")
-      } else failUnsupported(out, "`NaN` floating point values")
-    } else failCannotBeMapKey("floating point values")
+        else failUnsupported(out, "`Infinity` floating point values")
+      else failUnsupported(out, "`NaN` floating point values")
+    else failCannotBeMapKey("floating point values")
 
   def onDouble(value: Double): Unit =
-    if (isNotMapKey) {
-      if (!value.isNaN) {
-        if (!value.isInfinity) {
+    if (isNotMapKey)
+      if (!value.isNaN)
+        if (!value.isInfinity)
           out = count(sep(out).writeStringAsAsciiBytes(Util.doubleToString(value)))
-        } else failUnsupported(out, "`Infinity` floating point values")
-      } else failUnsupported(out, "`NaN` floating point values")
-    } else failCannotBeMapKey("floating point values")
+        else failUnsupported(out, "`Infinity` floating point values")
+      else failUnsupported(out, "`NaN` floating point values")
+    else failCannotBeMapKey("floating point values")
 
   def onNumberString(value: String): Unit =
-    if (isNotMapKey) {
+    if (isNotMapKey)
       out = count(sep(out).writeStringAsAsciiBytes(value))
-    } else failCannotBeMapKey("number strings")
+    else failCannotBeMapKey("number strings")
 
   def onBytes[Bytes: ByteAccess](value: Bytes): Unit =
     failUnsupported(out, "byte strings")
@@ -124,16 +123,16 @@ final private[borer] class JsonRenderer(var out: Output) extends Renderer {
   def onBytesStart(): Unit =
     failUnsupported(out, "byte string streams")
 
-  def onString(value: String): Unit = {
+  def onString(value: String): Unit =
     @tailrec def rec(out: Output, ix: Int): Output =
-      if (ix < value.length) {
+      if (ix < value.length)
         var index = ix
         val newOut =
-          value.charAt(ix) match {
+          value.charAt(ix) match
             case '"'  => writeEscaped(out, '"')
             case '\\' => writeEscaped(out, '\\')
             case c if c >= 0x20 => // we re-encode the character (or surrogate pair) from UTF-16 to UTF-8 right here
-              if (c > 0x7F) {
+              if (c > 0x7F)
                 var codePoint = c.toInt
                 (if (codePoint > 0x7FF) {
                    (if (0xD800 <= codePoint && codePoint < 0xE000) { // UTF-16 high surrogate (i.e. first of pair)
@@ -148,7 +147,7 @@ final private[borer] class JsonRenderer(var out: Output) extends Renderer {
                      .writeAsByte(0x80 | ((codePoint >> 6) & 0x3F))
                  } else out.writeAsByte(0xC0 | (codePoint >> 6))) // 2-byte UTF-8 codepoint
                   .writeAsByte(0x80 | (codePoint & 0x3F))
-              } else out.writeAsByte(c)
+              else out.writeAsByte(c)
 
             case '\b' => writeEscaped(out, 'b')
             case '\f' => writeEscaped(out, 'f')
@@ -156,23 +155,21 @@ final private[borer] class JsonRenderer(var out: Output) extends Renderer {
             case '\r' => writeEscaped(out, 'r')
             case '\t' => writeEscaped(out, 't')
             case c    => writeUnicodeLiteral(out, c)
-          }
         rec(newOut, index + 1)
-      } else out
+      else out
 
     out = count(rec(if (sepRequired) out.writeAsBytes(separator, '"') else out.writeAsByte('"'), 0).writeAsByte('"'))
-  }
 
-  def onChars(buffer: Array[Char], length: Int): Unit = {
+  def onChars(buffer: Array[Char], length: Int): Unit =
     @tailrec def rec(out: Output, ix: Int): Output =
-      if (ix < length) {
+      if (ix < length)
         var index = ix
         val newOut =
-          buffer(ix) match {
+          buffer(ix) match
             case '"'  => writeEscaped(out, '"')
             case '\\' => writeEscaped(out, '\\')
             case c if c >= 0x20 => // we re-encode the character (or surrogate pair) from UTF-16 to UTF-8 right here
-              if (c > 0x7F) {
+              if (c > 0x7F)
                 var codePoint = c.toInt
                 (if (codePoint > 0x7FF) {
                    (if (0xD800 <= codePoint && codePoint < 0xE000) { // UTF-16 high surrogate (i.e. first of pair)
@@ -187,7 +184,7 @@ final private[borer] class JsonRenderer(var out: Output) extends Renderer {
                      .writeAsByte(0x80 | ((codePoint >> 6) & 0x3F))
                  } else out.writeAsByte(0xC0 | (codePoint >> 6))) // 2-byte UTF-8 codepoint
                   .writeAsByte(0x80 | (codePoint & 0x3F))
-              } else out.writeAsByte(c)
+              else out.writeAsByte(c)
 
             case '\b' => writeEscaped(out, 'b')
             case '\f' => writeEscaped(out, 'f')
@@ -195,12 +192,10 @@ final private[borer] class JsonRenderer(var out: Output) extends Renderer {
             case '\r' => writeEscaped(out, 'r')
             case '\t' => writeEscaped(out, 't')
             case c    => writeUnicodeLiteral(out, c)
-          }
         rec(newOut, index + 1)
-      } else out
+      else out
 
     out = count(rec(if (sepRequired) out.writeAsBytes(separator, '"') else out.writeAsByte('"'), 0).writeAsByte('"'))
-  }
 
   private def writeEscaped(out: Output, c: Char): Output = out.writeAsBytes('\\', c)
 
@@ -219,39 +214,38 @@ final private[borer] class JsonRenderer(var out: Output) extends Renderer {
     failUnsupported(out, "definite-length arrays")
 
   def onArrayStart(): Unit =
-    if (isNotMapKey) {
+    if (isNotMapKey)
       out = if (sepRequired) out.writeAsBytes(separator, '[') else out.writeAsByte('[')
       level += 1
-      if (level < 64) {
+      if (level < 64)
         levelType <<= 1
         levelCount <<= 1
         sepRequired = false
-      } else failUnsupported(out, "more than 64 JSON Array/Object nesting levels")
-    } else failCannotBeMapKey("arrays")
+      else failUnsupported(out, "more than 64 JSON Array/Object nesting levels")
+    else failCannotBeMapKey("arrays")
 
   def onMapHeader(length: Long): Unit =
     failUnsupported(out, "definite-length maps")
 
   def onMapStart(): Unit =
-    if (isNotMapKey) {
+    if (isNotMapKey)
       out = if (sepRequired) out.writeAsBytes(separator, '{') else out.writeAsByte('{')
       level += 1
-      if (level < 64) {
+      if (level < 64)
         levelType = (levelType << 1) | 1
         levelCount <<= 1
         sepRequired = false
-      } else failUnsupported(out, "more than 64 JSON Array/Object nesting levels")
-    } else failCannotBeMapKey("maps")
+      else failUnsupported(out, "more than 64 JSON Array/Object nesting levels")
+    else failCannotBeMapKey("maps")
 
-  def onBreak(): Unit = {
+  def onBreak(): Unit =
     val c = if ((levelType & 1) == 0) ']' else '}'
-    if (level > 0) {
+    if (level > 0)
       level -= 1
       levelType >>>= 1
       levelCount >>>= 1
-    } else failValidation("Received BREAK without corresponding ArrayStart or MapStart")
+    else failValidation("Received BREAK without corresponding ArrayStart or MapStart")
     out = count(out.writeAsByte(c)) // level-entering items are only counted when the level is exited, not when entered
-  }
 
   def onTag(value: Tag): Unit         = failUnsupported(out, "CBOR tags")
   def onSimpleValue(value: Int): Unit = failUnsupported(out, "CBOR Simple Values")
@@ -264,24 +258,22 @@ final private[borer] class JsonRenderer(var out: Output) extends Renderer {
 
   @inline private def isNotMapKey: Boolean = (levelType & ~levelCount & 1) == 0
 
-  @inline private def count(out: Output): Output = {
+  @inline private def count(out: Output): Output =
     levelCount ^= 1
     sepRequired = true
     out
-  }
 
   private def writeLong(out: Output, value: Long): Output =
-    if (value != 0) {
-      if (value != Long.MinValue) {
-        @inline def div10(i: Int) = {
+    if (value != 0)
+      if (value != Long.MinValue)
+        @inline def div10(i: Int) =
           var q = (i << 3) + (i << 2)
           q += (q << 12) + (q << 8) + (q << 4) + i
           q >>>= 19
           q // 52429 * l / 524288 = l * 0.10000038146972656
-        }
 
         // for small numbers we can use the "fast-path"
-        def phase2(i: Int): Output = {
+        def phase2(i: Int): Output =
           val q = div10(i)
           val r = i - q * 10
           val newOut =
@@ -289,26 +281,24 @@ final private[borer] class JsonRenderer(var out: Output) extends Renderer {
             else if (value < 0) out.writeAsByte('-')
             else out
           newOut.writeAsByte('0' + r)
-        }
 
         // for large numbers we bite the bullet of performing one division every two digits
         def phase1(l: Long): Output =
-          if (l > 65535L) {
+          if (l > 65535L)
             val q  = l / 100
             val r  = (l - q * 100).toInt
             val rq = div10(r)
             phase1(q).writeBytes(('0' + rq).toByte, ('0' + r - rq * 10).toByte)
-          } else phase2(l.toInt)
+          else phase2(l.toInt)
 
         phase1(math.abs(value))
-      } else out.writeStringAsAsciiBytes("-9223372036854775808")
-    } else out.writeAsByte('0')
+      else out.writeStringAsAsciiBytes("-9223372036854775808")
+    else out.writeAsByte('0')
 
   // fast branchless implementation returning the lower-case hex digit corresponding to the last 4 bits of the given Int
-  @inline private def lowerHexDigit(int: Int): Int = {
+  @inline private def lowerHexDigit(int: Int): Int =
     val i = int & 0x0F
     48 + i + (39 & ((9 - i) >> 31))
-  }
 
   private def failUnsupported(out: Output, what: String) =
     throw new Borer.Error.Unsupported(out, s"The JSON renderer doesn't support $what")
@@ -320,8 +310,6 @@ final private[borer] class JsonRenderer(var out: Output) extends Renderer {
 
   private def failValidation(msg: String) =
     throw new Borer.Error.ValidationFailure(out, msg)
-}
 
-object JsonRenderer extends (Output => JsonRenderer) {
+object JsonRenderer extends (Output => JsonRenderer):
   def apply(out: Output) = new JsonRenderer(out)
-}

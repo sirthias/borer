@@ -12,7 +12,7 @@ import scala.annotation.tailrec
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
 
-private[borer] object Util {
+private[borer] object Util:
 
   val isJS  = 1.0.toString == "1"
   val isJVM = !isJS
@@ -23,11 +23,10 @@ private[borer] object Util {
   // "platform-independent" toString for Doubles, appends a ".0" suffix on JS, if required
   def doubleToString(value: Double): String = fixFloatingPointNumbersOnJS(java.lang.Double.toString(value))
 
-  private def fixFloatingPointNumbersOnJS(s: String): String = {
+  private def fixFloatingPointNumbersOnJS(s: String): String =
     // check, whether the string consists only of digits (except for the first char, which might be a minus sign)
     @tailrec def onlyDigits(ix: Int): Boolean = ix <= 0 || { val c = s(ix); '0' <= c && c <= '9' && onlyDigits(ix - 1) }
     if (isJS && onlyDigits(s.length - 1)) s + ".0" else s
-  }
 
   @inline def requireNonNegative(value: Int, name: String): Int = requireNonNegative(value.toLong, name).toInt
 
@@ -73,7 +72,7 @@ private[borer] object Util {
       case _                        => java.lang.reflect.Array.newInstance(ct.runtimeClass, 0)
     }).asInstanceOf[Array[T]]
 
-  def toBigEndianBytes(uLong: Long): Array[Byte] = {
+  def toBigEndianBytes(uLong: Long): Array[Byte] =
     val bytes = new Array[Byte](8)
     bytes(0) = (uLong >>> 56).toByte
     bytes(1) = (uLong >>> 48).toByte
@@ -84,9 +83,8 @@ private[borer] object Util {
     bytes(6) = (uLong >>> 8).toByte
     bytes(7) = uLong.toByte
     bytes
-  }
 
-  def canBeRepresentedAsFloat16(value: Float): Boolean = {
+  def canBeRepresentedAsFloat16(value: Float): Boolean =
     val bits = java.lang.Float.floatToIntBits(value)
     // Float has 23 mantissa bits, Float16 has only 10
     // so the 13 lower bits of the mantissa must be zero
@@ -97,47 +95,42 @@ private[borer] object Util {
         (normalizedExp >> 4) == (normalizedExp >> 31) // does normalizedExp fit into 5 bits?
       }
     }
-  }
 
   @inline def canBeRepresentedAsFloat(value: Double): Boolean = value.isNaN || value.toFloat.toDouble == value
 
-  def inPlaceNegate(bytes: Array[Byte]): Unit = {
+  def inPlaceNegate(bytes: Array[Byte]): Unit =
     @tailrec def rec(ix: Int): Unit =
-      if (ix < bytes.length) {
+      if (ix < bytes.length)
         bytes(ix) = (~bytes(ix).toInt).toByte; rec(ix + 1)
-      }
     rec(0)
-  }
 
   /**
    * Returns a positive number if the first `charsLen` characters of `chars` compare greater than `string`,
    * zero if equal, and a negative number if less.
    */
-  def charsStringCompare(chars: Array[Char], charsLen: Int, string: String): Int = {
+  def charsStringCompare(chars: Array[Char], charsLen: Int, string: String): Int =
     val limit = math.min(charsLen, string.length)
     @tailrec def rec(ix: Int): Int =
-      if (ix < limit) {
+      if (ix < limit)
         val diff = chars(ix).toInt - string.charAt(ix).toInt
         if (diff != 0) diff else rec(ix + 1)
-      } else charsLen - string.length
+      else charsLen - string.length
     rec(0)
-  }
 
   /**
    * Returns a positive number if the first `aLen` characters of `a` compare greater than `b`,
    * zero if equal, and a negative number if less.
    */
-  def charsCharsCompare(a: Array[Char], aLen: Int, b: Array[Char]): Int = {
+  def charsCharsCompare(a: Array[Char], aLen: Int, b: Array[Char]): Int =
     val limit = math.min(aLen, b.length)
     @tailrec def rec(ix: Int): Int =
-      if (ix < limit) {
+      if (ix < limit)
         val diff = a(ix).toInt - b(ix).toInt
         if (diff != 0) diff else rec(ix + 1)
-      } else aLen - b.length
+      else aLen - b.length
     rec(0)
-  }
 
-  implicit final class RichIterator[T](val underlying: Iterator[T]) extends AnyVal {
+  implicit final class RichIterator[T](val underlying: Iterator[T]) extends AnyVal:
 
     def +:(element: T): Iterator[T] =
       new Iterator[T] {
@@ -145,24 +138,19 @@ private[borer] object Util {
         def hasNext               = pending || underlying.hasNext
 
         def next() =
-          if (pending) {
+          if (pending)
             pending = false
             element
-          } else underlying.next()
+          else underlying.next()
       }
-  }
 
-  implicit class StringInterpolators(val sc: StringContext) extends AnyVal {
+  implicit class StringInterpolators(val sc: StringContext) extends AnyVal:
 
-    def hex(args: Any*): Array[Byte] = {
+    def hex(args: Any*): Array[Byte] =
       val hexString = sc.s(args: _*)
-      try {
+      try
         if ((hexString.length & 1) != 0) sys.error("string length is not even")
         hexString.grouped(2).map(Integer.parseInt(_, 16).toByte).toArray
-      } catch {
+      catch
         case NonFatal(e) =>
           throw new IllegalArgumentException(s"`$hexString` is not a valid hex string", e)
-      }
-    }
-  }
-}

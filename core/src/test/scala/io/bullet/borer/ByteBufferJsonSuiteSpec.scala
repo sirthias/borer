@@ -11,12 +11,11 @@ package io.bullet.borer
 import java.nio.charset.StandardCharsets
 import java.nio.ByteBuffer
 
-object ByteBufferJsonSuiteSpec extends AbstractJsonSuiteSpec {
+class ByteBufferJsonSuiteSpec extends AbstractJsonSuiteSpec:
 
-  def encode[T: Encoder](value: T): String = {
+  def encode[T: Encoder](value: T): String =
     val byteBuffer = Json.encode(value).withConfig(Json.EncodingConfig(bufferSize = 8)).toByteBuffer
     new String(ByteAccess.ForByteBuffer.toByteArray(byteBuffer), StandardCharsets.UTF_8)
-  }
 
   def decode[T: Decoder](encoded: String): T =
     Json
@@ -24,4 +23,3 @@ object ByteBufferJsonSuiteSpec extends AbstractJsonSuiteSpec {
       .withConfig(Json.DecodingConfig.default.copy(maxNumberAbsExponent = 300))
       .to[T]
       .value
-}

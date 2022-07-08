@@ -8,20 +8,19 @@
 
 package io.bullet.borer.derivation
 
-import io.bullet.borer._
-import io.bullet.borer.derivation.internal._
-import io.bullet.borer.deriver.DeriveWith
-
-import scala.reflect.macros.blackbox
+import io.bullet.borer.*
+import scala.deriving.*
+import scala.compiletime.*
+import scala.quoted.*
 
 /**
  * Derivation macros for array-based encodings.
  */
-object ArrayBasedCodecs {
+object ArrayBasedCodecs extends DerivationApi {
 
   /**
    * Macro that creates an [[Encoder]] for [[T]] provided that
-   * - [[T]] is a `case class`, `sealed abstract class` or `sealed trait`
+   * - [[T]] is a `case class`, `enum`, `sealed abstract class` or `sealed trait`
    * - [[Encoder]] instances for all members of [[T]] (if [[T]] is a `case class`)
    *   or all sub-types of [[T]] (if [[T]] is an ADT) are implicitly available
    *
@@ -30,12 +29,12 @@ object ArrayBasedCodecs {
    * NOTE: If `T` is unary (i.e. only has a single member) then the member value is written in an unwrapped form,
    * i.e. without the array container.
    */
-  def deriveEncoder[T]: Encoder[T] = macro Macros.encoder[T]
+  inline def deriveEncoder[T]: Encoder[T] = ${ Macros.encoder[T] }
 
   /**
    * Macro that creates an [[Encoder]] for [[T]] and all direct and indirect sub-types of [[T]],
    * which are concrete, i.e. not abstract.
-   * [[T]] must be a `sealed abstract class` or `sealed trait`.
+   * [[T]] must be an `enum`, `sealed abstract class` or `sealed trait`.
    *
    * It works by generating a code block such as this one:
    *
@@ -56,11 +55,11 @@ object ArrayBasedCodecs {
    * This means that you can specify your own custom Encoders for concrete sub-types or whole branches
    * of the sub-type hierarchy and they will be properly picked up rather than create conflicts.
    */
-  def deriveAllEncoders[T]: Encoder[T] = macro Macros.allEncoders[T]
+  inline def deriveAllEncoders[T]: Encoder[T] = ${ Macros.allEncoders[T] }
 
   /**
    * Macro that creates a [[Decoder]] for [[T]] provided that
-   * - [[T]] is a `case class`, `sealed abstract class` or `sealed trait`
+   * - [[T]] is a `case class`, `enum`, `sealed abstract class` or `sealed trait`
    * - [[Decoder]] instances for all members of [[T]] (if [[T]] is a `case class`)
    *   or all sub-types of [[T]] (if [[T]] is an ADT) are implicitly available
    *
@@ -69,12 +68,12 @@ object ArrayBasedCodecs {
    * NOTE: If `T` is unary (i.e. only has a single member) then the member value is expected in an unwrapped form,
    * i.e. without the array container.
    */
-  def deriveDecoder[T]: Decoder[T] = macro Macros.decoder[T]
+  inline def deriveDecoder[T]: Decoder[T] = ${ Macros.decoder[T] }
 
   /**
    * Macro that creates a [[Decoder]] for [[T]] and all direct and indirect sub-types of [[T]],
    * which are concrete, i.e. not abstract.
-   * [[T]] must be a `sealed abstract class` or `sealed trait`.
+   * [[T]] must be an `enum`, `sealed abstract class` or `sealed trait`.
    *
    * It works by generating a code block such as this one:
    *
@@ -95,127 +94,220 @@ object ArrayBasedCodecs {
    * This means that you can specify your own custom Decoders for concrete sub-types or whole branches
    * of the sub-type hierarchy and they will be properly picked up rather than create conflicts.
    */
-  def deriveAllDecoders[T]: Decoder[T] = macro Macros.allDecoders[T]
+  inline def deriveAllDecoders[T]: Decoder[T] = ${ Macros.allDecoders[T] }
 
   /**
    * Macro that creates an [[Encoder]] and [[Decoder]] pair for [[T]].
-   * Convenience shortcut for `Codec(deriveEncoder[T], deriveDecoder[T])"`.
+   * Convenience shortcut for `Codec(deriveEncoder[T], deriveDecoder[T])`.
    */
-  def deriveCodec[T]: Codec[T] = macro Macros.codec[T]
+  inline def deriveCodec[T]: Codec[T] = Codec(deriveEncoder[T], deriveDecoder[T])
 
   /**
    * Macro that creates an [[Encoder]] and [[Decoder]] pair for [[T]] and all direct and indirect sub-types of [[T]].
-   * Convenience shortcut for `Codec(deriveAllEncoders[T], deriveAllDecoders[T])"`.
+   * Convenience shortcut for `Codec(deriveAllEncoders[T], deriveAllDecoders[T])`.
    */
-  def deriveAllCodecs[T]: Codec[T] = macro Macros.allCodecs[T]
+  inline def deriveAllCodecs[T]: Codec[T] = Codec(deriveAllEncoders[T], deriveAllDecoders[T])
 
-  private object Macros {
-    import MacroSupport._
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    def encoder[T: ctx.WeakTypeTag](ctx: blackbox.Context): ctx.Tree =
-      DeriveWith[T](ctx) {
-        new CodecDeriver[ctx.type](ctx) {
-          import c.universe._
+  private[derivation] object Macros {
 
-          def deriveForCaseObject(tpe: Type, module: ModuleSymbol) =
-            q"$encoderCompanion[${module.typeSignature}]((w, _) => w.writeEmptyArray())"
+    def encoder[T: Type](using quotes: Quotes): Expr[Encoder[T]] =
+      Derive[Encoder, T] {
+        import quotes.reflect.*
+
+        new Deriver[Encoder, T, quotes.type] {
+
+          def deriveForCaseObject(moduleTermSymbol: Symbol): Expr[Encoder[T]] =
+            '{ Encoder[T]((w, _) => w.writeEmptyArray()) }
 
           def deriveForCaseClass(
-              tpe: Type,
-              companion: ModuleSymbol,
-              params: List[CaseParam],
-              annotationTrees: List[Tree],
-              constructorIsPrivate: Boolean) = {
+              tpe: TypeRepr,
+              classSym: Symbol,
+              companion: Symbol,
+              fields: IArray[Field]): Expr[Encoder[T]] =
 
-            val arity     = params.size
-            val writeOpen = if (arity == 1) q"w" else q"w.writeArrayOpen($arity)"
-            val writeOpenAndFields = params.foldLeft(writeOpen) { (acc, field) =>
-              val suffix =
-                if (field.isBasicType && field.getImplicit(encoderType).exists(isDefinedOn(_, encoderType))) {
-                  field.paramType.tpe.toString
-                } else ""
-              q"$acc.${TermName(s"write$suffix")}(x.${field.name})"
+            def gen(w: Expr[Writer], x: Expr[T], nonBasicEncoders: IArray[Option[Val]])(using Quotes): Expr[Writer] = {
+              val arity     = fields.size
+              val writeOpen = if (arity == 1) w else '{ $w.writeArrayOpen(${ Expr(arity) }) }
+              val writeOpenAndFields = fields.foldLeft(writeOpen) { (acc, field) =>
+                field.theType match
+                  case '[t] =>
+                    val encoder = nonBasicEncoders(field.index).map(_.as[Encoder[t]].get)
+                    writeField[t](acc, select[t](x, field.name), encoder)
+              }
+              if (arity == 1) writeOpenAndFields else '{ $writeOpenAndFields.writeArrayClose() }
             }
-            val writeOpenFieldsAndClose =
-              if (arity == 1) writeOpenAndFields else q"$writeOpenAndFields.writeArrayClose()"
-            q"""$encoderCompanion((w, x) => $writeOpenFieldsAndClose)"""
-          }
 
-          def deriveForSealedTrait(node: AdtTypeNode) =
-            deriveAdtEncoder(
-              node,
-              x => q"""w.writeArrayOpen(2)
-                $x
-                w.writeArrayClose()""")
+            withOptVals(fields) { field =>
+              field.theType match
+                case '[t] =>
+                  Expr
+                    .summon[Encoder[t]]
+                    .orElse(fail(
+                      s"Could not find implicit Encoder[${Type.show[t]}] for field `${field.name}` of case class `$theTname`"))
+                    .filterNot(isBasicDefaultEncoder)
+                    .map(x => Val.of[Encoder[t]](x))
+            } { nonBasicEncoders =>
+              '{ Encoder[T] { (w, x) => ${ gen('w, 'x, nonBasicEncoders) } } }
+            }
+          end deriveForCaseClass
+
+          def deriveForSealedTrait(rootNode: AdtTypeNode): Expr[Encoder[T]] =
+            '{
+              new ArrayBasedAdtEncoder[T]:
+                def write(w: Writer, value: T): Writer = {
+                  val self = this // work around for compiler crash (AssertionError) during macro expansion
+                  ${ deriveAdtEncoderBody(rootNode, 'self, 'w, 'value) }
+                }
+            }
         }
       }
 
-    def allEncoders[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
-      deriveAll(c)(isEncoder = true, "ArrayBasedCodecs", "deriveAllEncoders", "deriveEncoder")
+    def decoder[T: Type](using quotes: Quotes): Expr[Decoder[T]] =
+      Derive[Decoder, T] {
+        import quotes.reflect.*
 
-    def decoder[T: ctx.WeakTypeTag](ctx: blackbox.Context): ctx.Tree =
-      DeriveWith[T](ctx) {
-        new CodecDeriver[ctx.type](ctx) {
-          import c.universe._
+        new Deriver[Decoder, T, quotes.type]:
 
-          def deriveForCaseObject(tpe: Type, module: ModuleSymbol) =
-            q"$decoderCompanion(r => r.readArrayClose(r.readArrayOpen(0), $module))"
+          def deriveForCaseObject(moduleTermSymbol: Symbol): Expr[Decoder[T]] =
+            '{ Decoder[T](r => r.readArrayClose(r.readArrayOpen(0), ${ Ref(moduleTermSymbol).asExprOf[T] })) }
 
           def deriveForCaseClass(
-              tpe: Type,
-              companion: ModuleSymbol,
-              params: List[CaseParam],
-              annotationTrees: List[Tree],
-              constructorIsPrivate: Boolean) = {
+              tpe: TypeRepr,
+              classSym: Symbol,
+              companion: Symbol,
+              fields: IArray[Field]): Expr[Decoder[T]] =
 
-            if (constructorIsPrivate)
-              error(s"Cannot derive Decoder[$tpe] because the primary constructor of `$tpe` is private")
+            def gen(r: Expr[Reader], nonBasicDecoders: IArray[Option[Val]])(using Quotes): Expr[T] =
+              def readObjectBlock(r: Expr[Reader])(using Quotes) =
+                withVals(fields) { field =>
+                  field.theType match
+                    case '[t] =>
+                      val decoder = nonBasicDecoders(field.index).map(_.as[Decoder[t]].get)
+                      Val.of[t](readField[t](r, decoder))
+                } { exprs =>
+                  companionApply(companion, typeArgs(tpe), exprs.toList.map(_.get.asTerm)).asExprOf[T]
+                }
 
-            val arity = params.size
-            val readObject = {
-              val fieldNames = params.indices.map(ix => TermName(s"x$ix"))
-              val readFields = params.zip(fieldNames).map { case (p, name) =>
-                val paramType = p.paramType.tpe
-                val rhs =
-                  if (isBasicType(paramType) && p.getImplicit(decoderType).exists(isDefinedOn(_, decoderCompanion))) {
-                    q"r.${TermName(s"read$paramType")}()"
-                  } else q"r.read[$paramType]()"
-                q"val $name = $rhs"
-              }
-              q"""..$readFields
-                $companion.apply(..$fieldNames)"""
-            }
-            def expected(s: String) = s"$s for decoding an instance of type `$tpe`"
-            val readObjectWithWrapping =
-              arity match {
+              def expected(s: String)(using Quotes) = Expr(s"$s for decoding an instance of `$theTname`")
+
+              fields.size match
                 case 0 =>
-                  q"""if (r.tryReadArrayHeader(0) || r.tryReadArrayStart() && r.tryReadBreak()) $readObject
-                    else r.unexpectedDataItem(${expected(s"Empty array")})"""
-                case 1 => readObject
-                case x =>
-                  q"""def readObject() = $readObject
-                    if (r.tryReadArrayStart()) {
-                      val result = readObject()
-                      if (r.tryReadBreak()) result
-                      else r.unexpectedDataItem(${expected(s"Array with $x elements")}, "at least one extra element")
-                    } else if (r.tryReadArrayHeader($x)) readObject()
-                    else r.unexpectedDataItem(${expected(s"Array Start or Array Header ($x)")})"""
-              }
-            q"$decoderCompanion(r => $readObjectWithWrapping)"
-          }
+                  '{
+                    if ($r.tryReadArrayHeader(0) || $r.tryReadArrayStart() && $r.tryReadBreak()) ${ readObjectBlock(r) }
+                    else $r.unexpectedDataItem(${ expected("Empty array") })
+                  }
 
-          def deriveForSealedTrait(node: AdtTypeNode) =
-            deriveAdtDecoder(node, q"()", x => q"r.readArrayClose(r.readArrayOpen(2), $x)")
+                case 1 => readObjectBlock(r)
+
+                case x =>
+                  '{
+                    def readObject(r: Reader) = ${ readObjectBlock('r) }
+                    if ($r.tryReadArrayStart()) {
+                      val result = readObject($r)
+                      if ($r.tryReadBreak()) result
+                      else
+                        $r.unexpectedDataItem(${ expected(s"Array with $x elements") }, "at least one extra element")
+                    } else if ($r.tryReadArrayHeader(${ Expr(x) })) readObject($r)
+                    else $r.unexpectedDataItem(${ expected(s"Array-Start or Array-Header($x)") })
+                  }
+            end gen
+
+            withOptVals(fields) { field =>
+              field.theType match
+                case '[t] =>
+                  Expr
+                    .summon[Decoder[t]]
+                    .orElse(fail(
+                      s"Could not find implicit Decoder[${Type.show[t]}] for field `${field.name}` of case class `$theTname`"))
+                    .filterNot(isBasicDefaultDecoder)
+                    .map(x => Val.of[Decoder[t]](x))
+            } { nonBasicDecoders =>
+              '{ Decoder[T](r => ${ gen('r, nonBasicDecoders) }) }
+            }
+
+          end deriveForCaseClass
+
+          def deriveForSealedTrait(rootNode: AdtTypeNode): Expr[Decoder[T]] =
+            val methodBody = sealedTraitMethodBody(rootNode)
+
+            def read0(self: Expr[DerivedAdtDecoder[T]], r: Expr[Reader])(using Quotes) =
+              methodBody.derive(
+                self,
+                r,
+                identity,
+                {
+                  case x: Long   => '{ $r.tryReadLongCompare(${ Expr(x) }) }
+                  case x: String => '{ $r.tryReadStringCompare(${ Expr(x) }) }
+                })
+
+            def read1(self: Expr[DerivedAdtDecoder[T]], r: Expr[Reader], typeId: Expr[Long])(using Quotes) =
+              import java.lang.Long.compare as longCompare
+              methodBody.derive(
+                self,
+                r,
+                _.filter(_._1.isInstanceOf[Long]),
+                tid => '{ longCompare($typeId, ${ Expr(tid.asInstanceOf[Long]) }) })
+
+            def read2(self: Expr[DerivedAdtDecoder[T]], r: Expr[Reader], typeId: Expr[String])(using Quotes) =
+              methodBody.derive(
+                self,
+                r,
+                _.filter(_._1.isInstanceOf[String]),
+                tid => '{ $typeId.compareTo(${ Expr(tid.asInstanceOf[String]) }) })
+
+            '{
+              new ArrayBasedAdtDecoder[T]:
+
+                def read(r: Reader): T =
+                  val self = this // work around for compiler crash (AssertionError) during macro expansion
+                  r.readArrayClose(r.readArrayOpen(2), ${ read0('self, 'r) })
+
+                def read(r: Reader, typeId: Long): T =
+                  val self = this // work around for compiler crash (AssertionError) during macro expansion
+                  ${ read1('self, 'r, 'typeId) }
+
+                def read(r: Reader, typeId: String): T =
+                  val self = this // work around for compiler crash (AssertionError) during macro expansion
+                  ${ read2('self, 'r, 'typeId) }
+
+                def failExpectedTypeId(r: Reader) =
+                  r.unexpectedDataItem(${ Expr(s"type id key for subtype of `$theTname`") })
+            }
+
+          end deriveForSealedTrait
+      }
+
+    def allEncoders[T: Type](using Quotes): Expr[Encoder[T]] =
+      Derive.deriveAll[Encoder, T]("allEncoders", "deriveEncoder") {
+        new Derive.MacroCall[Encoder] {
+          def apply[A: Type](using Quotes) = '{ deriveEncoder[A] }
         }
       }
 
-    def codec[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
-      codecMacro(c)("ArrayBasedCodecs", "deriveEncoder", "deriveDecoder")
-
-    def allDecoders[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
-      deriveAll(c)(isEncoder = false, "ArrayBasedCodecs", "deriveAllDecoders", "deriveDecoder")
-
-    def allCodecs[T: c.WeakTypeTag](c: blackbox.Context): c.Tree =
-      codecMacro(c)("ArrayBasedCodecs", "deriveAllEncoders", "deriveAllDecoders")
+    def allDecoders[T: Type](using Quotes): Expr[Decoder[T]] =
+      Derive.deriveAll[Decoder, T]("allDecoders", "deriveDecoder") {
+        new Derive.MacroCall[Decoder] {
+          def apply[A: Type](using Quotes) = '{ deriveDecoder[A] }
+        }
+      }
   }
+
+  abstract class ArrayBasedAdtEncoder[T] extends DerivedAdtEncoder[T] {
+
+    final def writeAdtValue[A](w: Writer, typeId: Long, value: A)(using encoder: Encoder[A]): Writer =
+      encoder match {
+        case enc: AdtEncoder[A] => enc.write(w, value)
+        case enc                => enc.write(w.writeArrayOpen(2).writeLong(typeId), value).writeArrayClose()
+      }
+
+    final def writeAdtValue[A](w: Writer, typeId: String, value: A)(using encoder: Encoder[A]): Writer =
+      encoder match {
+        case enc: AdtEncoder[A] => enc.write(w, value)
+        case enc                => enc.write(w.writeArrayOpen(2).writeString(typeId), value).writeArrayClose()
+      }
+  }
+
+  abstract class ArrayBasedAdtDecoder[T] extends DerivedAdtDecoder[T]
 }

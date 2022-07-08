@@ -11,9 +11,8 @@ package io.bullet.borer.derivation
 import java.nio.charset.StandardCharsets
 
 import io.bullet.borer._
-import utest._
 
-object JsonFlatAdtEncodingSpec extends AbstractBorerSpec {
+class JsonFlatAdtEncodingSpec extends AbstractBorerSpec {
 
   def encode[T: Encoder](value: T): String = Json.encode(value).toUtf8String
 
@@ -27,107 +26,98 @@ object JsonFlatAdtEncodingSpec extends AbstractBorerSpec {
   case object Yeti                                                           extends Animal
   case class Fish(color: String)                                             extends Animal
 
-  implicit val flatAdtEncoding = AdtEncodingStrategy.flat()
+  given AdtEncodingStrategy = AdtEncodingStrategy.flat()
 
-  implicit val dogCodec    = MapBasedCodecs.deriveCodec[Dog]
-  implicit val catCodec    = MapBasedCodecs.deriveCodec[Cat]
-  implicit val mouseCodec  = MapBasedCodecs.deriveCodec[Mouse]
-  implicit val yetiCodec   = MapBasedCodecs.deriveCodec[Yeti.type]
-  implicit val fishCodec   = ArrayBasedCodecs.deriveCodec[Fish]
-  implicit val animalCodec = MapBasedCodecs.deriveCodec[Animal]
+  given Codec[Dog]       = MapBasedCodecs.deriveCodec[Dog]
+  given Codec[Cat]       = MapBasedCodecs.deriveCodec[Cat]
+  given Codec[Mouse]     = MapBasedCodecs.deriveCodec[Mouse]
+  given Codec[Yeti.type] = MapBasedCodecs.deriveCodec[Yeti.type]
+  given Codec[Fish]      = ArrayBasedCodecs.deriveCodec[Fish]
+  given Codec[Animal]    = MapBasedCodecs.deriveCodec[Animal]
 
-  val tests = Tests {
+  test("<roundtrip> default string type id") {
+    val dog = Dog(2, "Lolle")
+    roundTrip("""{"age":2,"name":"Lolle"}""", dog)
+    roundTrip("""{"_type":"Dog","age":2,"name":"Lolle"}""", dog: Animal)
+  }
 
-    "roundtrip" - {
+  test("<roundtrip> custom string type id") {
+    val cat = Cat(5.6, "red", "street")
+    roundTrip("""{"weight":5.6,"color":"red","home":"street"}""", cat)
+    roundTrip("""{"_type":"TheCAT","weight":5.6,"color":"red","home":"street"}""", cat: Animal)
+  }
 
-      "default string type id" - {
-        val dog = Dog(2, "Lolle")
-        roundTrip("""{"age":2,"name":"Lolle"}""", dog)
-        roundTrip("""{"_type":"Dog","age":2,"name":"Lolle"}""", dog: Animal)
-      }
+  test("<roundtrip> int type id") {
+    val mouse = Mouse(true)
+    roundTrip("""{"tail":true}""", mouse)
+    roundTrip("""{"_type":42,"tail":true}""", mouse: Animal)
+  }
 
-      "custom string type id" - {
-        val cat = Cat(5.6, "red", "street")
-        roundTrip("""{"weight":5.6,"color":"red","home":"street"}""", cat)
-        roundTrip("""{"_type":"TheCAT","weight":5.6,"color":"red","home":"street"}""", cat: Animal)
-      }
+  test("<roundtrip> case object") {
+    roundTrip("""{}""", Yeti)
+    roundTrip("""{"_type":"Yeti"}""", Yeti: Animal)
+  }
 
-      "int type id" - {
-        val mouse = Mouse(true)
-        roundTrip("""{"tail":true}""", mouse)
-        roundTrip("""{"_type":42,"tail":true}""", mouse: Animal)
-      }
+  test("<roundtrip> nested ADTs") {
+    sealed trait Result[+T]
+    case class Good[+T](value: T) extends Result[T]
+    case object Bad               extends Result[Nothing]
 
-      "case object" - {
-        roundTrip("""{}""", Yeti)
-        roundTrip("""{"_type":"Yeti"}""", Yeti: Animal)
-      }
+    implicit def goodCodec[T: Encoder: Decoder]: Codec[Good[T]]     = MapBasedCodecs.deriveCodec[Good[T]]
+    implicit val badCodec: Codec[Bad.type]                          = MapBasedCodecs.deriveCodec[Bad.type]
+    implicit def resultCodec[T: Encoder: Decoder]: Codec[Result[T]] = MapBasedCodecs.deriveCodec[Result[T]]
 
-      "nested ADTs" - {
-        sealed trait Result[+T]
-        case class Good[+T](value: T) extends Result[T]
-        case object Bad               extends Result[Nothing]
+    val goodDog = Good(Dog(2, "Lolle"))
+    roundTrip("""{"value":{"age":2,"name":"Lolle"}}""", goodDog)
+    roundTrip("""{"_type":"Good","value":{"_type":"Dog","age":2,"name":"Lolle"}}""", goodDog: Result[Animal])
+    verifyDecoding("""{"value":{"age":2,"_type":"Dog","name":"Lolle"}, "_type":"Good"}""", goodDog: Result[Animal])
 
-        implicit def goodCodec[T: Encoder: Decoder]   = MapBasedCodecs.deriveCodec[Good[T]]
-        implicit val badCodec                         = MapBasedCodecs.deriveCodec[Bad.type]
-        implicit def resultCodec[T: Encoder: Decoder] = MapBasedCodecs.deriveCodec[Result[T]]
+    val dogs = Good(List(Dog(2, "LL")))
+    roundTrip("""{"value":[{"age":2,"name":"LL"}]}""", dogs)
+    roundTrip("""{"_type":"Good","value":[{"_type":"Dog","age":2,"name":"LL"}]}""", dogs: Result[List[Animal]])
+    verifyDecoding("""{"value":[{"age":2,"_type":"Dog","name":"LL"}],"_type":"Good"}""", dogs: Result[List[Animal]])
+  }
 
-        val goodDog = Good(Dog(2, "Lolle"))
-        roundTrip("""{"value":{"age":2,"name":"Lolle"}}""", goodDog)
-        roundTrip("""{"_type":"Good","value":{"_type":"Dog","age":2,"name":"Lolle"}}""", goodDog: Result[Animal])
-        verifyDecoding("""{"value":{"age":2,"_type":"Dog","name":"Lolle"}, "_type":"Good"}""", goodDog: Result[Animal])
+  test("<roundtrip> in list") {
+    val animals: List[Animal] = List(Dog(2, "Lolle"))
+    roundTrip("""[{"_type":"Dog","age":2,"name":"Lolle"}]""", animals)
+  }
 
-        val dogs = Good(List(Dog(2, "LL")))
-        roundTrip("""{"value":[{"age":2,"name":"LL"}]}""", dogs)
-        roundTrip("""{"_type":"Good","value":[{"_type":"Dog","age":2,"name":"LL"}]}""", dogs: Result[List[Animal]])
-        verifyDecoding("""{"value":[{"age":2,"_type":"Dog","name":"LL"}],"_type":"Good"}""", dogs: Result[List[Animal]])
-      }
+  test("<roundtrip> stacked") {
+    sealed trait A
+    sealed trait B             extends A
+    case class C(x: Option[B]) extends B
 
-      "in list" - {
-        val animals: List[Animal] = List(Dog(2, "Lolle"))
-        roundTrip("""[{"_type":"Dog","age":2,"name":"Lolle"}]""", animals)
-      }
+    implicit lazy val bCodec: Codec[B] = MapBasedCodecs.deriveAllCodecs[B]
+    implicit val aCodec                = MapBasedCodecs.deriveAllCodecs[A]
 
-      "stacked" - {
-        sealed trait A
-        sealed trait B             extends A
-        case class C(x: Option[B]) extends B
+    roundTrip("""{"_type":"C","x":[]}""", C(None): A)
+  }
 
-        implicit lazy val bCodec: Codec[B] = MapBasedCodecs.deriveAllCodecs[B]
-        implicit val aCodec                = MapBasedCodecs.deriveAllCodecs[A]
+  test("skipping simple members") {
+    verifyDecoding("""{"age":2,"_type":"Dog","name":"Lolle"}""", Dog(2, "Lolle"): Animal)
+    verifyDecoding("""{"age":2,"name":"Lolle","_type":"Dog"}""", Dog(2, "Lolle"): Animal)
+  }
 
-        roundTrip("""{"_type":"C","x":[]}""", C(None): A)
-      }
-    }
+  test("skipping complex members") {
+    verifyDecoding("""{"age":2,"ignored":[1,["a","b"],{}],"_type":"Dog","name":"Lolle"}""", Dog(2, "Lolle"): Animal)
+    verifyDecoding("""{"age":2,"ignored":[1,["a","b"],{}],"name":"Lolle","_type":"Dog"}""", Dog(2, "Lolle"): Animal)
+  }
 
-    "delayed type id member" - {
+  test("non-map sub-type errors") {
+    val fish = Fish("red")
+    roundTrip(""""red"""", fish)
 
-      "skipping simple members" - {
-        verifyDecoding("""{"age":2,"_type":"Dog","name":"Lolle"}""", Dog(2, "Lolle"): Animal)
-        verifyDecoding("""{"age":2,"name":"Lolle","_type":"Dog"}""", Dog(2, "Lolle"): Animal)
-      }
+    intercept[Borer.Error.Unsupported[_]] {
+      verifyEncoding(fish: Animal, "{}")
+    }.getMessage ==> "AdtEncodingStrategy.flat requires all sub-types of `Animal` be serialized as a Map but here it was a String (Output.ToByteArray index 0)"
 
-      "skipping complex members" - {
-        verifyDecoding("""{"age":2,"ignored":[1,["a","b"],{}],"_type":"Dog","name":"Lolle"}""", Dog(2, "Lolle"): Animal)
-        verifyDecoding("""{"age":2,"ignored":[1,["a","b"],{}],"name":"Lolle","_type":"Dog"}""", Dog(2, "Lolle"): Animal)
-      }
-    }
+    intercept[Borer.Error.InvalidInputData[_]] {
+      verifyDecoding(""""red"""", fish: Animal)
+    }.getMessage ==> "Expected Map for decoding an instance of type `Animal` but got Chars (input position 0)"
 
-    "non-map sub-type errors" - {
-      val fish = Fish("red")
-      roundTrip(""""red"""", fish)
-
-      intercept[Borer.Error.Unsupported[_]] {
-        verifyEncoding(fish: Animal, "{}")
-      }.getMessage ==> "AdtEncodingStrategy.flat requires all sub-types of `io.bullet.borer.derivation.JsonFlatAdtEncodingSpec.Animal` be serialized as a Map but here it was a String (Output.ToByteArray index 0)"
-
-      intercept[Borer.Error.InvalidInputData[_]] {
-        verifyDecoding(""""red"""", fish: Animal)
-      }.getMessage ==> "Expected Map for decoding an instance of type `io.bullet.borer.derivation.JsonFlatAdtEncodingSpec.Animal` but got Chars (input position 0)"
-
-      intercept[Borer.Error.InvalidInputData[_]] {
-        verifyDecoding("{}", fish: Animal)
-      }.getMessage ==> "Expected Type-ID member `_type` for decoding an instance of type `io.bullet.borer.derivation.JsonFlatAdtEncodingSpec.Animal` but got none (input position 1)"
-    }
+    intercept[Borer.Error.InvalidInputData[_]] {
+      verifyDecoding("{}", fish: Animal)
+    }.getMessage ==> "Expected Type-ID member `_type` for decoding an instance of type `Animal` but got none (input position 1)"
   }
 }
