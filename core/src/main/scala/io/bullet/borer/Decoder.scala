@@ -318,17 +318,17 @@ object Decoder extends LowPrioDecoders {
 
     implicit val doubleDecoder: Decoder[Double] =
       Decoder(r => if (r.hasString) r.readString().toDouble else r.readDouble())
-    implicit val charDecoder: Decoder[Char]   = Decoder.forChar(forInt)
-    implicit val byteDecoder: Decoder[Byte]   = Decoder.forByte(forInt)
-    implicit val shortDecoder: Decoder[Short] = Decoder.forShort(forInt)
+    implicit val charDecoder: Decoder[Char]   = Decoder.forChar(intDecoder)
+    implicit val byteDecoder: Decoder[Byte]   = Decoder.forByte(intDecoder)
+    implicit val shortDecoder: Decoder[Short] = Decoder.forShort(intDecoder)
 
-    implicit def boxedCharDecoder: Decoder[Character] = forChar.asInstanceOf[Decoder[Character]]
-    implicit def boxedByteDecoder: Decoder[JByte]     = forByte.asInstanceOf[Decoder[JByte]]
-    implicit def boxedShortDecoder: Decoder[JShort]   = forShort.asInstanceOf[Decoder[JShort]]
-    implicit def boxedIntDecoder: Decoder[Integer]    = forInt.asInstanceOf[Decoder[Integer]]
-    implicit def boxedLongDecoder: Decoder[JLong]     = forLong.asInstanceOf[Decoder[JLong]]
-    implicit def boxedFloatDecoder: Decoder[JFloat]   = forFloat.asInstanceOf[Decoder[JFloat]]
-    implicit def boxedDoubleDecoder: Decoder[JDouble] = forDouble.asInstanceOf[Decoder[JDouble]]
+    implicit def boxedCharDecoder: Decoder[Character] = charDecoder.asInstanceOf[Decoder[Character]]
+    implicit def boxedByteDecoder: Decoder[JByte]     = byteDecoder.asInstanceOf[Decoder[JByte]]
+    implicit def boxedShortDecoder: Decoder[JShort]   = shortDecoder.asInstanceOf[Decoder[JShort]]
+    implicit def boxedIntDecoder: Decoder[Integer]    = intDecoder.asInstanceOf[Decoder[Integer]]
+    implicit def boxedLongDecoder: Decoder[JLong]     = longDecoder.asInstanceOf[Decoder[JLong]]
+    implicit def boxedFloatDecoder: Decoder[JFloat]   = floatDecoder.asInstanceOf[Decoder[JFloat]]
+    implicit def boxedDoubleDecoder: Decoder[JDouble] = doubleDecoder.asInstanceOf[Decoder[JDouble]]
   }
 
   object StringBooleans {
@@ -343,7 +343,7 @@ object Decoder extends LowPrioDecoders {
       } else r.readBoolean()
     }
 
-    implicit def boxedBooleanDecoder: Decoder[JBoolean] = forBoolean.asInstanceOf[Decoder[JBoolean]]
+    implicit def boxedBooleanDecoder: Decoder[JBoolean] = booleanDecoder.asInstanceOf[Decoder[JBoolean]]
   }
 
   object StringNulls {
