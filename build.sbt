@@ -1,7 +1,7 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import sbt._
 
-def scala3   = "3.1.3"
+def scala3 = "3.1.3"
 
 inThisBuild(
   List(
@@ -25,12 +25,13 @@ lazy val commonSettings = Seq(
   scalaVersion := scala3,
   scalacOptions ++= Seq(
     "-deprecation",
-    "-encoding", "UTF-8",
+    "-encoding",
+    "UTF-8",
     "-feature",
     "-unchecked",
     "-indent",
-    //"-source:future",
-    //"-explain",
+    // "-source:future",
+    // "-explain",
     "-pagewidth:120",
     "-Xtarget:11",
     "-Xfatal-warnings",
@@ -42,7 +43,6 @@ lazy val commonSettings = Seq(
   Compile / doc / scalacOptions += "-no-link-warnings",
   sourcesInBase := false,
   Compile / unmanagedResources += baseDirectory.value.getParentFile.getParentFile / "LICENSE",
-
   scalafmtOnCompile := true, // reformat main and test sources on compile
 
   // file headers
@@ -96,7 +96,7 @@ val `circe-parser`      = Def.setting("io.circe"                %%% "circe-parse
 val `circe-generic`     = Def.setting("io.circe"                %%% "circe-generic"           % "0.14.2")
 val `scodec-bits`       = Def.setting("org.scodec"              %%% "scodec-bits"             % "1.1.34")
 val munit               = Def.setting("org.scalameta"           %%% "munit"                   % "0.7.29" % Test)
-val macrolizer          = Def.setting("io.bullet"               %%% "macrolizer"              % "0.6.2-SNAPSHOT" % "compile-internal, test-internal")
+val macrolizer          = Def.setting("io.bullet"               %%% "macrolizer"              % "0.6.2" % "compile-internal, test-internal")
 // format: ON
 
 /////////////////////// PROJECTS /////////////////////////
@@ -126,7 +126,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .settings(commonSettings)
   .settings(releaseSettings)
   .settings(
-    moduleName   := "borer-core",
+    moduleName := "borer-core",
     libraryDependencies ++= Seq(munit.value),
   )
   .jvmSettings(
@@ -145,17 +145,17 @@ lazy val `compat-akka` = project
   .settings(
     moduleName := "borer-compat-akka",
     libraryDependencies ++= Seq(
-      `akka-actor`.value % "provided",
+      `akka-actor`.value  % "provided",
       `akka-stream`.value % "provided",
-      `akka-http`.value % "provided" cross CrossVersion.for3Use2_13,
+      `akka-http`.value   % "provided" cross CrossVersion.for3Use2_13,
       munit.value)
   )
 
 lazy val `compat-cats-jvm` = `compat-cats`.jvm
   .dependsOn(`core-jvm` % "compile->compile;test->test")
   .dependsOn(`derivation-jvm` % "test->compile")
-lazy val `compat-cats-js`  = `compat-cats`.js
-  .dependsOn(`core-js`   % "compile->compile;test->test")
+lazy val `compat-cats-js` = `compat-cats`.js
+  .dependsOn(`core-js` % "compile->compile;test->test")
   .dependsOn(`derivation-js` % "test->compile")
 lazy val `compat-cats` = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
@@ -172,8 +172,8 @@ lazy val `compat-cats` = crossProject(JSPlatform, JVMPlatform)
 lazy val `compat-circe-jvm` = `compat-circe`.jvm
   .dependsOn(`core-jvm` % "compile->compile;test->test")
   .dependsOn(`derivation-jvm` % "test->compile")
-lazy val `compat-circe-js`  = `compat-circe`.js
-  .dependsOn(`core-js`   % "compile->compile;test->test")
+lazy val `compat-circe-js` = `compat-circe`.js
+  .dependsOn(`core-js` % "compile->compile;test->test")
   .dependsOn(`derivation-js` % "test->compile")
 lazy val `compat-circe` = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
@@ -194,8 +194,8 @@ lazy val `compat-circe` = crossProject(JSPlatform, JVMPlatform)
 lazy val `compat-scodec-jvm` = `compat-scodec`.jvm
   .dependsOn(`core-jvm` % "compile->compile;test->test")
   .dependsOn(`derivation-jvm` % "test->compile")
-lazy val `compat-scodec-js`  = `compat-scodec`.js
-  .dependsOn(`core-js`   % "compile->compile;test->test")
+lazy val `compat-scodec-js` = `compat-scodec`.js
+  .dependsOn(`core-js` % "compile->compile;test->test")
   .dependsOn(`derivation-js` % "test->compile")
 lazy val `compat-scodec` = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
@@ -223,7 +223,7 @@ lazy val derivation = crossProject(JSPlatform, JVMPlatform)
   .settings(commonSettings)
   .settings(releaseSettings)
   .settings(
-    moduleName   := "borer-derivation",
+    moduleName := "borer-derivation",
     libraryDependencies ++= Seq(macrolizer.value, munit.value),
   )
   .jsSettings(scalajsSettings: _*)
