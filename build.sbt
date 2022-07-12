@@ -108,7 +108,7 @@ lazy val borer = (project in file("."))
   .aggregate(`compat-circe-jvm`, `compat-circe-js`)
   .aggregate(`compat-scodec-jvm`, `compat-scodec-js`)
   .aggregate(`derivation-jvm`, `derivation-js`)
-  .aggregate(benchmarks)
+  //.aggregate(benchmarks)
   .aggregate(site)
   .settings(commonSettings)
   .settings(releaseSettings)
@@ -249,7 +249,14 @@ lazy val benchmarks = project
   )
 
 lazy val site = project
-  .dependsOn(`core-jvm`, `derivation-jvm`, `compat-akka`, `compat-cats-jvm`, `compat-circe-jvm`, `compat-scodec-jvm`)
+  .dependsOn(
+    `core-jvm` % "compile->compile;test->test",
+    `derivation-jvm`,
+    `compat-akka`,
+    `compat-cats-jvm`,
+    `compat-circe-jvm`,
+    `compat-scodec-jvm`
+  )
   .enablePlugins(
     ParadoxPlugin,
     ParadoxMaterialThemePlugin,

@@ -8,155 +8,140 @@
 
 package io.bullet.borer.site
 
-import io.bullet.borer.internal.Util._
-import utest._
+import io.bullet.borer.internal.Util.*
+import io.bullet.borer.BorerSuite
 
 import scala.util.Try
 
-object EncodingDecodingSpec extends TestSuite {
+class EncodingDecodingSpec extends BorerSuite {
 
-  val tests = Tests {
+  test("Encoding CBOR") {
+    // #encoding-cbor
+    import io.bullet.borer.Cbor
 
-    "Encoding" - {
+    val value = List("foo", "bar", "baz") // example value
 
-      "CBOR" - {
-        // #encoding-cbor
-        import io.bullet.borer.Cbor
+    val bytes: Array[Byte] =
+      Cbor.encode(value).toByteArray // throws on error
 
-        val value = List("foo", "bar", "baz") // example value
+    bytes ==> hex"9f63666f6f636261726362617aff"
+    // #encoding-cbor
+  }
 
-        val bytes: Array[Byte] =
-          Cbor.encode(value).toByteArray // throws on error
+  test("Encoding JSON") {
+    // #encoding-json
+    import io.bullet.borer.Json
 
-        bytes ==> hex"9f63666f6f636261726362617aff"
-        // #encoding-cbor
-      }
+    val value = List("foo", "bar", "baz") // example value
 
-      "JSON" - {
-        // #encoding-json
-        import io.bullet.borer.Json
+    val bytes: Array[Byte] =
+      Json.encode(value).toByteArray // throws on error
 
-        val value = List("foo", "bar", "baz") // example value
+    // or immediately decode the bytes into a String:
 
-        val bytes: Array[Byte] =
-          Json.encode(value).toByteArray // throws on error
+    val json: String =
+      Json.encode(value).toUtf8String // throws on error
 
-        // or immediately decode the bytes into a String:
+    json ==> """["foo","bar","baz"]"""
+    bytes ==> json.getBytes("UTF8")
+    // #encoding-json
+  }
 
-        val json: String =
-          Json.encode(value).toUtf8String // throws on error
+  test("Decoding CBOR") {
+    val bytes = hex"9f63666f6f636261726362617aff"
 
-        json ==> """["foo","bar","baz"]"""
-        bytes ==> json.getBytes("UTF8")
-        // #encoding-json
-      }
-    }
+    // #decoding-cbor
+    import io.bullet.borer.Cbor
 
-    "Decoding" - {
+    val list: List[String] =
+      Cbor.decode(bytes).to[List[String]].value // throws on error
+    // #decoding-cbor
 
-      "CBOR" - {
-        val bytes = hex"9f63666f6f636261726362617aff"
+    list ==> List("foo", "bar", "baz")
+  }
 
-        // #decoding-cbor
-        import io.bullet.borer.Cbor
+  test("Decoding JSON") {
+    val bytes = """["foo","bar","baz"]""" getBytes "UTF8"
 
-        val list: List[String] =
-          Cbor.decode(bytes).to[List[String]].value // throws on error
-        // #decoding-cbor
+    // #decoding-json
+    import io.bullet.borer.Json
 
-        list ==> List("foo", "bar", "baz")
-      }
+    val list: List[String] =
+      Json.decode(bytes).to[List[String]].value // throws on error
+    // #decoding-json
 
-      "JSON" - {
-        val bytes = """["foo","bar","baz"]""" getBytes "UTF8"
+    list ==> List("foo", "bar", "baz")
+  }
 
-        // #decoding-json
-        import io.bullet.borer.Json
+  test("Try CBOR") {
+    val value = List("foo", "bar", "baz")
+    val bytes = hex"9f63666f6f636261726362617aff"
 
-        val list: List[String] =
-          Json.decode(bytes).to[List[String]].value // throws on error
-        // #decoding-json
+    // #try-cbor
+    import io.bullet.borer.Cbor
 
-        list ==> List("foo", "bar", "baz")
-      }
-    }
+    val encoded: Try[Array[Byte]] =
+      Cbor.encode(value).toByteArrayTry
 
-    "Try" - {
+    val decoded: Try[List[String]] =
+      Cbor.decode(bytes).to[List[String]].valueTry
+    // #try-cbor
 
-      "CBOR" - {
-        val value = List("foo", "bar", "baz")
-        val bytes = hex"9f63666f6f636261726362617aff"
+    encoded.get ==> bytes
+    decoded.get ==> value
+  }
 
-        // #try-cbor
-        import io.bullet.borer.Cbor
+  test("Try JSON") {
+    val value = List("foo", "bar", "baz")
+    val bytes = """["foo","bar","baz"]""" getBytes "UTF8"
 
-        val encoded: Try[Array[Byte]] =
-          Cbor.encode(value).toByteArrayTry
+    // #try-json
+    import io.bullet.borer.Json
 
-        val decoded: Try[List[String]] =
-          Cbor.decode(bytes).to[List[String]].valueTry
-        // #try-cbor
+    val encoded: Try[Array[Byte]] =
+      Json.encode(value).toByteArrayTry
 
-        encoded.get ==> bytes
-        decoded.get ==> value
-      }
+    val decoded: Try[List[String]] =
+      Json.decode(bytes).to[List[String]].valueTry
+    // #try-json
 
-      "JSON" - {
-        val value = List("foo", "bar", "baz")
-        val bytes = """["foo","bar","baz"]""" getBytes "UTF8"
+    encoded.get ==> bytes
+    decoded.get ==> value
+  }
 
-        // #try-json
-        import io.bullet.borer.Json
+  test("CBOR") {
+    val value = List("foo", "bar", "baz")
+    val bytes = hex"9f63666f6f636261726362617aff"
 
-        val encoded: Try[Array[Byte]] =
-          Json.encode(value).toByteArrayTry
+    // #either-cbor
+    import io.bullet.borer._
 
-        val decoded: Try[List[String]] =
-          Json.decode(bytes).to[List[String]].valueTry
-        // #try-json
+    val encoded: Either[Borer.Error[Output], Array[Byte]] =
+      Cbor.encode(value).to[Array[Byte]].resultEither
 
-        encoded.get ==> bytes
-        decoded.get ==> value
-      }
-    }
+    val decoded: Either[Borer.Error[Input.Position], List[String]] =
+      Cbor.decode(bytes).to[List[String]].valueEither
+    // #either-cbor
 
-    "Either" - {
+    encoded.getOrElse(sys.error("fail")) ==> bytes
+    decoded.getOrElse(sys.error("fail")) ==> value
+  }
 
-      "CBOR" - {
-        val value = List("foo", "bar", "baz")
-        val bytes = hex"9f63666f6f636261726362617aff"
+  test("JSON") {
+    val value = List("foo", "bar", "baz")
+    val bytes = """["foo","bar","baz"]""" getBytes "UTF8"
 
-        // #either-cbor
-        import io.bullet.borer._
+    // #either-json
+    import io.bullet.borer._
 
-        val encoded: Either[Borer.Error[Output], Array[Byte]] =
-          Cbor.encode(value).to[Array[Byte]].resultEither
+    val encoded: Either[Borer.Error[Output], Array[Byte]] =
+      Json.encode(value).to[Array[Byte]].resultEither
 
-        val decoded: Either[Borer.Error[Input.Position], List[String]] =
-          Cbor.decode(bytes).to[List[String]].valueEither
-        // #either-cbor
+    val decoded: Either[Borer.Error[Input.Position], List[String]] =
+      Json.decode(bytes).to[List[String]].valueEither
+    // #either-json
 
-        encoded.getOrElse(sys.error("fail")) ==> bytes
-        decoded.getOrElse(sys.error("fail")) ==> value
-      }
-
-      "JSON" - {
-        val value = List("foo", "bar", "baz")
-        val bytes = """["foo","bar","baz"]""" getBytes "UTF8"
-
-        // #either-json
-        import io.bullet.borer._
-
-        val encoded: Either[Borer.Error[Output], Array[Byte]] =
-          Json.encode(value).to[Array[Byte]].resultEither
-
-        val decoded: Either[Borer.Error[Input.Position], List[String]] =
-          Json.decode(bytes).to[List[String]].valueEither
-        // #either-json
-
-        encoded.getOrElse(sys.error("fail")) ==> bytes
-        decoded.getOrElse(sys.error("fail")) ==> value
-      }
-    }
+    encoded.getOrElse(sys.error("fail")) ==> bytes
+    decoded.getOrElse(sys.error("fail")) ==> value
   }
 }

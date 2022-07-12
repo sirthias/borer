@@ -8,74 +8,70 @@
 
 package io.bullet.borer.site
 
-import io.bullet.borer.internal.Util._
-import utest._
+import io.bullet.borer.internal.Util.*
+import io.bullet.borer.BorerSuite
 
-object JsonSpecificsSpec extends TestSuite {
+class JsonSpecificsSpec extends BorerSuite {
 
-  val tests = Tests {
+  test("writeEmptyArray") {
+    // #writeEmptyArray
+    import io.bullet.borer.Writer
 
-    "JSON specifics" - {
+    def writeEmptyArray(w: Writer): w.type =
+      if (w.writingJson) w.writeArrayStart().writeBreak()
+      else w.writeArrayHeader(0) // fixed-sized Arrays are not supported in JSON
+    // #writeEmptyArray
 
-      "writeEmptyArray" - {
-        // #writeEmptyArray
-        import io.bullet.borer.Writer
+    import io.bullet.borer._
 
-        def writeEmptyArray(w: Writer): w.type =
-          if (w.writingJson) w.writeArrayStart().writeBreak()
-          else w.writeArrayHeader(0) // fixed-sized Arrays are not supported in JSON
-        // #writeEmptyArray
+    object Foo
 
-        import io.bullet.borer._
+    implicit val fooEncoder: Encoder[Foo.type] =
+      Encoder((w, _) => writeEmptyArray(w))
 
-        object Foo
+    Cbor.encode(Foo).toByteArray ==> hex"80"
+    Json.encode(Foo).toUtf8String ==> "[]"
+  }
 
-        implicit val fooEncoder: Encoder[Foo.type] =
-          Encoder((w, _) => writeEmptyArray(w))
+  test("writeArrayOpen-close") {
+    // #writeArrayOpen-close
+    import io.bullet.borer.Writer
 
-        Cbor.encode(Foo).toByteArray ==> hex"80"
-        Json.encode(Foo).toUtf8String ==> "[]"
-      }
+    def writeAsUnaryArray(w: Writer, s: String): w.type =
+      w.writeArrayOpen(1) // automatically chooses the most efficient
+        .writeString(s)
+        .writeArrayClose() // way to write an array of size one
+    // #writeArrayOpen-close
 
-      "writeArrayOpen-close" - {
-        // #writeArrayOpen-close
-        import io.bullet.borer.Writer
+    import io.bullet.borer._
 
-        def writeAsUnaryArray(w: Writer, s: String): w.type =
-          w.writeArrayOpen(1) // automatically chooses the most efficient
-            .writeString(s)
-            .writeArrayClose() // way to write an array of size one
-        // #writeArrayOpen-close
+    object Foo
 
-        import io.bullet.borer._
+    implicit val fooEncoder: Encoder[Foo.type] =
+      Encoder((w, _) => writeAsUnaryArray(w, "foo"))
 
-        object Foo
+    Cbor.encode(Foo).toByteArray ==> hex"8163666F6F"
+    Json.encode(Foo).toUtf8String ==> """["foo"]"""
+  }
 
-        implicit val fooEncoder: Encoder[Foo.type] =
-          Encoder((w, _) => writeAsUnaryArray(w, "foo"))
+  test("alternative base encoding") {
+    // #alternative-base-encoding
+    import io.bullet.borer.{Decoder, Encoder, Json}
+    import io.bullet.borer.encodings.BaseEncoding
 
-        Cbor.encode(Foo).toByteArray ==> hex"8163666F6F"
-        Json.encode(Foo).toUtf8String ==> """["foo"]"""
-      }
+    val binaryData = hex"DEADBEEF"
 
-      "alternative base encoding" - {
-        // #alternative-base-encoding
-        import io.bullet.borer.{Decoder, Encoder, Json}
-        import io.bullet.borer.encodings.BaseEncoding
+    // Json.encode(binaryData).toByteArray or
+    Json.encode(binaryData).toUtf8String ==> """"3q2+7w==""""
 
-        val binaryData = hex"DEADBEEF"
+    {
+      // we need to explicitly define the encoder as well as the decoder
+      // in order to "override" the defaults for Array[Byte] on either side
+      implicit val byteArrayEncoder = Encoder.forByteArray(BaseEncoding.zbase32)
+      implicit val byteArrayDecoder = Decoder.forByteArray(BaseEncoding.zbase32)
 
-        // Json.encode(binaryData).toByteArray or
-        Json.encode(binaryData).toUtf8String ==> """"3q2+7w==""""
-
-        // we need to explicitly define the encoder as well as the decoder
-        // in order to "override" the defaults for Array[Byte] on either side
-        implicit val byteArrayEncoder = Encoder.forByteArray(BaseEncoding.zbase32)
-        implicit val byteArrayDecoder = Decoder.forByteArray(BaseEncoding.zbase32)
-
-        Json.encode(binaryData).toUtf8String ==> """"54s575a""""
-        // #alternative-base-encoding
-      }
+      Json.encode(binaryData).toUtf8String ==> """"54s575a""""
     }
+    // #alternative-base-encoding
   }
 }

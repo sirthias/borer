@@ -8,70 +8,67 @@
 
 package io.bullet.borer.site
 
-import utest._
+import io.bullet.borer.BorerSuite
 
-object TranscodingSpec extends TestSuite {
+class TranscodingSpec extends BorerSuite {
 
-  val tests = Tests {
+  test("example") {
+    // #example
+    import io.bullet.borer.Cbor
+    import io.bullet.borer.Dom
+    import io.bullet.borer.derivation.MapBasedCodecs._
 
-    "example" - {
-      // #example
-      import io.bullet.borer.Cbor
-      import io.bullet.borer.Dom
-      import io.bullet.borer.derivation.MapBasedCodecs._
+    case class Employee(nick: String, age: Int)
+    case class Department(name: String, employees: List[Employee])
 
-      case class Employee(nick: String, age: Int)
-      case class Department(name: String, employees: List[Employee])
+    implicit val employeeCodec   = deriveCodec[Employee]
+    implicit val departmentCodec = deriveCodec[Department]
 
-      implicit val employeeCodec   = deriveCodec[Employee]
-      implicit val departmentCodec = deriveCodec[Department]
-
-      val value =
-        Department(
-          name = "IT",
-          employees = List(
-            Employee("Alice", 32),
-            Employee("Bob", 28),
-            Employee("Charlie", 42),
-          )
-        )
-
-      val dom = Cbor // could also be `Json` to target JSON
-        .transEncode(value)
-        .transDecode
-        .to[Dom.Element]
-        .value
-
-      val transformer =
-        new Dom.Transformer {
-          import Dom._
-
-          override def transformMapMember(member: (Element, Element)) =
-            member match {
-              case (k @ StringElem("age"), IntElem(age)) => k -> IntElem(age + 1)
-              case x                                     => super.transformMapMember(x)
-            }
-        }
-
-      val transformed = transformer(dom)
-
-      val result = Cbor // could also be `Json` to target JSON
-        .transEncode(transformed)
-        .transDecode
-        .to[Department]
-        .valueEither
-
-      result ==> Right(
-        Department(
-          name = "IT",
-          employees = List(
-            Employee("Alice", 33),
-            Employee("Bob", 29),
-            Employee("Charlie", 43),
-          )
+    val value =
+      Department(
+        name = "IT",
+        employees = List(
+          Employee("Alice", 32),
+          Employee("Bob", 28),
+          Employee("Charlie", 42),
         )
       )
-      // #example
-    }
+
+    val dom = Cbor // could also be `Json` to target JSON
+      .transEncode(value)
+      .transDecode
+      .to[Dom.Element]
+      .value
+
+    val transformer =
+      new Dom.Transformer {
+        import Dom._
+
+        override def transformMapMember(member: (Element, Element)) =
+          member match {
+            case (k @ StringElem("age"), IntElem(age)) => k -> IntElem(age + 1)
+            case x                                     => super.transformMapMember(x)
+          }
+      }
+
+    val transformed = transformer(dom)
+
+    val result = Cbor // could also be `Json` to target JSON
+      .transEncode(transformed)
+      .transDecode
+      .to[Department]
+      .valueEither
+
+    result ==> Right(
+      Department(
+        name = "IT",
+        employees = List(
+          Employee("Alice", 33),
+          Employee("Bob", 29),
+          Employee("Charlie", 43),
+        )
+      )
+    )
+    // #example
   }
 }
