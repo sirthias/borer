@@ -11,9 +11,8 @@ package io.bullet.borer.compat
 import _root_.scodec.bits.ByteVector
 import io.bullet.borer._
 import io.bullet.borer.derivation.ArrayBasedCodecs
-import utest._
 
-object ByteVectorSpec extends AbstractBorerSpec {
+class ByteVectorSpec extends AbstractBorerSpec {
   import scodec._
 
   def encode[T: Encoder](value: T): String   = toHexString(Cbor.encode(value).to[ByteVector].result.toArray)
@@ -21,11 +20,10 @@ object ByteVectorSpec extends AbstractBorerSpec {
 
   case class Foo(int: Int, content: ByteVector)
 
-  implicit val fooCodec = ArrayBasedCodecs.deriveCodec[Foo]
+  implicit val fooCodec: Codec[Foo] = ArrayBasedCodecs.deriveCodec[Foo]
 
-  val tests = Tests {
-
-    "basic roundtrip" - roundTrip(
+  test("basic roundtrip") {
+    roundTrip(
       "83820b40820c476f682079656168820d43ff0001",
       Vector(
         Foo(11, ByteVector.empty),

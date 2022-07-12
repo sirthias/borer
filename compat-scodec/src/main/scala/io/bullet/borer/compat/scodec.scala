@@ -60,7 +60,7 @@ object scodec {
   /**
    * Encoding and Decoding for [[ByteVector]].
    */
-  implicit val ByteVectorCodec = Codec[ByteVector](_ writeBytes _, _.readBytes())
+  implicit val ByteVectorCodec: Codec[ByteVector] = Codec[ByteVector](_ writeBytes _, _.readBytes())
 
   /**
    * [[Input]] around [[ByteVector]].

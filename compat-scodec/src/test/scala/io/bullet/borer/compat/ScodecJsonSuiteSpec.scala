@@ -12,7 +12,7 @@ import java.nio.charset.StandardCharsets
 import _root_.scodec.bits.ByteVector
 import io.bullet.borer._
 
-object ScodecJsonSuiteSpec extends AbstractJsonSuiteSpec {
+class ScodecJsonSuiteSpec extends AbstractJsonSuiteSpec {
   import scodec._
 
   def encode[T: Encoder](value: T): String =
