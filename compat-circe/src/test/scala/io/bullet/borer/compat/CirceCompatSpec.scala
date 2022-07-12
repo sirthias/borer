@@ -8,17 +8,15 @@
 
 package io.bullet.borer.compat
 
-import io.bullet.borer.{Cbor, Json}
-import io.circe._
-import utest._
+import io.bullet.borer.{BorerSuite, Cbor, Json}
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
+import io.circe.*
 
-object CirceCompatSpec extends TestSuite {
+class CirceCompatSpec extends BorerSuite {
   import circe._
 
   final case class Foo(byte: Byte, short: Short, char: Char, int: Int, long: Long, list: List[String], bar: Bar)
   final case class Bar(boolean: Boolean, nll: Null, float: Float, double: Double, string: String, bd: BigDecimal)
-
-  import io.circe.derivation.{deriveDecoder, deriveEncoder}
 
   implicit val nullEncoder: Encoder[Null] =
     new Encoder[Null] {
@@ -57,19 +55,16 @@ object CirceCompatSpec extends TestSuite {
         bd = BigDecimal("1.23456789"))
     )
 
-  val tests = Tests {
+  test("JSON round trip") {
+    val encoding =
+      """{"byte":1,"short":-26,"char":"x","int":1234567,"long":98765432123456789,"list":["red","green","blue"],"bar":{"boolean":true,"nll":null,"float":1.25,"double":-0.12345,"string":"borer rocks!","bd":1.23456789}}"""
 
-    "JSON round trip" - {
-      val encoding =
-        """{"byte":1,"short":-26,"char":"x","int":1234567,"long":98765432123456789,"list":["red","green","blue"],"bar":{"boolean":true,"nll":null,"float":1.25,"double":-0.12345,"string":"borer rocks!","bd":1.23456789}}"""
+    Json.encode(foo).toUtf8String ==> encoding
+    Json.decode(encoding.getBytes("UTF8")).to[Foo].value ==> foo
+  }
 
-      Json.encode(foo).toUtf8String ==> encoding
-      Json.decode(encoding.getBytes("UTF8")).to[Foo].value ==> foo
-    }
-
-    "CBOR round trip" - {
-      val encoding = Cbor.encode(foo).toByteArray
-      Cbor.decode(encoding).to[Foo].value ==> foo
-    }
+  test("CBOR round trip") {
+    val encoding = Cbor.encode(foo).toByteArray
+    Cbor.decode(encoding).to[Foo].value ==> foo
   }
 }

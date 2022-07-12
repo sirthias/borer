@@ -186,6 +186,7 @@ lazy val `compat-circe` = crossProject(JSPlatform, JVMPlatform)
     libraryDependencies ++= Seq(
       `circe-core`.value,
       `circe-parser`.value % "test",
+      `circe-generic`.value % "test",
       munit.value
     )
   )
