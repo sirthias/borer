@@ -97,7 +97,7 @@ val `circe-parser`      = Def.setting("io.circe"                %%% "circe-parse
 val `circe-generic`     = Def.setting("io.circe"                %%% "circe-generic"           % "0.14.2")
 val `scodec-bits`       = Def.setting("org.scodec"              %%% "scodec-bits"             % "1.1.34")
 val munit               = Def.setting("org.scalameta"           %%% "munit"                   % "0.7.29" % Test)
-val macrolizer          = Def.setting("io.bullet"               %%% "macrolizer"              % "0.6.2-SNAPSHOT" % "compile-internal, test-internal")
+val macrolizer          = Def.setting("io.bullet"               %%% "macrolizer"              % "0.6.2" % "compile-internal, test-internal")
 // format: ON
 
 /////////////////////// PROJECTS /////////////////////////
@@ -237,8 +237,8 @@ lazy val benchmarks = project
   .settings(
     publish / skip := true,
     libraryDependencies ++= Seq(
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"        % "2.13.35",
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros"      % "2.13.35" % Provided,
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"        % "2.13.36",
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros"      % "2.13.36" % Provided,
       "com.fasterxml.jackson.module"          %% "jackson-module-scala"       % "2.13.2",
       "com.fasterxml.jackson.module"           % "jackson-module-afterburner" % "2.13.2",
       "com.lihaoyi"                           %% "upickle"                    % "1.6.0",
