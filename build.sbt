@@ -35,7 +35,8 @@ lazy val commonSettings = Seq(
     "-Xtarget:11",
     "-Xfatal-warnings",
     "-Xcheck-macros",
-    "-Xmax-inlines:128", // requires for compiling upickle benchmarks
+    //"-Ydebug-error",
+    "-Xmax-inlines:128", // required for compiling upickle benchmarks
   ),
   Compile / console / scalacOptions ~= (_ filterNot (o => o.contains("warn") || o.contains("Xlint"))),
   Test / console / scalacOptions := (Compile / console / scalacOptions).value,

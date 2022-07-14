@@ -133,7 +133,7 @@ object ArrayBasedCodecs extends DerivationApi {
               val writeOpenAndFields = fields.foldLeft(writeOpen) { (acc, field) =>
                 field.theType match
                   case '[t] =>
-                    val encoder = nonBasicEncoders(field.index).map(_.as[Encoder[t]].get)
+                    val encoder = nonBasicEncoders(field.ownTypeIndex).map(_.as[Encoder[t]].get)
                     writeField[t](acc, select[t](x, field.name), encoder)
               }
               if (arity == 1) writeOpenAndFields else '{ $writeOpenAndFields.writeArrayClose() }
@@ -141,13 +141,14 @@ object ArrayBasedCodecs extends DerivationApi {
 
             withOptVals(fields) { field =>
               field.theType match
-                case '[t] =>
+                case '[t] if field.fieldType.isInstanceOf[OwnType] =>
                   Expr
                     .summon[Encoder[t]]
                     .orElse(fail(
                       s"Could not find implicit Encoder[${Type.show[t]}] for field `${field.name}` of case class `$theTname`"))
                     .filterNot(isBasicDefaultEncoder)
-                    .map(x => Val.of[Encoder[t]](x))
+                    .map(x => Val.of[Encoder[t]]('{ $x.recursive }))
+                case _ => None
             } { nonBasicEncoders =>
               '{ Encoder[T] { (w, x) => ${ gen('w, 'x, nonBasicEncoders) } } }
             }
@@ -184,7 +185,7 @@ object ArrayBasedCodecs extends DerivationApi {
                 withVals(fields) { field =>
                   field.theType match
                     case '[t] =>
-                      val decoder = nonBasicDecoders(field.index).map(_.as[Decoder[t]].get)
+                      val decoder = nonBasicDecoders(field.ownTypeIndex).map(_.as[Decoder[t]].get)
                       Val.of[t](readField[t](r, decoder))
                 } { exprs =>
                   companionApply(companion, typeArgs(tpe), exprs.toList.map(_.get.asTerm)).asExprOf[T]
@@ -216,13 +217,14 @@ object ArrayBasedCodecs extends DerivationApi {
 
             withOptVals(fields) { field =>
               field.theType match
-                case '[t] =>
+                case '[t] if field.fieldType.isInstanceOf[OwnType] =>
                   Expr
                     .summon[Decoder[t]]
                     .orElse(fail(
                       s"Could not find implicit Decoder[${Type.show[t]}] for field `${field.name}` of case class `$theTname`"))
                     .filterNot(isBasicDefaultDecoder)
-                    .map(x => Val.of[Decoder[t]](x))
+                    .map(x => Val.of[Decoder[t]]('{ $x.recursive }))
+                case _ => None
             } { nonBasicDecoders =>
               '{ Decoder[T](r => ${ gen('r, nonBasicDecoders) }) }
             }

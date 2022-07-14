@@ -44,7 +44,7 @@ object Derive {
               case Nil => macroCall[T]
               case x :: tail =>
                 x.tpe.asType match
-                  case '[t] => '{ given F[t] = ${ macroCall[t] }; ${ rec(tail) } }
+                  case '[t] => '{ implicit val x: F[t] = ${ macroCall[t] }; ${ rec(tail) } }
 
           rec(subsWithoutImplicitTypeclassInstances[F](rootNode))
     }
@@ -101,6 +101,11 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
     def hasDefaultValue: Boolean               = defaultValueMethod.isDefined
 
     def theType: Type[?] = fieldType.tpe.asType
+
+    def ownTypeIndex: Int =
+      fieldType match
+        case OwnType(_)    => index
+        case SameAs(other) => other.ownTypeIndex
 
     def isBasicType: Boolean =
       theType match {
@@ -375,10 +380,10 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
    * (If there are circular dependencies a compiler error is automatically thrown.)
    */
   final def subsWithoutImplicitTypeclassInstances[F[_]: Type](rootNode: AdtTypeNode): List[AdtTypeNode] = {
-    val relevantSubs = flattenedSubs[F](rootNode, deepRecurse = false).collect { case (node, false) => node }.toList
-
-    if (theTname == "TreeNodeX") println("-------------------------")
-    if (theTname == "TreeNodeX") println(rootNode.name)
+    val relevantSubs =
+      flattenedSubs[F](rootNode, deepRecurse = false, includeEnumSingletonCases = false).collect { case (node, false) =>
+        node
+      }.toList
 
     // for each non-abstract sub-type S we collect the "links",
     // which are the ADT sub-types that appear somewhere within the member definitions of S and,
@@ -395,8 +400,6 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
                 case _ => Nil
         }
       }
-
-    if (theTname == "TreeNodeX") println(relevantSubsWithLinks.map(x => s"${x._1.name}: ${x._2.map(_.name)}"))
 
     @tailrec def topoSort(
         remaining: List[(AdtTypeNode, List[AdtTypeNode])],
@@ -420,9 +423,7 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
         case Nil => result.reverse
       }
 
-    val res = topoSort(relevantSubsWithLinks, Nil, Nil)
-    if (theTname == "TreeNodeX") println(res.map(_.name))
-    res
+    topoSort(relevantSubsWithLinks, Nil, Nil)
   }
 
   private def typeReprsOf[Ts: Type]: List[TypeRepr] =
@@ -618,7 +619,7 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
 
   final def fail(msg: String): Nothing = report.errorAndAbort(msg, Position.ofMacroExpansion)
 
-  private def printStackTracePrefix(msg: String): Unit = {
+  def printStackTracePrefix(msg: String): Unit = {
     val sw = new java.io.StringWriter
     val pw = new java.io.PrintWriter(sw)
     new RuntimeException("Stack Trace").printStackTrace(pw)
