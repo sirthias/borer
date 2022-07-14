@@ -191,7 +191,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.7.2
+<i class="md-icon" title="Version">label_outline</i> 1.10.0
 </label>
 </li>
 </ul>
@@ -222,7 +222,7 @@ sirthias/borer/
 <p><code>null</code> values differ from missing members (see also <a href="../borer-derivation/map-based.html#default-values">Map-Based Codecs</a>) in that the value for an element is indeed present, but is <code>null</code>.</p>
 <p><em>borer</em> handles this case in a properly typed fashion: If your data model allows for certain members to have a <code>null</code> encoding that you would like to treat specially the member&rsquo;s type should be wrapped with <code>Nullable</code>, e.g. <code>Nullable[String]</code>.<br> In combination with the simple type class <code>Default[T]</code>, which provides the capability to supply default values for a type <code>T</code>, the pre-defined Encoder and Decoder for <code>Nullable[T]</code> will be able to translate <code>null</code> values to the respective default value and back.</p>
 <p>Example:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/NullableSpec.scala#L19-L30" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Json, Nullable}
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/NullableSpec.scala#L17-L28" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Json, Nullable}
 import io.bullet.borer.derivation.MapBasedCodecs._
 
 case class Dog(age: Int, name: Nullable[String])
@@ -239,7 +239,7 @@ Dog(age = 4, name = &quot;&quot;) // the `Default[String]` provides an empty Str
 <pre class="prettyprint"><code class="language-scala">import io.bullet.borer.NullOptions._
 </code></pre>
 <p>Here is how <code>NullOptions</code> are implemented:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/NullOptions.scala#L12-L34" target="_blank" title="Go to snippet source">source</a><code class="language-scala">/**
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/NullOptions.scala#L12-L33" target="_blank" title="Go to snippet source">source</a><code class="language-scala">/**
  * In order to enable an alternative [[Option]] codec, which
  * encodes `None` to `null` and `Some` to an unwrapped value
  * you can import the members of this object with
@@ -248,7 +248,7 @@ Dog(age = 4, name = &quot;&quot;) // the `Default[String]` provides an empty Str
  * import io.bullet.borer.NullOptions._
  * }}}
  */
-object NullOptions {
+object NullOptions:
 
   implicit def encoder[T: Encoder]: Encoder[Option[T]] =
     Encoder {
@@ -260,8 +260,7 @@ object NullOptions {
     Decoder { r =&gt;
       if (r.tryReadNull()) None
       else Some(r.read[T]())
-    }
-}</code></pre><div class="callout note "><div class="callout-title">Note</div>
+    }</code></pre><div class="callout note "><div class="callout-title">Note</div>
 <p>At first glance it might seem that <code>NullOptions</code> could actually be the default way to encode a value of type <code>Option[T]</code> since <code>null</code> appears as the &ldquo;natural&rdquo; construct in <a href="http://json.org/">JSON</a> / <a href="http://cbor.io/">CBOR</a> to represent &ldquo;no value&rdquo;.<br> However, <code>NullOptions</code> have a serious drawback which makes them unsuitable as the generally preferred representation strategie for <code>Option[T]</code>:<br>They are <em>unsound</em> as in &ldquo;they don&rsquo;t compose&rdquo;.</p>
 <p>Consider the type <code>Option[Option[T]]</code>. With <code>NullOptions</code> its value <code>Some(None)</code> would serialize to <code>null</code>, which would then deserialize to <code>None</code> rather than <code>Some(None)</code>, which is <em>unsound</em> as it violates the basic &ldquo;roundtrip requirement&rdquo; <code>deserialize(serialize(x)) == x</code>.</p></div>
 </div>
@@ -272,7 +271,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.7.2
+1.10.0
 </span>
 </div>
 </article>
@@ -314,7 +313,7 @@ StringNumbers and StringBooleans
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019-2021 Mathias Doenitz
+Copyright (C) 2019-2022 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

@@ -184,7 +184,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.7.2
+<i class="md-icon" title="Version">label_outline</i> 1.10.0
 </label>
 </li>
 </ul>
@@ -198,7 +198,7 @@ sirthias/borer/
 <p>Array-Based Codec derivation is enabled with this import:</p>
 <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L19" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.derivation.ArrayBasedCodecs._</code></pre>
 <p>Here is an example:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L36-L63" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Json
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L34-L61" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Codec, Json}
 import io.bullet.borer.derivation.key
 import io.bullet.borer.derivation.ArrayBasedCodecs._
 
@@ -207,11 +207,11 @@ case class Cat(weight: Double, color: String, home: String) extends Animal
 @key(&quot;TheDog&quot;) case class Dog(age: Int, name: String)       extends Animal
 @key(42) case class Mouse(tail: Boolean)                    extends Animal
 
-implicit val dogCodec   = deriveCodec[Dog]
-implicit val catCodec   = deriveCodec[Cat]
-implicit val mouseCodec = deriveCodec[Mouse]
+implicit val dogCodec: Codec[Dog]     = deriveCodec[Dog]
+implicit val catCodec: Codec[Cat]     = deriveCodec[Cat]
+implicit val mouseCodec: Codec[Mouse] = deriveCodec[Mouse]
 
-implicit val animalCodec = deriveCodec[Animal]
+implicit val animalCodec: Codec[Animal] = deriveCodec[Animal]
 
 val cat   = Cat(8.5, &quot;grey&quot;, &quot;sofa&quot;)
 val dog   = Dog(2, &quot;Rex&quot;)
@@ -237,7 +237,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.7.2
+1.10.0
 </span>
 </div>
 </article>
@@ -279,7 +279,7 @@ Map-Based Codecs
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019-2021 Mathias Doenitz
+Copyright (C) 2019-2022 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

@@ -193,7 +193,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.7.2
+<i class="md-icon" title="Version">label_outline</i> 1.10.0
 </label>
 </li>
 </ul>
@@ -225,15 +225,14 @@ sirthias/borer/
 <p>In order to allow for seamless integration in all kinds of application environments <em>borer</em> abstracts over decoding input, encoding output as well as general &ldquo;chunks of bytes&rdquo; with three additional type classes <code>Input[T]</code>, <code>Output[T]</code> and <code>ByteAccess[T]</code>.</p>
 <h2><a href="#input" name="input" class="anchor"><span class="anchor-link"></span></a>Input</h2>
 <p>For decoding <em>borer</em> happily consumes any type for which an <code>Input.Provider[T]</code> is implicitly available, which is responsible for constructing an <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Input.scala">Input</a> from or around <code>T</code>:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Input.scala#L126-L134" target="_blank" title="Go to snippet source">source</a><code class="language-scala">/**
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Input.scala#L123-L130" target="_blank" title="Go to snippet source">source</a><code class="language-scala">/**
  * Responsible for converting an instance of [[T]]
  * to a respective [[Input]] instance.
  */
-trait Provider[T] {
+trait Provider[T]:
   type Bytes
   def byteAccess: ByteAccess[Bytes]
-  def apply(value: T): Input[Bytes]
-}</code></pre>
+  def apply(value: T): Input[Bytes]</code></pre>
 <p>Currently <em>borer</em> comes with predefined <code>Input</code> implementations for these types:</p>
 <ul>
   <li><code>Array[Byte]</code></li>
@@ -248,21 +247,19 @@ trait Provider[T] {
 <p>The <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Input.scala">Input</a> trait isn&rsquo;t particularly hard to implement, especially since it merely has to support single-pass access to the underlying bytes with minimal buffering and without random access.</p>
 <h2><a href="#output" name="output" class="anchor"><span class="anchor-link"></span></a>Output</h2>
 <p>On the encoding side <em>borer</em> can either produce any type <code>T</code> for which an <code>Output.ToTypeProvider[T]</code> is available, or &ldquo;push&rdquo; the output into a value of type <code>T</code> if an <code>Output.ToValueProvider[T]</code> is available:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Output.scala#L47-L62" target="_blank" title="Go to snippet source">source</a><code class="language-scala">/**
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Output.scala#L47-L60" target="_blank" title="Go to snippet source">source</a><code class="language-scala">/**
  * Responsible for providing an Output that produces instances of [[T]].
  */
-trait ToTypeProvider[T] {
+trait ToTypeProvider[T]:
   type Out &lt;: Output { type Result = T }
   def apply(bufferSize: Int, allowBufferCaching: Boolean): Out
-}
 
 /**
  * Responsible for providing an Output that outputs into the given value [[T]].
  */
-trait ToValueProvider[T] {
+trait ToValueProvider[T]:
   type Out &lt;: Output { type Result = T }
   def apply(value: T, bufferSize: Int, allowBufferCaching: Boolean): Out
-}
 </code></pre>
 <p>Currently <em>borer</em> comes with predefined <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Output.scala">Output</a> implementations for these types:</p>
 <ul>
@@ -275,7 +272,7 @@ trait ToValueProvider[T] {
 </ul>
 <p>The <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Output.scala">Output</a> trait isn&rsquo;t hard to implement as it simply writes out all bytes in a single pass.</p>
 <p>Here are a few examples to illustrate the top-level output API:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/OutputExamplesSpec.scala#L23-L37" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Cbor
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/OutputExamplesSpec.scala#L21-L35" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Cbor
 
 val value = List(&quot;foo&quot;, &quot;bar&quot;, &quot;baz&quot;) // example value
 
@@ -307,7 +304,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.7.2
+1.10.0
 </span>
 </div>
 </article>
@@ -349,7 +346,7 @@ JSON Specifics
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019-2021 Mathias Doenitz
+Copyright (C) 2019-2022 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

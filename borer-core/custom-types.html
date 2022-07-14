@@ -193,7 +193,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.7.2
+<i class="md-icon" title="Version">label_outline</i> 1.10.0
 </label>
 </li>
 </ul>
@@ -250,30 +250,32 @@ implicit def forOption[T: Codec]: Codec[Option[T]] = ...
 <p>The best way to concisely generate codecs for case classes is <em>borer</em>&rsquo;s <a href="../borer-derivation/index.html">Derivation</a> module.</p>
 <p>If for some reason you cannot or don&rsquo;t want to use macro-based codec derivation and array-based codecs are sufficient for you use case then there is a macro-less solution available with the <code>borer-core</code> alone:</p>
 <p>If <code>T</code> is a case class with at most 22 members then an <code>Encoder[T]</code> and/or <code>Decoder[T]</code> can be concisely provided by via the <code>unapply</code> / <code>apply</code> methods of the <code>T</code> companion object: </p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/CustomCodecsSpec.scala#L20-L31" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Codec, Decoder, Encoder}
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/CustomCodecsSpec.scala#L18-L29" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Codec, Decoder, Encoder}
 
 case class Color(name: String, value: Int)
 
-implicit val encoder = Encoder.from(Color.unapply _)
-implicit val decoder = Decoder.from(Color.apply _)
+implicit val encoder: Encoder[Color] = Encoder.forProduct[Color]
+implicit val decoder: Decoder[Color] = Decoder.forProduct[Color]
 
 // alternative: provide an Encoder and Decoder at the same time
-implicit val codec = Codec(
-  Encoder.from(Color.unapply _),
-  Decoder.from(Color.apply _)
+implicit val codec: Codec[Color] = Codec(
+  Encoder.forProduct[Color],
+  Decoder.forProduct[Color]
 )</code></pre>
 <p>The codecs created in this way always encode a case class instance to a single <a href="http://cbor.io/">CBOR</a>/<a href="http://json.org/">JSON</a> data item: an array with the length corresponding to the case classes arity and the member encodings forming the array elements.<br> There is one exception though: In order to increase encoding efficiency unary case classes, with only one parameter, have their single member written directly, without a wrapping single-element array.</p>
 <p>The encoding strategy is thus identical to the one produced by the macro-derived <a href="../borer-derivation/array-based.html">ArrayBasedCodecs</a>.</p>
 <p>If you would like your case classes to be encoded in a more JSON-esque way, as maps with each member being keyed by its member name, the <a href="../borer-derivation/map-based.html">MapBasedCodecs</a> from the <a href="../borer-derivation/index.html"><code>borer-derivation</code></a> module are your only option, short of <a href="custom-types.html#construction">Manual Construction</a>. </p>
 <h2><a href="#transforming-existing-encoders-decoders" name="transforming-existing-encoders-decoders" class="anchor"><span class="anchor-link"></span></a>Transforming Existing Encoders / Decoders</h2>
 <p>If your type can somehow be constructed from or deconstructed to another type that an Encoder or Decoder is already available for, you can rely on the <code>contramap</code> and <code>map</code> methods available on Encoders / Decoders:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/CustomCodecsSpec.scala#L44-L50" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Decoder, Encoder}
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/CustomCodecsSpec.scala#L42-L50" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Decoder, Encoder}
 
 class Person(val name: String)
 
 // have `Person` be encoded as a simple CBOR/JSON text data item
-implicit val personEncoder = Encoder.forString.contramap[Person](_.name)
-implicit val personDecoder = Decoder.forString.map(new Person(_))</code></pre>
+implicit val personEncoder: Encoder[Person] =
+  Encoder.forString.contramap[Person](_.name)
+implicit val personDecoder: Decoder[Person] =
+  Decoder.forString.map(new Person(_))</code></pre>
 <h2><a href="#construction" name="construction" class="anchor"><span class="anchor-link"></span></a>&ldquo;Manual&rdquo; Construction</h2>
 <p>For full flexibility of how your type <code>T</code> is to be encoded in <a href="http://cbor.io/">CBOR</a>/<a href="http://json.org/">JSON</a> you can of course also write the respective <code>Encoder[T]</code> / <code>Decoder[T]</code> manually. This is done by explicitly defining how your type is to be written to a <code>Writer</code> and read from a <code>Reader</code>:</p>
 <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/CustomCodecsSpec.scala#L63-L82" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Decoder, Encoder}
@@ -327,7 +329,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.7.2
+1.10.0
 </span>
 </div>
 </article>
@@ -369,7 +371,7 @@ Nullable and Default
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019-2021 Mathias Doenitz
+Copyright (C) 2019-2022 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

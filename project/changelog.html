@@ -184,7 +184,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.7.2
+<i class="md-icon" title="Version">label_outline</i> 1.10.0
 </label>
 </li>
 </ul>
@@ -197,7 +197,24 @@ sirthias/borer/
 <h1><a href="#changelog" name="changelog" class="anchor"><span class="anchor-link"></span></a>Changelog</h1>
 <p>This is the current <em>borer</em> <a href="https://github.com/sirthias/borer/tree/master/CHANGELOG">CHANGELOG</a>:</p>
 <br>
-<pre><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/CHANGELOG" target="_blank" title="Go to snippet source">source</a><code>Version 1.7.2 (2021-04-29)
+<pre><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/CHANGELOG" target="_blank" title="Go to snippet source">source</a><code>Version 1.10.0 (2022-07-14)
+--------------------------
+
+- Upgraded to Scala 3, dropped support for Scala 2.13
+  (use version 1.8.0 for Scala 2.13)
+- Added support for the new Scala enums
+
+
+Version 1.8.0 (2022-07-12)
+--------------------------
+
+- Implemented DOM rendering, improve DOM API (breaking)
+- Refactored Logging API and implementation for features and flexibility
+- Fixed StringNumbers, StringBooleans not working for boxed values (#567)
+- Enable StringNumber decoding also for BigInt and BigDecimal (#568)
+
+
+Version 1.7.2 (2021-04-29)
 --------------------------
 
 - fixed broken `Dom.MapElem.to[Map]` and `Dom.MapElem.toStringKeyed[Map]`
@@ -442,7 +459,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.7.2
+1.10.0
 </span>
 </div>
 </article>
@@ -484,7 +501,7 @@ References
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019-2021 Mathias Doenitz
+Copyright (C) 2019-2022 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

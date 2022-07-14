@@ -193,7 +193,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.7.2
+<i class="md-icon" title="Version">label_outline</i> 1.10.0
 </label>
 </li>
 </ul>
@@ -226,16 +226,17 @@ sirthias/borer/
 <h3><a href="#custom-overrides" name="custom-overrides" class="anchor"><span class="anchor-link"></span></a>Custom Overrides</h3>
 <p>Fully-automatic derivation of encoders/decoders for ADTs allows for providing custom codecs for a subsets of the type hierarchy. If an implicit typeclass for a certain sub-type is already available at the <code>deriveAll...</code> macro call site then this implicit will be used rather than a new (and potentially conflicting) one generated.</p>
 <p>Example:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L90-L94" target="_blank" title="Go to snippet source">source</a><code class="language-scala">sealed trait Animal
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L88-L92" target="_blank" title="Go to snippet source">source</a><code class="language-scala">sealed trait Animal
 case class Dog(age: Int, name: String)                      extends Animal
 case class Cat(weight: Double, color: String, home: String) extends Animal
 case class Fish(color: String)                              extends Animal
 case object Yeti                                            extends Animal</code></pre>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L155-L166" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Codec, Json}
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L153-L165" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Codec, Json}
 import io.bullet.borer.derivation.MapBasedCodecs._
 
 // custom codec only for `Fish`
-implicit val fishCodec = Codec.bimap[Int, Fish](_ =&gt; 0, _ =&gt; Fish(&quot;red&quot;))
+implicit val fishCodec: Codec[Fish] =
+  Codec.bimap[Int, Fish](_ =&gt; 0, _ =&gt; Fish(&quot;red&quot;))
 
 // let borer derive the codecs for the rest of the Animal ADT
 implicit val animalCodec = deriveAllCodecs[Animal]
@@ -248,30 +249,30 @@ Json.encode(animal).toUtf8String ==&gt; &quot;&quot;&quot;{&quot;Fish&quot;:0}&q
 <p>Sometimes the interplay of typeclasses and ADTs can become a bit confusing, especially when explicit upcasts are required.</p>
 <p>The important thing to remember is that <em>borer&rsquo;s</em> typeclasses (<code>Encoder[T]</code>, <code>Decoder[T]</code> and <code>Codec[T]</code>) are intentionally <strong>invariant</strong> in their type parameters. This means that they will only be found and used when the types match up exactly.</p>
 <p>With this ADT, for example:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L90-L94" target="_blank" title="Go to snippet source">source</a><code class="language-scala">sealed trait Animal
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L88-L92" target="_blank" title="Go to snippet source">source</a><code class="language-scala">sealed trait Animal
 case class Dog(age: Int, name: String)                      extends Animal
 case class Cat(weight: Double, color: String, home: String) extends Animal
 case class Fish(color: String)                              extends Animal
 case object Yeti                                            extends Animal</code></pre>
 <p>the following codec definition gives you an <code>Encoder[Animal]</code> and a <code>Decoder[Animal]</code>,<br>nothing more, nothing less:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L122-L124" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.derivation.MapBasedCodecs._
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L120-L122" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.derivation.MapBasedCodecs._
 
 implicit val animalCodec = deriveAllCodecs[Animal]</code></pre>
 <p>It does <strong>not</strong> give you an <code>Encoder[Dog]</code> or a <code>Decoder[Cat]</code>!<br> If you want codecs for specific ADT sub-types like <code>Dog</code> or <code>Cat</code> you need to define them in addition to the codec for the ADT super-type, e.g. like this:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L172-L176" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.derivation.MapBasedCodecs._
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L171-L175" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.derivation.MapBasedCodecs._
 
 implicit val dogCodec    = deriveCodec[Dog]
 implicit val catCodec    = deriveCodec[Cat]
 implicit val animalCodec = deriveAllCodecs[Animal]</code></pre>
 <p>An alternative would be to explicitly <em>upcast</em> a value of a more specific type to the ADT super type, e.g. like this:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L111-L116" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Json
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L109-L114" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Json
 
 val animal: Animal = Dog(2, &quot;Rex&quot;)
 
 // Json.encode(animal).toByteArray or
 Json.encode(animal).toUtf8String ==&gt; &quot;&quot;&quot;{&quot;Dog&quot;:{&quot;age&quot;:2,&quot;name&quot;:&quot;Rex&quot;}}&quot;&quot;&quot;</code></pre>
 <p>However, note that the encoding of a <code>Dog</code> as an <code>Animal</code> is not the same as the encoding of the <code>Dog</code> itself!! The former includes the wrapping layer with the type-id while the latter doesn&rsquo;t:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L181-L185" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Json
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L180-L184" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Json
 
 val dog = Dog(2, &quot;Rex&quot;)
 Json.encode(dog: Animal).toUtf8String ==&gt; &quot;&quot;&quot;{&quot;Dog&quot;:{&quot;age&quot;:2,&quot;name&quot;:&quot;Rex&quot;}}&quot;&quot;&quot;
@@ -280,7 +281,7 @@ Json.encode(dog        ).toUtf8String ==&gt; &quot;&quot;&quot;{&quot;age&quot;:
 <p>So, while explicit upcasts are sometimes what you want there are also cases where they are not what you want. The exact target types of your (de)serializations depends on your specific use case and, as such, should be chosen carefully.</p>
 <h3><a href="#recursive-adts" name="recursive-adts" class="anchor"><span class="anchor-link"></span></a>Recursive ADTs</h3>
 <p>In most cases the codecs for non-generic ADTs are assigned to an <code>implicit val</code> so they don&rsquo;t have to be recreated on every use. However, if the <code>ADT</code> is recursive the definition should be an <code>implicit lazy val</code> with an explicit type annotation instead, as in this example:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L224-L231" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Codec
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L223-L230" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Codec
 import io.bullet.borer.derivation.MapBasedCodecs._
 
 sealed trait TreeNode
@@ -296,7 +297,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.7.2
+1.10.0
 </span>
 </div>
 </article>
@@ -338,7 +339,7 @@ borer-compat-akka
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019-2021 Mathias Doenitz
+Copyright (C) 2019-2022 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

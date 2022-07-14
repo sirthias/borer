@@ -191,7 +191,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.7.2
+<i class="md-icon" title="Version">label_outline</i> 1.10.0
 </label>
 </li>
 </ul>
@@ -223,7 +223,7 @@ sirthias/borer/
 <dl>
   <dt>CBOR</dt>
   <dd>
-  <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DomSpec.scala#L21-L35" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Cbor
+  <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DomSpec.scala#L19-L33" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Cbor
 import io.bullet.borer.Dom._
 
 val dom = MapElem.Sized(
@@ -240,7 +240,7 @@ val decoded = Cbor.decode(encoded).to[Element].value
 decoded ==&gt; dom</code></pre></dd>
   <dt>JSON</dt>
   <dd>
-  <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DomSpec.scala#L42-L56" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Dom._
+  <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DomSpec.scala#L40-L54" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Dom._
 import io.bullet.borer.Json
 
 val dom = MapElem.Unsized(
@@ -258,7 +258,7 @@ decoded ==&gt; dom</code></pre></dd>
 </dl>
 <p>Any <a href="http://cbor.io/">CBOR</a> or <a href="http://json.org/">JSON</a> document can be deserialized into a <code>io.bullet.borer.Dom.Element</code>, which can then be queried or transformed in any way, and potentially written back to <a href="http://cbor.io/">CBOR</a> or <a href="http://json.org/">JSON</a>. Make sure to also look at <em>borer</em>&rsquo;s built-in support for efficient <a href="transcoding.html">transcoding</a> if that is something you are interested in.<br></p>
 <p>As such, the <em>borer</em> DOM can also be used to transform <a href="http://json.org/">JSON</a> to <a href="http://cbor.io/">CBOR</a>, e.g. like this:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DomSpec.scala#L62-L75" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Cbor, Json}
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DomSpec.scala#L60-L73" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Cbor, Json}
 import io.bullet.borer.Dom._
 
 import scala.util.Try
@@ -286,7 +286,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.7.2
+1.10.0
 </span>
 </div>
 </article>
@@ -328,7 +328,7 @@ Transcoding
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019-2021 Mathias Doenitz
+Copyright (C) 2019-2022 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>
