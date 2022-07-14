@@ -14,7 +14,8 @@ _borer_ comes with built-in encoding and decoding support for arbitrary combinat
 - `M[A, B] <: Map[A, B]`
 - `Iterator[T]`  (encoding only!)
 - `Either[A, B]` (with `import io.bullet.borer.Codec.ForEither.default`)
-- `Tuple1[A]` ... `Tuple22[A, B, ... V]`
+- `T <: Tuple`
+- `T <: scala.reflect.Enum`
 
 All these type are encoded to exactly one [CBOR] or [JSON] data item (which may of course be an array or map
 consisting of other, nested data items.)

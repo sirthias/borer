@@ -1,3 +1,11 @@
+Version 1.10.0 (2022-07-14)
+--------------------------
+
+- Upgraded to Scala 3, dropped support for Scala 2.13
+  (use version 1.8.0 for Scala 2.13)
+- Added support for the new Scala enums
+
+
 Version 1.8.0 (2022-07-12)
 --------------------------
 

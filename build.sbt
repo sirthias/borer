@@ -67,7 +67,6 @@ lazy val scalajsSettings = Seq(
 lazy val releaseSettings = {
   import ReleaseTransformations._
   Seq(
-    releaseCrossBuild := true,
     releaseProcess := Seq[ReleaseStep](
       checkSnapshotDependencies,
       inquireVersions,
@@ -293,7 +292,7 @@ lazy val site = project
       java.awt.Desktop.getDesktop.browse(new java.net.URI(uri))
       state
     },
-    Compile / paradox / version := "1.7.2",
+    Compile / paradox / version := "1.10.0",
     paradoxProperties ++= Map(
       "image.base_url" -> ".../assets/images",
       "github.base_url" -> {

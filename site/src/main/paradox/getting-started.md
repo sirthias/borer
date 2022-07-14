@@ -20,15 +20,19 @@ The artifacts for _borer_ live on Maven Central and can be tied into your projec
 
 
 @@dependency[sbt,Maven,Gradle] {
-  group="io.bullet" artifact="borer-core_2.13" version="$project.version$"
-  group2="io.bullet" artifact2="borer-derivation_2.13" version2="$project.version$"
-  group3="io.bullet" artifact3="borer-compat-akka_2.13" version3="$project.version$"
-  group3="io.bullet" artifact3="borer-compat-cats_2.13" version4="$project.version$"
-  group4="io.bullet" artifact4="borer-compat-circe_2.13" version5="$project.version$"
-  group5="io.bullet" artifact5="borer-compat-scodec_2.13" version6="$project.version$"
+  group="io.bullet" artifact="borer-core_3" version="$project.version$"
+  group2="io.bullet" artifact2="borer-derivation_3" version2="$project.version$"
+  group3="io.bullet" artifact3="borer-compat-akka_3" version3="$project.version$"
+  group3="io.bullet" artifact3="borer-compat-cats_3" version4="$project.version$"
+  group4="io.bullet" artifact4="borer-compat-circe_3" version5="$project.version$"
+  group5="io.bullet" artifact5="borer-compat-scodec_3" version6="$project.version$"
 }
 
-_borer_ is available for [Scala] 2.12 and 2.13 as well as [scala.js].
+_borer_ is available for [Scala] 3.x, both for the JVM as well as [scala.js].
+
+There is also a version for Scala 2.13, whose latest version number is 1.8.0.  
+Currently there is still feature parity between the Scala 3 and Scala 2.13 versions, but future development will
+focus on the newer Scala 3 code only.
 
   [Scala]: https://www.scala-lang.org/
   [scala.js]: https://www.scala-js.org/
