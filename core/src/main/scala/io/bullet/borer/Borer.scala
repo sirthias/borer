@@ -337,6 +337,14 @@ object Borer:
 
   sealed abstract class DecodingConfig extends Reader.Config
 
+  /**
+   * Enum Singleton Cases are encodec in the same way as [[Unit]] by default.
+   * By providing an [[Encoder[Borer.EnumSingleton]]]/[[Decoder[Borer.EnumSingleton]]] yourself
+   * you can override this behavior with your own logic.
+   */
+  opaque type EnumSingleton = Unit
+  val EnumSingleton: EnumSingleton = ()
+
   sealed abstract class Error[+IO](private var _io: IO @uncheckedVariance, msg: String, cause: Throwable = null)
       extends RuntimeException(msg, cause):
 

@@ -111,21 +111,20 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
 
   case class AdtTypeNode(tpe: TypeRepr, subs: List[AdtTypeNode]) extends WithAnnotations {
     @threadUnsafe lazy val name: String = {
-      val s                   = tpe.typeSymbol.name
-      def rec(c: Int): String = if (s.charAt(c - 1) == '$') rec(c - 1) else s.substring(0, c)
-      rec(s.length)
+      var s = tpe.show
+      s = s.substring(s.lastIndexOf('.') + 1)
+      s.indexOf('[') match
+        case -1 => s
+        case x  => s.substring(0, x)
     }
     def annotations: List[Term]                       = tpe.typeSymbol.annotations
     def containedIn(list: List[AdtTypeNode]): Boolean = list.exists(_ eq this)
+    def isEnum: Boolean                               = isRoot && tpe.typeSymbol.flags.is(Flags.Enum)
+    def isEnumSingletonCase: Boolean =
+      !isRoot && tpe.typeSymbol.flags.is(Flags.Enum | Flags.Abstract | Flags.Sealed)
     def isAbstract: Boolean =
-      tpe.classSymbol.fold(true) { sym =>
-        val flags = sym.flags
-        flags.is(Flags.Trait) || flags.is(Flags.Enum) || flags.is(Flags.Abstract) || flags.is(Flags.JavaDefined)
-      }
-
-    def allNodes: List[AdtTypeNode]                  = this :: allDescendants
-    def allDescendants: List[AdtTypeNode]            = subs.flatMap(_.allNodes)
-    def allNonAbstractDescendants: List[AdtTypeNode] = allDescendants.filterNot(_.isAbstract)
+      val flags = tpe.typeSymbol.flags
+      flags.is(Flags.Trait) || flags.is(Flags.Abstract) || flags.is(Flags.JavaDefined)
 
     def isRoot: Boolean = parent.isEmpty
 
@@ -155,14 +154,20 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   final def derive: Expr[F[T]] =
-    theT.dealias.widen match {
-      case x if x.typeSymbol.flags.is(Flags.Enum) || x.typeSymbol.flags.is(Flags.Module) =>
+    val widened = theT.dealias.widen
+    val flags   = widened.typeSymbol.flags
+    widened match {
+      case x if flags.is(Flags.Module) && flags.is(Flags.Case) =>
         deriveForCaseObject(if (x.isSingleton) x.termSymbol else x.typeSymbol.companionModule)
-      case x if x.typeSymbol.flags.is(Flags.Case) =>
+      case x if flags.is(Flags.Case) =>
         forCaseClass(x, x.classSymbol.getOrElse(fail(s"Cannot get classSymbol for `$theTname`")))
-      case x =>
+      case x if flags.is(Flags.Sealed) && (flags.is(Flags.Trait) || flags.is(Flags.Abstract)) =>
         def adtNode(tpe: TypeRepr): AdtTypeNode = AdtTypeNode(tpe, adtChildren(tpe).map(adtNode))
         deriveForSealedTrait(adtNode(x).initAllParentBacklinks(None))
+      case _ =>
+        fail(
+          s"Cannot derive ${Type.show[F[T]]}. Macro-based derivation only works for case objects, " +
+            s"case classes, sealed traits and sealed abstract classes.")
     }
 
   private def forCaseClass(tpe: TypeRepr, classSym: Symbol): Expr[F[T]] = {
@@ -208,7 +213,7 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
       self: Expr[DerivedAdtEncoder[T]],
       w: Expr[Writer],
       value: Expr[T])(using Quotes): Expr[Writer] = {
-    val flattened             = flattenedSubs[Encoder](rootNode, deepRecurse = false)
+    val flattened             = flattenedSubs[Encoder](rootNode, deepRecurse = false, includeEnumSingletonCases = false)
     val typeIdsAndNodesSorted = extractTypeIdsAndSort(rootNode, flattened)
 
     def rec(ix: Int): Expr[Writer] =
@@ -227,6 +232,8 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
             testType.asType match
               case '[b] => '{ if ($value.isInstanceOf[b]) $writeKeyed else ${ rec(ix + 1) } }
         }
+      } else if (rootNode.isEnum) {
+        '{ $self.writeAdtValue($w, $value.asInstanceOf[scala.reflect.Enum].productPrefix, Borer.EnumSingleton) }
       } else '{ throw new MatchError($value) }
 
     rec(0)
@@ -236,8 +243,8 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
 
   final def sealedTraitMethodBody(rootNode: AdtTypeNode): SealedTraitMethodBody =
     new SealedTraitMethodBody {
-      private val flattened          = flattenedSubs[Decoder](rootNode, deepRecurse = true)
-      private val abstracts          = flattened.collect { case (sub, _) if sub.isAbstract => sub }
+      private val flattened = flattenedSubs[Decoder](rootNode, deepRecurse = true, includeEnumSingletonCases = true)
+      private val abstracts = flattened.collect { case (sub, _) if sub.isAbstract => sub }
       private val typeIdsAndSubTypes = extractTypeIdsAndSort(rootNode, flattened)
 
       private def rec(
@@ -249,15 +256,25 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
           val mid           = (start + end) >> 1
           val (typeId, sub) = array(mid)
           val cmp           = comp(typeId)
-          val readTpe       = sub.nodePath().find(abstracts.contains).map(_.tpe) getOrElse sub.tpe
-          val readAdtVal = readTpe.asType match {
-            case '[a] =>
-              val decA =
-                Expr.summon[Decoder[a]].getOrElse(fail(s"Cannot find given Decoder[${Type.show[a]}]")) // TODO: cache!!!
-              typeId match
-                case x: Long   => '{ helpers.readAdtValue[T, a]($r, ${ Expr(x) }, $decA) }
-                case x: String => '{ helpers.readAdtValue[T, a]($r, ${ Expr(x) }, $decA) }
-          }
+          val readAdtVal =
+            if (sub.isEnumSingletonCase) {
+              val companion = rootNode.tpe.typeSymbol.companionModule
+              val enumRef = typeId match
+                case x: Long   => ???
+                case x: String => Select.unique(Ref(companion), x).asExprOf[T]
+              '{ $r.read[Borer.EnumSingleton](); $enumRef }
+            } else {
+              val readTpe = sub.nodePath().find(abstracts.contains).map(_.tpe) getOrElse sub.tpe
+              readTpe.asType match {
+                case '[a] =>
+                  val decA = Expr
+                    .summon[Decoder[a]]
+                    .getOrElse(fail(s"Cannot find given Decoder[${Type.show[a]}]")) // TODO: cache!!!
+                  typeId match
+                    case x: Long   => '{ helpers.readAdtValue[T, a]($r, ${ Expr(x) }, $decA) }
+                    case x: String => '{ helpers.readAdtValue[T, a]($r, ${ Expr(x) }, $decA) }
+              }
+            }
           if (start < mid)
             '{
               val c = $cmp
@@ -289,10 +306,12 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
   // The `deepRecurse` flag determines, whether to recurse into abstract sub-types whose flag is
   // `true` (deepRecurse == true) or not (deepRecurse == false).
   //
-  // Abstract sub-types whose flag is `true` are always returned (if reached during the tree walk)
-  // while abstract sub-types whose flag is `false` are never part of the result.
-  private def flattenedSubs[F[_]: Type](rootNode: AdtTypeNode, deepRecurse: Boolean)(
-      using Quotes): Array[(AdtTypeNode, Boolean)] = {
+  // Abstract sub-types whose flag is `true` are themselves always returned (if reached during the tree walk)
+  // while abstract sub-types whose flag is `false` are themselves never part of the result.
+  private def flattenedSubs[F[_]: Type](
+      rootNode: AdtTypeNode,
+      deepRecurse: Boolean,
+      includeEnumSingletonCases: Boolean)(using Quotes): Array[(AdtTypeNode, Boolean)] = {
     val buf = new ArrayBuffer[(AdtTypeNode, Boolean)]
     @tailrec def rec(remaining: List[AdtTypeNode]): Array[(AdtTypeNode, Boolean)] =
       remaining match {
@@ -302,7 +321,10 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
               val implicitAvailable = Expr.summon[F[t]].isDefined
               def appendHead()      = if (!buf.exists(_._1.tpe =:= head.tpe)) buf += head -> implicitAvailable
               rec {
-                if (head.isAbstract) {
+                if (head.isEnumSingletonCase) {
+                  if (includeEnumSingletonCases) appendHead()
+                  tail
+                } else if (head.isAbstract) {
                   if (implicitAvailable) {
                     appendHead()
                     if (deepRecurse) head.subs ::: tail else tail
@@ -408,86 +430,13 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
       case '[EmptyTuple] => Nil
       case '[t *: ts]    => TypeRepr.of[t] :: typeReprsOf[ts]
 
-  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  /// copied verbatim from jsoniter-scala by @plokhotnyuk
-  /// https://github.com/plokhotnyuk/jsoniter-scala/blob/a9653be18c5ee77c95c763c896316c21d63323ef/jsoniter-scala-macros/shared/src/main/scala-3/com/github/plokhotnyuk/jsoniter_scala/macros/JsonCodecMaker.scala#L600-L662
-  /// TODO: replace after https://github.com/lampepfl/dotty/issues/15159 is resolved
-  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   private def adtChildren(tpe: TypeRepr): List[TypeRepr] =
-    def resolveParentTypeArg(
-        child: Symbol,
-        fromNudeChildTarg: TypeRepr,
-        parentTarg: TypeRepr,
-        binding: Map[String, TypeRepr]): Map[String, TypeRepr] =
-      if (fromNudeChildTarg.typeSymbol.isTypeParam) { // todo: check for paramRef instead ?
-        val paramName = fromNudeChildTarg.typeSymbol.name
-        binding.get(paramName) match
-          case None => binding.updated(paramName, parentTarg)
-          case Some(oldBinding) =>
-            if (oldBinding =:= parentTarg) binding
-            else
-              fail(
-                s"Type parameter $paramName in class ${child.name} appeared in the constructor of " +
-                  s"${tpe.show} two times differently, with ${oldBinding.show} and ${parentTarg.show}")
-      } else if (fromNudeChildTarg <:< parentTarg)
-        binding // TODO: assupe parentTag is covariant, get covariance from tycon type parameters.
-      else {
-        (fromNudeChildTarg, parentTarg) match
-          case (AppliedType(ctycon, ctargs), AppliedType(ptycon, ptargs)) =>
-            ctargs.zip(ptargs).foldLeft(resolveParentTypeArg(child, ctycon, ptycon, binding)) { (b, e) =>
-              resolveParentTypeArg(child, e._1, e._2, b)
-            }
-          case _ =>
-            fail(
-              s"Failed unification of type parameters of ${tpe.show} from child $child - " +
-                s"${fromNudeChildTarg.show} and ${parentTarg.show}")
-      }
-
-    def resolveParentTypeArgs(
-        child: Symbol,
-        nudeChildParentTags: List[TypeRepr],
-        parentTags: List[TypeRepr],
-        binding: Map[String, TypeRepr]): Map[String, TypeRepr] =
-      nudeChildParentTags.zip(parentTags).foldLeft(binding)((s, e) => resolveParentTypeArg(child, e._1, e._2, s))
-
-    tpe.typeSymbol.children.map { sym =>
-      if (sym.isType) {
-        if (sym.name == "<local child>") // problem - we have no other way to find this other return the name
-          fail(
-            s"Local child symbols are not supported, please consider change '${tpe.show}' or implement a " +
-              "custom implicitly accessible codec")
-        val nudeSubtype      = TypeIdent(sym).tpe
-        val tpeArgsFromChild = typeArgs(nudeSubtype.baseType(tpe.typeSymbol))
-        nudeSubtype.memberType(sym.primaryConstructor) match
-          case MethodType(_, _, resTp) => resTp
-          case PolyType(names, bounds, resPolyTp) =>
-            val targs     = typeArgs(tpe)
-            val tpBinding = resolveParentTypeArgs(sym, tpeArgsFromChild, targs, Map.empty)
-            val ctArgs = names.map { name =>
-              tpBinding
-                .get(name)
-                .getOrElse(fail(s"Type parameter $name of $sym can't be deduced from type arguments of " +
-                  s"${tpe.show}. Please provide a custom implicitly accessible codec for if"))
-            }
-            val polyRes = resPolyTp match
-              case MethodType(_, _, resTp) => resTp
-              case other                   => other // hope we have no multiple typed param lists yet.
-            if (ctArgs.isEmpty) polyRes
-            else
-              polyRes match
-                case AppliedType(base, _)                       => base.appliedTo(ctArgs)
-                case AnnotatedType(AppliedType(base, _), annot) => AnnotatedType(base.appliedTo(ctArgs), annot)
-                case _                                          => polyRes.appliedTo(ctArgs)
-          case other => fail(s"Primary constructior for ${tpe.show} is not MethodType or PolyType but $other")
-      } else if (sym.isTerm) Ref(sym).tpe
-      else
-        fail(
-          "Only Scala classes & objects are supported for ADT leaf classes. Please consider using of " +
-            s"them for ADT with base '${tpe.show}' or provide a custom implicitly accessible codec for the ADT base. " +
-            s"Failed symbol: $sym (fullName=${sym.fullName})\n")
-    }
-
-  end adtChildren
+    tpe.asType match
+      case '[t] =>
+        Expr.summon[Mirror.Of[t]].toList.flatMap {
+          case '{ $m: Mirror.SumOf[t] { type MirroredElemTypes = subs } } => typeReprsOf[subs]
+          case x                                                          => Nil
+        }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

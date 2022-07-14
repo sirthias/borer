@@ -19,6 +19,8 @@ import java.lang.{
 import java.math.{BigDecimal as JBigDecimal, BigInteger as JBigInteger}
 import io.bullet.borer.encodings.BaseEncoding
 import io.bullet.borer.internal.Util
+import io.bullet.borer.Borer.EnumSingleton
+import io.bullet.borer.Encoder.forUnit
 
 import scala.annotation.{tailrec, threadUnsafe}
 import scala.collection.immutable.{HashMap, ListMap, TreeMap}
@@ -106,6 +108,7 @@ object Decoder extends LowPrioDecoders:
   implicit val forUnit: Decoder[Unit] = Decoder { r =>
     if (r.readInt() != 0) r.unexpectedDataItem(expected = "integer value zero")
   }
+  implicit val forEnumSingleton: Decoder[EnumSingleton] = forUnit.asInstanceOf[Decoder[EnumSingleton]]
 
   implicit val forByteArrayDefault: Decoder[Array[Byte]] = forByteArray(BaseEncoding.base64)
 
