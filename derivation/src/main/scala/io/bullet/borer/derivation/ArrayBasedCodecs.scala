@@ -259,12 +259,32 @@ object ArrayBasedCodecs extends DerivationApi {
                 _.filter(_._1.isInstanceOf[String]),
                 tid => '{ $typeId.compareTo(${ Expr(tid.asInstanceOf[String]) }) })
 
+            def readWithEnvelope(self: Expr[DerivedAdtDecoder[T]], r: Expr[Reader])(using Quotes): Expr[T] =
+              val res0: Expr[T] = '{ $r.readArrayClose($r.readArrayOpen(2), ${ read0(self, r) }) }
+              val res1: Expr[T] =
+                if (rootNode.isEnum && rootNode.subs.exists(x => x.isEnumSingletonCase && x.key.isInstanceOf[String])) {
+                  val readStringSingleton = methodBody.derive(
+                    self,
+                    r,
+                    _.filter((tid, n) => tid.isInstanceOf[String] && n.isEnumSingletonCase),
+                    tid => '{ $r.tryReadStringCompare(${ Expr(tid.asInstanceOf[String]) }) })
+                  '{ if ($r.hasString) $readStringSingleton else $res0 }
+                } else res0
+              if (rootNode.isEnum && rootNode.subs.exists(x => x.isEnumSingletonCase && x.key.isInstanceOf[Long])) {
+                val readLongSingleton = methodBody.derive(
+                  self,
+                  r,
+                  _.filter((tid, n) => tid.isInstanceOf[Long] && n.isEnumSingletonCase),
+                  tid => '{ $r.tryReadLongCompare(${ Expr(tid.asInstanceOf[Long]) }) })
+                '{ if ($r.hasLong) $readLongSingleton else $res1 }
+              } else res1
+
             '{
               new ArrayBasedAdtDecoder[T]:
 
                 def read(r: Reader): T =
                   val self = this // work around for compiler crash (AssertionError) during macro expansion
-                  r.readArrayClose(r.readArrayOpen(2), ${ read0('self, 'r) })
+                  ${ readWithEnvelope('self, 'r) }
 
                 def read(r: Reader, typeId: Long): T =
                   val self = this // work around for compiler crash (AssertionError) during macro expansion

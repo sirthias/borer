@@ -71,7 +71,7 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
     def name: String
     def annotations: List[Term]
 
-    def key: String | Long = {
+    lazy val key: String | Long = {
       val keys: List[String | Long] = annotations.filter(_.tpe <:< keyAnno).flatMap {
         case Apply(_, List(Literal(StringConstant(x)))) => Some(x)
         case Apply(_, List(Literal(LongConstant(x))))   => Some(x)
@@ -135,6 +135,10 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
 
     def nodePath(suffix: List[AdtTypeNode] = Nil): List[AdtTypeNode] =
       if (isRoot) suffix else parent.get.nodePath(this :: suffix)
+
+    def enumRef(rootNode: AdtTypeNode): Expr[T] =
+      val companion = rootNode.tpe.typeSymbol.companionModule
+      Select.unique(Ref(companion), name).asExprOf[T]
 
     /////////////////// internal ////////////////////
 
@@ -218,27 +222,34 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
       self: Expr[DerivedAdtEncoder[T]],
       w: Expr[Writer],
       value: Expr[T])(using Quotes): Expr[Writer] = {
-    val flattened             = flattenedSubs[Encoder](rootNode, deepRecurse = false, includeEnumSingletonCases = false)
+    val flattened             = flattenedSubs[Encoder](rootNode, deepRecurse = false, includeEnumSingletonCases = true)
     val typeIdsAndNodesSorted = extractTypeIdsAndSort(rootNode, flattened)
 
     def rec(ix: Int): Expr[Writer] =
       if (ix < typeIdsAndNodesSorted.length) {
         val (typeId, sub) = typeIdsAndNodesSorted(ix)
-        val testType = sub.tpe match
-          case AppliedType(x, _) => x
-          case x                 => x
-        sub.tpe.asType match {
-          case '[a] =>
-            val valueAsA = '{ $value.asInstanceOf[a] }
-            val encA     = Expr.summon[Encoder[a]].getOrElse(fail(s"Cannot find given Encoder[${Type.show[a]}]"))
-            val writeKeyed = typeId match
-              case x: Long   => '{ $self.writeAdtValue[a]($w, ${ Expr(x) }, $valueAsA)(using $encA) }
-              case x: String => '{ $self.writeAdtValue[a]($w, ${ Expr(x) }, $valueAsA)(using $encA) }
-            testType.asType match
-              case '[b] => '{ if ($value.isInstanceOf[b]) $writeKeyed else ${ rec(ix + 1) } }
+        if (sub.isEnumSingletonCase) {
+          val enumRef = sub.enumRef(rootNode).asExprOf[AnyRef]
+          val writeTypeId = typeId match
+            case x: Long   => '{ $w.writeLong(${ Expr(x) }) }
+            case x: String => '{ $w.writeString(${ Expr(x) }) }
+          '{ if ($value.asInstanceOf[AnyRef] eq $enumRef) $writeTypeId else ${ rec(ix + 1) } }
+        } else {
+          val testType = sub.tpe match
+            case AppliedType(x, _) => x
+            case x                 => x
+          sub.tpe.asType match {
+            case '[a] =>
+              val valueAsA = '{ $value.asInstanceOf[a] }
+              val encA     = Expr.summon[Encoder[a]].getOrElse(fail(s"Cannot find given Encoder[${Type.show[a]}]"))
+              val writeKeyed = typeId match
+                case x: Long => '{ $self.writeAdtValue[a]($w, ${ Expr(x) }, $valueAsA)(using $encA) }
+                case x: String =>
+                  '{ $self.writeAdtValue[a]($w, ${ Expr(x) }, $valueAsA)(using $encA) }
+              testType.asType match
+                case '[b] => '{ if ($value.isInstanceOf[b]) $writeKeyed else ${ rec(ix + 1) } }
+          }
         }
-      } else if (rootNode.isEnum) {
-        '{ $self.writeAdtValue($w, $value.asInstanceOf[scala.reflect.Enum].productPrefix, Borer.EnumSingleton) }
       } else '{ throw new MatchError($value) }
 
     rec(0)
@@ -262,13 +273,8 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
           val (typeId, sub) = array(mid)
           val cmp           = comp(typeId)
           val readAdtVal =
-            if (sub.isEnumSingletonCase) {
-              val companion = rootNode.tpe.typeSymbol.companionModule
-              val enumRef = typeId match
-                case x: Long   => ???
-                case x: String => Select.unique(Ref(companion), x).asExprOf[T]
-              '{ $r.read[Borer.EnumSingleton](); $enumRef }
-            } else {
+            if (sub.isEnumSingletonCase) sub.enumRef(rootNode)
+            else {
               val readTpe = sub.nodePath().find(abstracts.contains).map(_.tpe) getOrElse sub.tpe
               readTpe.asType match {
                 case '[a] =>

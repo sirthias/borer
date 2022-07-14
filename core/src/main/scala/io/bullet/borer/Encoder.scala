@@ -19,7 +19,6 @@ import java.lang.{
 import java.math.{BigDecimal as JBigDecimal, BigInteger as JBigInteger}
 import io.bullet.borer.encodings.BaseEncoding
 import io.bullet.borer.internal.{ElementDeque, Util}
-import io.bullet.borer.Borer.EnumSingleton
 
 import scala.annotation.{tailrec, threadUnsafe}
 import scala.collection.LinearSeq
@@ -133,8 +132,7 @@ object Encoder extends LowPrioEncoders:
   implicit def forBoxedFloat: Encoder[JFloat]     = forFloat.asInstanceOf[Encoder[JFloat]]
   implicit def forBoxedDouble: Encoder[JDouble]   = forDouble.asInstanceOf[Encoder[JDouble]]
 
-  implicit val forUnit: Encoder[Unit]                   = Encoder((w, _) => w.writeInt(0))
-  implicit val forEnumSingleton: Encoder[EnumSingleton] = forUnit.asInstanceOf[Encoder[EnumSingleton]]
+  implicit val forUnit: Encoder[Unit] = Encoder((w, _) => w.writeInt(0))
 
   implicit val forByteArrayDefault: Encoder[Array[Byte]] = forByteArray(BaseEncoding.base64)
 

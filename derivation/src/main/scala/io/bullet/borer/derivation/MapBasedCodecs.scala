@@ -488,7 +488,7 @@ object MapBasedCodecs extends DerivationApi {
               methodBody.derive(
                 self,
                 r,
-                identity,
+                _.filter((_, n) => !n.isEnumSingletonCase),
                 {
                   case x: Long   => '{ $r.tryReadLongCompare(${ Expr(x) }) }
                   case x: String => '{ $r.tryReadStringCompare(${ Expr(x) }) }
@@ -499,26 +499,53 @@ object MapBasedCodecs extends DerivationApi {
               methodBody.derive(
                 self,
                 r,
-                _.filter(_._1.isInstanceOf[Long]),
+                _.filter((tid, n) => tid.isInstanceOf[Long] && !n.isEnumSingletonCase),
                 tid => '{ longCompare($typeId, ${ Expr(tid.asInstanceOf[Long]) }) })
 
             def read2(self: Expr[DerivedAdtDecoder[T]], r: Expr[Reader], typeId: Expr[String])(using Quotes) =
               methodBody.derive(
                 self,
                 r,
-                _.filter(_._1.isInstanceOf[String]),
+                _.filter((tid, n) => tid.isInstanceOf[String] && !n.isEnumSingletonCase),
                 tid => '{ $typeId.compareTo(${ Expr(tid.asInstanceOf[String]) }) })
+
+            def readWithEnvelope(
+                self: Expr[DerivedAdtDecoder[T]],
+                r: Expr[Reader],
+                strategy: Expr[AdtEncodingStrategy])(using Quotes): Expr[T] =
+              val rootName = Expr(rootNode.name)
+              val res0: Expr[T] =
+                '{
+                  val opening = $strategy.readAdtEnvelopeOpen($r, $rootName)
+                  val result  = ${ read0(self, r) }
+                  $strategy.readAdtEnvelopeClose($r, opening, $rootName)
+                  result
+                }
+              val res1: Expr[T] =
+                if (rootNode.isEnum && rootNode.subs.exists(x => x.isEnumSingletonCase && x.key.isInstanceOf[String])) {
+                  val readStringSingleton = methodBody.derive(
+                    self,
+                    r,
+                    _.filter((tid, n) => tid.isInstanceOf[String] && n.isEnumSingletonCase),
+                    tid => '{ $r.tryReadStringCompare(${ Expr(tid.asInstanceOf[String]) }) })
+                  '{ if ($r.hasString) $readStringSingleton else $res0 }
+                } else res0
+              if (rootNode.isEnum && rootNode.subs.exists(x => x.isEnumSingletonCase && x.key.isInstanceOf[Long])) {
+                val readLongSingleton = methodBody.derive(
+                  self,
+                  r,
+                  _.filter((tid, n) => tid.isInstanceOf[Long] && n.isEnumSingletonCase),
+                  tid => '{ $r.tryReadLongCompare(${ Expr(tid.asInstanceOf[Long]) }) })
+                '{ if ($r.hasLong) $readLongSingleton else $res1 }
+              } else res1
 
             '{
               new MapBasedAdtDecoder[T]:
                 private val strategy = summonInline[AdtEncodingStrategy]
 
                 def read(r: Reader): T =
-                  val self    = this // work around for compiler crash (AssertionError) during macro expansion
-                  val opening = strategy.readAdtEnvelopeOpen(r, ${ Expr(rootNode.name) })
-                  val result  = ${ read0('self, 'r) }
-                  strategy.readAdtEnvelopeClose(r, opening, ${ Expr(rootNode.name) })
-                  result
+                  val self = this // work around for compiler crash (AssertionError) during macro expansion
+                  ${ readWithEnvelope('self, 'r, 'strategy) }
 
                 def read(r: Reader, typeId: Long): T =
                   val self = this // work around for compiler crash (AssertionError) during macro expansion

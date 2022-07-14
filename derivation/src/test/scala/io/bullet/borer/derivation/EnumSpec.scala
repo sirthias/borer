@@ -26,9 +26,9 @@ class EnumSpec extends AbstractBorerSpec {
   test("Enum") {
     given Codec[Body] = MapBasedCodecs.deriveAllCodecs[Body]
 
-    roundTrip("""{"Earth":0}""", Body.Earth: Body)
-    roundTrip("""{"Moon":0}""", Body.Moon: Body)
+    roundTrip(""""Earth"""", Body.Earth: Body)
+    roundTrip(""""Moon"""", Body.Moon: Body)
     roundTrip("""{"Asteroid":{"mass":18.3}}""", Body.Asteroid(18.3): Body)
-    roundTrip("""{"Sun":0}""", Body.Sun: Body)
+    roundTrip(""""Sun"""", Body.Sun: Body)
   }
 }
