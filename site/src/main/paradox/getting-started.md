@@ -28,11 +28,11 @@ The artifacts for _borer_ live on Maven Central and can be tied into your projec
   group5="io.bullet" artifact5="borer-compat-scodec_3" version6="$project.version$"
 }
 
-_borer_ is available for [Scala] 3.x, both for the JVM as well as [scala.js].
+The current _borer_ is available for [Scala] 3.x only, both for the JVM as well as [scala.js].
 
-There is also a version for Scala 2.13, whose latest version number is 1.8.0.  
-Currently there is still feature parity between the Scala 3 and Scala 2.13 versions, but future development will
-focus on the newer Scala 3 code only.
+The latest version supporting Scala 2.13 is `1.8.0`.  
+The latest version supporting Scala 2.12 is `1.6.3`.
+
 
   [Scala]: https://www.scala-lang.org/
   [scala.js]: https://www.scala-js.org/
