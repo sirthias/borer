@@ -1,5 +1,11 @@
+Version 1.10.1 (2022-07-43)
+---------------------------
+
+- Changed to Java-8-compatible build
+
+
 Version 1.10.0 (2022-07-14)
---------------------------
+---------------------------
 
 - Upgraded to Scala 3, dropped support for Scala 2.13
   (use version 1.8.0 for Scala 2.13)
