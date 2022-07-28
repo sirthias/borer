@@ -1,0 +1,69 @@
+name: CI
+
+env:
+  JDK_JAVA_OPTIONS: -XX:+PrintCommandLineFlags # JDK_JAVA_OPTIONS is _the_ env. variable to use for modern Java
+  JVM_OPTS: -XX:+PrintCommandLineFlags # for Java 8 only (sadly, it is not modern enough for JDK_JAVA_OPTIONS)
+
+on:
+  pull_request:
+  push:
+    branches: ['master']
+  release:
+    types:
+      - published
+
+jobs:
+  lint:
+    runs-on: ubuntu-20.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v2.4.0
+        with:
+          fetch-depth: 0
+      - name: Setup Java
+        uses: actions/setup-java@v3.4.1
+        with:
+          distribution: corretto
+          java-version: 17
+          check-latest: true
+      - name: Cache scala dependencies
+        uses: coursier/cache-action@v6
+      - name: Lint code
+        run: sbt ++3.1.3 check
+
+  test:
+    runs-on: ubuntu-20.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['8', '11', '17']
+        scala: ['3.1.3']
+        platform: ['JVM', 'JS']
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v2.4.0
+        with:
+          fetch-depth: 0
+      - name: Setup Java
+        uses: actions/setup-java@v3.4.1
+        with:
+          distribution: corretto
+          java-version: ${{ matrix.java }}
+          check-latest: true
+      - name: Cache scala dependencies
+        uses: coursier/cache-action@v6
+      - name: Run tests
+        if: ${{ !startsWith(matrix.scala, '3.1.') }}
+        run: sbt ++${{ matrix.scala }}! test${{ matrix.platform }}
+      - name: Run dotty tests
+        if: ${{ startsWith(matrix.scala, '3.1.') && matrix.platform == 'JVM' }}
+        run: sbt ++${{ matrix.scala }}! testJVM
+
+  ci:
+    runs-on: ubuntu-20.04
+    needs: [lint, test]
+    steps:
+      - name: Aggregate of lint, and all tests
+        run: echo "ci passed"

@@ -26,7 +26,7 @@ object Analysis {
         Score(libary, method, param, score)
       }
 
-    def showResults(method: String) {
+    def showResults(method: String) = {
       def perf(library: String): Map[String, Double] =
         results.filter(x => x.library == library && x.method == method).map(x => x.param -> x.score).toMap
 
