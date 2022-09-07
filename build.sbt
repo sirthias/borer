@@ -104,7 +104,7 @@ lazy val releaseSettings = {
 // format: OFF
 val `akka-actor`        = Def.setting("com.typesafe.akka"       %%  "akka-actor-typed"        % "2.6.19")
 val `akka-stream`       = Def.setting("com.typesafe.akka"       %%  "akka-stream"             % "2.6.19")
-val `akka-http`         = Def.setting("com.typesafe.akka"       %%  "akka-http"               % "10.2.9")
+val `akka-http`         = Def.setting("com.typesafe.akka"       %%  "akka-http"               % "10.2.10")
 val `cats-core`         = Def.setting("org.typelevel"           %%% "cats-core"               % "2.8.0")
 val `circe-core`        = Def.setting("io.circe"                %%% "circe-core"              % "0.14.2")
 val `circe-parser`      = Def.setting("io.circe"                %%% "circe-parser"            % "0.14.2")
