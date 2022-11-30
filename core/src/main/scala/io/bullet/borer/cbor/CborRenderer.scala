@@ -109,7 +109,7 @@ final private[borer] class CborRenderer(var out: Output) extends Renderer:
        } else out.writeAsByte(0x18 + majorType)
      } else {
        v += majorType; out
-     }) .writeByte(v.toByte)
+     }).writeByte(v.toByte)
 
 object CborRenderer extends (Output => CborRenderer):
   def apply(out: Output) = new CborRenderer(out)
