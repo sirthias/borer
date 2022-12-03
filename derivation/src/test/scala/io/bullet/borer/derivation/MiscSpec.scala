@@ -162,4 +162,17 @@ class MiscSpec extends AbstractBorerSpec {
       |    1| }
       |""".stripMargin
   }
+
+  test("Extra members") {
+    sealed trait Base
+    case class A(x: Int) extends Base
+    case class B()       extends Base
+    case object C        extends Base
+
+    implicit val baseCodecs: Decoder[Base] = MapBasedCodecs.deriveAllDecoders
+
+    verifyDecoding[Base]("""{"A":{"x":100, "extra": "should be ignored"}}""", A(100))
+    verifyDecoding[Base]("""{"B":{"extra": "should be ignored"}}""", B())
+    verifyDecoding[Base]("""{"C":{"extra": "should be ignored"}}""", C)
+  }
 }

@@ -246,7 +246,12 @@ object MapBasedCodecs extends DerivationApi {
         new Deriver[Decoder, T, quotes.type]:
 
           def deriveForCaseObject(moduleTermSymbol: Symbol): Expr[Decoder[T]] =
-            '{ Decoder[T](r => r.readMapClose(r.readMapOpen(0), ${ Ref(moduleTermSymbol).asExprOf[T] })) }
+            '{
+              Decoder[T] { r =>
+                if (r.readMapOpen(0)) while (!r.tryReadBreak()) r.skipElement()
+                ${ Ref(moduleTermSymbol).asExprOf[T] }
+              }
+            }
 
           def deriveForCaseClass(
               tpe: TypeRepr,
@@ -443,7 +448,7 @@ object MapBasedCodecs extends DerivationApi {
                     else fail("Case classes mit > 128 fields are not supported")
                   } else
                     '{
-                      if (count < 0) $r.readBreak()
+                      if (count < 0) while (! $r.tryReadBreak()) $r.skipElement()
                       ${ companionApply(companion, typeArgs(tpe), Nil).asExprOf[T] }
                     }
                 }
