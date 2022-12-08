@@ -13,12 +13,11 @@ import java.nio.ByteOrder
 import java.security.PrivilegedExceptionAction
 import sun.misc.{Unsafe => SMUnsafe}
 
-import scala.annotation.{nowarn, tailrec}
+import scala.annotation.tailrec
 import scala.util.control.NonFatal
 
 object Unsafe {
 
-  @nowarn
   final val UNSAFE: SMUnsafe = {
     try {
       SMUnsafe.getUnsafe

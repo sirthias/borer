@@ -1,7 +1,7 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import sbt._
 
-def scala213 = "2.13.8"
+def scala213 = "2.13.10"
 
 inThisBuild(
   List(
@@ -29,14 +29,15 @@ lazy val commonSettings = Seq(
     "-feature",
     "-unchecked",
     "-language:_",
-    "-target:jvm-1.8",
+    "-release:9",
+    //"-Wnonunit-statement",
     "-Xlint:_,-missing-interpolator",
+    "-Xfatal-warnings",
     "-Ywarn-dead-code",
     "-Ywarn-numeric-widen",
     "-Ybackend-parallelism", "8",
     "-Ywarn-unused:imports,-patvars,-privates,-locals,-implicits,-explicits",
     "-Ycache-macro-class-loader:last-modified",
-    "-Xfatal-warnings",
     "-Vimplicits",
     "-Vtype-diffs",
   ),
@@ -90,15 +91,15 @@ lazy val releaseSettings = {
 /////////////////////// DEPENDENCIES /////////////////////////
 
 // format: OFF
-val `akka-actor`        = Def.setting("com.typesafe.akka"       %%  "akka-actor-typed"        % "2.6.19")
-val `akka-stream`       = Def.setting("com.typesafe.akka"       %%  "akka-stream"             % "2.6.19")
-val `akka-http`         = Def.setting("com.typesafe.akka"       %%  "akka-http"               % "10.2.9")
-val `cats-core`         = Def.setting("org.typelevel"           %%% "cats-core"               % "2.8.0")
-val `circe-core`        = Def.setting("io.circe"                %%% "circe-core"              % "0.14.2")
-val `circe-parser`      = Def.setting("io.circe"                %%% "circe-parser"            % "0.14.2")
+val `akka-actor`        = Def.setting("com.typesafe.akka"       %%  "akka-actor-typed"        % "2.6.20")
+val `akka-stream`       = Def.setting("com.typesafe.akka"       %%  "akka-stream"             % "2.6.20")
+val `akka-http`         = Def.setting("com.typesafe.akka"       %%  "akka-http"               % "10.4.0")
+val `cats-core`         = Def.setting("org.typelevel"           %%% "cats-core"               % "2.9.0")
+val `circe-core`        = Def.setting("io.circe"                %%% "circe-core"              % "0.13.0")
+val `circe-parser`      = Def.setting("io.circe"                %%% "circe-parser"            % "0.13.0")
 val `circe-derivation`  = Def.setting("io.circe"                %%% "circe-derivation"        % "0.13.0-M5")
 val `scodec-bits`       = Def.setting("org.scodec"              %%% "scodec-bits"             % "1.1.34")
-val utest               = Def.setting("com.lihaoyi"             %%% "utest"                   % "0.8.0" % Test)
+val utest               = Def.setting("com.lihaoyi"             %%% "utest"                   % "0.8.1" % Test)
 val munit               = Def.setting("org.scalameta"           %%% "munit"                   % "0.7.29" % Test)
 val macrolizer          = Def.setting("io.bullet"               %%% "macrolizer"              % "0.6.2" % "compile-internal, test-internal")
 val `scala-compiler`    = Def.setting("org.scala-lang"          %   "scala-compiler" % scalaVersion.value % "provided")
@@ -258,10 +259,10 @@ lazy val benchmarks = project
   .settings(
     publish / skip := true,
     libraryDependencies ++= Seq(
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"        % "2.13.35",
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros"      % "2.13.35" % Provided,
-      "com.fasterxml.jackson.module"          %% "jackson-module-scala"       % "2.13.2",
-      "com.fasterxml.jackson.module"           % "jackson-module-afterburner" % "2.13.2",
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"        % "2.19.0",
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros"      % "2.19.0" % Provided,
+      "com.fasterxml.jackson.module"          %% "jackson-module-scala"       % "2.14.1",
+      "com.fasterxml.jackson.module"           % "jackson-module-afterburner" % "2.14.1",
       "com.lihaoyi"                           %% "upickle"                    % "1.6.0",
       "io.spray"                              %% "spray-json"                 % "1.3.6",
       `circe-core`.value,
