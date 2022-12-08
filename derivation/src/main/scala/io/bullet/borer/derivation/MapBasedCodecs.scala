@@ -142,7 +142,7 @@ object MapBasedCodecs {
               q"private[this] val ${encName(p)} = $fieldEncWithDefault"
             }
             val nonBasicDefaultValues = nonBasicParams.flatMap { p =>
-              p.defaultValueMethod.map(defaultValue => q"val ${encName(p, "d")} = $defaultValue")
+              p.defaultValueMethod.map(defaultValue => q"private[this] val ${encName(p, "d")} = $defaultValue")
             }
             val basicFieldOutputFlags = basicParams.flatMap { p =>
               p.defaultValueMethod.map { defaultValue =>
@@ -169,8 +169,9 @@ object MapBasedCodecs {
               val method        = TermName(s"write${if (isBasic) p.paramType.tpe.dealias.toString else ""}")
               val rawWriteEntry = q"$writeKey.$method(value.${p.name})"
               if (isBasic) {
-                if (p.defaultValueMethod.isDefined) q"if (${encName(p, "o")}) $rawWriteEntry" else rawWriteEntry
-              } else q"if (${encName(p, "o")}) $rawWriteEntry(${encName(p)})"
+                if (p.defaultValueMethod.isDefined) q"if (${encName(p, "o")}) { $rawWriteEntry: Unit }"
+                else q"$rawWriteEntry: Unit"
+              } else q"if (${encName(p, "o")}) { $rawWriteEntry(${encName(p)}): Unit }"
             }
             val encoderName = TypeName(s"${tpe.typeSymbol.name.decodedName}Encoder")
 
@@ -205,8 +206,8 @@ object MapBasedCodecs {
               node,
               x => q"""val typeName = ${node.tpe.toString}
                 val strategy = implicitly[$borerPkg.AdtEncodingStrategy]
-                strategy.writeAdtEnvelopeOpen(w, typeName)
-                $x
+                strategy.writeAdtEnvelopeOpen(w, typeName): Unit
+                $x : Unit
                 strategy.writeAdtEnvelopeClose(w, typeName)""")
         }
       }

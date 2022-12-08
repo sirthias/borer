@@ -42,7 +42,7 @@ abstract private[derivation] class CodecDeriver[C <: blackbox.Context](ctx: C) e
     val writeAdtValueLong =
       if (typeIdsAndNodesSorted.exists(_._1.isInstanceOf[Key.Long])) {
         val T = TypeName(c.freshName("T"))
-        q"""private def writeAdtValue[$T](w: $writerType, typeId: _root_.scala.Long, value: $T)(implicit enc: $encoderType[$T]) =
+        q"""private def writeAdtValue[$T](w: $writerType, typeId: _root_.scala.Long, value: $T)(implicit enc: $encoderType[$T]): $writerType =
               enc match {
                 case enc: $adtEncoderType[$T] => enc.write(w, value)
                 case enc                      => ${withEnvelope(q"enc.write(w.writeLong(typeId), value)")}
@@ -52,7 +52,7 @@ abstract private[derivation] class CodecDeriver[C <: blackbox.Context](ctx: C) e
     val writeAdtValueString =
       if (typeIdsAndNodesSorted.exists(_._1.isInstanceOf[Key.String])) {
         val T = TypeName(c.freshName("T"))
-        q"""private def writeAdtValue[$T](w: $writerType, typeId: _root_.java.lang.String, value: $T)(implicit enc: $encoderType[$T]) =
+        q"""private def writeAdtValue[$T](w: $writerType, typeId: _root_.java.lang.String, value: $T)(implicit enc: $encoderType[$T]): $writerType =
               enc match {
                 case enc: $adtEncoderType[$T] => enc.write(w, value)
                 case enc                      => ${withEnvelope(q"enc.write(w.writeString(typeId), value)")}

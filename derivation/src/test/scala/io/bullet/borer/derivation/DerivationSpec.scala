@@ -325,7 +325,7 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
         val badDom  = transform(dom)(x => x :+ x(memberIx))
         val encoded = encode(badDom)
         decode[Element](encoded) ==> badDom
-        decode[T](encoded)
+        decode[T](encoded): Unit
       }
 
       def extraMemberBeforeFillCompletion[T: Encoder: Decoder](value: T, dom: MapElem, ix: Int): Unit = {

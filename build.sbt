@@ -30,7 +30,6 @@ lazy val commonSettings = Seq(
     "-unchecked",
     "-language:_",
     "-release:9",
-    //"-Wnonunit-statement",
     "-Xlint:_,-missing-interpolator",
     "-Xfatal-warnings",
     "-Ywarn-dead-code",
@@ -239,6 +238,7 @@ lazy val derivation = crossProject(JSPlatform, JVMPlatform)
   .settings(releaseSettings)
   .settings(
     moduleName := "borer-derivation",
+    scalacOptions += "-Wnonunit-statement",
     libraryDependencies ++= Seq(`scala-compiler`.value, `scala-reflect`.value, macrolizer.value),
   )
   .jsSettings(scalajsSettings: _*)

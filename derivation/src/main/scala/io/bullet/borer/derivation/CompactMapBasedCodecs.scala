@@ -139,7 +139,7 @@ object CompactMapBasedCodecs {
       val tpe        = weakTypeOf[T].dealias
       val borerPkg   = c.mirror.staticPackage("_root_.io.bullet.borer")
       val iter       = tpe.decls.collect { case m: MethodSymbol if m.isCaseAccessor => m.asMethod }.iterator
-      val isUnary    = iter.hasNext && { iter.next(); !iter.hasNext }
+      val isUnary    = iter.hasNext && { iter.next(): Unit; !iter.hasNext }
       val objectName = if (isUnary) "ArrayBasedCodecs" else "MapBasedCodecs"
       q"$borerPkg.derivation.${TermName(objectName)}.${TermName(macroName)}[$tpe]"
     }

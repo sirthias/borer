@@ -144,8 +144,8 @@ object ArrayBasedCodecs {
           def deriveForSealedTrait(node: AdtTypeNode) =
             deriveAdtEncoder(
               node,
-              x => q"""w.writeArrayOpen(2)
-                $x
+              x => q"""w.writeArrayOpen(2): Unit
+                $x: Unit
                 w.writeArrayClose()""")
         }
       }
