@@ -8,12 +8,13 @@
 
 package io.bullet.borer.compat
 
-import io.bullet.borer._
+import io.bullet.borer.*
 import io.bullet.borer.encodings.BaseEncoding
 import io.circe.{Json, JsonNumber, JsonObject}
 
-import scala.annotation.switch
+import scala.annotation.{switch, tailrec}
 import scala.collection.Factory
+import scala.collection.mutable.ArrayBuffer
 
 object circe {
 
@@ -98,9 +99,26 @@ object circe {
       import DataItem.{Shifts => DIS}
 
       private[this] val arrayDecoder = Decoder.fromFactory(this, implicitly[Factory[Json, Vector[Json]]])
-      private[this] val mapDecoder   = Decoder.forListMap(Decoder.forString, this)
+      private[this] val mapDecoder =
+        Decoder { r =>
+          val buf = new scala.collection.mutable.ArrayBuilder.ofRef[(String, Json)]
+          if (r.hasMapHeader)
+            @tailrec def rec(remaining: Int): Array[(String, Json)] =
+              if (remaining > 0) {
+                buf.addOne(r.readString() -> r.read[Json]())
+                rec(remaining - 1)
+              } else buf.result()
+            val size = r.readMapHeader()
+            if (size <= Int.MaxValue) rec(size.toInt)
+            else r.overflow(s"Cannot deserialize Map with size $size (> Int.MaxValue)")
+          else if (r.hasMapStart) {
+            r.readMapStart()
+            while (!r.tryReadBreak()) buf.addOne(r.readString() -> r.read[Json]())
+            buf.result()
+          } else r.unexpectedDataItem(expected = "Map")
+        }
 
-      def read(r: Reader) =
+      def read(r: Reader): Json =
         (Integer.numberOfTrailingZeros(r.dataItem()): @switch) match {
           case DIS.Null => r.readNull(); Json.Null
 
