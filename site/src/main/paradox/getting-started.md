@@ -31,7 +31,7 @@ The artifacts for _borer_ live on Maven Central and can be tied into your projec
 The current _borer_ is available for [Scala] 3.x only, both for the JVM as well as [scala.js].
 
 The latest version supporting Scala 2.13 is `1.8.0`.  
-The latest version supporting Scala 2.12 is `1.6.3`.
+The latest version supporting Scala 2.12 is `1.7.2`.
 
 
   [Scala]: https://www.scala-lang.org/
