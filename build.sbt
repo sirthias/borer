@@ -59,7 +59,7 @@ lazy val commonSettings = Seq(
   Compile / doc / scalacOptions += "-no-link-warnings",
   sourcesInBase := false,
   Compile / unmanagedResources += baseDirectory.value.getParentFile.getParentFile / "LICENSE",
-  scalafmtOnCompile := true, // reformat main and test sources on compile
+  //scalafmtOnCompile := true, // reformat main and test sources on compile
 
   // file headers
   headerLicense := Some(HeaderLicense.MPLv2("2019-2022", "Mathias Doenitz")),
@@ -104,7 +104,7 @@ lazy val releaseSettings = {
 // format: OFF
 val `akka-actor`        = Def.setting("com.typesafe.akka"       %%  "akka-actor-typed"        % "2.6.20")
 val `akka-stream`       = Def.setting("com.typesafe.akka"       %%  "akka-stream"             % "2.6.20")
-val `akka-http`         = Def.setting("com.typesafe.akka"       %%  "akka-http"               % "10.2.10")
+val `akka-http`         = Def.setting("com.typesafe.akka"       %%  "akka-http"               % "10.4.0")
 val `cats-core`         = Def.setting("org.typelevel"           %%% "cats-core"               % "2.9.0")
 val `circe-core`        = Def.setting("io.circe"                %%% "circe-core"              % "0.14.3")
 val `circe-parser`      = Def.setting("io.circe"                %%% "circe-parser"            % "0.14.3")
@@ -287,7 +287,7 @@ lazy val site = project
       `akka-http`.value.cross(CrossVersion.for3Use2_13),
       munit.value
     ),
-    com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo := scmInfo.value.get.connection.drop("scm:git:".length),
+    com.github.sbt.git.SbtGit.GitKeys.gitRemoteRepo := scmInfo.value.get.connection.drop("scm:git:".length),
     ghpagesNoJekyll                               := true,
     ParadoxMaterialThemePlugin.paradoxMaterialThemeSettings(Compile),
     Compile / paradoxMaterialTheme := {
