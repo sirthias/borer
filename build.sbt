@@ -1,7 +1,7 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import sbt._
 
-def scala3 = "3.2.1"
+def scala3 = "3.2.2"
 
 inThisBuild(
   List(
@@ -59,7 +59,7 @@ lazy val commonSettings = Seq(
   Compile / doc / scalacOptions += "-no-link-warnings",
   sourcesInBase := false,
   Compile / unmanagedResources += baseDirectory.value.getParentFile.getParentFile / "LICENSE",
-  //scalafmtOnCompile := true, // reformat main and test sources on compile
+  // scalafmtOnCompile := true, // reformat main and test sources on compile
 
   // file headers
   headerLicense := Some(HeaderLicense.MPLv2("2019-2022", "Mathias Doenitz")),
@@ -288,7 +288,7 @@ lazy val site = project
       munit.value
     ),
     com.github.sbt.git.SbtGit.GitKeys.gitRemoteRepo := scmInfo.value.get.connection.drop("scm:git:".length),
-    ghpagesNoJekyll                               := true,
+    ghpagesNoJekyll                                 := true,
     ParadoxMaterialThemePlugin.paradoxMaterialThemeSettings(Compile),
     Compile / paradoxMaterialTheme := {
       ParadoxMaterialTheme()
