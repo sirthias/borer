@@ -1,3 +1,11 @@
+Version 1.10.2 (2023-02-09)
+---------------------------
+
+- compat-circe: simplified map decoding (#584)
+- Fixed decoding error on extra members for nullary case classes and objects with MapBasedCodecs (#600)
+- Decreased stack pressure of derivation macros by partially unrolling loops (#608)
+
+
 Version 1.10.1 (2022-07-43)
 ---------------------------
 
