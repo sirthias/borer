@@ -21,8 +21,8 @@ inThisBuild(
   )
 )
 
-addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
-addCommandAlias("check", "; scalafmtSbtCheck; scalafmtCheckAll")
+addCommandAlias("fmt", "all scalafmt test:scalafmt")
+addCommandAlias("check", "; scalafmtCheckAll")
 
 addCommandAlias(
   "testJVM",
@@ -59,7 +59,7 @@ lazy val commonSettings = Seq(
   Compile / doc / scalacOptions += "-no-link-warnings",
   sourcesInBase := false,
   Compile / unmanagedResources += baseDirectory.value.getParentFile.getParentFile / "LICENSE",
-  //scalafmtOnCompile := true, // reformat main and test sources on compile
+  scalafmtOnCompile := true, // reformat main and test sources on compile
 
   // file headers
   headerLicense := Some(HeaderLicense.MPLv2("2019-2022", "Mathias Doenitz")),

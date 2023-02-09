@@ -43,7 +43,15 @@ object Derive {
             remaining match
               case Nil => macroCall[T]
               case x0 :: x1 :: x2 :: x3 :: x4 :: x5 :: x6 :: x7 :: tail =>
-                (x0.tpe.asType, x1.tpe.asType, x2.tpe.asType, x3.tpe.asType, x4.tpe.asType, x5.tpe.asType, x6.tpe.asType, x7.tpe.asType) match
+                (
+                  x0.tpe.asType,
+                  x1.tpe.asType,
+                  x2.tpe.asType,
+                  x3.tpe.asType,
+                  x4.tpe.asType,
+                  x5.tpe.asType,
+                  x6.tpe.asType,
+                  x7.tpe.asType) match
                   case ('[t0], '[t1], '[t2], '[t3], '[t4], '[t5], '[t6], '[t7]) =>
                     '{
                       given F[t0] = ${ macroCall[t0] }
@@ -767,7 +775,7 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
         case n if n >= 1 =>
           val v = initialValue(array(ix))
           v.tpe match
-            case '[t]=>
+            case '[t] =>
               '{
                 var x: t = ${ v.as[t].get }
                 ${
@@ -782,7 +790,7 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
 
   final def withOptVals[A, B: Type](array: IArray[A])(initialValue: Quotes ?=> A => Option[Val])(
       next: Quotes ?=> IArray[Option[Val]] => Expr[B])(using Quotes): Expr[B] =
-    val result = Array.fill[Option[Val]](array.size)(None)
+    val result                 = Array.fill[Option[Val]](array.size)(None)
     val initialValuesWithIndex = array.zipWithIndex.flatMap { case (x, i) => initialValue(x).map(_ -> i) }
     def rec(ix: Int)(using Quotes): Expr[B] =
       initialValuesWithIndex.size - ix match
