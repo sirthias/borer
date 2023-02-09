@@ -1,5 +1,5 @@
 -Xmx4g
--Xss4M
+-Xss1M
 -XX:MaxMetaspaceSize=1g
 -XX:ReservedCodeCacheSize=256m
 -XX:+UseG1GC
