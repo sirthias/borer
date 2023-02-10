@@ -106,9 +106,9 @@ val `akka-actor`        = Def.setting("com.typesafe.akka"       %%  "akka-actor-
 val `akka-stream`       = Def.setting("com.typesafe.akka"       %%  "akka-stream"             % "2.6.20")
 val `akka-http`         = Def.setting("com.typesafe.akka"       %%  "akka-http"               % "10.4.0")
 val `cats-core`         = Def.setting("org.typelevel"           %%% "cats-core"               % "2.9.0")
-val `circe-core`        = Def.setting("io.circe"                %%% "circe-core"              % "0.14.3")
-val `circe-parser`      = Def.setting("io.circe"                %%% "circe-parser"            % "0.14.3")
-val `circe-generic`     = Def.setting("io.circe"                %%% "circe-generic"           % "0.14.3")
+val `circe-core`        = Def.setting("io.circe"                %%% "circe-core"              % "0.14.4")
+val `circe-parser`      = Def.setting("io.circe"                %%% "circe-parser"            % "0.14.4")
+val `circe-generic`     = Def.setting("io.circe"                %%% "circe-generic"           % "0.14.4")
 val `scodec-bits`       = Def.setting("org.scodec"              %%% "scodec-bits"             % "1.1.35")
 val munit               = Def.setting("org.scalameta"           %%% "munit"                   % "0.7.29" % Test)
 val macrolizer          = Def.setting("io.bullet"               %%% "macrolizer"              % "0.6.2" % "compile-internal, test-internal")
@@ -288,7 +288,7 @@ lazy val site = project
       munit.value
     ),
     com.github.sbt.git.SbtGit.GitKeys.gitRemoteRepo := scmInfo.value.get.connection.drop("scm:git:".length),
-    ghpagesNoJekyll                               := true,
+    ghpagesNoJekyll                                 := true,
     ParadoxMaterialThemePlugin.paradoxMaterialThemeSettings(Compile),
     Compile / paradoxMaterialTheme := {
       ParadoxMaterialTheme()
