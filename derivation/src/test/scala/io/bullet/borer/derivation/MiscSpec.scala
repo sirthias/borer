@@ -175,4 +175,17 @@ class MiscSpec extends AbstractBorerSpec {
     verifyDecoding[Base]("""{"B":{"extra": "should be ignored"}}""", B())
     verifyDecoding[Base]("""{"C":{"extra": "should be ignored"}}""", C)
   }
+
+  test("Problematic ADT") {
+    val error = compileErrors("MapBasedCodecs.deriveAllEncoders[io.bullet.borer.derivation.BadAdt]")
+    error.split('\n').slice(1, 3) ==> Array(
+      "Could not find any sub-types of `BadAdt`, likely because `BadAdt` is not a fully closed ADT.",
+      "Do you maybe have a `sealed trait` somewhere, which has no subclasses?"
+    )
+  }
 }
+
+sealed trait BadAdt
+object BadAdt:
+  case object A  extends BadAdt
+  sealed trait B extends BadAdt

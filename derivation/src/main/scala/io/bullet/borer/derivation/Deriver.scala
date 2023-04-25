@@ -430,10 +430,17 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
    * (If there are circular dependencies a compiler error is automatically thrown.)
    */
   final def subsWithoutImplicitTypeclassInstances[F[_]: Type](rootNode: AdtTypeNode): List[AdtTypeNode] = {
-    val relevantSubs =
-      flattenedSubs[F](rootNode, deepRecurse = false, includeEnumSingletonCases = false).collect { case (node, false) =>
-        node
-      }.toList
+    val subs = flattenedSubs[F](rootNode, deepRecurse = false, includeEnumSingletonCases = false)
+    if (subs.isEmpty)
+      fail(
+        s"""Could not find any sub-types of `$theTname`, likely because `$theTname` is not a fully closed ADT.
+           |Do you maybe have a `sealed trait` somewhere, which has no subclasses?""".stripMargin)
+
+    val relevantSubs = subs.collect { case (node, false) => node }.toList
+    if (relevantSubs.isEmpty)
+      val fName = TypeRepr.of[F].typeSymbol.name
+      fail(s"It looks like all subtypes of `$theTname` already have a given $fName available. " +
+        "You can therefore replace the `deriveAll` with a simple `derive`.")
 
     // for each non-abstract sub-type S we collect the "links",
     // which are the ADT sub-types that appear somewhere within the member definitions of S and,

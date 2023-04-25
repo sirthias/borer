@@ -133,7 +133,7 @@ class JsonDeepDerivationSpec extends AbstractBorerSpec {
     case class C(x: Option[B]) extends B
 
     implicit lazy val bCodec: Codec[B] = MapBasedCodecs.deriveAllCodecs[B]
-    implicit val aCodec                = MapBasedCodecs.deriveAllCodecs[A]
+    implicit val aCodec                = MapBasedCodecs.deriveCodec[A]
 
     roundTrip("""{"C":{"x":[]}}""", C(None): A)
   }
