@@ -61,6 +61,8 @@ class JsonDeepDerivationSpec extends AbstractBorerSpec {
   test("recursive") {
     sealed trait TreeNode
     case object Leaf                                 extends TreeNode
+    case class YNode(subs: List[Node])               extends TreeNode
+    case class XNode(subs: List[YNode])              extends TreeNode
     case class Node(left: TreeNode, right: TreeNode) extends TreeNode
 
     given Codec[TreeNode] = ArrayBasedCodecs.deriveAllCodecs[TreeNode]

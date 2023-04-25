@@ -445,7 +445,12 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
             case '[t] =>
               Expr.summon[Mirror.Of[t]] match
                 case Some('{ $m: Mirror.Product { type MirroredElemTypes = elementTypes } }) =>
-                  val typeReprs = typeReprsOf[elementTypes]
+                  @tailrec def rec(remaining: List[TypeRepr], result: List[TypeRepr]): List[TypeRepr] =
+                    remaining match
+                      case Nil => result
+                      case head :: tail => rec(head.typeArgs.reverse_:::(tail), head :: result)
+
+                  val typeReprs = rec(typeReprsOf[elementTypes], Nil)
                   relevantSubs.filter(n => typeReprs.exists(_ =:= n.tpe))
                 case _ => Nil
         }
