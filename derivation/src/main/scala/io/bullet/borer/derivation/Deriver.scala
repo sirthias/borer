@@ -9,8 +9,8 @@
 package io.bullet.borer.derivation
 
 import scala.language.implicitConversions
-
 import io.bullet.borer.*
+
 import scala.annotation.threadUnsafe
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -18,6 +18,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.deriving.*
 import scala.compiletime.*
 import scala.quoted.*
+import scala.reflect.ClassTag
 
 object Derive {
   def apply[F[_], T: Type](deriver: Deriver[F, T, ?]): Expr[F[T]] = deriver.derive
@@ -355,7 +356,7 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
         comp: Long | String => Expr[Int])(using Quotes): Expr[T]
   }
 
-  // returns all (recursively reachable, i.e. descendant) sub-types of `node` along with a flag showing
+  // returns all (recursively reachable, i.e. descendant) sub-types of `rootNode` along with a flag showing
   // whether an instance of the given typeclass is implicitly available for the respective sub-type
   //
   // The `deepRecurse` flag determines, whether to recurse into abstract sub-types whose flag is
@@ -501,6 +502,41 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
           case x                                                          => Nil
         }
 
+  /**
+   * Somewhat "unorthodox" way of abstracting over the rendering of a variable number of definitions
+   * (e.g. values, variables or givens) before some nested block in a stack-safe fashion.
+   *
+   * @param as A collection of values of some type `A`. Each value is rendered into one definition.
+   * @param tpe Simple function providing the capability of extracting the definition type form a value of type `A`
+   * @param f A polymorphic function (with a `X: Type` context bound) turning a value of type `A`
+   *          into an `Expr[Any]` (the respective definition) using a callback taking a value of type `B`.
+   *          The `B` values of all definitions are collected and passed to `result` function in the end.
+   * @param result Function returning the (nested) result expression using the collected `B` values.
+   */
+  private def renderEach[A, B:ClassTag, R](as: IArray[A])(tpe: A => Type[?])
+                                          (f: Quotes ?=> [X] => A => Type[X] ?=> (Quotes ?=> B => Expr[Any]) => Expr[Any])
+                                          (result: Quotes ?=> IArray[B] => Expr[R])
+                                          (using Quotes): Expr[R] =
+    val bs = Array.ofDim[B](as.size)
+
+    @tailrec def rec(ix: Int, statements: List[Statement], q: Quotes): Expr[R] =
+      if (ix < as.size) {
+        val a = as(ix)
+        tpe(a) match
+          case '[t] =>
+            var nextQ: Quotes = null
+            val expr = f(using q)[t](a) { b =>
+              nextQ = summon[Quotes]
+              bs(ix) = b
+              '{ () }
+            }
+            val tree = expr.asTerm match
+                case Inlined(_, _, Block(List(x), _)) => x
+            rec(ix + 1, tree :: statements, nextQ)
+      } else Block(statements.reverse, result(using q)(IArray.unsafeFromArray(bs)).asTerm).asExpr.asInstanceOf[Expr[R]]
+
+    rec(0, Nil, summon[Quotes])
+
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   final def isBasicDefaultEncoder(encoder: Expr[Encoder[?]]): Boolean =
@@ -620,276 +656,26 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
       }
   }
 
-  final def withVals[A, B: Type](array: IArray[A])(initialValue: Quotes ?=> A => Val)(
-      next: Quotes ?=> IArray[Val] => Expr[B])(using Quotes): Expr[B] =
-    val result = new Array[Val](array.size)
-    def rec(ix: Int)(using Quotes): Expr[B] =
-      array.size - ix match
-        case n if n >= 8 =>
-          val v0 = initialValue(array(ix + 0))
-          val v1 = initialValue(array(ix + 1))
-          val v2 = initialValue(array(ix + 2))
-          val v3 = initialValue(array(ix + 3))
-          val v4 = initialValue(array(ix + 4))
-          val v5 = initialValue(array(ix + 5))
-          val v6 = initialValue(array(ix + 6))
-          val v7 = initialValue(array(ix + 7))
-          (v0.tpe, v1.tpe, v2.tpe, v3.tpe, v4.tpe, v5.tpe, v6.tpe, v7.tpe) match
-            case ('[t0], '[t1], '[t2], '[t3], '[t4], '[t5], '[t6], '[t7]) =>
-              '{
-                val x0: t0 = ${ v0.as[t0].get }
-                val x1: t1 = ${ v1.as[t1].get }
-                val x2: t2 = ${ v2.as[t2].get }
-                val x3: t3 = ${ v3.as[t3].get }
-                val x4: t4 = ${ v4.as[t4].get }
-                val x5: t5 = ${ v5.as[t5].get }
-                val x6: t6 = ${ v6.as[t6].get }
-                val x7: t7 = ${ v7.as[t7].get }
-                ${
-                  result(ix + 0) = Val.of('x0)
-                  result(ix + 1) = Val.of('x1)
-                  result(ix + 2) = Val.of('x2)
-                  result(ix + 3) = Val.of('x3)
-                  result(ix + 4) = Val.of('x4)
-                  result(ix + 5) = Val.of('x5)
-                  result(ix + 6) = Val.of('x6)
-                  result(ix + 7) = Val.of('x7)
-                  rec(ix + 8)
-                }
-              }
+  final def withVals[A: Type](array: IArray[Val])(next: Quotes ?=> IArray[Val] => Expr[A])(using Quotes): Expr[A] =
+    renderEach[Val, Val, A](array)(_.tpe) {
+      [X] => (v: Val) => tail => '{ val x: X = ${ v.as[X].get }; ${ tail(Val.of('x)) } }
+    } { vals => next(vals) }
 
-        case n if n >= 4 =>
-          val v0 = initialValue(array(ix + 0))
-          val v1 = initialValue(array(ix + 1))
-          val v2 = initialValue(array(ix + 2))
-          val v3 = initialValue(array(ix + 3))
-          (v0.tpe, v1.tpe, v2.tpe, v3.tpe) match
-            case ('[t0], '[t1], '[t2], '[t3]) =>
-              '{
-                val x0: t0 = ${ v0.as[t0].get }
-                val x1: t1 = ${ v1.as[t1].get }
-                val x2: t2 = ${ v2.as[t2].get }
-                val x3: t3 = ${ v3.as[t3].get }
-                ${
-                  result(ix + 0) = Val.of('x0)
-                  result(ix + 1) = Val.of('x1)
-                  result(ix + 2) = Val.of('x2)
-                  result(ix + 3) = Val.of('x3)
-                  rec(ix + 4)
-                }
-              }
+  final def withVars[A: Type](array: IArray[Val])(next: Quotes ?=> IArray[Var] => Expr[A])(using Quotes): Expr[A] =
+    renderEach[Val, Var, A](array)(_.tpe) {
+      [X] => (v: Val) => tail => '{ var x: X = ${ v.as[X].get } ; ${ tail(Var.of('x, newX => '{ x = $newX })) } }
+    } { vals => next(vals) }
 
-        case n if n >= 2 =>
-          val v0 = initialValue(array(ix + 0))
-          val v1 = initialValue(array(ix + 1))
-          (v0.tpe, v1.tpe) match
-            case ('[t0], '[t1]) =>
-              '{
-                val x0: t0 = ${ v0.as[t0].get }
-                val x1: t1 = ${ v1.as[t1].get }
-                ${
-                  result(ix + 0) = Val.of('x0)
-                  result(ix + 1) = Val.of('x1)
-                  rec(ix + 2)
-                }
-              }
-
-        case n if n >= 1 =>
-          val v = initialValue(array(ix))
-          v.tpe match
-            case '[t] =>
-              '{
-                val x: t = ${ v.as[t].get }
-                ${
-                  result(ix) = Val.of('x)
-                  rec(ix + 1)
-                }
-              }
-
-        case _ => next(IArray.unsafeFromArray(result))
-
-    rec(0)
-
-  final def withVars[A, B: Type](array: IArray[A])(initialValue: Quotes ?=> A => Val)(
-      next: Quotes ?=> IArray[Var] => Expr[B])(using Quotes): Expr[B] =
-    val result = new Array[Var](array.size)
-    def rec(ix: Int)(using Quotes): Expr[B] =
-      array.size - ix match
-        case n if n >= 8 =>
-          val v0 = initialValue(array(ix + 0))
-          val v1 = initialValue(array(ix + 1))
-          val v2 = initialValue(array(ix + 2))
-          val v3 = initialValue(array(ix + 3))
-          val v4 = initialValue(array(ix + 4))
-          val v5 = initialValue(array(ix + 5))
-          val v6 = initialValue(array(ix + 6))
-          val v7 = initialValue(array(ix + 7))
-          (v0.tpe, v1.tpe, v2.tpe, v3.tpe, v4.tpe, v5.tpe, v6.tpe, v7.tpe) match
-            case ('[t0], '[t1], '[t2], '[t3], '[t4], '[t5], '[t6], '[t7]) =>
-              '{
-                var x0: t0 = ${ v0.as[t0].get }
-                var x1: t1 = ${ v1.as[t1].get }
-                var x2: t2 = ${ v2.as[t2].get }
-                var x3: t3 = ${ v3.as[t3].get }
-                var x4: t4 = ${ v4.as[t4].get }
-                var x5: t5 = ${ v5.as[t5].get }
-                var x6: t6 = ${ v6.as[t6].get }
-                var x7: t7 = ${ v7.as[t7].get }
-                ${
-                  result(ix + 0) = Var.of('x0, newX => '{ x0 = $newX })
-                  result(ix + 1) = Var.of('x1, newX => '{ x1 = $newX })
-                  result(ix + 2) = Var.of('x2, newX => '{ x2 = $newX })
-                  result(ix + 3) = Var.of('x3, newX => '{ x3 = $newX })
-                  result(ix + 4) = Var.of('x4, newX => '{ x4 = $newX })
-                  result(ix + 5) = Var.of('x5, newX => '{ x5 = $newX })
-                  result(ix + 6) = Var.of('x6, newX => '{ x6 = $newX })
-                  result(ix + 7) = Var.of('x7, newX => '{ x7 = $newX })
-                  rec(ix + 8)
-                }
-              }
-
-        case n if n >= 4 =>
-          val v0 = initialValue(array(ix + 0))
-          val v1 = initialValue(array(ix + 1))
-          val v2 = initialValue(array(ix + 2))
-          val v3 = initialValue(array(ix + 3))
-          (v0.tpe, v1.tpe, v2.tpe, v3.tpe) match
-            case ('[t0], '[t1], '[t2], '[t3]) =>
-              '{
-                var x0: t0 = ${ v0.as[t0].get }
-                var x1: t1 = ${ v1.as[t1].get }
-                var x2: t2 = ${ v2.as[t2].get }
-                var x3: t3 = ${ v3.as[t3].get }
-                ${
-                  result(ix + 0) = Var.of('x0, newX => '{ x0 = $newX })
-                  result(ix + 1) = Var.of('x1, newX => '{ x1 = $newX })
-                  result(ix + 2) = Var.of('x2, newX => '{ x2 = $newX })
-                  result(ix + 3) = Var.of('x3, newX => '{ x3 = $newX })
-                  rec(ix + 4)
-                }
-              }
-
-        case n if n >= 2 =>
-          val v0 = initialValue(array(ix + 0))
-          val v1 = initialValue(array(ix + 1))
-          (v0.tpe, v1.tpe) match
-            case ('[t0], '[t1]) =>
-              '{
-                var x0: t0 = ${ v0.as[t0].get }
-                var x1: t1 = ${ v1.as[t1].get }
-                ${
-                  result(ix + 0) = Var.of('x0, newX => '{ x0 = $newX })
-                  result(ix + 1) = Var.of('x1, newX => '{ x1 = $newX })
-                  rec(ix + 2)
-                }
-              }
-
-        case n if n >= 1 =>
-          val v = initialValue(array(ix))
-          v.tpe match
-            case '[t] =>
-              '{
-                var x: t = ${ v.as[t].get }
-                ${
-                  result(ix + 0) = Var.of('x, newX => '{ x = $newX })
-                  rec(ix + 1)
-                }
-              }
-
-        case _ => next(IArray.unsafeFromArray(result))
-
-    rec(0)
-
-  final def withOptVals[A, B: Type](array: IArray[A])(initialValue: Quotes ?=> A => Option[Val])(
-      next: Quotes ?=> IArray[Option[Val]] => Expr[B])(using Quotes): Expr[B] =
-    val result                 = Array.fill[Option[Val]](array.size)(None)
-    val initialValuesWithIndex = array.zipWithIndex.flatMap { case (x, i) => initialValue(x).map(_ -> i) }
-    def rec(ix: Int)(using Quotes): Expr[B] =
-      initialValuesWithIndex.size - ix match
-        case n if n >= 8 =>
-          val (v0, i0) = initialValuesWithIndex(ix + 0)
-          val (v1, i1) = initialValuesWithIndex(ix + 1)
-          val (v2, i2) = initialValuesWithIndex(ix + 2)
-          val (v3, i3) = initialValuesWithIndex(ix + 3)
-          val (v4, i4) = initialValuesWithIndex(ix + 4)
-          val (v5, i5) = initialValuesWithIndex(ix + 5)
-          val (v6, i6) = initialValuesWithIndex(ix + 6)
-          val (v7, i7) = initialValuesWithIndex(ix + 7)
-          (v0.tpe, v1.tpe, v2.tpe, v3.tpe, v4.tpe, v5.tpe, v6.tpe, v7.tpe) match
-            case ('[t0], '[t1], '[t2], '[t3], '[t4], '[t5], '[t6], '[t7]) =>
-              '{
-                val x0: t0 = ${ v0.as[t0].get }
-                val x1: t1 = ${ v1.as[t1].get }
-                val x2: t2 = ${ v2.as[t2].get }
-                val x3: t3 = ${ v3.as[t3].get }
-                val x4: t4 = ${ v4.as[t4].get }
-                val x5: t5 = ${ v5.as[t5].get }
-                val x6: t6 = ${ v6.as[t6].get }
-                val x7: t7 = ${ v7.as[t7].get }
-                ${
-                  result(i0) = Some(Val.of('x0))
-                  result(i1) = Some(Val.of('x1))
-                  result(i2) = Some(Val.of('x2))
-                  result(i3) = Some(Val.of('x3))
-                  result(i4) = Some(Val.of('x4))
-                  result(i5) = Some(Val.of('x5))
-                  result(i6) = Some(Val.of('x6))
-                  result(i7) = Some(Val.of('x7))
-                  rec(ix + 8)
-                }
-              }
-
-        case n if n >= 4 =>
-          val (v0, i0) = initialValuesWithIndex(ix + 0)
-          val (v1, i1) = initialValuesWithIndex(ix + 1)
-          val (v2, i2) = initialValuesWithIndex(ix + 2)
-          val (v3, i3) = initialValuesWithIndex(ix + 3)
-          (v0.tpe, v1.tpe, v2.tpe, v3.tpe) match
-            case ('[t0], '[t1], '[t2], '[t3]) =>
-              '{
-                val x0: t0 = ${ v0.as[t0].get }
-                val x1: t1 = ${ v1.as[t1].get }
-                val x2: t2 = ${ v2.as[t2].get }
-                val x3: t3 = ${ v3.as[t3].get }
-                ${
-                  result(i0) = Some(Val.of('x0))
-                  result(i1) = Some(Val.of('x1))
-                  result(i2) = Some(Val.of('x2))
-                  result(i3) = Some(Val.of('x3))
-                  rec(ix + 4)
-                }
-              }
-
-        case n if n >= 2 =>
-          val (v0, i0) = initialValuesWithIndex(ix + 0)
-          val (v1, i1) = initialValuesWithIndex(ix + 1)
-          (v0.tpe, v1.tpe) match
-            case ('[t0], '[t1]) =>
-              '{
-                val x0: t0 = ${ v0.as[t0].get }
-                val x1: t1 = ${ v1.as[t1].get }
-                ${
-                  result(i0) = Some(Val.of('x0))
-                  result(i1) = Some(Val.of('x1))
-                  rec(ix + 2)
-                }
-              }
-
-        case n if n >= 1 =>
-          val (v, i) = initialValuesWithIndex(ix)
-          v.tpe match
-            case '[t] =>
-              '{
-                val x: t = ${ v.as[t].get }
-                ${
-                  result(i) = Some(Val.of('x))
-                  rec(ix + 1)
-                }
-              }
-
-        case _ => next(IArray.unsafeFromArray(result))
-
-    rec(0)
+  final def withOptVals[A: Type](array: IArray[Option[Val]])(
+      next: Quotes ?=> IArray[Option[Val]] => Expr[A])(using Quotes): Expr[A] =
+    val arrayWithIndices = array.zipWithIndex.flatMap { case (x, i) => x.map(_ -> i) }
+    renderEach[(Val, Int), (Val, Int), A](arrayWithIndices)(_._1.tpe) {
+      [X] => (pair:(Val, Int)) => tail => '{ val x: X = ${ pair._1.as[X].get } ; ${ tail(Val.of('x) -> pair._2) } }
+    } { valsWithIndices =>
+      val result = Array.fill[Option[Val]](array.size)(None)
+      valsWithIndices.foreach { case (v, i) => result(i) = Some(v) }
+      next(IArray.unsafeFromArray(result))
+    }
 
   final def companionApply(companion: Symbol, typeArgs: List[TypeRepr], args: List[Term]): Term =
     Select.overloaded(Ref(companion), "apply", typeArgs, args)
@@ -899,7 +685,7 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
 
   final def fail(msg: String): Nothing = report.errorAndAbort(msg, Position.ofMacroExpansion)
 
-  def printStackTracePrefix(msg: String): Unit = {
+  final def printStackTracePrefix(msg: String): Unit = {
     val sw = new java.io.StringWriter
     val pw = new java.io.PrintWriter(sw)
     new RuntimeException("Stack Trace").printStackTrace(pw)

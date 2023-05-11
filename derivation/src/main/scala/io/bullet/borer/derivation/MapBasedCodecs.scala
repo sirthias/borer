@@ -130,26 +130,30 @@ object MapBasedCodecs extends DerivationApi {
             val nonBasicFields  = fields.map(field => Option.when(!basicFieldFlags(field.index))(field))
 
             withVal('{ summonInline[DerivationConfig] }) { derivationConfig =>
-              withOptVals(nonBasicFields) {
-                _.flatMap { field =>
-                  field.theType match
-                    case '[t] if field.fieldType.isInstanceOf[OwnType] =>
-                      Some {
-                        Val.of[Encoder[t]] {
-                          val fieldEnc = fieldEncoders(field.index).map(_.asExprOf[Encoder[t]]).getOrElse {
-                            fail(s"Could not find implicit Encoder[${Type.show[t]}] " +
-                              s"for field `${field.name}` of case class `$theTname`")
+              withOptVals {
+                nonBasicFields.map {
+                  _.flatMap { field =>
+                    field.theType match
+                      case '[t] if field.fieldType.isInstanceOf[OwnType] =>
+                        Some {
+                          Val.of[Encoder[t]] {
+                            val fieldEnc = fieldEncoders(field.index).map(_.asExprOf[Encoder[t]]).getOrElse {
+                              fail(s"Could not find implicit Encoder[${Type.show[t]}] " +
+                                s"for field `${field.name}` of case class `$theTname`")
+                            }
+                            field.defaultValue[t] match
+                              case Some(x) => '{ $fieldEnc.withDefaultValue($x).recursive }
+                              case None => '{ $fieldEnc.recursive }
                           }
-                          field.defaultValue[t] match
-                            case Some(x) => '{ $fieldEnc.withDefaultValue($x).recursive }
-                            case None    => '{ $fieldEnc.recursive }
                         }
-                      }
-                    case _ => None
+                      case _ => None
+                  }
                 }
               } { fieldEncDefs =>
-                withOptVals(nonBasicFields) {
-                  _.flatMap(field => field.theType match { case '[t] => field.defaultValue[t].map(Val.of[t](_)) })
+                withOptVals {
+                  nonBasicFields.map {
+                    _.flatMap(field => field.theType match { case '[t] => field.defaultValue[t].map(Val.of[t](_)) })
+                  }
                 } { nonBasicDefaultValues =>
 
                   def gen(
@@ -157,35 +161,41 @@ object MapBasedCodecs extends DerivationApi {
                       value: Expr[T],
                       count: Expr[Int],
                       setCount: Quotes ?=> Expr[Int] => Expr[Unit])(using Quotes): Expr[Writer] =
-                    withVals(fields) { field =>
-                      field.theType match
-                        case '[t] =>
-                          Val.of[Boolean] {
-                            val fieldValue = select[t](value, field.name)
-                            val decCount   = setCount('{ $count - 1 })
-                            def defaultVal(expr: Option[Expr[t]])(using Quotes): Expr[Boolean] =
-                              expr match
-                                case Some(x) =>
-                                  '{
-                                    $derivationConfig.encodeCaseClassMemberDefaultValues
-                                    || $fieldValue != $x
-                                    || { $decCount; false }
-                                  }
-                                case None => Expr(true)
+                    withVals {
+                      fields.map { field =>
+                        field.theType match
+                          case '[t] =>
+                            Val.of[Boolean] {
+                              val fieldValue = select[t](value, field.name)
+                              val decCount = setCount('{ $count - 1 })
 
-                            if (basicFieldFlags(field.index)) {
-                              defaultVal(field.defaultValue[t])
-                            } else {
-                              '{
-                                val enc = ${ fieldEncDefs(field.ownTypeIndex).get.as[Encoder[t]].get }.unwrap
-                                if (enc.isInstanceOf[Encoder.PossiblyWithoutOutput[t]])
-                                  enc.asInstanceOf[Encoder.PossiblyWithoutOutput[t]].producesOutputFor($fieldValue) || {
-                                    $decCount; false
-                                  }
-                                else ${ defaultVal(nonBasicDefaultValues(field.index).map(_.get.asExprOf[t])) }
+                              def defaultVal(expr: Option[Expr[t]])(using Quotes): Expr[Boolean] =
+                                expr match
+                                  case Some(x) =>
+                                    '{
+                                      $derivationConfig.encodeCaseClassMemberDefaultValues
+                                        || $fieldValue != $x
+                                        || {
+                                        $decCount; false
+                                      }
+                                    }
+                                  case None => Expr(true)
+
+                              if (basicFieldFlags(field.index)) {
+                                defaultVal(field.defaultValue[t])
+                              } else {
+                                '{
+                                  val enc = ${ fieldEncDefs(field.ownTypeIndex).get.as[Encoder[t]].get }.unwrap
+                                  if (enc.isInstanceOf[Encoder.PossiblyWithoutOutput[t]])
+                                    enc.asInstanceOf[Encoder.PossiblyWithoutOutput[t]].producesOutputFor($fieldValue) || {
+                                      $decCount;
+                                      false
+                                    }
+                                  else ${ defaultVal(nonBasicDefaultValues(field.index).map(_.get.asExprOf[t])) }
+                                }
                               }
                             }
-                          }
+                      }
                     } { fieldOutputFlags =>
 
                       def writeEntriesBody(w: Expr[Writer])(using Quotes): Expr[Unit] =
@@ -295,18 +305,22 @@ object MapBasedCodecs extends DerivationApi {
                 def defaultOrNull[A: Type](field: Field)(using Quotes): Expr[A] =
                   field.defaultValue[A].getOrElse('{ null.asInstanceOf[A] })
 
-                withVars(IArray.unsafeFromArray(keysAndFields)) { (key, field) =>
-                  field.theType match
-                    case '[t] =>
-                      Val.of[t] {
-                        '{
-                          if ($remaining != 0 && ${ tryReadKey(key) }) {
-                            ${ setMaskBit(field) }
-                            ${ setRemaining('{ $remaining - 1 }) }
-                            ${ readField[t](r, nonBasicDecoders(field.ownTypeIndex).map(_.as[Decoder[t]].get)) }
-                          } else ${ defaultOrNull[t](field) }
-                        }
-                      }
+                withVars {
+                  IArray.unsafeFromArray {
+                    keysAndFields.map { (key, field) =>
+                      field.theType match
+                        case '[t] =>
+                          Val.of[t] {
+                            '{
+                              if ($remaining != 0 && ${ tryReadKey(key) }) {
+                                ${ setMaskBit(field) }
+                                ${ setRemaining('{ $remaining - 1 }) }
+                                ${ readField[t](r, nonBasicDecoders(field.ownTypeIndex).map(_.as[Decoder[t]].get)) }
+                              } else ${ defaultOrNull[t](field) }
+                            }
+                          }
+                    }
+                  }
                 } { fieldVars =>
                   def readFields(start: Int, end: Int)(using Quotes): Expr[Unit] =
                     if (start < end) {
@@ -465,22 +479,24 @@ object MapBasedCodecs extends DerivationApi {
               }
             end gen
 
-            withOptVals(fields) { field =>
-              field.theType match
-                case '[t] if field.fieldType.isInstanceOf[OwnType] =>
-                  Expr
-                    .summon[Decoder[t]]
-                    .orElse(fail(
-                      s"Could not find implicit Decoder[${Type.show[t]}] for field `${field.name}` of case class `$theTname`"))
-                    .filterNot(isBasicDefaultDecoder)
-                    .map { fieldDec =>
-                      Val.of[Decoder[t]] {
-                        field.defaultValue[t] match
-                          case Some(x) => '{ $fieldDec.withDefaultValue($x).recursive }
-                          case None    => '{ $fieldDec.recursive }
+            withOptVals {
+              fields.map { field =>
+                field.theType match
+                  case '[t] if field.fieldType.isInstanceOf[OwnType] =>
+                    Expr
+                      .summon[Decoder[t]]
+                      .orElse(fail(
+                        s"Could not find implicit Decoder[${Type.show[t]}] for field `${field.name}` of case class `$theTname`"))
+                      .filterNot(isBasicDefaultDecoder)
+                      .map { fieldDec =>
+                        Val.of[Decoder[t]] {
+                          field.defaultValue[t] match
+                            case Some(x) => '{ $fieldDec.withDefaultValue($x).recursive }
+                            case None => '{ $fieldDec.recursive }
+                        }
                       }
-                    }
-                case _ => None
+                  case _ => None
+              }
             } { nonBasicDecoders =>
               '{ Decoder[T](r => ${ gen('r, nonBasicDecoders) }) }
             }
