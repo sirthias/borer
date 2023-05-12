@@ -62,7 +62,7 @@ lazy val commonSettings = Seq(
   scalafmtOnCompile := true, // reformat main and test sources on compile
 
   // file headers
-  headerLicense := Some(HeaderLicense.MPLv2("2019-2022", "Mathias Doenitz")),
+  headerLicense := Some(HeaderLicense.MPLv2("2019-2023", "Mathias Doenitz")),
   testFrameworks += new TestFramework("utest.runner.Framework"),
   console / initialCommands := """import io.bullet.borer._""",
 
