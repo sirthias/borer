@@ -40,58 +40,36 @@ object Derive {
           fail(msg)
 
         def deriveForSealedTrait(rootNode: AdtTypeNode): Expr[F[T]] =
-          def rec(remaining: List[AdtTypeNode])(using Quotes): Expr[F[T]] =
-            remaining match
-              case Nil => macroCall[T]
-              case x0 :: x1 :: x2 :: x3 :: x4 :: x5 :: x6 :: x7 :: tail =>
-                (
-                  x0.tpe.asType,
-                  x1.tpe.asType,
-                  x2.tpe.asType,
-                  x3.tpe.asType,
-                  x4.tpe.asType,
-                  x5.tpe.asType,
-                  x6.tpe.asType,
-                  x7.tpe.asType) match
-                  case ('[t0], '[t1], '[t2], '[t3], '[t4], '[t5], '[t6], '[t7]) =>
-                    '{
-                      given F[t0] = ${ macroCall[t0] }
-                      given F[t1] = ${ macroCall[t1] }
-                      given F[t2] = ${ macroCall[t2] }
-                      given F[t3] = ${ macroCall[t3] }
-                      given F[t4] = ${ macroCall[t4] }
-                      given F[t5] = ${ macroCall[t5] }
-                      given F[t6] = ${ macroCall[t6] }
-                      given F[t7] = ${ macroCall[t7] }
-                      ${ rec(tail) }
-                    }
-              case x0 :: x1 :: x2 :: x3 :: tail =>
-                (x0.tpe.asType, x1.tpe.asType, x2.tpe.asType, x3.tpe.asType) match
-                  case ('[t0], '[t1], '[t2], '[t3]) =>
-                    '{
-                      given F[t0] = ${ macroCall[t0] }
-                      given F[t1] = ${ macroCall[t1] }
-                      given F[t2] = ${ macroCall[t2] }
-                      given F[t3] = ${ macroCall[t3] }
-                      ${ rec(tail) }
-                    }
-              case x0 :: x1 :: tail =>
-                (x0.tpe.asType, x1.tpe.asType) match
-                  case ('[t0], '[t1]) =>
-                    '{
-                      given F[t0] = ${ macroCall[t0] }
-                      given F[t1] = ${ macroCall[t1] }
-                      ${ rec(tail) }
-                    }
-              case x :: tail =>
-                x.tpe.asType match
-                  case '[t] =>
-                    '{
-                      given F[t] = ${ macroCall[t] }
-                      ${ rec(tail) }
-                    }
+          val (regularSubtypes, cycleBreakers) = subtypesNeedingTypeclassDerivation(rootNode)
 
-          rec(subsWithoutImplicitTypeclassInstances[F](rootNode))
+          // first, we define mutable variables for all cycle breaker types
+          withVars {
+            IArray.from {
+              cycleBreakers.map {
+                _.asType match
+                  case '[t] => Val.of[F[t]]('{ null.asInstanceOf[F[t]] })
+              }
+            }
+          } { cycleBreakerVars =>
+            // next, we define simple forwarder givens for all cycle breaker types, pointing to the variables
+            renderEach[Var, Unit, F[T]](cycleBreakerVars)(_.tpe) {
+              [FX] => (v: Var) => tail => '{ given FX = ${ v.as[FX].get }; ${ tail(()) } }
+            } { _ =>
+              // next, we define the givens for all "regular" sub types
+              renderEach[Type[?], Unit, F[T]](IArray.from(regularSubtypes.map(_.asType)))(identity) {
+                [X] => (_: Type[?]) => tail => '{ given F[X] = ${ macroCall[X] }; ${ tail(()) } }
+              } { _ =>
+                // then, we give the cycle breaker variables their actual contents
+                val tuples = IArray.from(cycleBreakers.map(_.asType)).zip(cycleBreakerVars)
+                renderEach[(Type[?], Var), Unit, F[T]](tuples)(_._1) {
+                  [X] => (tup: (Type[?], Var)) => tail => '{ ${ tup._2.as[F[X]].set(macroCall[X]) } ; ${ tail(()) } }
+                } { _ =>
+                  // finally we can call the generation macro for the ADT root type
+                  macroCall[T]
+                }
+              }
+            }
+          }
     }
 
   trait MacroCall[F[_]: Type] {
@@ -423,70 +401,84 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
   }
 
   /**
-   * When generating type class instances for a whole type hierarchy this method returns all descendant nodes of
-   * an ADT super type that don't have implicit type class instances already available.
+   * When generating type class instances for a whole type hierarchy this method returns
+   * - all ADT subtypes that don't have implicit type class instances already available
+   * - all ADT subtypes that can act as "cycle-breakers", breaking circular dependencies
    *
-   * The resulting list is already ordered in a way that allows intra-dependencies (i.e. between sub types) be resolved
+   * The first list is already ordered in a way that allows intra-dependencies (i.e. between sub types) be resolved
    * properly if the missing implicits are generated in order.
-   * (If there are circular dependencies a compiler error is automatically thrown.)
+   * The second list needs a special mutable construct in order to allow for deferred definitions,
+   * breaking dependency cycles.
    */
-  final def subsWithoutImplicitTypeclassInstances[F[_]: Type](rootNode: AdtTypeNode): List[AdtTypeNode] = {
-    val subs = flattenedSubs[F](rootNode, deepRecurse = false, includeEnumSingletonCases = false)
-    if (subs.isEmpty)
+  final def subtypesNeedingTypeclassDerivation[F[_] : Type](rootNode: AdtTypeNode): (List[TypeRepr], List[TypeRepr]) = {
+    val subNodes = flattenedSubs[F](rootNode, deepRecurse = false, includeEnumSingletonCases = false)
+    if (subNodes.isEmpty)
       fail(
         s"""Could not find any sub-types of `$theTname`, likely because `$theTname` is not a fully closed ADT.
            |Do you maybe have a `sealed trait` somewhere, which has no subclasses?""".stripMargin)
 
-    val relevantSubs = subs.collect { case (node, false) => node }.toList
-    if (relevantSubs.isEmpty)
+    val subTypesWithoutTC = subNodes.toList.collect { case (node, false) => node.tpe }
+    if (subTypesWithoutTC.isEmpty)
       val fName = TypeRepr.of[F].typeSymbol.name
       fail(s"It looks like all subtypes of `$theTname` already have a given $fName available. " +
         "You can therefore replace the `deriveAll` with a simple `derive`.")
 
-    // for each non-abstract sub-type S we collect the "links",
-    // which are the ADT sub-types that appear somewhere within the member definitions of S and,
-    // as such, need to have their typeclass be implicitly available _before_ the implicit derivation of S
-    val relevantSubsWithLinks =
-      relevantSubs.map { node =>
-        node -> {
-          node.tpe.asType match
-            case '[t] =>
-              Expr.summon[Mirror.Of[t]] match
-                case Some('{ $m: Mirror.Product { type MirroredElemTypes = elementTypes } }) =>
-                  @tailrec def rec(remaining: List[TypeRepr], result: List[TypeRepr]): List[TypeRepr] =
-                    remaining match
-                      case Nil => result
-                      case head :: tail => rec(head.typeArgs.reverse_:::(tail), head :: result)
+    type SubsWithMembers = List[(TypeRepr, List[TypeRepr])]
 
-                  val typeReprs = rec(typeReprsOf[elementTypes], Nil)
-                  relevantSubs.filter(n => typeReprs.exists(_ =:= n.tpe))
-                case _ => Nil
-        }
+    // for each subtype we record all membertypes, recursing into type-args
+    val subsWithMembers: SubsWithMembers = subTypesWithoutTC.map { sub =>
+      sub.asType match
+        case '[t] =>
+          Expr.summon[Mirror.Of[t]] match
+            case Some('{ $m: Mirror.Product {type MirroredElemTypes = elementTypes} }) =>
+              @tailrec def withRecursiveTypeArgs(remaining: List[TypeRepr], result: List[TypeRepr]): List[TypeRepr] =
+                remaining match
+                  case Nil => result
+                  case head :: tail => withRecursiveTypeArgs(head.typeArgs.reverse_:::(tail), head :: result)
+
+              sub -> withRecursiveTypeArgs(typeReprsOf[elementTypes], Nil)
+            case _ => sub -> Nil
+    }
+
+    // flattenedSubs above doesn't return abstract subtypes that have no typeclass defined for them
+    // but since they might be used as membertypes somewhere we look for them here and include them if found
+    val augmentedSubsWithMembers = subsWithMembers.foldLeft(Nil: SubsWithMembers) { case (acc, x@(_, memberTypes)) =>
+      memberTypes.foldLeft(x :: acc) { (acc, memberType) =>
+        if (!(memberType <:< rootNode.tpe) || (memberType =:= rootNode.tpe) ||
+          subNodes.exists(_._1.tpe =:= memberType) || acc.exists(_._1 =:= memberType)) acc
+        else (memberType -> adtChildren(memberType)) :: acc // found an abstract subtype that we have to include
       }
+    }
 
-    @tailrec def topoSort(
-        remaining: List[(AdtTypeNode, List[AdtTypeNode])],
-        blackSet: List[AdtTypeNode],
-        result: List[AdtTypeNode]): List[AdtTypeNode] =
+    // for each subtype S we collect the "dependencies", which are the ADT subtypes that appear somewhere within the member
+    // definitions of S and, as such, need to have their typeclass implicitly available _before_ the implicit derivation of S
+    val subsWithDeps = augmentedSubsWithMembers.map { case (sub, memberTypes) =>
+      sub -> memberTypes.filter(t => augmentedSubsWithMembers.exists(_._1 =:= t))
+    }
+
+    @tailrec def topoSort(remaining: SubsWithMembers, blackList: List[TypeRepr], result: List[TypeRepr],
+                          cycleBreakers: List[TypeRepr]): (List[TypeRepr], List[TypeRepr]) =
       remaining match {
-        case (n, links) :: tail if links.forall(_ containedIn result) =>
-          // we already have all links of the node in the result, to we can simply add the node itself
-          topoSort(tail, blackSet, n :: result)
-        case (n, links) :: _ =>
-          // if the node has links that we haven't processed yet we need to pull these forward
-          // but we need to be careful to detect unresolvable cycles, which we do via the "blackSet"
-          if (!n.containedIn(blackSet)) {
-            val (toPullForward, otherRemaining) = remaining.partition(_._1 containedIn links)
-            topoSort(toPullForward ::: otherRemaining, n :: blackSet, result)
-          } else
-            fail(
-              s"The ADT `${rootNode.name}` contains a circular dependency involving `${n.tpe.show}` that you need to " +
-                s"break manually, e.g. by explicitly defining the implicit typeclass for `${n.tpe.show}`."
-            )
-        case Nil => result.reverse
+        case (n, deps) :: tail =>
+          val (toPullForward, otherRemaining) = remaining.partition(x => deps.exists(_ =:= x._1))
+          if (toPullForward.isEmpty) {
+            // all dependencies of the node are already in the result, so we can simply add the node itself
+            topoSort(tail, blackList, n :: result, cycleBreakers)
+          } else {
+            if (blackList.contains(n)) {
+              // we have a cycle that can be broken by treating `n` specially,
+              // so we remove `n` from the process (and the result!) but add it to the `cycleBreakers`
+              topoSort(tail, blackList, result, n :: cycleBreakers)
+            } else {
+              // we have some types that need to be handled first, so we don't actually make any progress
+              // but simply reorder the `remaining` list and try again, thereby remembering that already processed `n`
+              topoSort(toPullForward ::: otherRemaining, n :: blackList, result, cycleBreakers)
+            }
+          }
+        case Nil => result.reverse -> cycleBreakers.reverse
       }
 
-    topoSort(relevantSubsWithLinks, Nil, Nil)
+    topoSort(subsWithDeps, Nil, Nil, Nil)
   }
 
   private def typeReprsOf[Ts: Type]: List[TypeRepr] =
@@ -508,15 +500,15 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
    *
    * @param as A collection of values of some type `A`. Each value is rendered into one definition.
    * @param tpe Simple function providing the capability of extracting the definition type form a value of type `A`
-   * @param f A polymorphic function (with a `X: Type` context bound) turning a value of type `A`
+   * @param f A polymorphic function (with an `X: Type` context bound) turning a value of type `A`
    *          into an `Expr[Any]` (the respective definition) using a callback taking a value of type `B`.
    *          The `B` values of all definitions are collected and passed to `result` function in the end.
    * @param result Function returning the (nested) result expression using the collected `B` values.
    */
-  private def renderEach[A, B:ClassTag, R](as: IArray[A])(tpe: A => Type[?])
-                                          (f: Quotes ?=> [X] => A => Type[X] ?=> (Quotes ?=> B => Expr[Any]) => Expr[Any])
-                                          (result: Quotes ?=> IArray[B] => Expr[R])
-                                          (using Quotes): Expr[R] =
+  protected def renderEach[A, B:ClassTag, R](as: IArray[A])(tpe: A => Type[?])
+                                            (f: Quotes ?=> [X] => A => Type[X] ?=> (Quotes ?=> B => Expr[Any]) => Expr[Any])
+                                            (result: Quotes ?=> IArray[B] => Expr[R])
+                                            (using Quotes): Expr[R] =
     val bs = Array.ofDim[B](as.size)
 
     @tailrec def rec(ix: Int, statements: List[Statement], q: Quotes): Expr[R] =
@@ -661,8 +653,8 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
       [X] => (v: Val) => tail => '{ val x: X = ${ v.as[X].get }; ${ tail(Val.of('x)) } }
     } { vals => next(vals) }
 
-  final def withVars[A: Type](array: IArray[Val])(next: Quotes ?=> IArray[Var] => Expr[A])(using Quotes): Expr[A] =
-    renderEach[Val, Var, A](array)(_.tpe) {
+  final def withVars[A: Type](inits: IArray[Val])(next: Quotes ?=> IArray[Var] => Expr[A])(using Quotes): Expr[A] =
+    renderEach[Val, Var, A](inits)(_.tpe) {
       [X] => (v: Val) => tail => '{ var x: X = ${ v.as[X].get } ; ${ tail(Var.of('x, newX => '{ x = $newX })) } }
     } { vals => next(vals) }
 
@@ -670,7 +662,7 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
       next: Quotes ?=> IArray[Option[Val]] => Expr[A])(using Quotes): Expr[A] =
     val arrayWithIndices = array.zipWithIndex.flatMap { case (x, i) => x.map(_ -> i) }
     renderEach[(Val, Int), (Val, Int), A](arrayWithIndices)(_._1.tpe) {
-      [X] => (pair:(Val, Int)) => tail => '{ val x: X = ${ pair._1.as[X].get } ; ${ tail(Val.of('x) -> pair._2) } }
+      [X] => (tup: (Val, Int)) => tail => '{ val x: X = ${ tup._1.as[X].get } ; ${ tail(Val.of('x) -> tup._2) } }
     } { valsWithIndices =>
       val result = Array.fill[Option[Val]](array.size)(None)
       valsWithIndices.foreach { case (v, i) => result(i) = Some(v) }
