@@ -25,11 +25,24 @@ class ComplexAdtSpec extends AbstractBorerSpec:
     deriveAllCodecs[Exp]
   }
 
-  test("Complex ADT") {
+  test("Complex ADT Example 1") {
     val ast: Exp = InsertDef(
       List(ColDef("DUMMY", Obj(Ident(List("DUMMY")), null, null, null, false), ExprType("java.lang.Integer"))),
       List(TableDef("DUMMY", Obj(TableObj(Ident(List("DUMMY"))), null, null, null, false))),
       Insert(null, null, List(), Values(List(Arr(List(BigDecimalConst(0))))), None, None))
+
+    val encoding = encode(ast)
+    roundTrip(encoding, ast)
+  }
+
+  test("Complex ADT Cycle Breaker Example") {
+    val ast: Exp = BracesSelectDef(
+      BracesSelectDef(
+        WithSelectDef(
+          SelectDef(Nil, Nil, Query(Nil, Filters(Nil))),
+          List(
+            WithTableDef(Nil, Nil, false, DeleteDef(Nil, Delete(filter = Arr(Nil), returning = None, db = None)))
+          ))))
 
     val encoding = encode(ast)
     roundTrip(encoding, ast)
