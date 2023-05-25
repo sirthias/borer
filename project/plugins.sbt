@@ -10,7 +10,7 @@ addSbtPlugin("pl.project13.scala"    % "sbt-jmh"                    % "0.4.4")
 addSbtPlugin("com.lightbend.paradox" % "sbt-paradox"                % "0.10.3")
 addSbtPlugin("io.bullet"             % "sbt-paradox-material-theme" % "0.7.0")
 addSbtPlugin("com.github.sbt"        % "sbt-ghpages"                % "0.7.0")
-addSbtPlugin("com.typesafe.sbt"      % "sbt-site"                   % "1.4.1")
+addSbtPlugin("com.github.sbt"        % "sbt-site"                   % "1.5.0")
 
 libraryDependencies ++= Seq(
   "io.bullet" %% "borer-core"       % "1.7.2",
