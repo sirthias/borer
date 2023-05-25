@@ -9,7 +9,7 @@ addSbtPlugin("org.portable-scala"    % "sbt-scalajs-crossproject"   % "1.3.1")
 addSbtPlugin("pl.project13.scala"    % "sbt-jmh"                    % "0.4.4")
 addSbtPlugin("com.lightbend.paradox" % "sbt-paradox"                % "0.10.3")
 addSbtPlugin("io.bullet"             % "sbt-paradox-material-theme" % "0.7.0")
-addSbtPlugin("com.github.sbt"        % "sbt-ghpages"                % "0.7.0")
+addSbtPlugin("com.github.sbt"        % "sbt-ghpages"                % "0.8.0")
 addSbtPlugin("com.typesafe.sbt"      % "sbt-site"                   % "1.4.1")
 
 libraryDependencies ++= Seq(
