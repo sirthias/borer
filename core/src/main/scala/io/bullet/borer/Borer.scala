@@ -62,7 +62,7 @@ case object Cbor extends Target:
       config: DecodingConfig = DecodingConfig.default,
       receiverWrapper: Receiver.Transformer[DecodingConfig] = CborValidation.wrapper)(
       implicit p: Input.Provider[T]): Reader =
-    new InputReader(new CborParser(p(value), config)(p.byteAccess), null, receiverWrapper, config, this)
+    new InputReader(new CborParser(p(value))(using p.byteAccess, config), null, receiverWrapper, config, this)
 
   /**
    * @param bufferSize                  the buffer size used for configuring the respective [[Output]]

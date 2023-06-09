@@ -1,7 +1,7 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import sbt._
 
-def scala3 = "3.2.2"
+def scala3 = "3.3.0"
 
 inThisBuild(
   List(
@@ -53,6 +53,7 @@ lazy val commonSettings = Seq(
     "-Xcheck-macros",
     // "-Ydebug-error",
     "-Xmax-inlines:128", // required for compiling upickle benchmarks
+    // "-Wunused:all" // disabled until https://github.com/lampepfl/dotty/issues/17315 is resolved
   ),
   Compile / console / scalacOptions ~= (_ filterNot (o => o.contains("warn") || o.contains("Xlint"))),
   Test / console / scalacOptions := (Compile / console / scalacOptions).value,

@@ -19,7 +19,6 @@ import java.lang.{
 import java.math.{BigDecimal as JBigDecimal, BigInteger as JBigInteger}
 import io.bullet.borer.encodings.BaseEncoding
 import io.bullet.borer.internal.Util
-import io.bullet.borer.Encoder.forUnit
 
 import scala.annotation.{tailrec, threadUnsafe}
 import scala.collection.immutable.{HashMap, ListMap, TreeMap}

@@ -10,9 +10,9 @@ package io.bullet.borer.json
 
 import java.nio.charset.StandardCharsets
 import java.util
-import java.lang.{Long => JLong}
+import java.lang.Long as JLong
 
-import io.bullet.borer.{Borer, _}
+import io.bullet.borer.*
 import io.bullet.borer.internal.{CharArrayCache, Parser, Util}
 
 import scala.annotation.{switch, tailrec}
@@ -584,7 +584,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
     if (remaining < 1) '\uffff' else ((input.readByte() << 8) | 0xFF).toChar
 
   def padQuadByte(remaining: Int): Int =
-    import input.{readByte => byte, readDoubleByteBigEndian => doub}
+    import input.{readByte as byte, readDoubleByteBigEndian as doub}
     cursorExtra += 4 - remaining
     // format: OFF
     remaining match
@@ -596,7 +596,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
     // format: ON
 
   def padOctaByte(remaining: Int): Long =
-    import input.{readByte => byte, readDoubleByteBigEndian => doub, readQuadByteBigEndian => quad}
+    import input.{readByte as byte, readDoubleByteBigEndian as doub, readQuadByteBigEndian as quad}
     cursorExtra += 8 - remaining
     // format: OFF
     remaining match

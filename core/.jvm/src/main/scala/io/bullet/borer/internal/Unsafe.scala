@@ -53,7 +53,6 @@ object Unsafe:
   final private val LONG_ARRAY_BASE_OFFSET =
     if (UNSAFE ne null) UNSAFE.arrayBaseOffset(classOf[Array[Long]]).toLong else 0L
 
-  // @nowarn("cat=other-match-analysis")
   def byteArrayAccess: ByteArrayAccess =
     if (UNSAFE ne null)
       ByteOrder.nativeOrder() match
