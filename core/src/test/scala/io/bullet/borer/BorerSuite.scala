@@ -23,10 +23,10 @@ abstract class BorerSuite extends FunSuite:
 
       assertEquals(arrayToSeq(lhs), arrayToSeq(rhs))
 
-    /**
-     * Asserts that the given block raises the expected exception. The exception
-     * is returned if raised, and an `AssertionError` is raised if the expected
-     * exception does not appear.
-     */
-    def assertMatch(pf: PartialFunction[A, Unit])(using munit.Location): Unit =
-      assert(pf.isDefinedAt(lhs))
+  /**
+   * Asserts that the given block raises the expected exception. The exception
+   * is returned if raised, and an `AssertionError` is raised if the expected
+   * exception does not appear.
+   */
+  def assertMatch(pf: PartialFunction[A, Unit])(using munit.Location): Unit =
+    assert(pf.isDefinedAt(lhs))
