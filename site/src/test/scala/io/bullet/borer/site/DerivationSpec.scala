@@ -12,9 +12,7 @@ import io.bullet.borer.BorerSuite
 
 class DerivationSpec extends BorerSuite {
 
-  case class Foo()
-
-  {
+  case class Foo() {
     // #import-array-based
     import io.bullet.borer.derivation.ArrayBasedCodecs._
     // #import-array-based
@@ -89,10 +87,10 @@ class DerivationSpec extends BorerSuite {
     case class Dog(age: Int, name: String)                      extends Animal
     case class Cat(weight: Double, color: String, home: String) extends Animal
     case class Fish(color: String)                              extends Animal
-    case object Yeti                                            extends Animal
-    // #example-adt
-
-    {
+    case object Yeti
+        extends Animal
+        // #example-adt
+        {
       // #adt-semi-automatic-codec-derivation
       import io.bullet.borer.derivation.MapBasedCodecs._
 
