@@ -12,7 +12,7 @@ import _root_.org.apache.pekko.util.ByteString
 import io.bullet.borer._
 
 class PekkoCborSuiteSpec extends AbstractCborSuiteSpec {
-  import org.apache.pekko._
+  import pekko._
 
   def encode[T: Encoder](value: T): String   = toHexString(Cbor.encode(value).to[ByteString].result.toArray)
   def decode[T: Decoder](encoded: String): T = Cbor.decode(ByteString(hexBytes(encoded))).to[T].value

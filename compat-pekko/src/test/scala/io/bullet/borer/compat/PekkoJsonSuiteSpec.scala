@@ -14,7 +14,7 @@ import _root_.org.apache.pekko.util.ByteString
 import io.bullet.borer._
 
 class PekkoJsonSuiteSpec extends AbstractJsonSuiteSpec {
-  import org.apache.pekko._
+  import pekko._
 
   def encode[T: Encoder](value: T): String =
     Json.encode(value).to[ByteString].result.utf8String

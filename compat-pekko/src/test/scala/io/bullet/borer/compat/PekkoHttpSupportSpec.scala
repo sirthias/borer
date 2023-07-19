@@ -29,7 +29,7 @@ import scala.concurrent.duration.DurationInt
  * which is copyright by Heiko Seeberger and licensed under Apache License, Version 2.0.
  */
 class PekkoHttpSupportSpec extends BorerSuite {
-  import org.apache.pekkoHttp._
+  import pekkoHttp._
 
   final case class Foo(bar: String) {
     require(bar == "bar", "bar must be 'bar'!")
