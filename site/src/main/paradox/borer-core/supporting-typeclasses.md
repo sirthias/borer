@@ -22,6 +22,7 @@ Currently _borer_ comes with predefined `Input` implementations for these types:
 - `java.io.InputStream`
 - `java.io.File`
 - `akka.util.ByteString` (with the `borer-compat-akka` module)
+- `pekko.util.ByteString` (with the `borer-compat-pekko` module)
 - `scodec.bits.ByteVector` (with the `borer-compat-scodec` module)
 - `Iterator[T]`, provided that there is an `Input.Provider[T]` available implicitly
 
@@ -49,6 +50,7 @@ implementations for these types:
 - `java.io.OutputStream` (to a an existing instance)
 - `java.io.File` (to a an existing instance)
 - `akka.util.ByteString` (with the `borer-compat-akka` module)
+- `pekko.util.ByteString` (with the `borer-compat-pekko` module)
 - `scodec.bits.ByteVector` (with the `borer-compat-scodec` module)
 
 The @github[Output](/core/src/main/scala/io/bullet/borer/Output.scala) trait isn't hard to implement as it simply writes
@@ -72,4 +74,5 @@ implementations for these types:
 - `Array[Byte]`
 - `java.nio.ByteBuffer`
 - `akka.util.ByteString` (with the `borer-compat-akka` module)
+- `pekko.util.ByteString` (with the `borer-compat-pekko` module)
 - `scodec.bits.ByteVector` (with the `borer-compat-scodec` module)

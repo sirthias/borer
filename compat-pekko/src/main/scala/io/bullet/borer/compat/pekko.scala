@@ -10,13 +10,13 @@ package io.bullet.borer.compat
 
 import java.nio.ByteBuffer
 
-import _root_.akka.util.ByteString
-import _root_.akka.actor
-import _root_.akka.actor.typed.{ActorRef, ActorRefResolver, ActorSystem}
-import _root_.akka.serialization.Serialization
+import _root_.org.apache.pekko.util.ByteString
+import _root_.org.apache.pekko.actor
+import _root_.org.apache.pekko.actor.typed.{ActorRef, ActorRefResolver, ActorSystem}
+import _root_.org.apache.pekko.serialization.Serialization
 import io.bullet.borer.{ByteAccess, _}
 
-object akka {
+object pekko {
 
   implicit def actorRefCodec(implicit system: actor.ActorSystem = serializationSystem): Codec[actor.ActorRef] = {
     val actorRefProvider = system.asInstanceOf[actor.ExtendedActorSystem].provider
@@ -80,7 +80,7 @@ object akka {
         case x             => fromByteArray(byteAccess.toByteArray(x))
       }
 
-    def empty: ByteString = ByteString.empty
+    def empty = ByteString.empty
   }
 
   /**

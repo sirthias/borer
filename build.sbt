@@ -26,7 +26,7 @@ addCommandAlias("check", "; scalafmtCheckAll")
 
 addCommandAlias(
   "testJVM",
-  Seq("core", "derivation", "compat-akka", "compat-cats", "compat-circe", "compat-scodec", "site")
+  Seq("core", "derivation", "compat-akka", "compat-pekko", "compat-cats", "compat-circe", "compat-scodec", "site")
     .mkString("; ", "/test ; ", "/test")
 )
 
@@ -61,6 +61,9 @@ lazy val commonSettings = Seq(
   sourcesInBase := false,
   Compile / unmanagedResources += baseDirectory.value.getParentFile.getParentFile / "LICENSE",
   scalafmtOnCompile := true, // reformat main and test sources on compile
+
+  // temporary
+  resolvers += "Apache Pekko Staging".at("https://repository.apache.org/content/groups/staging"),
 
   // file headers
   headerLicense := Some(HeaderLicense.MPLv2("2019-2023", "Mathias Doenitz")),
@@ -106,6 +109,9 @@ lazy val releaseSettings = {
 val `akka-actor`        = Def.setting("com.typesafe.akka" %%  "akka-actor-typed"  % "2.8.3")
 val `akka-stream`       = Def.setting("com.typesafe.akka" %%  "akka-stream"       % "2.8.3")
 val `akka-http`         = Def.setting("com.typesafe.akka" %%  "akka-http"         % "10.5.2")
+val `pekko-actor`       = Def.setting("org.apache.pekko" %%  "pekko-actor-typed"  % "1.0.1")
+val `pekko-stream`      = Def.setting("org.apache.pekko" %%  "pekko-stream"       % "1.0.1")
+val `pekko-http`        = Def.setting("org.apache.pekko" %%  "pekko-http"         % "1.0.0-RC2")
 val `cats-core`         = Def.setting("org.typelevel"     %%% "cats-core"         % "2.9.0")
 val `circe-core`        = Def.setting("io.circe"          %%% "circe-core"        % "0.14.5")
 val `circe-parser`      = Def.setting("io.circe"          %%% "circe-parser"      % "0.14.5")
@@ -120,6 +126,7 @@ val macrolizer          = Def.setting("io.bullet"         %%% "macrolizer"      
 lazy val borer = (project in file("."))
   .aggregate(`core-jvm`, `core-js`)
   .aggregate(`compat-akka`)
+  .aggregate(`compat-pekko`)
   .aggregate(`compat-cats-jvm`, `compat-cats-js`)
   .aggregate(`compat-circe-jvm`, `compat-circe-js`)
   .aggregate(`compat-scodec-jvm`, `compat-scodec-js`)
@@ -164,6 +171,21 @@ lazy val `compat-akka` = project
       `akka-actor`.value  % "provided",
       `akka-stream`.value % "provided",
       `akka-http`.value   % "provided" cross CrossVersion.for3Use2_13,
+      munit.value)
+  )
+
+lazy val `compat-pekko` = project
+  .enablePlugins(AutomateHeaderPlugin)
+  .dependsOn(`core-jvm` % "compile->compile;test->test")
+  .dependsOn(`derivation-jvm` % "test->compile")
+  .settings(commonSettings)
+  .settings(releaseSettings)
+  .settings(
+    moduleName := "borer-compat-pekko",
+    libraryDependencies ++= Seq(
+      `pekko-actor`.value  % "provided",
+      `pekko-stream`.value % "provided",
+      `pekko-http`.value   % "provided" cross CrossVersion.for3Use2_13,
       munit.value)
   )
 
@@ -269,6 +291,7 @@ lazy val site = project
     `core-jvm` % "compile->compile;test->test",
     `derivation-jvm`,
     `compat-akka`,
+    `compat-pekko`,
     `compat-cats-jvm`,
     `compat-circe-jvm`,
     `compat-scodec-jvm`
@@ -286,6 +309,9 @@ lazy val site = project
       `akka-actor`.value,
       `akka-stream`.value,
       `akka-http`.value.cross(CrossVersion.for3Use2_13),
+      `pekko-actor`.value,
+      `pekko-stream`.value,
+      `pekko-http`.value.cross(CrossVersion.for3Use2_13),
       munit.value
     ),
     com.github.sbt.git.SbtGit.GitKeys.gitRemoteRepo := scmInfo.value.get.connection.drop("scm:git:".length),

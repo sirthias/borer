@@ -41,7 +41,7 @@ Debuggable
   serialization issues, especially when working with a binary format like [CBOR].
 
 Scala JS
-: All _borer_ modules (except for `borer-compat-akka`) support [scala.js].
+: All _borer_ modules (except for `borer-compat-akka` and `borer-compat-pekko`) support [scala.js].
 
 
   [Scala]: https://www.scala-lang.org/
@@ -57,6 +57,7 @@ Scala JS
 * [-](borer-core/index.md)
 * [-](borer-derivation/index.md)
 * [-](borer-compat-akka.md)
+* [-](borer-compat-pekko.md)
 * [-](borer-compat-cats.md)
 * [-](borer-compat-circe.md)
 * [-](borer-compat-scodec.md)
