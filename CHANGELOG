@@ -1,3 +1,10 @@
+Version 1.11.0 (2023-07-31)
+---------------------------
+
+- Upgraded to Scala 3.3.0
+- Added compat-pekko module in analogy to compat-akka (#657, thanks to @abrighton)
+
+
 Version 1.10.3 (2023-05-12)
 ---------------------------
 

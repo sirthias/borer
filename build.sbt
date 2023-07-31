@@ -323,7 +323,7 @@ lazy val site = project
         .withColor("indigo", "orange")
         .withLogo("assets/images/borer-logo-white.svg")
         .withCustomStylesheet("assets/stylesheets/borer.css")
-        .withCopyright("Copyright (C) 2019-2022 Mathias Doenitz")
+        .withCopyright("Copyright (C) 2019-2023 Mathias Doenitz")
         .withRepository(scmInfo.value.get.browseUrl.toURI)
         .withSocial(uri("https://github.com/sirthias"), uri("https://twitter.com/sirthias"))
         .withSearch()
@@ -334,7 +334,7 @@ lazy val site = project
       java.awt.Desktop.getDesktop.browse(new java.net.URI(uri))
       state
     },
-    Compile / paradox / version := "1.10.3",
+    Compile / paradox / version := "1.11.0",
     paradoxProperties ++= Map(
       "image.base_url" -> ".../assets/images",
       "github.base_url" -> {
