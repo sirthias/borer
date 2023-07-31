@@ -53,7 +53,7 @@ object akka {
 
     def toByteArray(bytes: ByteString): Array[Byte] = bytes.toArray
 
-    def concat(a: ByteString, b: ByteString) =
+    def concat(a: ByteString, b: ByteString): ByteString =
       if (a.nonEmpty) {
         if (b.nonEmpty) {
           val len = a.length + b.length
@@ -74,13 +74,13 @@ object akka {
       if (copied < bytes.size) bytes.drop(copied) else empty
     }
 
-    def convert[B](value: B)(implicit byteAccess: ByteAccess[B]) =
+    def convert[B](value: B)(implicit byteAccess: ByteAccess[B]): ByteString =
       value match {
         case x: ByteString => x
         case x             => fromByteArray(byteAccess.toByteArray(x))
       }
 
-    def empty = ByteString.empty
+    def empty: ByteString = ByteString.empty
   }
 
   /**
@@ -94,7 +94,7 @@ object akka {
   implicit object ByteStringProvider extends Input.Provider[ByteString] {
     type Bytes = ByteString
     type In    = FromByteString
-    def byteAccess               = ByteStringByteAccess
+    def byteAccess: ByteAccess[ByteString] = ByteStringByteAccess
     def apply(value: ByteString) = new FromByteString(value)
   }
 
@@ -164,7 +164,7 @@ object akka {
       else pp.padOctaByte(remaining)
     }
 
-    def readBytes(length: Long, pp: Input.PaddingProvider[ByteString]) = {
+    def readBytes(length: Long, pp: Input.PaddingProvider[ByteString]): ByteString = {
       val remaining = (byteString.length - _cursor).toLong
       val len       = math.min(remaining, length).toInt
       val bytes =
@@ -187,7 +187,7 @@ object akka {
    * Mutable [[Output]] implementation for serializing to [[ByteString]].
    */
   final class ByteStringOutput extends Output {
-    private[this] var builder = ByteString.newBuilder
+    private[this] val builder = ByteString.newBuilder
 
     type Self   = ByteStringOutput
     type Result = ByteString
