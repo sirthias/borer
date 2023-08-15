@@ -112,7 +112,7 @@ val `akka-http`         = Def.setting("com.typesafe.akka" %%  "akka-http"       
 val `pekko-actor`       = Def.setting("org.apache.pekko" %%  "pekko-actor-typed"  % "1.0.1")
 val `pekko-stream`      = Def.setting("org.apache.pekko" %%  "pekko-stream"       % "1.0.1")
 val `pekko-http`        = Def.setting("org.apache.pekko" %%  "pekko-http"         % "1.0.0-RC2")
-val `cats-core`         = Def.setting("org.typelevel"     %%% "cats-core"         % "2.9.0")
+val `cats-core`         = Def.setting("org.typelevel"     %%% "cats-core"         % "2.10.0")
 val `circe-core`        = Def.setting("io.circe"          %%% "circe-core"        % "0.14.5")
 val `circe-parser`      = Def.setting("io.circe"          %%% "circe-parser"      % "0.14.5")
 val `circe-generic`     = Def.setting("io.circe"          %%% "circe-generic"     % "0.14.5")
@@ -315,7 +315,7 @@ lazy val site = project
       munit.value
     ),
     com.github.sbt.git.SbtGit.GitKeys.gitRemoteRepo := scmInfo.value.get.connection.drop("scm:git:".length),
-    ghpagesNoJekyll                               := true,
+    ghpagesNoJekyll                                 := true,
     ParadoxMaterialThemePlugin.paradoxMaterialThemeSettings(Compile),
     Compile / paradoxMaterialTheme := {
       ParadoxMaterialTheme()
