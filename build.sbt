@@ -1,7 +1,7 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import sbt._
 
-def scala3 = "3.3.0"
+def scala3 = "3.3.1"
 
 inThisBuild(
   List(
@@ -109,13 +109,13 @@ lazy val releaseSettings = {
 val `akka-actor`        = Def.setting("com.typesafe.akka" %%  "akka-actor-typed"  % "2.8.3")
 val `akka-stream`       = Def.setting("com.typesafe.akka" %%  "akka-stream"       % "2.8.3")
 val `akka-http`         = Def.setting("com.typesafe.akka" %%  "akka-http"         % "10.5.2")
-val `pekko-actor`       = Def.setting("org.apache.pekko" %%  "pekko-actor-typed"  % "1.0.1")
-val `pekko-stream`      = Def.setting("org.apache.pekko" %%  "pekko-stream"       % "1.0.1")
-val `pekko-http`        = Def.setting("org.apache.pekko" %%  "pekko-http"         % "1.0.0-RC2")
-val `cats-core`         = Def.setting("org.typelevel"     %%% "cats-core"         % "2.9.0")
-val `circe-core`        = Def.setting("io.circe"          %%% "circe-core"        % "0.14.5")
-val `circe-parser`      = Def.setting("io.circe"          %%% "circe-parser"      % "0.14.5")
-val `circe-generic`     = Def.setting("io.circe"          %%% "circe-generic"     % "0.14.5")
+val `pekko-actor`       = Def.setting("org.apache.pekko"  %%  "pekko-actor-typed" % "1.0.1")
+val `pekko-stream`      = Def.setting("org.apache.pekko"  %%  "pekko-stream"      % "1.0.1")
+val `pekko-http`        = Def.setting("org.apache.pekko"  %%  "pekko-http"        % "1.0.0")
+val `cats-core`         = Def.setting("org.typelevel"     %%% "cats-core"         % "2.10.0")
+val `circe-core`        = Def.setting("io.circe"          %%% "circe-core"        % "0.14.6")
+val `circe-parser`      = Def.setting("io.circe"          %%% "circe-parser"      % "0.14.6")
+val `circe-generic`     = Def.setting("io.circe"          %%% "circe-generic"     % "0.14.6")
 val `scodec-bits`       = Def.setting("org.scodec"        %%% "scodec-bits"       % "1.1.37")
 val munit               = Def.setting("org.scalameta"     %%% "munit"             % "0.7.29" % Test)
 val macrolizer          = Def.setting("io.bullet"         %%% "macrolizer"        % "0.6.2" % "compile-internal, test-internal")
