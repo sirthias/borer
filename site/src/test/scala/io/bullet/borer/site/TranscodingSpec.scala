@@ -14,15 +14,11 @@ class TranscodingSpec extends BorerSuite {
 
   test("example") {
     // #example
-    import io.bullet.borer.Cbor
-    import io.bullet.borer.Dom
-    import io.bullet.borer.derivation.MapBasedCodecs._
+    import io.bullet.borer.{Cbor, Dom, Codec}
+    import io.bullet.borer.derivation.MapBasedCodecs.*
 
-    case class Employee(nick: String, age: Int)
-    case class Department(name: String, employees: List[Employee])
-
-    implicit val employeeCodec   = deriveCodec[Employee]
-    implicit val departmentCodec = deriveCodec[Department]
+    case class Employee(nick: String, age: Int) derives Codec
+    case class Department(name: String, employees: List[Employee]) derives Codec
 
     val value =
       Department(

@@ -17,7 +17,7 @@ class CirceCompatSpec extends BorerSuite {
     // #example
     import io.circe.{Decoder, Encoder} // NOTE: circe (!) Encoders / Decoders
     import io.bullet.borer.Cbor
-    import io.bullet.borer.compat.circe._ // the borer codec for the circe AST
+    import io.bullet.borer.compat.circe.* // the borer codec for the circe AST
 
     // serializes a value to CBOR given that a circe `Encoder` is available
     def serializeToCbor[T: Encoder](value: T): Array[Byte] =

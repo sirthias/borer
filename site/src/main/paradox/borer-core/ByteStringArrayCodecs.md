@@ -22,8 +22,8 @@ in the case of [JSON].
 In order to allow for more efficient encodings (as well as faster encoding and decoding processes) _borer_
 provides special codecs for these array types that you can "enable" with one of these two imports:
 
-- `import io.bullet.borer.ByteStringArrayCodecs.BigEndian._`
-- `import io.bullet.borer.ByteStringArrayCodecs.LittleEndian._`
+- `import io.bullet.borer.ByteStringArrayCodecs.BigEndian.*`
+- `import io.bullet.borer.ByteStringArrayCodecs.LittleEndian.*`
 
 With one of these imports in place an `Array[Int]` for example will be encoded as a raw byte array, with each `Int`
 value being represented as four bytes (in the respective byte order). Conversion to and from byte arrays is done as

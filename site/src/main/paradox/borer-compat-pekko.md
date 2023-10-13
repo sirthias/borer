@@ -12,7 +12,7 @@ When you include the `borer-compat-pekko` module as a dependency (see the
 @ref:[Getting Started](getting-started.md) chapter for details) and
 
 ```scala
-import io.bullet.borer.compat.pekko._
+import io.bullet.borer.compat.pekko.*
 ```
 
 you also get:
@@ -31,7 +31,7 @@ When you include the `borer-compat-pekko` module as a dependency (see the
 @ref:[Getting Started](getting-started.md) chapter for details) and
 
 ```scala
-import io.bullet.borer.compat.pekkoHttp._
+import io.bullet.borer.compat.pekkoHttp.*
 ```
 
 `pekko-http` will transparently marshal to and from your custom domain model types:

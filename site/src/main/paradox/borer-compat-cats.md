@@ -21,7 +21,7 @@ Include the `borer-compat-cats` module as a dependency (see the @ref:[Getting St
 details) and
 
 ```scala
-import io.bullet.borer.compat.cats._
+import io.bullet.borer.compat.cats.*
 ```
 
 With this import in place _borer_ will seamlessly encode and decode instances of the types listed above, provided that

@@ -64,4 +64,30 @@ to the derivation macro for each ADT sub-type automatically, so you only need to
 @@snip [-]($test$/DerivationSpec.scala) { #adt-fully-automatic-codec-derivation }
 
 
- 
+Derivation via `derives`
+------------------------
+
+_borer_ also supports Scala 3's new `derives` clause, which allows for a very succinct definition of `Encoder`,
+`Decoder` and `Codec` instances:
+
+@@snip [-]($test$/DerivationSpec.scala) { #derives }
+
+The `derives Codec` clause automatically generates a respective `given` instance in the type companion object
+with a `deriveCodec` call to either `MapBasedCodecs`, `CompactMapBasedCodecs` or `ArrayBasedCodecs`, depending
+on what you have imported.
+(With `derives Encoder`, `derives Decoder` or `derives Encoder, Decoder` the same holds true analogously.)
+
+The snippet above is therefore equivalent to this one:
+
+@@snip [-]($test$/DerivationSpec.scala) { #derives-analog }
+
+@@@ note
+
+The `derives` clause only ever generates a single `Encoder`, `Decoder` or `Codec` for the type that is annoted with it.
+This means that you cannot use it to generate a call to `deriveAllEncoders`, `deriveAllDecoders` or `deriveAllCodecs`
+(see chapter on [Fully-Automatic Derivation](#fully-automatic-derivation) above).
+
+If you want to have _borer_ automatically construct the type classes for a whole ADT hierarchy you'll
+still have to resort to an explicit `given` instance with a call to the respective `deriveAllXXX`.
+
+@@@

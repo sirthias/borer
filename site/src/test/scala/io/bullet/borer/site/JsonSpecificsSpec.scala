@@ -22,12 +22,11 @@ class JsonSpecificsSpec extends BorerSuite {
       else w.writeArrayHeader(0) // fixed-sized Arrays are not supported in JSON
     // #writeEmptyArray
 
-    import io.bullet.borer._
+    import io.bullet.borer.*
 
     object Foo
 
-    implicit val fooEncoder: Encoder[Foo.type] =
-      Encoder((w, _) => writeEmptyArray(w))
+    given Encoder[Foo.type] = Encoder((w, _) => writeEmptyArray(w))
 
     Cbor.encode(Foo).toByteArray ==> hex"80"
     Json.encode(Foo).toUtf8String ==> "[]"
@@ -43,12 +42,11 @@ class JsonSpecificsSpec extends BorerSuite {
         .writeArrayClose() // way to write an array of size one
     // #writeArrayOpen-close
 
-    import io.bullet.borer._
+    import io.bullet.borer.*
 
     object Foo
 
-    implicit val fooEncoder: Encoder[Foo.type] =
-      Encoder((w, _) => writeAsUnaryArray(w, "foo"))
+    given Encoder[Foo.type] = Encoder((w, _) => writeAsUnaryArray(w, "foo"))
 
     Cbor.encode(Foo).toByteArray ==> hex"8163666F6F"
     Json.encode(Foo).toUtf8String ==> """["foo"]"""
@@ -67,8 +65,8 @@ class JsonSpecificsSpec extends BorerSuite {
     {
       // we need to explicitly define the encoder as well as the decoder
       // in order to "override" the defaults for Array[Byte] on either side
-      implicit val byteArrayEncoder = Encoder.forByteArray(BaseEncoding.zbase32)
-      implicit val byteArrayDecoder = Decoder.forByteArray(BaseEncoding.zbase32)
+      given Encoder[Array[Byte]] = Encoder.forByteArray(BaseEncoding.zbase32)
+      given Decoder[Array[Byte]] = Decoder.forByteArray(BaseEncoding.zbase32)
 
       Json.encode(binaryData).toUtf8String ==> """"54s575a""""
     }

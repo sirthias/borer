@@ -4,17 +4,15 @@ Encoding and Decoding Custom Types
 In order to encode some custom type `T` you'll have to implicitly provide an `Encoder[T]`:
 
 ```scala
-trait Encoder[T] {
+trait Encoder[T]:
   def write(w: Writer, value: T): w.type
-}
 ```
 
 Similarly, for decoding of `T` you'll have to implicitly provide `Decoder[T]`:
 
 ```scala
-trait Decoder[T] {
+trait Decoder[T]:
   def read(r: Reader): T
-}
 ```
 
 Many times, when encoding _and_ decoding must be available for a type, it's easier to supply just a single implicit for
@@ -22,7 +20,7 @@ Many times, when encoding _and_ decoding must be available for a type, it's easi
 provide a `Codec[T]`, which is defined like this:
 
 ```scala
-final case class Codec[T](encoder: Encoder[T], decoder: Decoder[T])
+case class Codec[T](encoder: Encoder[T], decoder: Decoder[T])
 ```
 
 Encoders and Decoders can be implicitly "unpacked" from a `Codec`.
@@ -41,14 +39,14 @@ For example, you should say:
 
 ```scala
 // ok: require `Encoder`/`Decoder` instances and supply a `Codec`
-implicit def forOption[T: Encoder :Decoder]: Codec[Option[T]] = ...
+given [T: Encoder :Decoder]: Codec[Option[T]] = ...
 ```
 
 rather than
 
 ```scala
 // bad: requiring a `Codec` (here: as a Context Bound)
-implicit def forOption[T: Codec]: Codec[Option[T]] = ...
+given [T: Codec]: Codec[Option[T]] = ...
 ```
 
 @@@

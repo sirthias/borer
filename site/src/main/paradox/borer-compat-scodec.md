@@ -8,7 +8,7 @@ When you include the `borer-compat-scodec` module as a dependency (see the
 @ref:[Getting Started](getting-started.md) chapter for details) and
 
 ```scala
-import io.bullet.borer.compat.scodec._
+import io.bullet.borer.compat.scodec.*
 ```
 
 you also get full "zero-copy" support for encoding to and decoding from `scodec.bits.ByteVector` as well as an implicit

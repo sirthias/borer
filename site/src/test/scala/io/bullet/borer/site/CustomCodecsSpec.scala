@@ -19,11 +19,11 @@ class CustomCodecsSpec extends BorerSuite {
 
     case class Color(name: String, value: Int)
 
-    implicit val encoder: Encoder[Color] = Encoder.forProduct[Color]
-    implicit val decoder: Decoder[Color] = Decoder.forProduct[Color]
+    given Encoder[Color] = Encoder.forProduct[Color]
+    given Decoder[Color] = Decoder.forProduct[Color]
 
     // alternative: provide an Encoder and Decoder at the same time
-    implicit val codec: Codec[Color] = Codec(
+    given Codec[Color] = Codec(
       Encoder.forProduct[Color],
       Decoder.forProduct[Color]
     )
@@ -44,10 +44,8 @@ class CustomCodecsSpec extends BorerSuite {
     class Person(val name: String)
 
     // have `Person` be encoded as a simple CBOR/JSON text data item
-    implicit val personEncoder: Encoder[Person] =
-      Encoder.forString.contramap[Person](_.name)
-    implicit val personDecoder: Decoder[Person] =
-      Decoder.forString.map(new Person(_))
+    given Encoder[Person] = Encoder.forString.contramap[Person](_.name)
+    given Decoder[Person] = Decoder.forString.map(new Person(_))
     // #map-contramap
 
     import io.bullet.borer.Json
@@ -64,7 +62,7 @@ class CustomCodecsSpec extends BorerSuite {
 
     class Person(val name: String, val age: Int)
 
-    implicit val encoder: Encoder[Person] = Encoder { (writer, person) =>
+    given Encoder[Person] = Encoder { (writer, person) =>
       writer
         .writeArrayOpen(2)
         .writeString(person.name)
@@ -72,7 +70,7 @@ class CustomCodecsSpec extends BorerSuite {
         .writeArrayClose()
     }
 
-    implicit val decoder: Decoder[Person] = Decoder { reader =>
+    given Decoder[Person] = Decoder { reader =>
       val unbounded = reader.readArrayOpen(2)
       val person = new Person(
         reader.readString(),
@@ -95,7 +93,7 @@ class CustomCodecsSpec extends BorerSuite {
     // #lookahead
     import io.bullet.borer.Decoder
 
-    implicit val eitherStringIntDecoder: Decoder[Either[String, Int]] =
+    given Decoder[Either[String, Int]] =
       Decoder { reader =>
         if (reader.hasString) Left(reader.readString())
         else if (reader.hasInt) Right(reader.readInt())

@@ -16,14 +16,14 @@ class DerivationSpec extends BorerSuite {
 
   {
     // #import-array-based
-    import io.bullet.borer.derivation.ArrayBasedCodecs._
+    import io.bullet.borer.derivation.ArrayBasedCodecs.*
     // #import-array-based
     deriveEncoder[Foo]
   }
 
   {
     // #import-map-based
-    import io.bullet.borer.derivation.MapBasedCodecs._
+    import io.bullet.borer.derivation.MapBasedCodecs.*
     // #import-map-based
     deriveEncoder[Foo]
   }
@@ -33,18 +33,12 @@ class DerivationSpec extends BorerSuite {
     // #array-based
     import io.bullet.borer.{Codec, Json}
     import io.bullet.borer.derivation.key
-    import io.bullet.borer.derivation.ArrayBasedCodecs._
+    import io.bullet.borer.derivation.ArrayBasedCodecs.*
 
-    sealed trait Animal
-    case class Cat(weight: Double, color: String, home: String) extends Animal
-    @key("TheDog") case class Dog(age: Int, name: String)       extends Animal
-    @key(42) case class Mouse(tail: Boolean)                    extends Animal
-
-    implicit val dogCodec: Codec[Dog]     = deriveCodec[Dog]
-    implicit val catCodec: Codec[Cat]     = deriveCodec[Cat]
-    implicit val mouseCodec: Codec[Mouse] = deriveCodec[Mouse]
-
-    implicit val animalCodec: Codec[Animal] = deriveCodec[Animal]
+    sealed trait Animal derives Codec
+    case class Cat(weight: Double, color: String, home: String) extends Animal derives Codec
+    @key("TheDog") case class Dog(age: Int, name: String)       extends Animal derives Codec
+    @key(42) case class Mouse(tail: Boolean)                    extends Animal derives Codec
 
     val cat   = Cat(8.5, "grey", "sofa")
     val dog   = Dog(2, "Rex")
@@ -65,14 +59,11 @@ class DerivationSpec extends BorerSuite {
   test("Map-based") {
 
     // #map-based
-    import io.bullet.borer.Json
-    import io.bullet.borer.derivation.MapBasedCodecs._
+    import io.bullet.borer.{Json, Codec}
+    import io.bullet.borer.derivation.MapBasedCodecs.*
 
-    case class Foo(int: Int, string: String)
-    case class Bar(foo: Foo, d: Double)
-
-    implicit val fooCodec = deriveCodec[Foo]
-    implicit val barCodec = deriveCodec[Bar]
+    case class Foo(int: Int, string: String) derives Codec
+    case class Bar(foo: Foo, d: Double) derives Codec
 
     val foo = Foo(int = 42, string = "yeah")
     val bar = Bar(foo, d = 1.234)
@@ -94,9 +85,10 @@ class DerivationSpec extends BorerSuite {
 
     {
       // #adt-semi-automatic-codec-derivation
-      import io.bullet.borer.derivation.MapBasedCodecs._
+      import io.bullet.borer.Codec
+      import io.bullet.borer.derivation.MapBasedCodecs.*
 
-      implicit val animalCodec = {
+      given Codec[Animal] = {
         implicit val dogCodec  = deriveCodec[Dog]
         implicit val catCodec  = deriveCodec[Cat]
         implicit val fishCodec = deriveCodec[Fish]
@@ -117,9 +109,10 @@ class DerivationSpec extends BorerSuite {
 
     {
       // #adt-fully-automatic-codec-derivation
-      import io.bullet.borer.derivation.MapBasedCodecs._
+      import io.bullet.borer.Codec
+      import io.bullet.borer.derivation.MapBasedCodecs.*
 
-      implicit val animalCodec = deriveAllCodecs[Animal]
+      given Codec[Animal] = deriveAllCodecs[Animal]
       // #adt-fully-automatic-codec-derivation
 
       import io.bullet.borer.Json
@@ -131,15 +124,44 @@ class DerivationSpec extends BorerSuite {
     }
 
     {
+      // #derives
+      import io.bullet.borer.{Codec, Json}
+      import io.bullet.borer.derivation.MapBasedCodecs.*
+
+      case class Color(r: Int, g: Int, b: Int) derives Codec
+
+      val color = Color(255, 0, 0)
+
+      Json.encode(color).toUtf8String ==> """{"r":255,"g":0,"b":0}"""
+      // #derives
+    }
+
+    {
+      // #derives-analog
+      import io.bullet.borer.{Codec, Json}
+      import io.bullet.borer.derivation.MapBasedCodecs.*
+
+      case class Color(r: Int, g: Int, b: Int)
+
+      object Color:
+        given Codec[Color] = deriveCodec
+
+      val color = Color(255, 0, 0)
+
+      Json.encode(color).toUtf8String ==> """{"r":255,"g":0,"b":0}"""
+      // #derives-analog
+    }
+
+    {
       // #flat-adt-encoding
-      import io.bullet.borer.{AdtEncodingStrategy, Json}
-      import io.bullet.borer.derivation.MapBasedCodecs._
+      import io.bullet.borer.{AdtEncodingStrategy, Json, Codec}
+      import io.bullet.borer.derivation.MapBasedCodecs.*
 
       // this enables the flat ADT encoding
-      implicit val flatAdtEncoding =
+      given AdtEncodingStrategy =
         AdtEncodingStrategy.flat(typeMemberName = "_type")
 
-      implicit val animalCodec = deriveAllCodecs[Animal]
+      given Codec[Animal] = deriveAllCodecs[Animal]
 
       val animal: Animal = Dog(2, "Rex")
 
@@ -151,10 +173,10 @@ class DerivationSpec extends BorerSuite {
     {
       // #custom-override
       import io.bullet.borer.{Codec, Json}
-      import io.bullet.borer.derivation.MapBasedCodecs._
+      import io.bullet.borer.derivation.MapBasedCodecs.*
 
       // custom codec only for `Fish`
-      implicit val fishCodec: Codec[Fish] =
+      given Codec[Fish] =
         Codec.bimap[Int, Fish](_ => 0, _ => Fish("red"))
 
       // let borer derive the codecs for the rest of the Animal ADT
@@ -168,11 +190,12 @@ class DerivationSpec extends BorerSuite {
 
     {
       // #adt-dog-cat-derivation
-      import io.bullet.borer.derivation.MapBasedCodecs._
+      import io.bullet.borer.Codec
+      import io.bullet.borer.derivation.MapBasedCodecs.*
 
-      implicit val dogCodec    = deriveCodec[Dog]
-      implicit val catCodec    = deriveCodec[Cat]
-      implicit val animalCodec = deriveAllCodecs[Animal]
+      given Codec[Dog]    = deriveCodec[Dog]
+      given Codec[Cat]    = deriveCodec[Cat]
+      given Codec[Animal] = deriveAllCodecs[Animal]
       // #adt-dog-cat-derivation
 
       // format: OFF
@@ -189,12 +212,10 @@ class DerivationSpec extends BorerSuite {
 
   test("Default Value") {
     // #default-value
-    import io.bullet.borer.Json
-    import io.bullet.borer.derivation.MapBasedCodecs._
+    import io.bullet.borer.{Json, Codec}
+    import io.bullet.borer.derivation.MapBasedCodecs.*
 
-    case class Dog(age: Int, name: String = "<unknown>")
-
-    implicit val dogCodec = deriveCodec[Dog]
+    case class Dog(age: Int, name: String = "<unknown>") derives Codec
 
     Json
       .decode("""{ "age": 4 }""" getBytes "UTF8")
@@ -205,29 +226,40 @@ class DerivationSpec extends BorerSuite {
 
   test("Custom Member Name") {
     // #custom-member-name
-    import io.bullet.borer.Json
+    import io.bullet.borer.{Json, Codec}
     import io.bullet.borer.derivation.key
-    import io.bullet.borer.derivation.MapBasedCodecs._
+    import io.bullet.borer.derivation.MapBasedCodecs.*
 
-    case class Dog(age: Int, @key("the-name") name: String)
-
-    implicit val dogCodec = deriveCodec[Dog]
+    case class Dog(age: Int, @key("the-name") name: String) derives Codec
 
     Json.encode(Dog(1, "Lolle")).toUtf8String ==>
     """{"age":1,"the-name":"Lolle"}"""
     // #custom-member-name
   }
 
-  test("Recursive ADT") {
-    // #recursive-adt
+  test("Recursive ADT old") {
+    // #recursive-adt-old
     import io.bullet.borer.Codec
-    import io.bullet.borer.derivation.MapBasedCodecs._
+    import io.bullet.borer.derivation.MapBasedCodecs.*
 
     sealed trait TreeNode
     case object Leaf                                 extends TreeNode
     case class Node(left: TreeNode, right: TreeNode) extends TreeNode
 
     implicit lazy val codec: Codec[TreeNode] = deriveAllCodecs[TreeNode]
-    // #recursive-adt
+    // #recursive-adt-old
+  }
+
+  test("Recursive ADT new") {
+    // #recursive-adt-new
+    import io.bullet.borer.Codec
+    import io.bullet.borer.derivation.MapBasedCodecs.*
+
+    sealed trait TreeNode
+    case object Leaf                                 extends TreeNode
+    case class Node(left: TreeNode, right: TreeNode) extends TreeNode
+
+    given Codec[TreeNode] = deriveAllCodecs[TreeNode]
+    // #recursive-adt-new
   }
 }

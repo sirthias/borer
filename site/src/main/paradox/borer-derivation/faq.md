@@ -63,12 +63,17 @@ carefully.
 
 ### Recursive ADTs
 
-In most cases the codecs for non-generic ADTs are assigned to an `implicit val` so they don't have to be recreated on
-every use. However, if the `ADT` is recursive the definition should be an `implicit lazy val` with an explicit type
+Before Scala 3 the codecs for non-generic ADTs were mostly assigned to an `implicit val` in order to not be recreated on
+every use. If the `ADT` is recursive this `val` had to be converted into an `implicit lazy val` with an explicit type
 annotation instead, as in this example:
 
-@@snip [-]($test$/DerivationSpec.scala) { #recursive-adt }
+@@snip [-]($test$/DerivationSpec.scala) { #recursive-adt-old }
 
+While this still works with Scala 3 we can now resort to a simple `given` definition for all use-cases:
 
+@@snip [-]($test$/DerivationSpec.scala) { #recursive-adt-new }
+
+The Scala 3 compiler compiles all such `given` definitions into the equivalent of `lazy val`s under the hood, so we
+don't have to make the distinction ourselves anymore.
 
         

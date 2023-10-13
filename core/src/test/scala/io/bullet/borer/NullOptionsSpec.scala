@@ -12,8 +12,8 @@ class NullOptionsSpec extends ByteArrayJsonSpec:
 
   case class Foo(int: Int, string: Option[String])
 
-  implicit val fooCodec: Codec[Foo] =
-    import NullOptions._
+  given Codec[Foo] =
+    import NullOptions.*
     Codec.forProduct[Foo]
 
   test("NullOptions") {

@@ -114,7 +114,7 @@ class EncodingDecodingSpec extends BorerSuite {
     val bytes = hex"9f63666f6f636261726362617aff"
 
     // #either-cbor
-    import io.bullet.borer._
+    import io.bullet.borer.*
 
     val encoded: Either[Borer.Error[Output], Array[Byte]] =
       Cbor.encode(value).to[Array[Byte]].resultEither
@@ -132,7 +132,7 @@ class EncodingDecodingSpec extends BorerSuite {
     val bytes = """["foo","bar","baz"]""" getBytes "UTF8"
 
     // #either-json
-    import io.bullet.borer._
+    import io.bullet.borer.*
 
     val encoded: Either[Borer.Error[Output], Array[Byte]] =
       Json.encode(value).to[Array[Byte]].resultEither

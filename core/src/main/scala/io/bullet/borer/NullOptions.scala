@@ -15,7 +15,7 @@ package io.bullet.borer
  * you can import the members of this object with
  *
  * {{{
- * import io.bullet.borer.NullOptions._
+ * import io.bullet.borer.NullOptions.*
  * }}}
  */
 object NullOptions:

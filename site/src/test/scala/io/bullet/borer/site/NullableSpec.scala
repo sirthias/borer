@@ -14,12 +14,10 @@ class NullableSpec extends BorerSuite {
 
   test("Example") {
     // #example
-    import io.bullet.borer.{Json, Nullable}
-    import io.bullet.borer.derivation.MapBasedCodecs._
+    import io.bullet.borer.{Json, Codec, Nullable}
+    import io.bullet.borer.derivation.MapBasedCodecs.*
 
-    case class Dog(age: Int, name: Nullable[String])
-
-    implicit val dogCodec = deriveCodec[Dog]
+    case class Dog(age: Int, name: Nullable[String]) derives Codec
 
     Json
       .decode("""{ "age": 4, "name": null }""" getBytes "UTF8")

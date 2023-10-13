@@ -12,7 +12,7 @@ When you include the `borer-compat-akka` module as a dependency (see the
 @ref:[Getting Started](getting-started.md) chapter for details) and
 
 ```scala
-import io.bullet.borer.compat.akka._
+import io.bullet.borer.compat.akka.*
 ```
 
 you also get:
@@ -31,7 +31,7 @@ When you include the `borer-compat-akka` module as a dependency (see the
 @ref:[Getting Started](getting-started.md) chapter for details) and
 
 ```scala
-import io.bullet.borer.compat.akkaHttp._
+import io.bullet.borer.compat.akkaHttp.*
 ```
  
 `akka-http` will transparently marshal to and from your custom domain model types:

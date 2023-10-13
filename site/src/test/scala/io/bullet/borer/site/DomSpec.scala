@@ -17,7 +17,7 @@ class DomSpec extends BorerSuite {
 
     // #cbor
     import io.bullet.borer.Cbor
-    import io.bullet.borer.Dom._
+    import io.bullet.borer.Dom.*
 
     val dom = MapElem.Sized(
       "foo" -> ArrayElem.Sized(IntElem(42), StringElem("rocks")),
@@ -37,7 +37,7 @@ class DomSpec extends BorerSuite {
   test("JSON") {
 
     // #json
-    import io.bullet.borer.Dom._
+    import io.bullet.borer.Dom.*
     import io.bullet.borer.Json
 
     val dom = MapElem.Unsized(
@@ -58,7 +58,7 @@ class DomSpec extends BorerSuite {
   test("JSON to CBOR") {
     // #json-to-cbor
     import io.bullet.borer.{Cbor, Json}
-    import io.bullet.borer.Dom._
+    import io.bullet.borer.Dom.*
 
     import scala.util.Try
 

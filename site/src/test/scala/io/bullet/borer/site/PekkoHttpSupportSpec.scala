@@ -10,24 +10,24 @@ package io.bullet.borer.site
 
 import io.bullet.borer.BorerSuite
 
-class AkkaHttpSupportSpec extends BorerSuite {
+class PekkoHttpSupportSpec extends BorerSuite {
 
   test("example") {
 
     // #example
-    import akka.http.scaladsl.server.Route
-    import akka.http.scaladsl.server.Directives.*
+    import org.apache.pekko.http.scaladsl.server.Directives.*
+    import org.apache.pekko.http.scaladsl.server.Route
 
     // borer encoders/decoders for the custom model above
-    import io.bullet.borer.{Encoder, Decoder}
+    import io.bullet.borer.{Decoder, Encoder}
     import io.bullet.borer.derivation.MapBasedCodecs.*
 
     // custom model for request and response content
-    case class MyRequest(foo: String) derives Decoder
-    case class MyResponse(importantValue: Int) derives Encoder
+    final case class MyRequest(foo: String) derives Decoder
+    final case class MyResponse(importantValue: Int) derives Encoder
 
     // bring automatic (un) marshaller construction in scope
-    import io.bullet.borer.compat.akkaHttp._
+    import io.bullet.borer.compat.pekkoHttp.*
 
     // route that unmarshalls to `MyRequest` and marshals to `MyResponse`
     val route: Route =

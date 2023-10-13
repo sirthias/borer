@@ -16,13 +16,13 @@ class StringNumbersSpec extends BorerSuite {
     // #imports
     import io.bullet.borer.{Decoder, Encoder}
 
-    import Encoder.StringNumbers._  // enables number-as-strings encoding
-    import Encoder.StringBooleans._ // enables booleans-as-strings encoding
-    import Encoder.StringNulls._    // enables null-as-strings encoding
+    import Encoder.StringNumbers.*  // enables number-as-strings encoding
+    import Encoder.StringBooleans.* // enables booleans-as-strings encoding
+    import Encoder.StringNulls.*    // enables null-as-strings encoding
 
-    import Decoder.StringNumbers._  // enables number-as-strings decoding
-    import Decoder.StringBooleans._ // enables booleans-as-strings decoding
-    import Decoder.StringNulls._    // enables null-as-strings decoding
+    import Decoder.StringNumbers.*  // enables number-as-strings decoding
+    import Decoder.StringBooleans.* // enables booleans-as-strings decoding
+    import Decoder.StringNulls.*    // enables null-as-strings decoding
     // #imports
 
     intEncoder.hashCode() ^
@@ -35,15 +35,13 @@ class StringNumbersSpec extends BorerSuite {
 
   test("Example") {
     // #example
-    import io.bullet.borer.{Encoder, Json}
-    import io.bullet.borer.derivation.MapBasedCodecs._
+    import io.bullet.borer.{Json, Encoder, Codec}
+    import io.bullet.borer.derivation.MapBasedCodecs.*
 
-    case class Dog(age: Int, male: Boolean, name: String)
+    import Encoder.StringNumbers.*  // enables number-as-strings encoding
+    import Encoder.StringBooleans.* // enables booleans-as-strings encoding
 
-    import Encoder.StringNumbers._  // enables number-as-strings encoding
-    import Encoder.StringBooleans._ // enables booleans-as-strings encoding
-
-    implicit val dogCodec = deriveCodec[Dog]
+    case class Dog(age: Int, male: Boolean, name: String) derives Codec
 
     val dog = Dog(2, false, "Lolle")
 
