@@ -1,3 +1,12 @@
+Version 1.12.0 (2023-10-13)
+---------------------------
+
+- Upgraded to Scala 3.3.1 and Scala.js 1.14.0
+- Added `derives` support for Encoder, Decoder and Codec
+- Added check for correct ByteOrder when reading ByteBuffers (#675)
+- Updated documentation site for Scala 3 (#625)
+
+
 Version 1.11.0 (2023-07-31)
 ---------------------------
 
