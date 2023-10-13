@@ -39,13 +39,11 @@ object Codec:
   @inline def of[T](implicit encoder: Encoder[T], decoder: Decoder[T]): Codec[T] =
     Codec(encoder, decoder)
 
-  extension [T](underlying: => Codec[T])
+  extension [T](underlying: Codec[T])
     /**
      * Wraps a [[Codec]] definition with lazy initialization.
      */
-    def recursive: Codec[T] =
-      @threadUnsafe lazy val delegate: Codec[T] = underlying
-      Codec(delegate.encoder.recursive, delegate.decoder.recursive)
+    def recursive: Codec[T] = Codec(underlying.encoder.recursive, underlying.decoder.recursive)
 
   /**
    * Convenience constructor.
