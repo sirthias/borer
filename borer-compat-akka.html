@@ -166,6 +166,7 @@ sirthias/borer/
     <li><a href="borer-derivation/faq.html" class="page">Derivation FAQ</a></li>
   </ul></li>
   <li><a href="borer-compat-akka.html" class="active page"><code>borer-compat-akka</code></a></li>
+  <li><a href="borer-compat-pekko.html" class="page"><code>borer-compat-pekko</code></a></li>
   <li><a href="borer-compat-cats.html" class="page"><code>borer-compat-cats</code></a></li>
   <li><a href="borer-compat-circe.html" class="page"><code>borer-compat-circe</code></a></li>
   <li><a href="borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
@@ -192,7 +193,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.10.3
+<i class="md-icon" title="Version">label_outline</i> 1.12.0
 </label>
 </li>
 </ul>
@@ -223,7 +224,7 @@ sirthias/borer/
 <h2><a href="#bytestring-support" name="bytestring-support" class="anchor"><span class="anchor-link"></span></a><code>ByteString</code> support</h2>
 <p>The <a href="borer-core/index.html"><code>borer-core</code></a> module by itself only knows how to encode to and decode from plain byte arrays (<code>Array[Byte]</code>) and a few other types (like <code>java.nio.ByteBuffer</code>, see the chapter on <a href="borer-core/supporting-typeclasses.html">Input, Output, ByteAccess</a> for full details).</p>
 <p>When you include the <code>borer-compat-akka</code> module as a dependency (see the <a href="getting-started.html">Getting Started</a> chapter for details) and</p>
-<pre class="prettyprint"><code class="language-scala">import io.bullet.borer.compat.akka._
+<pre class="prettyprint"><code class="language-scala">import io.bullet.borer.compat.akka.*
 </code></pre>
 <p>you also get:</p>
 <ul>
@@ -233,21 +234,19 @@ sirthias/borer/
 <h2><a href="#akka-http-un-marshalling" name="akka-http-un-marshalling" class="anchor"><span class="anchor-link"></span></a>Akka Http (Un)Marshalling</h2>
 <p>In addition to <code>ByteString</code> support the <code>borer-compat-akka</code> also provides convenient marshallers and unmarshallers for HTTP entities.</p>
 <p>When you include the <code>borer-compat-akka</code> module as a dependency (see the <a href="getting-started.html">Getting Started</a> chapter for details) and</p>
-<pre class="prettyprint"><code class="language-scala">import io.bullet.borer.compat.akkaHttp._
+<pre class="prettyprint"><code class="language-scala">import io.bullet.borer.compat.akkaHttp.*
 </code></pre>
 <p><code>akka-http</code> will transparently marshal to and from your custom domain model types:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/AkkaHttpSupportSpec.scala#L18-L44" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.Directives._
-
-// custom model for request and response content
-final case class MyRequest(foo: String)
-final case class MyResponse(importantValue: Int)
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/AkkaHttpSupportSpec.scala#L18-L42" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.Directives.*
 
 // borer encoders/decoders for the custom model above
-import io.bullet.borer.derivation.MapBasedCodecs._
+import io.bullet.borer.{Encoder, Decoder}
+import io.bullet.borer.derivation.MapBasedCodecs.*
 
-implicit val myRequestDecoder  = deriveDecoder[MyRequest]
-implicit val myResponseEncoder = deriveEncoder[MyResponse]
+// custom model for request and response content
+case class MyRequest(foo: String) derives Decoder
+case class MyResponse(importantValue: Int) derives Encoder
 
 // bring automatic (un) marshaller construction in scope
 import io.bullet.borer.compat.akkaHttp._
@@ -273,7 +272,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.10.3
+1.12.0
 </span>
 </div>
 </article>
@@ -296,13 +295,13 @@ Derivation FAQ
 </span>
 </div>
 </a>
-<a href="borer-compat-cats.html" title="borer-compat-cats" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<a href="borer-compat-pekko.html" title="borer-compat-pekko" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
 <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
 <span class="md-flex__ellipsis">
 <span class="md-footer-nav__direction">
 Next
 </span>
-borer-compat-cats
+borer-compat-pekko
 </span>
 </div>
 <div class="md-flex__cell md-flex__cell--shrink">
@@ -315,7 +314,7 @@ borer-compat-cats
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019-2022 Mathias Doenitz
+Copyright (C) 2019-2023 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

@@ -166,6 +166,7 @@ sirthias/borer/
     <li><a href="../borer-derivation/faq.html" class="page">Derivation FAQ</a></li>
   </ul></li>
   <li><a href="../borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
+  <li><a href="../borer-compat-pekko.html" class="page"><code>borer-compat-pekko</code></a></li>
   <li><a href="../borer-compat-cats.html" class="page"><code>borer-compat-cats</code></a></li>
   <li><a href="../borer-compat-circe.html" class="page"><code>borer-compat-circe</code></a></li>
   <li><a href="../borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
@@ -194,7 +195,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.10.3
+<i class="md-icon" title="Version">label_outline</i> 1.12.0
 </label>
 </li>
 </ul>
@@ -236,15 +237,11 @@ sirthias/borer/
 <h2><a href="#cbor-vs-json-transcoding" name="cbor-vs-json-transcoding" class="anchor"><span class="anchor-link"></span></a>CBOR vs. JSON Transcoding</h2>
 <p>Since transcoding skips the actual rendering to and parsing from raw bytes it is, in principle, agnostic to the question of whether <a href="http://cbor.io/">CBOR</a> or <a href="http://json.org/">JSON</a> is the encoding target. Nevertheless, the <code>Encoder</code> and <code>Decoder</code> implementations also have access to the information what the encoding target is and frequently use that information to adapt their logic accordingly. As such, you&rsquo;ll have to decide on whether to target <a href="http://cbor.io/">CBOR</a> or <a href="http://json.org/">JSON</a> even for transcoding.</p>
 <h2><a href="#example" name="example" class="anchor"><span class="anchor-link"></span></a>Example</h2>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/TranscodingSpec.scala#L17-L71" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Cbor
-import io.bullet.borer.Dom
-import io.bullet.borer.derivation.MapBasedCodecs._
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/TranscodingSpec.scala#L17-L67" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Cbor, Dom, Codec}
+import io.bullet.borer.derivation.MapBasedCodecs.*
 
-case class Employee(nick: String, age: Int)
-case class Department(name: String, employees: List[Employee])
-
-implicit val employeeCodec   = deriveCodec[Employee]
-implicit val departmentCodec = deriveCodec[Department]
+case class Employee(nick: String, age: Int) derives Codec
+case class Department(name: String, employees: List[Employee]) derives Codec
 
 val value =
   Department(
@@ -299,7 +296,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.10.3
+1.12.0
 </span>
 </div>
 </article>
@@ -341,7 +338,7 @@ Debugging
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019-2022 Mathias Doenitz
+Copyright (C) 2019-2023 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

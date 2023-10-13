@@ -166,6 +166,7 @@ sirthias/borer/
     <li><a href="borer-derivation/faq.html" class="page">Derivation FAQ</a></li>
   </ul></li>
   <li><a href="borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
+  <li><a href="borer-compat-pekko.html" class="page"><code>borer-compat-pekko</code></a></li>
   <li><a href="borer-compat-cats.html" class="page"><code>borer-compat-cats</code></a></li>
   <li><a href="borer-compat-circe.html" class="page"><code>borer-compat-circe</code></a></li>
   <li><a href="borer-compat-scodec.html" class="active page"><code>borer-compat-scodec</code></a></li>
@@ -184,7 +185,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.10.3
+<i class="md-icon" title="Version">label_outline</i> 1.12.0
 </label>
 </li>
 </ul>
@@ -197,7 +198,7 @@ sirthias/borer/
 <h1><a href="#borer-compat-scodec" name="borer-compat-scodec" class="anchor"><span class="anchor-link"></span></a><code>borer-compat-scodec</code></h1>
 <p>The <a href="borer-core/index.html"><code>borer-core</code></a> module by itself only knows how to encode to and decode from plain byte arrays (<code>Array[Byte]</code>).</p>
 <p>When you include the <code>borer-compat-scodec</code> module as a dependency (see the <a href="getting-started.html">Getting Started</a> chapter for details) and</p>
-<pre class="prettyprint"><code class="language-scala">import io.bullet.borer.compat.scodec._
+<pre class="prettyprint"><code class="language-scala">import io.bullet.borer.compat.scodec.*
 </code></pre>
 <p>you also get full &ldquo;zero-copy&rdquo; support for encoding to and decoding from <code>scodec.bits.ByteVector</code> as well as an implicit <code>Encoder[ByteVector]</code> and <code>Decoder[ByteVector]</code>.</p>
 </div>
@@ -208,7 +209,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.10.3
+1.12.0
 </span>
 </div>
 </article>
@@ -250,7 +251,7 @@ Project Info
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019-2022 Mathias Doenitz
+Copyright (C) 2019-2023 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

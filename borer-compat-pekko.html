@@ -20,7 +20,7 @@
 
 <meta name="description" content="CBOR and JSON (de)serialization in Scala">
 <link rel="shortcut icon" href="assets/images/favicon.ico">
-<title>borer-compat-cats · borer</title>
+<title>borer-compat-pekko · borer</title>
 <link rel="stylesheet" href="assets/stylesheets/application.451f80e5.css">
 <link rel="stylesheet" href="assets/stylesheets/application-palette.22915126.css">
 <meta name="theme-color" content="#3f51b5" />
@@ -61,7 +61,7 @@ data-md-color-accent="orange"
 borer
 </span>
 <span class="md-header-nav__topic">
-borer-compat-cats
+borer-compat-pekko
 </span>
 </div>
 </div>
@@ -166,8 +166,8 @@ sirthias/borer/
     <li><a href="borer-derivation/faq.html" class="page">Derivation FAQ</a></li>
   </ul></li>
   <li><a href="borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
-  <li><a href="borer-compat-pekko.html" class="page"><code>borer-compat-pekko</code></a></li>
-  <li><a href="borer-compat-cats.html" class="active page"><code>borer-compat-cats</code></a></li>
+  <li><a href="borer-compat-pekko.html" class="active page"><code>borer-compat-pekko</code></a></li>
+  <li><a href="borer-compat-cats.html" class="page"><code>borer-compat-cats</code></a></li>
   <li><a href="borer-compat-circe.html" class="page"><code>borer-compat-circe</code></a></li>
   <li><a href="borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
   <li><a href="project/index.html" class="page">Project Info</a>
@@ -181,10 +181,10 @@ sirthias/borer/
 <nav class="md-nav md-nav--secondary">
 <label class="md-nav__title" for="__toc">Table of contents</label>
 <ul>
-  <li><a href="borer-compat-cats.html#borer-compat-cats" class="header"><code>borer-compat-cats</code></a>
+  <li><a href="borer-compat-pekko.html#borer-compat-pekko" class="header"><code>borer-compat-pekko</code></a>
   <ul>
-    <li><a href="borer-compat-cats.html#installation" class="header">Installation</a></li>
-    <li><a href="borer-compat-cats.html#encoding-strategies" class="header">Encoding Strategies</a></li>
+    <li><a href="borer-compat-pekko.html#bytestring-support" class="header"><code>ByteString</code> support</a></li>
+    <li><a href="borer-compat-pekko.html#pekko-http-un-marshalling" class="header">Pekko Http (Un)Marshalling</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -206,10 +206,10 @@ sirthias/borer/
 <nav class="md-nav md-nav--secondary">
 <label class="md-nav__title" for="__toc">Table of contents</label>
 <ul>
-  <li><a href="borer-compat-cats.html#borer-compat-cats" class="header"><code>borer-compat-cats</code></a>
+  <li><a href="borer-compat-pekko.html#borer-compat-pekko" class="header"><code>borer-compat-pekko</code></a>
   <ul>
-    <li><a href="borer-compat-cats.html#installation" class="header">Installation</a></li>
-    <li><a href="borer-compat-cats.html#encoding-strategies" class="header">Encoding Strategies</a></li>
+    <li><a href="borer-compat-pekko.html#bytestring-support" class="header"><code>ByteString</code> support</a></li>
+    <li><a href="borer-compat-pekko.html#pekko-http-un-marshalling" class="header">Pekko Http (Un)Marshalling</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -220,61 +220,53 @@ sirthias/borer/
 <div class="md-content">
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
-<h1><a href="#borer-compat-cats" name="borer-compat-cats" class="anchor"><span class="anchor-link"></span></a><code>borer-compat-cats</code></h1>
-<p>The <code>borer-compat-cats</code> module provides default codecs for the following <code>cats.data._</code> data structures from the <a href="https://typelevel.org/cats/">cats</a> <code>cats-core</code> package:</p>
-<ul>
-  <li><code>Chain[A]</code></li>
-  <li><code>Ior[A, B]</code></li>
-  <li><code>NonEmptyChain[T]</code></li>
-  <li><code>NonEmptyList[T]</code></li>
-  <li><code>NonEmptyMap[T]</code></li>
-  <li><code>NonEmptySet[T]</code></li>
-  <li><code>NonEmptyVector[T]</code></li>
-  <li><code>Validated[A, B]</code></li>
-</ul>
-<h2><a href="#installation" name="installation" class="anchor"><span class="anchor-link"></span></a>Installation</h2>
-<p>Include the <code>borer-compat-cats</code> module as a dependency (see the <a href="getting-started.html">Getting Started</a> chapter for details) and</p>
-<pre class="prettyprint"><code class="language-scala">import io.bullet.borer.compat.cats.*
+<h1><a href="#borer-compat-pekko" name="borer-compat-pekko" class="anchor"><span class="anchor-link"></span></a><code>borer-compat-pekko</code></h1>
+<h2><a href="#bytestring-support" name="bytestring-support" class="anchor"><span class="anchor-link"></span></a><code>ByteString</code> support</h2>
+<p>The <a href="borer-core/index.html"><code>borer-core</code></a> module by itself only knows how to encode to and decode from plain byte arrays (<code>Array[Byte]</code>) and a few other types (like <code>java.nio.ByteBuffer</code>, see the chapter on <a href="borer-core/supporting-typeclasses.html">Input, Output, ByteAccess</a> for full details).</p>
+<p>When you include the <code>borer-compat-pekko</code> module as a dependency (see the <a href="getting-started.html">Getting Started</a> chapter for details) and</p>
+<pre class="prettyprint"><code class="language-scala">import io.bullet.borer.compat.pekko.*
 </code></pre>
-<p>With this import in place <em>borer</em> will seamlessly encode and decode instances of the types listed above, provided that encoders and/or decoders are available for the respective &ldquo;inner&rdquo; types. </p>
-<h2><a href="#encoding-strategies" name="encoding-strategies" class="anchor"><span class="anchor-link"></span></a>Encoding Strategies</h2>
-<p>While the encoding strategies for most of the above data structures should be relatively straight-forward there are two types, for which there is no clear default encoding:</p>
+<p>you also get:</p>
 <ul>
-  <li><code>Ior[A, B]</code></li>
-  <li><code>Validated[A, B]</code></li>
+  <li>full &ldquo;zero-copy&rdquo; support for encoding to and decoding from <code>pekko.util.ByteString</code></li>
+  <li>implicit codecs for <code>pekko.util.ByteString</code>, <code>pekko.actor.ActorRef</code> and <code>pekko.actor.typed.ActorRef[T]</code></li>
 </ul>
-<p>The encodings implemented by <code>borer-compat-circe</code> aim for best time and space efficiency, not &ldquo;readability&rdquo;.</p>
-<p>One easy way to optimize for self-describability rather than efficiency would be to rely on <code>borer-derivation</code> instead. Here is an example contrasting the difference:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/CatsCompatSpec.scala#L18-L43" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import cats.data.Ior
-import io.bullet.borer.{Decoder, Encoder, Codec, Json}
+<h2><a href="#pekko-http-un-marshalling" name="pekko-http-un-marshalling" class="anchor"><span class="anchor-link"></span></a>Pekko Http (Un)Marshalling</h2>
+<p>In addition to <code>ByteString</code> support the <code>borer-compat-pekko</code> also provides convenient marshallers and unmarshallers for HTTP entities.</p>
+<p>When you include the <code>borer-compat-pekko</code> module as a dependency (see the <a href="getting-started.html">Getting Started</a> chapter for details) and</p>
+<pre class="prettyprint"><code class="language-scala">import io.bullet.borer.compat.pekkoHttp.*
+</code></pre>
+<p><code>pekko-http</code> will transparently marshal to and from your custom domain model types:</p>
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/PekkoHttpSupportSpec.scala#L18-L42" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import org.apache.pekko.http.scaladsl.server.Directives.*
+import org.apache.pekko.http.scaladsl.server.Route
 
-val value = List(
-  Ior.Left(1),
-  Ior.Right(&quot;foo&quot;),
-  Ior.Both(42, &quot;bar&quot;)
-)
+// borer encoders/decoders for the custom model above
+import io.bullet.borer.{Decoder, Encoder}
+import io.bullet.borer.derivation.MapBasedCodecs.*
 
-// the Ior encoding of `borer-compat-circe` is optimized for efficiency
-{
-  import io.bullet.borer.compat.cats.*
+// custom model for request and response content
+final case class MyRequest(foo: String) derives Decoder
+final case class MyResponse(importantValue: Int) derives Encoder
 
-  Json.encode(value).toUtf8String ==&gt;
-  &quot;&quot;&quot;[[0,1],[1,&quot;foo&quot;],[2,42,&quot;bar&quot;]]&quot;&quot;&quot;
-}
+// bring automatic (un) marshaller construction in scope
+import io.bullet.borer.compat.pekkoHttp.*
 
-// the map-based codec generated by `borer-derivation` produces encodings
-// that self-describe better, but are less efficient space and time-wise
-{
-  given [A: Encoder: Decoder, B: Encoder: Decoder]: Codec[Ior[A, B]] =
-    MapBasedCodecs.deriveAllCodecs[Ior[A, B]]
-
-  Json.encode(value).toUtf8String ==&gt;
-  &quot;&quot;&quot;[{&quot;Left&quot;:{&quot;a&quot;:1}},{&quot;Right&quot;:{&quot;b&quot;:&quot;foo&quot;}},{&quot;Both&quot;:{&quot;a&quot;:42,&quot;b&quot;:&quot;bar&quot;}}]&quot;&quot;&quot;
-}</code></pre>
-<p>See the <a href="https://github.com/sirthias/borer/tree/master/compat-cats/src/main/scala/io/bullet/borer/compat/cats.scala">module sources</a> for full details.</p>
+// route that unmarshalls to `MyRequest` and marshals to `MyResponse`
+val route: Route =
+  pathSingleSlash {
+    post {
+      entity(as[MyRequest]) { myRequest =&gt;
+        complete {
+          MyResponse(myRequest.foo.length)
+        }
+      }
+    }
+  }</code></pre>
+<p>By default the <code>Unmarshaller</code> constructed by <code>borer-compat-pekko</code> understand both <a href="http://cbor.io/">CBOR</a> and <a href="http://json.org/">JSON</a> with Content-Type <code>application/cbor</code> and <code>application/json</code>, respectively.<br> The <code>Marshaller</code> also supports both formats and lets the client determine via HTTP content negotiation (i.e. the <code>Accept</code> header) , which one it prefers. If the client has no clear preference, i.e. it accepts both <a href="http://cbor.io/">CBOR</a> and <a href="http://json.org/">JSON</a> with equal &ldquo;q-value&rdquo; (preference weight) the <code>Marshaller</code> choses <a href="http://json.org/">JSON</a> by default. This default, however, can be configured to <a href="http://cbor.io/">CBOR</a> if needed.</p>
+<p>(Un)marshaller construction can be customized in various ways, e.g. with custom media types, and is also available for streams, i.e. to and from <code>pekko.stream.scaladsl.Source[T, _]</code> rather than simply <code>T</code>.<br> Check out the <a href="https://github.com/sirthias/borer/tree/master/compat-pekko/src/main/scala/io/bullet/borer/compat/pekkoHttp.scala">sources</a> for full details.</p>
 </div>
 <div>
-<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-compat-cats.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-compat-pekko.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
@@ -290,7 +282,7 @@ Edit this page
 <footer class="md-footer">
 <div class="md-footer-nav">
 <nav class="md-footer-nav__inner md-grid">
-<a href="borer-compat-pekko.html" title="borer-compat-pekko" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<a href="borer-compat-akka.html" title="borer-compat-akka" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
 <div class="md-flex__cell md-flex__cell--shrink">
 <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
 </div>
@@ -299,17 +291,17 @@ Edit this page
 <span class="md-footer-nav__direction">
 Previous
 </span>
-borer-compat-pekko
+borer-compat-akka
 </span>
 </div>
 </a>
-<a href="borer-compat-circe.html" title="borer-compat-circe" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<a href="borer-compat-cats.html" title="borer-compat-cats" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
 <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
 <span class="md-flex__ellipsis">
 <span class="md-footer-nav__direction">
 Next
 </span>
-borer-compat-circe
+borer-compat-cats
 </span>
 </div>
 <div class="md-flex__cell md-flex__cell--shrink">

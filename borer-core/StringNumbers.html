@@ -166,6 +166,7 @@ sirthias/borer/
     <li><a href="../borer-derivation/faq.html" class="page">Derivation FAQ</a></li>
   </ul></li>
   <li><a href="../borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
+  <li><a href="../borer-compat-pekko.html" class="page"><code>borer-compat-pekko</code></a></li>
   <li><a href="../borer-compat-cats.html" class="page"><code>borer-compat-cats</code></a></li>
   <li><a href="../borer-compat-circe.html" class="page"><code>borer-compat-circe</code></a></li>
   <li><a href="../borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
@@ -184,7 +185,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.10.3
+<i class="md-icon" title="Version">label_outline</i> 1.12.0
 </label>
 </li>
 </ul>
@@ -200,24 +201,22 @@ sirthias/borer/
 <p>This is how they are enabled:</p>
 <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/StringNumbersSpec.scala#L17-L25" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Decoder, Encoder}
 
-import Encoder.StringNumbers._  // enables number-as-strings encoding
-import Encoder.StringBooleans._ // enables booleans-as-strings encoding
-import Encoder.StringNulls._    // enables null-as-strings encoding
+import Encoder.StringNumbers.*  // enables number-as-strings encoding
+import Encoder.StringBooleans.* // enables booleans-as-strings encoding
+import Encoder.StringNulls.*    // enables null-as-strings encoding
 
-import Decoder.StringNumbers._  // enables number-as-strings decoding
-import Decoder.StringBooleans._ // enables booleans-as-strings decoding
-import Decoder.StringNulls._    // enables null-as-strings decoding</code></pre>
+import Decoder.StringNumbers.*  // enables number-as-strings decoding
+import Decoder.StringBooleans.* // enables booleans-as-strings decoding
+import Decoder.StringNulls.*    // enables null-as-strings decoding</code></pre>
 <p>As always these imports are &ldquo;active&rdquo; throughout the complete scope in which they are visible.</p>
 <p>Here is an example demonstrating how to encode numbers and booleans as strings:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/StringNumbersSpec.scala#L38-L52" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Encoder, Json}
-import io.bullet.borer.derivation.MapBasedCodecs._
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/StringNumbersSpec.scala#L38-L50" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Json, Encoder, Codec}
+import io.bullet.borer.derivation.MapBasedCodecs.*
 
-case class Dog(age: Int, male: Boolean, name: String)
+import Encoder.StringNumbers.*  // enables number-as-strings encoding
+import Encoder.StringBooleans.* // enables booleans-as-strings encoding
 
-import Encoder.StringNumbers._  // enables number-as-strings encoding
-import Encoder.StringBooleans._ // enables booleans-as-strings encoding
-
-implicit val dogCodec = deriveCodec[Dog]
+case class Dog(age: Int, male: Boolean, name: String) derives Codec
 
 val dog = Dog(2, false, &quot;Lolle&quot;)
 
@@ -233,7 +232,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.10.3
+1.12.0
 </span>
 </div>
 </article>
@@ -275,7 +274,7 @@ ByteStringArrayCodecs
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019-2022 Mathias Doenitz
+Copyright (C) 2019-2023 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

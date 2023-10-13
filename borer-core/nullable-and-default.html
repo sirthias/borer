@@ -166,6 +166,7 @@ sirthias/borer/
     <li><a href="../borer-derivation/faq.html" class="page">Derivation FAQ</a></li>
   </ul></li>
   <li><a href="../borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
+  <li><a href="../borer-compat-pekko.html" class="page"><code>borer-compat-pekko</code></a></li>
   <li><a href="../borer-compat-cats.html" class="page"><code>borer-compat-cats</code></a></li>
   <li><a href="../borer-compat-circe.html" class="page"><code>borer-compat-circe</code></a></li>
   <li><a href="../borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
@@ -191,7 +192,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.10.3
+<i class="md-icon" title="Version">label_outline</i> 1.12.0
 </label>
 </li>
 </ul>
@@ -222,12 +223,10 @@ sirthias/borer/
 <p><code>null</code> values differ from missing members (see also <a href="../borer-derivation/map-based.html#default-values">Map-Based Codecs</a>) in that the value for an element is indeed present, but is <code>null</code>.</p>
 <p><em>borer</em> handles this case in a properly typed fashion: If your data model allows for certain members to have a <code>null</code> encoding that you would like to treat specially the member&rsquo;s type should be wrapped with <code>Nullable</code>, e.g. <code>Nullable[String]</code>.<br> In combination with the simple type class <code>Default[T]</code>, which provides the capability to supply default values for a type <code>T</code>, the pre-defined Encoder and Decoder for <code>Nullable[T]</code> will be able to translate <code>null</code> values to the respective default value and back.</p>
 <p>Example:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/NullableSpec.scala#L17-L28" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Json, Nullable}
-import io.bullet.borer.derivation.MapBasedCodecs._
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/NullableSpec.scala#L17-L26" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Json, Codec, Nullable}
+import io.bullet.borer.derivation.MapBasedCodecs.*
 
-case class Dog(age: Int, name: Nullable[String])
-
-implicit val dogCodec = deriveCodec[Dog]
+case class Dog(age: Int, name: Nullable[String]) derives Codec
 
 Json
   .decode(&quot;&quot;&quot;{ &quot;age&quot;: 4, &quot;name&quot;: null }&quot;&quot;&quot; getBytes &quot;UTF8&quot;)
@@ -245,7 +244,7 @@ Dog(age = 4, name = &quot;&quot;) // the `Default[String]` provides an empty Str
  * you can import the members of this object with
  *
  * {{{
- * import io.bullet.borer.NullOptions._
+ * import io.bullet.borer.NullOptions.*
  * }}}
  */
 object NullOptions:
@@ -271,7 +270,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.10.3
+1.12.0
 </span>
 </div>
 </article>
@@ -313,7 +312,7 @@ StringNumbers and StringBooleans
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019-2022 Mathias Doenitz
+Copyright (C) 2019-2023 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

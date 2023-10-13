@@ -166,6 +166,7 @@ sirthias/borer/
     <li><a href="../borer-derivation/faq.html" class="page">Derivation FAQ</a></li>
   </ul></li>
   <li><a href="../borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
+  <li><a href="../borer-compat-pekko.html" class="page"><code>borer-compat-pekko</code></a></li>
   <li><a href="../borer-compat-cats.html" class="page"><code>borer-compat-cats</code></a></li>
   <li><a href="../borer-compat-circe.html" class="page"><code>borer-compat-circe</code></a></li>
   <li><a href="../borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
@@ -195,7 +196,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.10.3
+<i class="md-icon" title="Version">label_outline</i> 1.12.0
 </label>
 </li>
 </ul>
@@ -227,17 +228,14 @@ sirthias/borer/
 <div class="md-content__searchable">
 <h1><a href="#map-based-codecs" name="map-based-codecs" class="anchor"><span class="anchor-link"></span></a>Map-Based Codecs</h1>
 <p>Map-based codec derivation is enabled with this import:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L26" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.derivation.MapBasedCodecs._</code></pre>
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L26" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.derivation.MapBasedCodecs.*</code></pre>
 <p>With these codecs case classes are encoded as <a href="http://cbor.io/">CBOR</a>/<a href="http://json.org/">JSON</a> maps with the member name as key, i.e. the popular &ldquo;standard&rdquo; way for serializing to and from <a href="http://json.org/">JSON</a>. </p>
 <p>Here is an example relying on map-based codecs:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L68-L82" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Json
-import io.bullet.borer.derivation.MapBasedCodecs._
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L62-L73" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Json, Codec}
+import io.bullet.borer.derivation.MapBasedCodecs.*
 
-case class Foo(int: Int, string: String)
-case class Bar(foo: Foo, d: Double)
-
-implicit val fooCodec = deriveCodec[Foo]
-implicit val barCodec = deriveCodec[Bar]
+case class Foo(int: Int, string: String) derives Codec
+case class Bar(foo: Foo, d: Double) derives Codec
 
 val foo = Foo(int = 42, string = &quot;yeah&quot;)
 val bar = Bar(foo, d = 1.234)
@@ -248,7 +246,7 @@ Json.encode(bar).toUtf8String ==&gt;
 <h3><a href="#default-adt-encoding" name="default-adt-encoding" class="anchor"><span class="anchor-link"></span></a>Default ADT Encoding</h3>
 <p>The default encoding for ADT super-types is a single-entry map, with the key being the type id and the value becoming the encoding of the actual ADT subtype instance.</p>
 <p>For example, a <code>Dog</code> instance of the following ADT:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L88-L92" target="_blank" title="Go to snippet source">source</a><code class="language-scala">sealed trait Animal
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L79-L83" target="_blank" title="Go to snippet source">source</a><code class="language-scala">sealed trait Animal
 case class Dog(age: Int, name: String)                      extends Animal
 case class Cat(weight: Double, color: String, home: String) extends Animal
 case class Fish(color: String)                              extends Animal
@@ -262,7 +260,7 @@ case object Yeti                                            extends Animal</code
 }
 </code></pre>
 <p>Here is the code (Note the explicit upcast to the ADT super-type <code>Animal</code>!):</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L109-L114" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Json
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L101-L106" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Json
 
 val animal: Animal = Dog(2, &quot;Rex&quot;)
 
@@ -278,14 +276,14 @@ Json.encode(animal).toUtf8String ==&gt; &quot;&quot;&quot;{&quot;Dog&quot;:{&quo
 }
 </code></pre>
 <p>This alternative ADT encoding can be switched to by making the result of a call to <code>AdtEncodingStrategy.flat()</code> implicitly available:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L135-L147" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{AdtEncodingStrategy, Json}
-import io.bullet.borer.derivation.MapBasedCodecs._
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L157-L169" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{AdtEncodingStrategy, Json, Codec}
+import io.bullet.borer.derivation.MapBasedCodecs.*
 
 // this enables the flat ADT encoding
-implicit val flatAdtEncoding =
+given AdtEncodingStrategy =
   AdtEncodingStrategy.flat(typeMemberName = &quot;_type&quot;)
 
-implicit val animalCodec = deriveAllCodecs[Animal]
+given Codec[Animal] = deriveAllCodecs[Animal]
 
 val animal: Animal = Dog(2, &quot;Rex&quot;)
 
@@ -307,12 +305,10 @@ Json.encode(animal).toUtf8String ==&gt; &quot;&quot;&quot;{&quot;_type&quot;:&qu
 <p>Map-based codecs support missing and extra members.</p>
 <p>By default a member whose value matches the default value is not written to the output at all during encoding. This can be changed by bringing a customized <code>io.bullet.borer.derivation.DerivationConfig</code> instance into scope.</p>
 <p>During decoding the type&rsquo;s <code>Decoder</code> will use the potentially defined default value for all missing members, e.g.:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L192-L202" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Json
-import io.bullet.borer.derivation.MapBasedCodecs._
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L215-L223" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Json, Codec}
+import io.bullet.borer.derivation.MapBasedCodecs.*
 
-case class Dog(age: Int, name: String = &quot;&lt;unknown&gt;&quot;)
-
-implicit val dogCodec = deriveCodec[Dog]
+case class Dog(age: Int, name: String = &quot;&lt;unknown&gt;&quot;) derives Codec
 
 Json
   .decode(&quot;&quot;&quot;{ &quot;age&quot;: 4 }&quot;&quot;&quot; getBytes &quot;UTF8&quot;)
@@ -347,13 +343,11 @@ Json
 <h3><a href="#customized-member-keys" name="customized-member-keys" class="anchor"><span class="anchor-link"></span></a>Customized Member Keys</h3>
 <p><em>borer</em> supports customizing the name of case class members in the encoding with the same <code>@key</code> annotation, that is also used for custom ADT type-ids (see <a href="array-based.html">Array-Based Codec</a> and the <code>@key</code> sources <a href="https://github.com/sirthias/borer/tree/master/derivation/src/main/scala/io/bullet/borer/derivation/key.scala">here</a> for more info).</p>
 <p>Simply annotate a case class member do provide a custom name:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L208-L217" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Json
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L229-L236" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Json, Codec}
 import io.bullet.borer.derivation.key
-import io.bullet.borer.derivation.MapBasedCodecs._
+import io.bullet.borer.derivation.MapBasedCodecs.*
 
-case class Dog(age: Int, @key(&quot;the-name&quot;) name: String)
-
-implicit val dogCodec = deriveCodec[Dog]
+case class Dog(age: Int, @key(&quot;the-name&quot;) name: String) derives Codec
 
 Json.encode(Dog(1, &quot;Lolle&quot;)).toUtf8String ==&gt;
 &quot;&quot;&quot;{&quot;age&quot;:1,&quot;the-name&quot;:&quot;Lolle&quot;}&quot;&quot;&quot;</code></pre>
@@ -368,7 +362,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.10.3
+1.12.0
 </span>
 </div>
 </article>
@@ -410,7 +404,7 @@ Type IDs
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019-2022 Mathias Doenitz
+Copyright (C) 2019-2023 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

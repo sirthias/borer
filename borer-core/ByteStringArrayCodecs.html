@@ -166,6 +166,7 @@ sirthias/borer/
     <li><a href="../borer-derivation/faq.html" class="page">Derivation FAQ</a></li>
   </ul></li>
   <li><a href="../borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
+  <li><a href="../borer-compat-pekko.html" class="page"><code>borer-compat-pekko</code></a></li>
   <li><a href="../borer-compat-cats.html" class="page"><code>borer-compat-cats</code></a></li>
   <li><a href="../borer-compat-circe.html" class="page"><code>borer-compat-circe</code></a></li>
   <li><a href="../borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
@@ -184,7 +185,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.10.3
+<i class="md-icon" title="Version">label_outline</i> 1.12.0
 </label>
 </li>
 </ul>
@@ -207,8 +208,8 @@ sirthias/borer/
 <p>By default <em>borer</em> will encode these types like any other array, which can add quite a bit of overhead, especially in the case of <a href="http://json.org/">JSON</a>.</p>
 <p>In order to allow for more efficient encodings (as well as faster encoding and decoding processes) <em>borer</em> provides special codecs for these array types that you can &ldquo;enable&rdquo; with one of these two imports:</p>
 <ul>
-  <li><code>import io.bullet.borer.ByteStringArrayCodecs.BigEndian._</code></li>
-  <li><code>import io.bullet.borer.ByteStringArrayCodecs.LittleEndian._</code></li>
+  <li><code>import io.bullet.borer.ByteStringArrayCodecs.BigEndian.*</code></li>
+  <li><code>import io.bullet.borer.ByteStringArrayCodecs.LittleEndian.*</code></li>
 </ul>
 <p>With one of these imports in place an <code>Array[Int]</code> for example will be encoded as a raw byte array, with each <code>Int</code> value being represented as four bytes (in the respective byte order). Conversion to and from byte arrays is done as efficiently as the platform allows.</p>
 <p>Also, the <code>ByteStringArrayCodecs</code> are compatible with custom byte array encoders (like the <a href="JSON-specifics.html#base-encodings-for-binary-data">Base Encoders</a>). </p>
@@ -220,7 +221,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.10.3
+1.12.0
 </span>
 </div>
 </article>
@@ -262,7 +263,7 @@ Input, Output, ByteAccess
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019-2022 Mathias Doenitz
+Copyright (C) 2019-2023 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

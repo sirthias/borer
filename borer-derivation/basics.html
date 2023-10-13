@@ -166,6 +166,7 @@ sirthias/borer/
     <li><a href="../borer-derivation/faq.html" class="page">Derivation FAQ</a></li>
   </ul></li>
   <li><a href="../borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
+  <li><a href="../borer-compat-pekko.html" class="page"><code>borer-compat-pekko</code></a></li>
   <li><a href="../borer-compat-cats.html" class="page"><code>borer-compat-cats</code></a></li>
   <li><a href="../borer-compat-circe.html" class="page"><code>borer-compat-circe</code></a></li>
   <li><a href="../borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
@@ -184,6 +185,7 @@ sirthias/borer/
   <ul>
     <li><a href="../borer-derivation/basics.html#semi-automatic-derivation" class="header">Semi-Automatic Derivation</a></li>
     <li><a href="../borer-derivation/basics.html#fully-automatic-derivation" class="header">Fully-Automatic Derivation</a></li>
+    <li><a href="../borer-derivation/basics.html#derivation-via-derives" class="header">Derivation via <code>derives</code></a></li>
   </ul></li>
 </ul>
 </nav>
@@ -192,7 +194,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.10.3
+<i class="md-icon" title="Version">label_outline</i> 1.12.0
 </label>
 </li>
 </ul>
@@ -209,6 +211,7 @@ sirthias/borer/
   <ul>
     <li><a href="../borer-derivation/basics.html#semi-automatic-derivation" class="header">Semi-Automatic Derivation</a></li>
     <li><a href="../borer-derivation/basics.html#fully-automatic-derivation" class="header">Fully-Automatic Derivation</a></li>
+    <li><a href="../borer-derivation/basics.html#derivation-via-derives" class="header">Derivation via <code>derives</code></a></li>
   </ul></li>
 </ul>
 </nav>
@@ -246,15 +249,16 @@ sirthias/borer/
   <li><code>deriveAllCodecs[T]</code>, which derives a <code>Codec[T]</code>, i.e. an <code>Encoder[T]</code> as well as a <code>Decoder[T]</code></li>
 </ul>
 <p>To understand what these macros do consider this simple example:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L88-L92" target="_blank" title="Go to snippet source">source</a><code class="language-scala">sealed trait Animal
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L79-L83" target="_blank" title="Go to snippet source">source</a><code class="language-scala">sealed trait Animal
 case class Dog(age: Int, name: String)                      extends Animal
 case class Cat(weight: Double, color: String, home: String) extends Animal
 case class Fish(color: String)                              extends Animal
 case object Yeti                                            extends Animal</code></pre>
 <p>With semi-automatic derivation you&rsquo;d have to explicitly call a derivation macro <em>for each</em> sub-type individually:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L97-L105" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.derivation.MapBasedCodecs._
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L88-L97" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Codec
+import io.bullet.borer.derivation.MapBasedCodecs.*
 
-implicit val animalCodec = {
+given Codec[Animal] = {
   implicit val dogCodec  = deriveCodec[Dog]
   implicit val catCodec  = deriveCodec[Cat]
   implicit val fishCodec = deriveCodec[Fish]
@@ -263,9 +267,35 @@ implicit val animalCodec = {
 }</code></pre>
 <p>This gives you full control but can be a bit tedious for larger ADT hierarchies.</p>
 <p>Fully-automatic derivation on the other hand lets you reduce the boilerplate to a minimum by generating the calls to the derivation macro for each ADT sub-type automatically, so you only need to write a single line: </p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L120-L122" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.derivation.MapBasedCodecs._
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L112-L115" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Codec
+import io.bullet.borer.derivation.MapBasedCodecs.*
 
-implicit val animalCodec = deriveAllCodecs[Animal]</code></pre>
+given Codec[Animal] = deriveAllCodecs[Animal]</code></pre>
+<h2><a href="#derivation-via-derives" name="derivation-via-derives" class="anchor"><span class="anchor-link"></span></a>Derivation via <code>derives</code></h2>
+<p><em>borer</em> also supports Scala 3&rsquo;s new <code>derives</code> clause, which allows for a very succinct definition of <code>Encoder</code>, <code>Decoder</code> and <code>Codec</code> instances:</p>
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L128-L135" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Codec, Json}
+import io.bullet.borer.derivation.MapBasedCodecs.*
+
+case class Color(r: Int, g: Int, b: Int) derives Codec
+
+val color = Color(255, 0, 0)
+
+Json.encode(color).toUtf8String ==&gt; &quot;&quot;&quot;{&quot;r&quot;:255,&quot;g&quot;:0,&quot;b&quot;:0}&quot;&quot;&quot;</code></pre>
+<p>The <code>derives Codec</code> clause automatically generates a respective <code>given</code> instance in the type companion object with a <code>deriveCodec</code> call to either <code>MapBasedCodecs</code>, <code>CompactMapBasedCodecs</code> or <code>ArrayBasedCodecs</code>, depending on what you have imported. (With <code>derives Encoder</code>, <code>derives Decoder</code> or <code>derives Encoder, Decoder</code> the same holds true analogously.)</p>
+<p>The snippet above is therefore equivalent to this one:</p>
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L141-L151" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Codec, Json}
+import io.bullet.borer.derivation.MapBasedCodecs.*
+
+case class Color(r: Int, g: Int, b: Int)
+
+object Color:
+  given Codec[Color] = deriveCodec
+
+val color = Color(255, 0, 0)
+
+Json.encode(color).toUtf8String ==&gt; &quot;&quot;&quot;{&quot;r&quot;:255,&quot;g&quot;:0,&quot;b&quot;:0}&quot;&quot;&quot;</code></pre><div class="callout note "><div class="callout-title">Note</div>
+<p>The <code>derives</code> clause only ever generates a single <code>Encoder</code>, <code>Decoder</code> or <code>Codec</code> for the type that is annoted with it. This means that you cannot use it to generate a call to <code>deriveAllEncoders</code>, <code>deriveAllDecoders</code> or <code>deriveAllCodecs</code> (see chapter on <a href="#fully-automatic-derivation">Fully-Automatic Derivation</a> above).</p>
+<p>If you want to have <em>borer</em> automatically construct the type classes for a whole ADT hierarchy you&rsquo;ll still have to resort to an explicit <code>given</code> instance with a call to the respective <code>deriveAllXXX</code>.</p></div>
 </div>
 <div>
 <a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-derivation/basics.md" title="Edit this page" class="md-source-file md-edit">
@@ -274,7 +304,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.10.3
+1.12.0
 </span>
 </div>
 </article>
@@ -316,7 +346,7 @@ Array-Based Codecs
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019-2022 Mathias Doenitz
+Copyright (C) 2019-2023 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

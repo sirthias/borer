@@ -166,6 +166,7 @@ sirthias/borer/
     <li><a href="../borer-derivation/faq.html" class="page">Derivation FAQ</a></li>
   </ul></li>
   <li><a href="../borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
+  <li><a href="../borer-compat-pekko.html" class="page"><code>borer-compat-pekko</code></a></li>
   <li><a href="../borer-compat-cats.html" class="page"><code>borer-compat-cats</code></a></li>
   <li><a href="../borer-compat-circe.html" class="page"><code>borer-compat-circe</code></a></li>
   <li><a href="../borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
@@ -193,7 +194,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.10.3
+<i class="md-icon" title="Version">label_outline</i> 1.12.0
 </label>
 </li>
 </ul>
@@ -240,6 +241,7 @@ trait Provider[T]:
   <li><code>java.io.InputStream</code></li>
   <li><code>java.io.File</code></li>
   <li><code>akka.util.ByteString</code> (with the <code>borer-compat-akka</code> module)</li>
+  <li><code>pekko.util.ByteString</code> (with the <code>borer-compat-pekko</code> module)</li>
   <li><code>scodec.bits.ByteVector</code> (with the <code>borer-compat-scodec</code> module)</li>
   <li><code>Iterator[T]</code>, provided that there is an <code>Input.Provider[T]</code> available implicitly</li>
 </ul>
@@ -268,6 +270,7 @@ trait ToValueProvider[T]:
   <li><code>java.io.OutputStream</code> (to a an existing instance)</li>
   <li><code>java.io.File</code> (to a an existing instance)</li>
   <li><code>akka.util.ByteString</code> (with the <code>borer-compat-akka</code> module)</li>
+  <li><code>pekko.util.ByteString</code> (with the <code>borer-compat-pekko</code> module)</li>
   <li><code>scodec.bits.ByteVector</code> (with the <code>borer-compat-scodec</code> module)</li>
 </ul>
 <p>The <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Output.scala">Output</a> trait isn&rsquo;t hard to implement as it simply writes out all bytes in a single pass.</p>
@@ -294,6 +297,7 @@ Cbor.encode(value).to(file).result ==&gt; file</code></pre>
   <li><code>Array[Byte]</code></li>
   <li><code>java.nio.ByteBuffer</code></li>
   <li><code>akka.util.ByteString</code> (with the <code>borer-compat-akka</code> module)</li>
+  <li><code>pekko.util.ByteString</code> (with the <code>borer-compat-pekko</code> module)</li>
   <li><code>scodec.bits.ByteVector</code> (with the <code>borer-compat-scodec</code> module)</li>
 </ul>
 </div>
@@ -304,7 +308,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.10.3
+1.12.0
 </span>
 </div>
 </article>
@@ -346,7 +350,7 @@ JSON Specifics
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019-2022 Mathias Doenitz
+Copyright (C) 2019-2023 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

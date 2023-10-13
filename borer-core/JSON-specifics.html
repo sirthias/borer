@@ -166,6 +166,7 @@ sirthias/borer/
     <li><a href="../borer-derivation/faq.html" class="page">Derivation FAQ</a></li>
   </ul></li>
   <li><a href="../borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
+  <li><a href="../borer-compat-pekko.html" class="page"><code>borer-compat-pekko</code></a></li>
   <li><a href="../borer-compat-cats.html" class="page"><code>borer-compat-cats</code></a></li>
   <li><a href="../borer-compat-circe.html" class="page"><code>borer-compat-circe</code></a></li>
   <li><a href="../borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
@@ -193,7 +194,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.10.3
+<i class="md-icon" title="Version">label_outline</i> 1.12.0
 </label>
 </li>
 </ul>
@@ -232,7 +233,7 @@ def writeEmptyArray(w: Writer): w.type =
   if (w.writingJson) w.writeArrayStart().writeBreak()
   else w.writeArrayHeader(0) // fixed-sized Arrays are not supported in JSON</code></pre>
 <p>But on a slightly higher level the <code>Writer</code> also gives you a way to write arrays (and maps) without having distinguish between <a href="http://cbor.io/">CBOR</a> and <a href="http://json.org/">JSON</a> yourself:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/JsonSpecificsSpec.scala#L38-L43" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Writer
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/JsonSpecificsSpec.scala#L37-L42" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Writer
 
 def writeAsUnaryArray(w: Writer, s: String): w.type =
   w.writeArrayOpen(1) // automatically chooses the most efficient
@@ -253,7 +254,7 @@ def writeAsUnaryArray(w: Writer, s: String): w.type =
 </ul>
 <p>The default <a href="http://json.org/">JSON</a> encoding for <code>Array[Byte]</code> is <a href="https://tools.ietf.org/html/rfc4648#section-4">base64</a>.</p>
 <p>In order to switch to a different base encoding in a particular scope define the a pair of implicits as in this example:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/JsonSpecificsSpec.scala#L59-L74" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Decoder, Encoder, Json}
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/JsonSpecificsSpec.scala#L57-L72" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Decoder, Encoder, Json}
 import io.bullet.borer.encodings.BaseEncoding
 
 val binaryData = hex&quot;DEADBEEF&quot;
@@ -264,8 +265,8 @@ Json.encode(binaryData).toUtf8String ==&gt; &quot;&quot;&quot;&quot;3q2+7w==&quo
 {
   // we need to explicitly define the encoder as well as the decoder
   // in order to &quot;override&quot; the defaults for Array[Byte] on either side
-  implicit val byteArrayEncoder = Encoder.forByteArray(BaseEncoding.zbase32)
-  implicit val byteArrayDecoder = Decoder.forByteArray(BaseEncoding.zbase32)
+  given Encoder[Array[Byte]] = Encoder.forByteArray(BaseEncoding.zbase32)
+  given Decoder[Array[Byte]] = Decoder.forByteArray(BaseEncoding.zbase32)
 
   Json.encode(binaryData).toUtf8String ==&gt; &quot;&quot;&quot;&quot;54s575a&quot;&quot;&quot;&quot;
 }</code></pre>
@@ -368,7 +369,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.10.3
+1.12.0
 </span>
 </div>
 </article>
@@ -410,7 +411,7 @@ JSON Performance
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019-2022 Mathias Doenitz
+Copyright (C) 2019-2023 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

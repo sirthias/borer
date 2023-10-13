@@ -166,6 +166,7 @@ sirthias/borer/
     <li><a href="borer-derivation/faq.html" class="page">Derivation FAQ</a></li>
   </ul></li>
   <li><a href="borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
+  <li><a href="borer-compat-pekko.html" class="page"><code>borer-compat-pekko</code></a></li>
   <li><a href="borer-compat-cats.html" class="page"><code>borer-compat-cats</code></a></li>
   <li><a href="borer-compat-circe.html" class="active page"><code>borer-compat-circe</code></a></li>
   <li><a href="borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
@@ -193,7 +194,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.10.3
+<i class="md-icon" title="Version">label_outline</i> 1.12.0
 </label>
 </li>
 </ul>
@@ -252,7 +253,7 @@ sirthias/borer/
 
 <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/CirceCompatSpec.scala#L18-L35" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.circe.{Decoder, Encoder} // NOTE: circe (!) Encoders / Decoders
 import io.bullet.borer.Cbor
-import io.bullet.borer.compat.circe._ // the borer codec for the circe AST
+import io.bullet.borer.compat.circe.* // the borer codec for the circe AST
 
 // serializes a value to CBOR given that a circe `Encoder` is available
 def serializeToCbor[T: Encoder](value: T): Array[Byte] =
@@ -289,7 +290,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.10.3
+1.12.0
 </span>
 </div>
 </article>
@@ -331,7 +332,7 @@ borer-compat-scodec
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019-2022 Mathias Doenitz
+Copyright (C) 2019-2023 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

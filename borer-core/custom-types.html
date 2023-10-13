@@ -166,6 +166,7 @@ sirthias/borer/
     <li><a href="../borer-derivation/faq.html" class="page">Derivation FAQ</a></li>
   </ul></li>
   <li><a href="../borer-compat-akka.html" class="page"><code>borer-compat-akka</code></a></li>
+  <li><a href="../borer-compat-pekko.html" class="page"><code>borer-compat-pekko</code></a></li>
   <li><a href="../borer-compat-cats.html" class="page"><code>borer-compat-cats</code></a></li>
   <li><a href="../borer-compat-circe.html" class="page"><code>borer-compat-circe</code></a></li>
   <li><a href="../borer-compat-scodec.html" class="page"><code>borer-compat-scodec</code></a></li>
@@ -193,7 +194,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.10.3
+<i class="md-icon" title="Version">label_outline</i> 1.12.0
 </label>
 </li>
 </ul>
@@ -223,28 +224,26 @@ sirthias/borer/
 <div class="md-content__searchable">
 <h1><a href="#encoding-and-decoding-custom-types" name="encoding-and-decoding-custom-types" class="anchor"><span class="anchor-link"></span></a>Encoding and Decoding Custom Types</h1>
 <p>In order to encode some custom type <code>T</code> you&rsquo;ll have to implicitly provide an <code>Encoder[T]</code>:</p>
-<pre class="prettyprint"><code class="language-scala">trait Encoder[T] {
+<pre class="prettyprint"><code class="language-scala">trait Encoder[T]:
   def write(w: Writer, value: T): w.type
-}
 </code></pre>
 <p>Similarly, for decoding of <code>T</code> you&rsquo;ll have to implicitly provide <code>Decoder[T]</code>:</p>
-<pre class="prettyprint"><code class="language-scala">trait Decoder[T] {
+<pre class="prettyprint"><code class="language-scala">trait Decoder[T]:
   def read(r: Reader): T
-}
 </code></pre>
 <p>Many times, when encoding <em>and</em> decoding must be available for a type, it&rsquo;s easier to supply just a single implicit for <code>T</code>, rather than two. As an alternative to providing a separate <code>Encoder[T]</code> as well as a <code>Decoder[T]</code> you can also provide a <code>Codec[T]</code>, which is defined like this:</p>
-<pre class="prettyprint"><code class="language-scala">final case class Codec[T](encoder: Encoder[T], decoder: Decoder[T])
+<pre class="prettyprint"><code class="language-scala">case class Codec[T](encoder: Encoder[T], decoder: Decoder[T])
 </code></pre>
 <p>Encoders and Decoders can be implicitly &ldquo;unpacked&rdquo; from a <code>Codec</code>.</p>
 <p>There are several ways to provide such encoders, decoders or codecs for your custom types.<br> The following sections outline the alternatives.</p><div class="callout note "><div class="callout-title">Note</div>
 <p>In order to not hinder composability Codecs should only ever be <em>supplied</em>, never consumed.<br> So, if you write an <code>Encoder</code>, <code>Decoder</code> or <code>Codec</code> for a generic type, which itself requires implicitly available encoders and/or decoders for certain type parameters (like <code>Encoder.forOption</code>, for example) then you should never require an implicitly available <code>Codec[T]</code>, but rather an <code>Encoder[T]</code> and <code>Decoder[T]</code> separately.</p>
 <p>For example, you should say:</p>
 <pre class="prettyprint"><code class="language-scala">// ok: require `Encoder`/`Decoder` instances and supply a `Codec`
-implicit def forOption[T: Encoder :Decoder]: Codec[Option[T]] = ...
+given [T: Encoder :Decoder]: Codec[Option[T]] = ...
 </code></pre>
 <p>rather than</p>
 <pre class="prettyprint"><code class="language-scala">// bad: requiring a `Codec` (here: as a Context Bound)
-implicit def forOption[T: Codec]: Codec[Option[T]] = ...
+given [T: Codec]: Codec[Option[T]] = ...
 </code></pre></div>
 <h2><a href="#case-classes" name="case-classes" class="anchor"><span class="anchor-link"></span></a>Case Classes</h2>
 <p>The best way to concisely generate codecs for case classes is <em>borer</em>&rsquo;s <a href="../borer-derivation/index.html">Derivation</a> module.</p>
@@ -254,11 +253,11 @@ implicit def forOption[T: Codec]: Codec[Option[T]] = ...
 
 case class Color(name: String, value: Int)
 
-implicit val encoder: Encoder[Color] = Encoder.forProduct[Color]
-implicit val decoder: Decoder[Color] = Decoder.forProduct[Color]
+given Encoder[Color] = Encoder.forProduct[Color]
+given Decoder[Color] = Decoder.forProduct[Color]
 
 // alternative: provide an Encoder and Decoder at the same time
-implicit val codec: Codec[Color] = Codec(
+given Codec[Color] = Codec(
   Encoder.forProduct[Color],
   Decoder.forProduct[Color]
 )</code></pre>
@@ -267,22 +266,20 @@ implicit val codec: Codec[Color] = Codec(
 <p>If you would like your case classes to be encoded in a more JSON-esque way, as maps with each member being keyed by its member name, the <a href="../borer-derivation/map-based.html">MapBasedCodecs</a> from the <a href="../borer-derivation/index.html"><code>borer-derivation</code></a> module are your only option, short of <a href="custom-types.html#construction">Manual Construction</a>. </p>
 <h2><a href="#transforming-existing-encoders-decoders" name="transforming-existing-encoders-decoders" class="anchor"><span class="anchor-link"></span></a>Transforming Existing Encoders / Decoders</h2>
 <p>If your type can somehow be constructed from or deconstructed to another type that an Encoder or Decoder is already available for, you can rely on the <code>contramap</code> and <code>map</code> methods available on Encoders / Decoders:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/CustomCodecsSpec.scala#L42-L50" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Decoder, Encoder}
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/CustomCodecsSpec.scala#L42-L48" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Decoder, Encoder}
 
 class Person(val name: String)
 
 // have `Person` be encoded as a simple CBOR/JSON text data item
-implicit val personEncoder: Encoder[Person] =
-  Encoder.forString.contramap[Person](_.name)
-implicit val personDecoder: Decoder[Person] =
-  Decoder.forString.map(new Person(_))</code></pre>
+given Encoder[Person] = Encoder.forString.contramap[Person](_.name)
+given Decoder[Person] = Decoder.forString.map(new Person(_))</code></pre>
 <h2><a href="#construction" name="construction" class="anchor"><span class="anchor-link"></span></a>&ldquo;Manual&rdquo; Construction</h2>
 <p>For full flexibility of how your type <code>T</code> is to be encoded in <a href="http://cbor.io/">CBOR</a>/<a href="http://json.org/">JSON</a> you can of course also write the respective <code>Encoder[T]</code> / <code>Decoder[T]</code> manually. This is done by explicitly defining how your type is to be written to a <code>Writer</code> and read from a <code>Reader</code>:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/CustomCodecsSpec.scala#L63-L82" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Decoder, Encoder}
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/CustomCodecsSpec.scala#L61-L80" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Decoder, Encoder}
 
 class Person(val name: String, val age: Int)
 
-implicit val encoder: Encoder[Person] = Encoder { (writer, person) =&gt;
+given Encoder[Person] = Encoder { (writer, person) =&gt;
   writer
     .writeArrayOpen(2)
     .writeString(person.name)
@@ -290,7 +287,7 @@ implicit val encoder: Encoder[Person] = Encoder { (writer, person) =&gt;
     .writeArrayClose()
 }
 
-implicit val decoder: Decoder[Person] = Decoder { reader =&gt;
+given Decoder[Person] = Decoder { reader =&gt;
   val unbounded = reader.readArrayOpen(2)
   val person = new Person(
     reader.readString(),
@@ -313,9 +310,9 @@ implicit val decoder: Decoder[Person] = Decoder { reader =&gt;
 <p>While <em>borer</em> implements validation logic (enabled by default), which verifies the structural integrity of all produced and consumed data, there are no static (type-level, i.e. compile-time) checks that catch you, when you forget to write or read the BREAK primitive at the end!</p>
 <p>When consuming <a href="http://cbor.io/">CBOR</a> data during decoding the <code>Reader</code> gives you one-element look-ahead. This means that you can &ldquo;see&rdquo; the kind of the next data item (primitive) that is available <em>before</em> reading it, which is often very helpful.</p>
 <p>For example, here is an potential <code>Decoder[Either[String, Int]]</code>:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/CustomCodecsSpec.scala#L96-L103" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Decoder
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/CustomCodecsSpec.scala#L94-L101" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Decoder
 
-implicit val eitherStringIntDecoder: Decoder[Either[String, Int]] =
+given Decoder[Either[String, Int]] =
   Decoder { reader =&gt;
     if (reader.hasString) Left(reader.readString())
     else if (reader.hasInt) Right(reader.readInt())
@@ -329,7 +326,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.10.3
+1.12.0
 </span>
 </div>
 </article>
@@ -371,7 +368,7 @@ Nullable and Default
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019-2022 Mathias Doenitz
+Copyright (C) 2019-2023 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>
