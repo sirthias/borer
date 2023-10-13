@@ -8,8 +8,7 @@
 
 package io.bullet.borer.input
 
-import java.nio.ByteBuffer
-
+import java.nio.{ByteBuffer, ByteOrder}
 import io.bullet.borer.{ByteAccess, Input}
 
 trait FromByteBufferInput:
@@ -19,7 +18,14 @@ trait FromByteBufferInput:
     def byteAccess               = ByteAccess.ForByteArray
     def apply(value: ByteBuffer) = fromByteBuffer(value)
 
-  def fromByteBuffer(value: ByteBuffer): Input[Array[Byte]] = new FromByteBuffer(value)
+  def fromByteBuffer(value: ByteBuffer): Input[Array[Byte]] =
+    if (value.order() != ByteOrder.BIG_ENDIAN)
+      throw new IllegalArgumentException(
+        """borer requires all input ByteBuffers to have BIG ENDIAN byte order for correct parsing,
+          |but the given one is configured as LITTLE ENDIAN.
+          |Please set `ByteOrder.BIG_ENDIAN` before parsing!
+          |Note that you can switch the byte order back to LITTLE ENDIAN after parsing if needed.""".stripMargin)
+    new FromByteBuffer(value)
 
   final private class FromByteBuffer(buffer: ByteBuffer) extends Input[Array[Byte]]:
 
