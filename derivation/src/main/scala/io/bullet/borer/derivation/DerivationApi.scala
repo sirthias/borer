@@ -24,4 +24,33 @@ trait DerivationApi {
 
   inline def deriveAllCodecs[T]: Codec[T]
 
+  /**
+   * This enables [[Encoder]] derivation via the `derives` clauses, e.g.
+   * {{{
+   * import io.bullet.borer.derivation.MapBasedCodecs.*
+   *
+   * case class Foo(x: Int) derives Encoder
+   * }}}
+   */
+  extension (c: Encoder.type) inline def derived[A]: Encoder[A] = deriveEncoder[A]
+
+  /**
+   * This enables [[Decoder]] derivation via the `derives` clauses, e.g.
+   * {{{
+   * import io.bullet.borer.derivation.MapBasedCodecs.*
+   *
+   * case class Foo(x: Int) derives Decoder
+   * }}}
+   */
+  extension (c: Decoder.type) inline def derived[A]: Decoder[A] = deriveDecoder[A]
+
+  /**
+   * This enables [[Codec]] derivation via the `derives` clauses, e.g.
+   * {{{
+   * import io.bullet.borer.derivation.MapBasedCodecs.*
+   *
+   * case class Foo(x: Int) derives Codec
+   * }}}
+   */
+  extension (c: Codec.type) inline def derived[A]: Codec[A] = deriveCodec[A]
 }
