@@ -116,7 +116,7 @@ val `cats-core`         = Def.setting("org.typelevel"     %%% "cats-core"       
 val `circe-core`        = Def.setting("io.circe"          %%% "circe-core"        % "0.14.6")
 val `circe-parser`      = Def.setting("io.circe"          %%% "circe-parser"      % "0.14.6")
 val `circe-generic`     = Def.setting("io.circe"          %%% "circe-generic"     % "0.14.6")
-val `scodec-bits`       = Def.setting("org.scodec"        %%% "scodec-bits"       % "1.1.37")
+val `scodec-bits`       = Def.setting("org.scodec"        %%% "scodec-bits"       % "1.1.38")
 val munit               = Def.setting("org.scalameta"     %%% "munit"             % "0.7.29" % Test)
 val macrolizer          = Def.setting("io.bullet"         %%% "macrolizer"        % "0.6.2" % "compile-internal, test-internal")
 // format: ON
@@ -315,7 +315,7 @@ lazy val site = project
       munit.value
     ),
     com.github.sbt.git.SbtGit.GitKeys.gitRemoteRepo := scmInfo.value.get.connection.drop("scm:git:".length),
-    ghpagesNoJekyll                               := true,
+    ghpagesNoJekyll                                 := true,
     ParadoxMaterialThemePlugin.paradoxMaterialThemeSettings(Compile),
     Compile / paradoxMaterialTheme := {
       ParadoxMaterialTheme()
