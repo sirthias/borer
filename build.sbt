@@ -1,15 +1,15 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
-import sbt._
+import sbt.*
 
 def scala3 = "3.3.1"
 
 inThisBuild(
   List(
     organization := "io.bullet",
-    homepage     := Some(new URL("https://github.com/sirthias/borer/")),
+    homepage     := Some(new URI("https://github.com/sirthias/borer/").toURL),
     description  := "CBOR and JSON (de)serialization in Scala",
     startYear    := Some(2019),
-    licenses     := Seq("MPLv2" -> new URL("https://www.mozilla.org/en-US/MPL/2.0/")),
+    licenses     := Seq("MPLv2" -> new URI("https://www.mozilla.org/en-US/MPL/2.0/").toURL),
     scmInfo := Some(ScmInfo(url("https://github.com/sirthias/borer/"), "scm:git:git@github.com:sirthias/borer.git")),
     versionScheme := Some("early-semver"),
     developers :=

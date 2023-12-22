@@ -151,7 +151,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       val newLen      = len + digitCount
       val unreadCount = 7 - digitCount
 
-      @inline def returnWith(value: Long): Int =
+      inline def returnWith(value: Long): Int =
         unread(unreadCount)
         nextChar = stopChar
         auxLong = -value
@@ -189,32 +189,32 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       val nlz        = JLong.numberOfLeadingZeros(mask)
       val digitCount = nlz >> 3 // the number of actual digit chars before a non-digit character (stopchar) [0..8]
 
-      @inline def v1 = value * 10 - (digs >>> 56)
-      @inline def v2 = value * 100 - (digs >>> 56) * 10 - (digs << 8 >>> 56)
+      inline def v1 = value * 10 - (digs >>> 56)
+      inline def v2 = value * 100 - (digs >>> 56) * 10 - (digs << 8 >>> 56)
 
-      @inline def v3 =
+      inline def v3 =
         value * 1000 - longFrom4Digits {
           (digs >>> 56 << 32) | ((digs & 0x00FF000000000000L) >>> 32) | (digs << 16 >>> 56)
         }
 
-      @inline def v4 =
+      inline def v4 =
         value * 10000 - longFrom4Digits {
           val a = (digs >>> 48 << 32) | (digs << 16 >>> 48) // 0x00000a0b00000c0d
           val b = a & 0x0000FF000000FF00L                   // 0x00000a0000000c00
           val x = (a ^ b) | (b << 8)                        // 0x000a000b000c000d
           x
         }
-      @inline def v5 = value * 100000 - longFrom8Digits(digs >>> 24)
-      @inline def v6 = value * 1000000 - longFrom8Digits(digs >>> 16)
-      @inline def v7 = value * 10000000 - longFrom8Digits(digs >>> 8)
-      @inline def v8 = value * 100000000 - longFrom8Digits(digs)
+      inline def v5 = value * 100000 - longFrom8Digits(digs >>> 24)
+      inline def v6 = value * 1000000 - longFrom8Digits(digs >>> 16)
+      inline def v7 = value * 10000000 - longFrom8Digits(digs >>> 8)
+      inline def v8 = value * 100000000 - longFrom8Digits(digs)
 
       // use the idling ALUs to pre-compute these values, which we are likely to need anyway
       val stopChar    = (octa << nlz >>> 56).toInt
       val newLen      = len + digitCount
       val unreadCount = 7 - digitCount
 
-      @inline def returnWith(value: Long): Int =
+      inline def returnWith(value: Long): Int =
         unread(unreadCount)
         nextChar = stopChar
         auxLong = value
@@ -642,14 +642,14 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
 
     if (nextChar <= 0x20) skip1() else nextChar
 
-  @inline private def ensureCharsLen(len: Int): Unit =
+  private inline def ensureCharsLen(len: Int): Unit =
     def grow(): Unit =
       if (len > config.maxStringLength) failStringTooLong(-len)
       val newLen = math.max(chars.length << 1, len)
       chars = util.Arrays.copyOf(chars, newLen)
     if (len > chars.length) grow()
 
-  @inline private def unread(count: Int): Unit =
+  private inline def unread(count: Int): Unit =
     def unreadWithExtra(): Unit =
       val n = count - cursorExtra
       cursorExtra = if (n > 0)
@@ -671,7 +671,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
     x >> 32
 
   // same as above but for 4 digits 0x000a000b000c000d where `abcd` are the digits to be converted into a Long value
-  @inline private def longFrom4Digits(x: Long) =
+  private inline def longFrom4Digits(x: Long) =
     ((x * 281517932938216L) // (x * 1000) + ((x * 100) << 16) + ((x * 10) << 32) + (x << 48)
       >> 48)
 
