@@ -138,13 +138,7 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
   }
 
   case class AdtTypeNode(tpe: TypeRepr, subs: List[AdtTypeNode]) extends WithAnnotations {
-    @threadUnsafe lazy val name: String = {
-      var s = tpe.show
-      s = s.substring(s.lastIndexOf('.') + 1)
-      s.indexOf('[') match
-        case -1 => s
-        case x  => s.substring(0, x)
-    }
+    @threadUnsafe lazy val name: String = if (tpe.isSingleton) tpe.termSymbol.name else tpe.typeSymbol.name
     def annotations: List[Term]                       = tpe.typeSymbol.annotations
     def containedIn(list: List[AdtTypeNode]): Boolean = list.exists(_ eq this)
     def isEnum: Boolean                               = isRoot && tpe.typeSymbol.flags.is(Flags.Enum)
