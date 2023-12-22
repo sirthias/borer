@@ -60,7 +60,6 @@ lazy val commonSettings = Seq(
   Compile / doc / scalacOptions += "-no-link-warnings",
   sourcesInBase := false,
   Compile / unmanagedResources += baseDirectory.value.getParentFile.getParentFile / "LICENSE",
-  scalafmtOnCompile := true, // reformat main and test sources on compile
 
   // temporary
   resolvers += "Apache Pekko Staging".at("https://repository.apache.org/content/groups/staging"),
