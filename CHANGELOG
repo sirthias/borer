@@ -1,3 +1,10 @@
+Version 1.13.0 (2023-12-22)
+---------------------------
+
+- Point ScalaJS source maps to github (#684)
+- Improve auto-generation of ADT type ids (#685)
+
+
 Version 1.12.0 (2023-10-13)
 ---------------------------
 
