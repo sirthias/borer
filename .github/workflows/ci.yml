@@ -30,7 +30,7 @@ jobs:
       - name: Cache scala dependencies
         uses: coursier/cache-action@v6
       - name: Lint code
-        run: sbt ++3.3.0 check
+        run: sbt ++3.3.1 check
 
   test:
     runs-on: ubuntu-20.04
@@ -38,8 +38,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: ['8', '11', '17']
-        scala: ['3.3.0']
+        java: ['11', '17', '21']
+        scala: ['3.3.1']
         platform: ['JVM', 'JS']
     steps:
       - name: Checkout current branch
@@ -55,10 +55,7 @@ jobs:
       - name: Cache scala dependencies
         uses: coursier/cache-action@v6
       - name: Run tests
-        if: ${{ !startsWith(matrix.scala, '3.') }}
-        run: sbt ++${{ matrix.scala }}! test${{ matrix.platform }}
-      - name: Run dotty tests
-        if: ${{ startsWith(matrix.scala, '3.') && matrix.platform == 'JVM' }}
+        if: ${{ matrix.platform == 'JVM' }}
         run: sbt ++${{ matrix.scala }}! testJVM
 
   ci:
