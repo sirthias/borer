@@ -54,7 +54,14 @@ lazy val commonSettings = Seq(
     // "-Ydebug-error",
     "-Xmax-inlines:128", // required for compiling upickle benchmarks
     // "-Wunused:all" // disabled until https://github.com/lampepfl/dotty/issues/17315 is resolved
-  ),
+  ) ++ {
+    val dir = baseDirectory.value
+    if (dir.name == ".js") {
+      val localSourcesPath = baseDirectory.value.toURI
+      val remoteSourcesPath = s"https://raw.githubusercontent.com/sirthias/borer/${git.gitHeadCommit.value.get}/"
+      s"-scalajs-mapSourceURI:${dir.getParentFile.toURI}->$remoteSourcesPath" :: Nil
+    } else Nil
+  },
   Compile / console / scalacOptions ~= (_ filterNot (o => o.contains("warn") || o.contains("Xlint"))),
   Test / console / scalacOptions := (Compile / console / scalacOptions).value,
   Compile / doc / scalacOptions += "-no-link-warnings",
