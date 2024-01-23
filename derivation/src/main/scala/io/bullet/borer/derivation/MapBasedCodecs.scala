@@ -138,7 +138,7 @@ object MapBasedCodecs extends DerivationApi {
                         Some {
                           Val.of[Encoder[t]] {
                             val fieldEnc = fieldEncoders(field.index).map(_.asExprOf[Encoder[t]]).getOrElse {
-                              fail(s"Could not find implicit Encoder[${Type.show[t]}] " +
+                              fail(s"Could not find given Encoder[${Type.show[t]}] " +
                                 s"for field `${field.name}` of case class `$theTname`")
                             }
                             field.defaultValue[t] match
@@ -486,7 +486,7 @@ object MapBasedCodecs extends DerivationApi {
                     Expr
                       .summon[Decoder[t]]
                       .orElse(fail(
-                        s"Could not find implicit Decoder[${Type.show[t]}] for field `${field.name}` of case class `$theTname`"))
+                        s"Could not find given Decoder[${Type.show[t]}] for field `${field.name}` of case class `$theTname`"))
                       .filterNot(isBasicDefaultDecoder)
                       .map { fieldDec =>
                         Val.of[Decoder[t]] {

@@ -146,7 +146,7 @@ object ArrayBasedCodecs extends DerivationApi {
                     Expr
                       .summon[Encoder[t]]
                       .orElse(fail(
-                        s"Could not find implicit Encoder[${Type.show[t]}] for field `${field.name}` of case class `$theTname`"))
+                        s"Could not find given Encoder[${Type.show[t]}] for field `${field.name}` of case class `$theTname`"))
                       .filterNot(isBasicDefaultEncoder)
                       .map(x => Val.of[Encoder[t]]('{ $x.recursive }))
                   case _ => None
@@ -226,7 +226,7 @@ object ArrayBasedCodecs extends DerivationApi {
                     Expr
                       .summon[Decoder[t]]
                       .orElse(fail(
-                        s"Could not find implicit Decoder[${Type.show[t]}] for field `${field.name}` of case class `$theTname`"))
+                        s"Could not find given Decoder[${Type.show[t]}] for field `${field.name}` of case class `$theTname`"))
                       .filterNot(isBasicDefaultDecoder)
                       .map(x => Val.of[Decoder[t]]('{ $x.recursive }))
                   case _ => None
