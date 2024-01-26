@@ -9,6 +9,7 @@
 package io.bullet.borer.internal
 
 import scala.annotation.tailrec
+import scala.deriving.Mirror
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
 
@@ -60,6 +61,8 @@ private[borer] object Util:
   inline def isInt(x: Long): Boolean              = (x >> 31) == (x >> 63)
   inline def isUnsignedInt(uLong: Long): Boolean  = uLong >> 31 == 0
   inline def isUnsignedLong(uLong: Long): Boolean = uLong >= 0
+
+  inline def typeName[T](using m: Mirror.Of[T]): String = valueOf[m.MirroredLabel]
 
   def emptyArray[T](implicit ct: ClassTag[T]): Array[T] =
     (ct.runtimeClass match {

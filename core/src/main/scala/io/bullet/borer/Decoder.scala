@@ -68,9 +68,47 @@ object Decoder extends LowPrioDecoders:
   }
 
   extension [A](underlying: Decoder[A])
-    def map[B](f: A => B): Decoder[B]                     = Decoder(r => f(underlying.read(r)))
+
+    /**
+     * Maps the result of the underlying [[Decoder]] with the given function.
+     * The function can throw exceptions to terminate the decoding process with an error.
+     * If the thrown exception is not a [[Borer.Error]] itself it will be
+     * wrapped in a [[Borer.Error.General]] instance.
+     */
+    def map[B](f: A => B): Decoder[B] = Decoder(r => f(underlying.read(r)))
+
+    /**
+     * Maps the result of the underlying [[Decoder]] with the given function.
+     * Since the function has access to the [[Reader]] instance it can call its
+     * helper methods `validationFailure` or `overflow` (among other things) to signal errors.
+     */
     def mapWithReader[B](f: (Reader, A) => B): Decoder[B] = Decoder(r => f(r, underlying.read(r)))
 
+    /**
+     * Maps the result of the underlying [[Decoder]] with the given function.
+     * If the function returns `None` decoding will fail with a [[Borer.Error.ValidationFailure]].
+     */
+    inline def mapOption[B: Mirror.Of](f: A => Option[B]): Decoder[B] =
+      Decoder(r => f(underlying.read(r)).getOrElse(r.unexpectedDataItem(Util.typeName[B])))
+
+    /**
+     * Maps the result of the underlying [[Decoder]] with the given function.
+     * [[Left]] results will terminate the encoding process with an error.
+     * If the [[Throwable]] is not a [[Borer.Error]] itself it will be
+     * wrapped in a [[Borer.Error.General]] instance.
+     */
+    def mapEither[B](f: A => Either[Throwable, B]): Decoder[B] =
+      Decoder { r =>
+        f(underlying.read(r)) match
+          case Left(e) => throw e
+          case Right(b) => b
+      }
+
+    /**
+     * Changes the default value of the [[Decoder]] to a new value.
+     * If the underlying [[Decoder]] is not [[Decoder.DefaultValueAware]]
+     * this method has no effect.
+     */
     def withDefaultValue(defaultValue: A): Decoder[A] =
       underlying.unwrap match
         case x: Decoder.DefaultValueAware[A] => x withDefaultValue defaultValue
