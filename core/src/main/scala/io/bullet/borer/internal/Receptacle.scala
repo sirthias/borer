@@ -25,16 +25,16 @@ final private[borer] class Receptacle extends Receiver with java.lang.Cloneable:
 
   private[this] var _byteAccess: ByteAccess[Any] = _
 
-  @inline def boolValue: Boolean        = _bool
-  @inline def intValue: Int             = _int
-  @inline def longValue: Long           = _long
-  @inline def floatValue: Float         = _float
-  @inline def doubleValue: Double       = _double
-  @inline def stringValue: String       = _obj.asInstanceOf[String]
-  @inline def charBufValue: Array[Char] = _obj.asInstanceOf[Array[Char]]
-  @inline def tagValue: Tag             = _obj.asInstanceOf[Tag]
+  inline def boolValue: Boolean        = _bool
+  inline def intValue: Int             = _int
+  inline def longValue: Long           = _long
+  inline def floatValue: Float         = _float
+  inline def doubleValue: Double       = _double
+  inline def stringValue: String       = _obj.asInstanceOf[String]
+  inline def charBufValue: Array[Char] = _obj.asInstanceOf[Array[Char]]
+  inline def tagValue: Tag             = _obj.asInstanceOf[Tag]
 
-  @inline def getBytes[Bytes](implicit byteAccess: ByteAccess[Bytes]): Bytes =
+  inline def getBytes[Bytes](implicit byteAccess: ByteAccess[Bytes]): Bytes =
     byteAccess.convert(_obj)(_byteAccess)
 
   def onNull(): Unit = ()

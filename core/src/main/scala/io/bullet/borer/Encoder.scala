@@ -55,7 +55,7 @@ object Encoder extends LowPrioEncoders:
   /**
    * Creates an [[Encoder]] from the given function.
    */
-  def apply[T](implicit encoder: Encoder[T]): Encoder[T] = encoder
+  inline def apply[T](implicit encoder: Encoder[T]): Encoder[T] = encoder
 
   /**
    * Creates an [[Encoder]] that encodes a product instance as a simple array of values.

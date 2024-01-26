@@ -32,29 +32,29 @@ final private[borer] class ResizableByteRingBuffer(initialCapacity: Int, val max
   private[this] var writeIx: Int = _
   private[this] var readIx: Int  = _
 
-  @inline def clear(): Unit =
+  inline def clear(): Unit =
     writeIx = 0
     readIx = 0
 
   /**
    * The number of elements currently in the buffer.
    */
-  @inline def count: Int = writeIx - readIx
+  inline def count: Int = writeIx - readIx
 
   /**
    * True if no elements are currently in the buffer.
    */
-  @inline def isEmpty: Boolean = writeIx == readIx
+  inline def isEmpty: Boolean = writeIx == readIx
 
   /**
    * True if at least one elements is currently in the buffer.
    */
-  @inline def nonEmpty: Boolean = writeIx != readIx
+  inline def nonEmpty: Boolean = writeIx != readIx
 
   /**
    * The number of elements the buffer can hold without having to be resized.
    */
-  @inline def currentCapacity: Int = array.length
+  inline def currentCapacity: Int = array.length
 
   def append1(value: Byte): Boolean =
     if (count < currentCapacity)
@@ -140,11 +140,11 @@ final private[borer] class ResizableByteRingBuffer(initialCapacity: Int, val max
       write9(byte, long, ix)
     else grow() && prepend9(byte, long)
 
-  @inline private def write1(value: Byte, ix: Int): Boolean =
+  private inline def write1(value: Byte, ix: Int): Boolean =
     array(ix & mask) = value
     true
 
-  @inline private def write2(a: Byte, b: Byte, ix: Int): Boolean =
+  private inline def write2(a: Byte, b: Byte, ix: Int): Boolean =
     array(ix & mask) = a
     array((ix + 1) & mask) = b
     true

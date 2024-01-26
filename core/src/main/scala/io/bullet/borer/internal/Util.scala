@@ -28,22 +28,24 @@ private[borer] object Util:
     @tailrec def onlyDigits(ix: Int): Boolean = ix <= 0 || { val c = s(ix); '0' <= c && c <= '9' && onlyDigits(ix - 1) }
     if (isJS && onlyDigits(s.length - 1)) s + ".0" else s
 
-  @inline def requireNonNegative(value: Int, name: String): Int = requireNonNegative(value.toLong, name).toInt
+  inline def requireNonNegative(value: Int, name: String): Int =
+    requireNonNegative(value.toLong, name).toInt
 
-  @inline def requireNonNegative(value: Long, name: String): Long =
+  inline def requireNonNegative(value: Long, name: String): Long =
     if (value < 0) throw new IllegalArgumentException(s"$name must be >= 0, but was $value")
     else value
 
-  @inline def requirePositive(value: Int, name: String): Int = requirePositive(value.toLong, name).toInt
+  inline def requirePositive(value: Int, name: String): Int =
+    requirePositive(value.toLong, name).toInt
 
-  @inline def requirePositive(value: Long, name: String): Long =
+  inline def requirePositive(value: Long, name: String): Long =
     if (value <= 0) throw new IllegalArgumentException(s"$name must be > 0, but was $value")
     else value
 
-  @inline def requireRange(value: Int, min: Int, max: Int, name: String): Int =
+  inline def requireRange(value: Int, min: Int, max: Int, name: String): Int =
     requireRange(value.toLong, min.toLong, max.toLong, name).toInt
 
-  @inline def requireRange(value: Long, min: Long, max: Long, name: String): Long =
+  inline def requireRange(value: Long, min: Long, max: Long, name: String): Long =
     if (min <= value && value <= max) value
     else throw new IllegalArgumentException(s"$name must be in the range [$min, $max], but was $value")
 
@@ -52,12 +54,12 @@ private[borer] object Util:
   private[this] val _identityFunc = (x: Any) => x
   def identityFunc[T]: T => T     = _identityFunc.asInstanceOf[T => T]
 
-  @inline def isChar(x: Int): Boolean              = (x >> 16) == 0
-  @inline def isByte(x: Int): Boolean              = (x >> 7) == (x >> 31)
-  @inline def isShort(x: Int): Boolean             = (x >> 15) == (x >> 31)
-  @inline def isInt(x: Long): Boolean              = (x >> 31) == (x >> 63)
-  @inline def isUnsignedInt(uLong: Long): Boolean  = uLong >> 31 == 0
-  @inline def isUnsignedLong(uLong: Long): Boolean = uLong >= 0
+  inline def isChar(x: Int): Boolean              = (x >> 16) == 0
+  inline def isByte(x: Int): Boolean              = (x >> 7) == (x >> 31)
+  inline def isShort(x: Int): Boolean             = (x >> 15) == (x >> 31)
+  inline def isInt(x: Long): Boolean              = (x >> 31) == (x >> 63)
+  inline def isUnsignedInt(uLong: Long): Boolean  = uLong >> 31 == 0
+  inline def isUnsignedLong(uLong: Long): Boolean = uLong >= 0
 
   def emptyArray[T](implicit ct: ClassTag[T]): Array[T] =
     (ct.runtimeClass match {
@@ -96,7 +98,7 @@ private[borer] object Util:
       }
     }
 
-  @inline def canBeRepresentedAsFloat(value: Double): Boolean = value.isNaN || value.toFloat.toDouble == value
+  inline def canBeRepresentedAsFloat(value: Double): Boolean = value.isNaN || value.toFloat.toDouble == value
 
   def inPlaceNegate(bytes: Array[Byte]): Unit =
     @tailrec def rec(ix: Int): Unit =

@@ -61,15 +61,15 @@ object Output
   // #provider
 
   implicit final class OutputOps(val underlying: Output) extends AnyVal:
-    @inline def writeAsByte(i: Int): underlying.Self = underlying.writeByte(i.toByte)
+    inline def writeAsByte(i: Int): underlying.Self = underlying.writeByte(i.toByte)
 
-    @inline def writeAsByte(c: Char): underlying.Self           = underlying.writeByte(c.toByte)
-    @inline def writeAsBytes(a: Char, b: Char): underlying.Self = underlying.writeBytes(a.toByte, b.toByte)
+    inline def writeAsByte(c: Char): underlying.Self           = underlying.writeByte(c.toByte)
+    inline def writeAsBytes(a: Char, b: Char): underlying.Self = underlying.writeBytes(a.toByte, b.toByte)
 
-    @inline def writeAsBytes(a: Char, b: Char, c: Char): underlying.Self =
+    inline def writeAsBytes(a: Char, b: Char, c: Char): underlying.Self =
       underlying.writeBytes(a.toByte, b.toByte, c.toByte)
 
-    @inline def writeAsBytes(a: Char, b: Char, c: Char, d: Char): underlying.Self =
+    inline def writeAsBytes(a: Char, b: Char, c: Char, d: Char): underlying.Self =
       underlying.writeBytes(a.toByte, b.toByte, c.toByte, d.toByte)
 
     def writeStringAsAsciiBytes(s: String): underlying.Self =

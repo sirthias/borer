@@ -76,15 +76,15 @@ object ByteAccess:
   implicit object ForByteArray extends ByteAccess[Array[Byte]]:
     type Out = Output.ToByteArray
 
-    @inline def empty = Array.emptyByteArray
+    inline def empty = Array.emptyByteArray
 
-    @inline def isEmpty(bytes: Array[Byte]) = bytes.length == 0
+    inline def isEmpty(bytes: Array[Byte]) = bytes.length == 0
 
-    @inline def sizeOf(bytes: Array[Byte]): Long = bytes.length.toLong
+    inline def sizeOf(bytes: Array[Byte]): Long = bytes.length.toLong
 
-    @inline def fromByteArray(byteArray: Array[Byte]): Array[Byte] = byteArray
+    inline def fromByteArray(byteArray: Array[Byte]): Array[Byte] = byteArray
 
-    @inline def toByteArray(bytes: Array[Byte]): Array[Byte] = bytes
+    inline def toByteArray(bytes: Array[Byte]): Array[Byte] = bytes
 
     def copyToByteArray(bytes: Array[Byte], byteArray: Array[Byte], startIndex: Int): Array[Byte] =
       val dstRemaining = byteArray.length - startIndex
@@ -121,7 +121,7 @@ object ByteAccess:
         else a
       else b
 
-    @inline def convert[B](value: B)(implicit byteAccess: ByteAccess[B]): Array[Byte] =
+    def convert[B](value: B)(implicit byteAccess: ByteAccess[B]): Array[Byte] =
       value match
         case x: Array[Byte] => x
         case x              => byteAccess.toByteArray(x)
@@ -136,11 +136,11 @@ object ByteAccess:
 
     def isEmpty(bytes: ByteBuffer) = !bytes.hasRemaining
 
-    @inline def sizeOf(bytes: ByteBuffer): Long = bytes.remaining.toLong
+    inline def sizeOf(bytes: ByteBuffer): Long = bytes.remaining.toLong
 
-    @inline def fromByteArray(byteArray: Array[Byte]): ByteBuffer = ByteBuffer.wrap(byteArray)
+    inline def fromByteArray(byteArray: Array[Byte]): ByteBuffer = ByteBuffer.wrap(byteArray)
 
-    @inline def toByteArray(bytes: ByteBuffer): Array[Byte] =
+    def toByteArray(bytes: ByteBuffer): Array[Byte] =
       val byteArray = new Array[Byte](bytes.remaining)
       bytes.mark()
       bytes.get(byteArray, 0, byteArray.length)
@@ -181,7 +181,7 @@ object ByteAccess:
         else a
       else b
 
-    @inline def convert[B](value: B)(implicit byteAccess: ByteAccess[B]): ByteBuffer =
+    def convert[B](value: B)(implicit byteAccess: ByteAccess[B]): ByteBuffer =
       value match
         case x: ByteBuffer => x
         case x             => fromByteArray(byteAccess.toByteArray(x))

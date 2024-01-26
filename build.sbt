@@ -52,7 +52,6 @@ lazy val commonSettings = Seq(
     "-Xfatal-warnings",
     "-Xcheck-macros",
     // "-Ydebug-error",
-    "-Xmax-inlines:128", // required for compiling upickle benchmarks
     // "-Wunused:all" // disabled until https://github.com/lampepfl/dotty/issues/17315 is resolved
   ) ++ {
     val local = (LocalRootProject / baseDirectory).value.toURI

@@ -374,7 +374,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
               unread(2) // unread our failed test for /n
               '\r'
           case 'u' =>
-            @inline def hd(c: Int): Int = HexDigits(c).toInt
+            inline def hd(c: Int): Int = HexDigits(c).toInt
 
             var q = input.readQuadByteBigEndianPadded(this)
             var x = (hd(q >>> 24) << 12) | (hd(q << 8 >>> 24) << 8) | (hd(q << 16 >>> 24) << 4) | hd(q & 0xFF)
@@ -613,7 +613,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
 
   def padBytes(rest: Bytes, missing: Long) = throw new UnsupportedOperationException
 
-  @inline private def fetchNextChar(): Unit = nextChar = nextCharAfterWhitespace()
+  private inline def fetchNextChar(): Unit = nextChar = nextCharAfterWhitespace()
 
   private def nextCharAfterWhitespace(): Int = nextCharAfterWhitespace(input.readBytePadded(this) & 0xFF)
 

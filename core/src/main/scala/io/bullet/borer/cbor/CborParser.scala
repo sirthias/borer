@@ -32,7 +32,7 @@ final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes]
    */
   def pull(receiver: Receiver): Int =
 
-    @inline def decodePositiveInteger(uLong: Long): Int =
+    def decodePositiveInteger(uLong: Long): Int =
       if (Util.isUnsignedInt(uLong))
         receiver.onInt(uLong.toInt)
         DataItem.Int
@@ -43,7 +43,7 @@ final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes]
         receiver.onOverLong(negative = false, uLong)
         DataItem.OverLong
 
-    @inline def decodeNegativeInteger(uLong: Long): Int =
+    def decodeNegativeInteger(uLong: Long): Int =
       if (Util.isUnsignedInt(uLong))
         receiver.onInt((~uLong).toInt)
         DataItem.Int
@@ -54,7 +54,7 @@ final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes]
         receiver.onOverLong(negative = true, uLong)
         DataItem.OverLong
 
-    @inline def decodeByteString(uLong: Long, indefiniteLength: Boolean): Int =
+    def decodeByteString(uLong: Long, indefiniteLength: Boolean): Int =
       if (indefiniteLength)
         receiver.onBytesStart()
         DataItem.BytesStart
@@ -63,7 +63,7 @@ final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes]
         DataItem.Bytes
       else failOverflow("This decoder does not support byte strings with size >= 2^63")
 
-    @inline def decodeTextString(uLong: Long, indefiniteLength: Boolean): Int =
+    def decodeTextString(uLong: Long, indefiniteLength: Boolean): Int =
       if (indefiniteLength)
         receiver.onTextStart()
         DataItem.TextStart
@@ -72,7 +72,7 @@ final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes]
         DataItem.Text
       else failOverflow("This decoder does not support text strings with size >= 2^63")
 
-    @inline def decodeArray(uLong: Long, indefiniteLength: Boolean): Int =
+    def decodeArray(uLong: Long, indefiniteLength: Boolean): Int =
       if (indefiniteLength)
         receiver.onArrayStart()
         DataItem.ArrayStart
@@ -81,7 +81,7 @@ final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes]
         DataItem.ArrayHeader
       else failOverflow("This decoder does not support arrays with size >= 2^63")
 
-    @inline def decodeMap(uLong: Long, indefiniteLength: Boolean): Int =
+    def decodeMap(uLong: Long, indefiniteLength: Boolean): Int =
       if (indefiniteLength)
         receiver.onMapStart()
         DataItem.MapStart
@@ -113,7 +113,7 @@ final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes]
       receiver.onTag(tag)
       DataItem.Tag
 
-    @inline def decodeExtra(info: Int, uLong: Long): Int =
+    def decodeExtra(info: Int, uLong: Long): Int =
       (info: @switch) match
         case 20 | 21 =>
           receiver.onBoolean(info == 21)
@@ -184,6 +184,7 @@ final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes]
       _valueIndex = 0
       0
     else failUnexpectedEOI("8-bit integer")
+    
   def padDoubleByte(remaining: Int)        = failUnexpectedEOI("16-bit integer")
   def padQuadByte(remaining: Int)          = failUnexpectedEOI("32-bit integer")
   def padOctaByte(remaining: Int)          = failUnexpectedEOI("64-bit integer")

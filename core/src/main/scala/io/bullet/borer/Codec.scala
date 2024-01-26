@@ -26,7 +26,7 @@ import scala.deriving.Mirror
  */
 final case class Codec[A](encoder: Encoder[A], decoder: Decoder[A]):
 
-  @inline def bimap[B](f: B => A, g: A => B): Codec[B] = Codec.bimap(f, g)(encoder, decoder)
+  inline def bimap[B](f: B => A, g: A => B): Codec[B] = Codec.bimap(f, g)(encoder, decoder)
 
   def withEncoder(encoder: Encoder[A]): Codec[A] = copy(encoder = encoder)
   def withDecoder(decoder: Decoder[A]): Codec[A] = copy(decoder = decoder)
@@ -36,7 +36,7 @@ object Codec:
   /**
    * Same as `apply` but with the parameter list marked as implicit.
    */
-  @inline def of[T](implicit encoder: Encoder[T], decoder: Decoder[T]): Codec[T] =
+  def of[T](implicit encoder: Encoder[T], decoder: Decoder[T]): Codec[T] =
     Codec(encoder, decoder)
 
   extension [T](underlying: Codec[T])
@@ -54,13 +54,13 @@ object Codec:
   /**
    * Constructs a `Codec[B]` from an `Encoder[A]`, a `Decoder[A]` and two functions.
    */
-  @inline def bimap[A, B](f: B => A, g: A => B)(implicit ea: Encoder[A], da: Decoder[A]): Codec[B] =
+  def bimap[A, B](f: B => A, g: A => B)(implicit ea: Encoder[A], da: Decoder[A]): Codec[B] =
     Codec(ea contramap f, da map g)
 
   /**
    * Creates a "unified" [[Codec]] from two codecs that each target only a single data format.
    */
-  @inline def targetSpecific[T](cbor: Codec[T], json: Codec[T]): Codec[T] =
+  def targetSpecific[T](cbor: Codec[T], json: Codec[T]): Codec[T] =
     Codec(Encoder.targetSpecific(cbor.encoder, json.encoder), Decoder.targetSpecific(cbor.decoder, json.decoder))
 
   /**

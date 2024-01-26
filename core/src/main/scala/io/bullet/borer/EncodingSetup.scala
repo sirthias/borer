@@ -84,7 +84,7 @@ object EncodingSetup:
      * Short-cut for encoding to a plain byte array, throwing an exception in case of any failures,
      * and then immediately UTF-8 decoding into a [[String]].
      */
-    @inline def toUtf8String: String
+    def toUtf8String: String
 
   final private[borer] class Impl[T: Encoder, Config <: Borer.EncodingConfig](
       value: T,

@@ -30,7 +30,7 @@ object Base16 extends BaseEncoding("base16", 4):
     val baa    = ByteArrayAccess.instance
     val sl4    = sl - 4
 
-    @inline def hexDigit(i: Int) = (48 + i + (digitBase & ((9 - i) >> 31))).toChar
+    inline def hexDigit(i: Int) = (48 + i + (digitBase & ((9 - i) >> 31))).toChar
 
     @tailrec def encodeSlow(si: Int, di: Int): Array[Char] =
       if (si < sl)

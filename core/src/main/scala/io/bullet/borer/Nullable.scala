@@ -22,9 +22,9 @@ object Default:
   implicit val float: Default[Float]     = Default(0.0f)
   implicit val double: Default[Double]   = Default(0.0)
 
-  @inline def of[T](implicit d: Default[T]): T = d.defaultValue
+  inline def of[T](implicit d: Default[T]): T = d.defaultValue
 
-  @inline def orValue[T: Default](value: T): T = if (value == null) Default.of[T] else value
+  def orValue[T: Default](value: T): T = if (value == null) Default.of[T] else value
 
   private[this] val optionDefault            = Default(None)
   implicit def option[T]: Default[Option[T]] = optionDefault
@@ -43,7 +43,7 @@ object Nullable extends LowPrioNullable:
   implicit def apply[T](value: T): Nullable[T]    = new Nullable(value)
   def unapply[T](value: Nullable[T]): Nullable[T] = value
 
-  @inline def getOrDefault[T: Default](nullable: Nullable[T]): T = Default.orValue(nullable.value)
+  def getOrDefault[T: Default](nullable: Nullable[T]): T = Default.orValue(nullable.value)
 
   implicit def optionEncoder[T: Encoder]: Encoder[Nullable[Option[T]]] =
     Encoder { (w, nullable) =>

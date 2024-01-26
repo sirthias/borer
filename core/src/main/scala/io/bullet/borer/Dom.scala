@@ -166,12 +166,12 @@ object Dom:
   sealed abstract class MapElem(private[Dom] val elems: Array[Element], dataItem: Int) extends Element(dataItem):
     if ((elems.length & 1) != 0) throw new IllegalArgumentException
 
-    @inline final def size: Int                                        = elems.length >> 1
-    @inline final def elementsInterleaved: IndexedSeq[Element]         = immutable.ArraySeq.unsafeWrapArray(elems)
-    @inline final def isEmpty                                          = false
-    @inline final def get: (Int, Iterator[Element], Iterator[Element]) = (size, keys, values)
-    @inline final def keys: Iterator[Element]                          = new MapElem.KVIterator(elems, 0)
-    @inline final def values: Iterator[Element]                        = new MapElem.KVIterator(elems, 1)
+    final def size: Int                                        = elems.length >> 1
+    final def elementsInterleaved: IndexedSeq[Element]         = immutable.ArraySeq.unsafeWrapArray(elems)
+    final def isEmpty                                          = false
+    final def get: (Int, Iterator[Element], Iterator[Element]) = (size, keys, values)
+    final def keys: Iterator[Element]                          = new MapElem.KVIterator(elems, 0)
+    final def values: Iterator[Element]                        = new MapElem.KVIterator(elems, 1)
 
     final def members: Iterator[(Element, Element)] =
       keys.zip(values)

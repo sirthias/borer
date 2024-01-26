@@ -231,9 +231,9 @@ private[borer] object CborValidation:
       if (!isMasked(dataItem))
         throw new Error.InvalidInputData(null, DataItem stringify mask, DataItem stringify dataItem)
 
-    @inline private def isMasked(test: Int): Boolean = (mask & test) != 0
+    private inline def isMasked(test: Int): Boolean = (mask & test) != 0
 
-    @inline private def isEvenNumberedElement: Boolean = (levelRemaining(level) & 1) == 0
+    private inline def isEvenNumberedElement: Boolean = (levelRemaining(level) & 1) == 0
 
     @tailrec private def count(): Unit =
       val l = level

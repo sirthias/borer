@@ -251,14 +251,13 @@ final private[borer] class JsonRenderer(var out: Output) extends Renderer:
   def onSimpleValue(value: Int): Unit = failUnsupported(out, "CBOR Simple Values")
   def onEndOfInput(): Unit            = ()
 
-  @inline private def sep(out: Output): Output =
-    if (sepRequired) out.writeAsByte(separator) else out
+  private inline def sep(out: Output): Output = if (sepRequired) out.writeAsByte(separator) else out
 
-  @inline private def separator: Char = if ((levelType & levelCount & 1) != 0) ':' else ','
+  private inline def separator: Char = if ((levelType & levelCount & 1) != 0) ':' else ','
 
-  @inline private def isNotMapKey: Boolean = (levelType & ~levelCount & 1) == 0
+  private inline def isNotMapKey: Boolean = (levelType & ~levelCount & 1) == 0
 
-  @inline private def count(out: Output): Output =
+  private inline def count(out: Output): Output =
     levelCount ^= 1
     sepRequired = true
     out
@@ -266,7 +265,7 @@ final private[borer] class JsonRenderer(var out: Output) extends Renderer:
   private def writeLong(out: Output, value: Long): Output =
     if (value != 0)
       if (value != Long.MinValue)
-        @inline def div10(i: Int) =
+        inline def div10(i: Int) =
           var q = (i << 3) + (i << 2)
           q += (q << 12) + (q << 8) + (q << 4) + i
           q >>>= 19
@@ -296,7 +295,7 @@ final private[borer] class JsonRenderer(var out: Output) extends Renderer:
     else out.writeAsByte('0')
 
   // fast branchless implementation returning the lower-case hex digit corresponding to the last 4 bits of the given Int
-  @inline private def lowerHexDigit(int: Int): Int =
+  private inline def lowerHexDigit(int: Int): Int =
     val i = int & 0x0F
     48 + i + (39 & ((9 - i) >> 31))
 

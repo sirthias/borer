@@ -96,10 +96,10 @@ final private[borer] class ElementDeque(val maxBufferSize: Int, val next: Elemen
       def onEndOfInput(): Unit              = ret(byteBuffer.append1(DIS.EndOfInput))
     }
 
-  @inline def isEmpty: Boolean  = byteBuffer.isEmpty
-  @inline def nonEmpty: Boolean = byteBuffer.nonEmpty
+  inline def isEmpty: Boolean  = byteBuffer.isEmpty
+  inline def nonEmpty: Boolean = byteBuffer.nonEmpty
 
-  @inline def clear(): Unit =
+  inline def clear(): Unit =
     byteBuffer.clear()
     objBuffer.clear()
 

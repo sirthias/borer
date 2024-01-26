@@ -117,7 +117,7 @@ object ZBase32 extends LookupBaseEncoding("z-base32", 5, "ybndrfg8ejkmcpqxot1uwi
 
     @tailrec def decode8(bitsRemaining: Long, si: Int, di: Int): Array[Byte] =
       if (bitsRemaining >= 40)
-        @inline def d(offset: Int) = decode(si + offset)
+        inline def d(offset: Int) = decode(si + offset)
 
         val long = d(0) << 35 | d(1) << 30 | d(2) << 25 | d(3) << 20 | d(4) << 15 | d(5) << 10 | d(6) << 5 | d(7)
         baa.setQuadByteBigEndian(result, di, (long >>> 8).toInt)

@@ -35,7 +35,7 @@ trait ToByteBufferOutput:
     type Self   = ToByteBuffer
     type Result = ByteBuffer
 
-    @inline def size: Long =
+    def size: Long =
       if (currentChunkBuffer ne null) fullChunksSize + currentChunkBuffer.position().toLong else 0L
 
     def writeByte(byte: Byte): this.type =
@@ -121,7 +121,7 @@ trait ToByteBufferOutput:
 
       rec(rootChunk)
 
-    @inline private def ensureBufferAllocated(): Unit =
+    private inline def ensureBufferAllocated(): Unit =
       if (currentChunkBuffer eq null) allocateBuffer()
 
     private def allocateBuffer(): Unit =

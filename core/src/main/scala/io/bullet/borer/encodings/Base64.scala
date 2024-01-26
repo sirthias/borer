@@ -74,7 +74,7 @@ final class Base64(name: String, alphabet: String) extends LookupBaseEncoding(na
       val baa = ByteArrayAccess.instance
       val sl4 = sl - 4
 
-      @inline def c(offset: Int) = chars(sl - offset) & 0xFFL
+      inline def c(offset: Int) = chars(sl - offset) & 0xFFL
 
       def decode(ix: Int): Long =
         val c = chars(ix)
@@ -87,7 +87,7 @@ final class Base64(name: String, alphabet: String) extends LookupBaseEncoding(na
         b.toLong
 
       def decode4(result: Array[Byte], si: Int, di: Int): Unit =
-        @inline def d(offset: Int) = decode(si + offset)
+        inline def d(offset: Int) = decode(si + offset)
 
         val quad = d(0) << 18 | d(1) << 12 | d(2) << 6 | d(3)
         baa.setDoubleByteBigEndian(result, di, (quad >> 8).toChar)
@@ -103,7 +103,7 @@ final class Base64(name: String, alphabet: String) extends LookupBaseEncoding(na
         val result   = new Array[Byte](baseLen - 3 + oddBytes)
 
         def decodeRest(si: Int, di: Int): Array[Byte] =
-          @inline def d(offset: Int) = decode(si + offset)
+          inline def d(offset: Int) = decode(si + offset)
 
           oddBytes match
             case 1 => result(di) = (d(0) << 2 | d(1) >> 4).toByte

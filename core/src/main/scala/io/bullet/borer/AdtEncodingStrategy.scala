@@ -51,7 +51,7 @@ object AdtEncodingStrategy:
    *   }
    * }}}
    */
-  implicit object Default extends AdtEncodingStrategy:
+  given Default: AdtEncodingStrategy with
 
     def writeAdtEnvelopeOpen(w: Writer, typeName: String): w.type =
       if (w.writingJson) w.writeMapStart()
@@ -60,7 +60,7 @@ object AdtEncodingStrategy:
     def writeAdtEnvelopeClose(w: Writer, typeName: String): w.type =
       if (w.writingJson) w.writeBreak() else w
 
-    def readAdtEnvelopeOpen(r: Reader, typeName: String) =
+    def readAdtEnvelopeOpen(r: Reader, typeName: String): Boolean =
       def fail() = r.unexpectedDataItem(s"Single-entry Map for decoding an instance of type `$typeName`")
       if (r.tryReadMapStart())
         true
@@ -106,7 +106,7 @@ object AdtEncodingStrategy:
    * }}}
    */
   def flat(typeMemberName: String = "_type", maxBufferSize: Int = 1024 * 1024): AdtEncodingStrategy =
-    new AdtEncodingStrategy {
+    new AdtEncodingStrategy:
       if (!Util.isPowerOf2(maxBufferSize))
         throw new IllegalArgumentException(s"maxBufferSize must be a power of 2 but was $maxBufferSize")
 
@@ -212,5 +212,6 @@ object AdtEncodingStrategy:
           rec(mapSize, mapSize)
         else failNoMap()
 
+      end readAdtEnvelopeOpen
+
       def readAdtEnvelopeClose(r: Reader, openResult: Boolean, typeName: String): Unit = ()
-    }
