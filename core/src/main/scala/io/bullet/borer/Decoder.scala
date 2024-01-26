@@ -97,10 +97,10 @@ object Decoder extends LowPrioDecoders:
      * If the [[Throwable]] is not a [[Borer.Error]] itself it will be
      * wrapped in a [[Borer.Error.General]] instance.
      */
-    def mapEither[B](f: A => Either[Throwable, B]): Decoder[B] =
+    def mapEither[E: DecodingError, B](f: A => Either[E, B]): Decoder[B] =
       Decoder { r =>
         f(underlying.read(r)) match
-          case Left(e) => throw e
+          case Left(e)  => DecodingError.raise(e, r)
           case Right(b) => b
       }
 
@@ -128,6 +128,23 @@ object Decoder extends LowPrioDecoders:
         @threadUnsafe lazy val delegate: Decoder[T] = underlying
         def read(r: Reader): T                      = delegate.read(r)
       }
+
+  /**
+   * Type class for turning arbitrary errors into decoding failures.
+   */
+  trait DecodingError[E]:
+    def raise(error: E, reader: Reader): Nothing
+
+  object DecodingError:
+
+    def raise[E](error: E, reader: Reader)(using ev: DecodingError[E]): Nothing =
+      ev.raise(error, reader)
+
+    given DecodingError[Throwable] with
+      def raise(error: Throwable, reader: Reader): Nothing = throw error
+
+    given DecodingError[String] with
+      def raise(error: String, reader: Reader): Nothing = reader.validationFailure(error)
 
   given fromCodec[T](using codec: Codec[T]): Decoder[T] = codec.decoder
 

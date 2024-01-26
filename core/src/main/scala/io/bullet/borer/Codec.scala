@@ -25,8 +25,17 @@ import scala.deriving.Mirror
  * then you should never require implicitly available Codecs, but rather Encoders and Decoders separately.
  */
 final case class Codec[A](encoder: Encoder[A], decoder: Decoder[A]):
+  private given Encoder[A] = encoder
+  private given Decoder[A] = decoder
 
-  inline def bimap[B](f: B => A, g: A => B): Codec[B] = Codec.bimap(f, g)(encoder, decoder)
+  def bimap[B](f: B => A, g: A => B): Codec[B] =
+    Codec.bimap(f, g)
+
+  inline def bimapOption[B: Mirror.Of](f: B => A, g: A => Option[B]): Codec[B] =
+    Codec.bimapOption(f, g)
+
+  def bimapEither[E: Decoder.DecodingError, B](f: B => A, g: A => Either[E, B]): Codec[B] =
+    Codec.bimapEither(f, g)
 
   def withEncoder(encoder: Encoder[A]): Codec[A] = copy(encoder = encoder)
   def withDecoder(decoder: Decoder[A]): Codec[A] = copy(decoder = decoder)
@@ -54,8 +63,24 @@ object Codec:
   /**
    * Constructs a `Codec[B]` from an `Encoder[A]`, a `Decoder[A]` and two functions.
    */
-  def bimap[A, B](f: B => A, g: A => B)(implicit ea: Encoder[A], da: Decoder[A]): Codec[B] =
-    Codec(ea contramap f, da map g)
+  def bimap[A, B](f: B => A, g: A => B)(using ea: Encoder[A], da: Decoder[A]): Codec[B] =
+    Codec(ea.contramap(f), da.map(g))
+
+  /**
+   * Constructs a `Codec[B]` from an `Encoder[A]`, a `Decoder[A]` and two functions.
+   */
+  inline def bimapOption[A, B: Mirror.Of](f: B => A, g: A => Option[B])(
+      using ea: Encoder[A],
+      da: Decoder[A]): Codec[B] =
+    Codec(ea.contramap(f), da.mapOption(g))
+
+  /**
+   * Constructs a `Codec[B]` from an `Encoder[A]`, a `Decoder[A]` and two functions.
+   */
+  def bimapEither[A, E: Decoder.DecodingError, B](f: B => A, g: A => Either[E, B])(
+      using ea: Encoder[A],
+      da: Decoder[A]): Codec[B] =
+    Codec(ea.contramap(f), da.mapEither(g))
 
   /**
    * Creates a "unified" [[Codec]] from two codecs that each target only a single data format.
