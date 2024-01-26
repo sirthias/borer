@@ -265,11 +265,7 @@ final private[borer] class JsonRenderer(var out: Output) extends Renderer:
   private def writeLong(out: Output, value: Long): Output =
     if (value != 0)
       if (value != Long.MinValue)
-        inline def div10(i: Int) =
-          var q = (i << 3) + (i << 2)
-          q += (q << 12) + (q << 8) + (q << 4) + i
-          q >>>= 19
-          q // 52429 * l / 524288 = l * 0.10000038146972656
+        inline def div10(i: Int) = i * 52429 >>> 19 // 52429 * l / 524288 = l * 0.10000038146972656
 
         // for small numbers we can use the "fast-path"
         def phase2(i: Int): Output =

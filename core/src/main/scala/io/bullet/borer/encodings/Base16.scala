@@ -59,7 +59,7 @@ object Base16 extends BaseEncoding("base16", 4):
   def decode(chars: Array[Char]): Array[Byte] =
     val sl = chars.length
 
-    def failIllegalEncoding() =
+    def failIllegalEncoding(): Nothing =
       throw new IllegalArgumentException(s"Illegal Encoding: The given char array has an odd length ($sl).")
 
     if ((sl & 1) != 0) failIllegalEncoding()
@@ -69,7 +69,7 @@ object Base16 extends BaseEncoding("base16", 4):
 
     def d(ix: Int): Int =
       val c = chars(ix)
-      def fail() =
+      def fail(): Nothing =
         throw new IllegalArgumentException(s""""${Util.show(chars)}" is not a valid $name encoding.
                                               | '$c' at index $ix is not part of the $name alphabet.""".stripMargin)
       val cc = c - 48

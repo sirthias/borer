@@ -179,16 +179,16 @@ final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes]
       receiver.onEndOfInput()
       DataItem.EndOfInput
 
-  def padByte() =
+  def padByte(): Byte =
     if (_valueIndex < 0)
       _valueIndex = 0
       0
     else failUnexpectedEOI("8-bit integer")
-    
-  def padDoubleByte(remaining: Int)        = failUnexpectedEOI("16-bit integer")
-  def padQuadByte(remaining: Int)          = failUnexpectedEOI("32-bit integer")
-  def padOctaByte(remaining: Int)          = failUnexpectedEOI("64-bit integer")
-  def padBytes(rest: Bytes, missing: Long) = failUnexpectedEOI(s"at least $missing more bytes")
+
+  def padDoubleByte(remaining: Int): Nothing        = failUnexpectedEOI("16-bit integer")
+  def padQuadByte(remaining: Int): Nothing          = failUnexpectedEOI("32-bit integer")
+  def padOctaByte(remaining: Int): Nothing          = failUnexpectedEOI("64-bit integer")
+  def padBytes(rest: Bytes, missing: Long): Nothing = failUnexpectedEOI(s"at least $missing more bytes")
 
   private def failUnexpectedEOI(expected: String) = throw new Borer.Error.UnexpectedEndOfInput(lastPos, expected)
   private def failInvalidInput(msg: String)       = throw new Borer.Error.InvalidInputData(lastPos, msg)
