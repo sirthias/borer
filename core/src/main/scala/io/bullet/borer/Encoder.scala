@@ -109,6 +109,16 @@ object Encoder extends LowPrioEncoders:
       new Encoder.ConcatEncoder(underlying, other, maxBufferSize)
 
   implicit def fromCodec[T](implicit codec: Codec[T]): Encoder[T] = codec.encoder
+  given [T](using ev: Codec.All[T]): Encoder[T] = ev.delegate.encoder
+
+  /**
+   * Helper type serving only as the target of a `derives Encoder.All` clause.
+   * The `borer-derivation` module can then provide the respective `derived` method on the companion object.
+   */
+  final class All[A](delegate: Encoder[A]) extends Encoder[A]:
+    inline def write(w: Writer, value: A): Writer = delegate.write(w, value)
+
+  object All
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

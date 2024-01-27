@@ -88,8 +88,8 @@ class JsonFlatAdtEncodingSpec extends AbstractBorerSpec {
     sealed trait B             extends A
     case class C(x: Option[B]) extends B
 
-    implicit lazy val bCodec: Codec[B] = MapBasedCodecs.deriveAllCodecs[B]
-    implicit val aCodec                = MapBasedCodecs.deriveCodec[A]
+    given Codec[B] = MapBasedCodecs.deriveAllCodecs[B]
+    given Codec[A] = MapBasedCodecs.deriveCodec[A]
 
     roundTrip("""{"_type":"C","x":[]}""", C(None): A)
   }

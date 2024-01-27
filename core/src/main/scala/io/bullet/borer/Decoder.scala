@@ -147,6 +147,16 @@ object Decoder extends LowPrioDecoders:
       def raise(error: String, reader: Reader): Nothing = reader.validationFailure(error)
 
   given fromCodec[T](using codec: Codec[T]): Decoder[T] = codec.decoder
+  given [T](using ev: Codec.All[T]): Decoder[T] = ev.delegate.decoder
+
+  /**
+   * Helper type serving only as the target of a `derives Encoder.All` clause.
+   * The `borer-derivation` module can then provide the respective `derived` method on the companion object.
+   */
+  final class All[A](delegate: Decoder[A]) extends Decoder[A]:
+    inline def read(r: Reader): A                      = delegate.read(r)
+
+  object All
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

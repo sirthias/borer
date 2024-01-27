@@ -18,14 +18,14 @@ class CborDeepDerivationSpec extends AbstractBorerSpec {
   def decode[T: Decoder](encoded: String): T = Cbor.decode(hexBytes(encoded)).to[T].value
 
   test("mixed id types") {
-    sealed trait Ax
+    import MapBasedCodecs.*
+    
+    sealed trait Ax derives Codec.All
     @key(2) case object B extends Ax
     case object C         extends Ax
     case object D         extends Ax
     @key(1) case object E extends Ax
     @key(3) case object F extends Ax
-
-    implicit val codec = MapBasedCodecs.deriveAllCodecs[Ax]
 
     roundTrip("a102a0", B: Ax)
     roundTrip("a16143a0", C: Ax)

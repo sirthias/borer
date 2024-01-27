@@ -153,6 +153,36 @@ class DerivationSpec extends BorerSuite {
     }
 
     {
+      // #derives-all
+      import io.bullet.borer.{Codec, Json}
+      import io.bullet.borer.derivation.MapBasedCodecs.*
+
+      enum Body derives Codec.All:
+        case Sun, Earth, Moon
+        case Asteroid(mass: Double)
+
+      val body: Body = Body.Asteroid(1.23)
+
+      // Json.encode(body).toByteArray or
+      Json.encode(body).toUtf8String ==> """{"Asteroid":{"mass":1.23}}"""
+      // #derives-all
+    }
+
+    {
+      // #derives-all-analog
+      import io.bullet.borer.Codec
+      import io.bullet.borer.derivation.MapBasedCodecs.*
+
+      enum Body:
+        case Sun, Earth, Moon
+        case Asteroid(mass: Double)
+
+      object Body:
+        given Codec[Body] = deriveAllCodecs
+      // #derives-all-analog
+    }
+
+    {
       // #flat-adt-encoding
       import io.bullet.borer.{AdtEncodingStrategy, Json, Codec}
       import io.bullet.borer.derivation.MapBasedCodecs.*

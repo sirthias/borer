@@ -81,13 +81,24 @@ The snippet above is therefore equivalent to this one:
 
 @@snip [-]($test$/DerivationSpec.scala) { #derives-analog }
 
-@@@ note
 
-The `derives` clause only ever generates a single `Encoder`, `Decoder` or `Codec` for the type that is annoted with it.
-This means that you cannot use it to generate a call to `deriveAllEncoders`, `deriveAllDecoders` or `deriveAllCodecs`
-(see chapter on [Fully-Automatic Derivation](#fully-automatic-derivation) above).
+### `derives` for Enums and ADTs
 
-If you want to have _borer_ automatically construct the type classes for a whole ADT hierarchy you'll
-still have to resort to an explicit `given` instance with a call to the respective `deriveAllXXX`.
+The `derives Encoder`, `derives Decoder` and `derives Codec` clauses shown above only ever generate calls to
+`deriveEncoder`, `deriveDecoder` and `deriveCodec`, respectively.<br>
+Often times, however, we want to generate calls to `deriveAllEncoders` and friends instead so as to make use of
+[Fully-Automatic Derivation](#fully-automatic-derivation).
 
-@@@
+This is possible via the following clauses:
+
+- `derives Encoder.All`
+- `derives Decoder.All`
+- `derives Codec.All`
+
+Here is an example:
+
+@@snip [-]($test$/DerivationSpec.scala) { #derives-all }
+
+And this is what the `derives Codec.All` clause generates:
+
+@@snip [-]($test$/DerivationSpec.scala) { #derives-all-analog }

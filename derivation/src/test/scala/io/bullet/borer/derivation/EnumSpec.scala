@@ -9,23 +9,21 @@
 package io.bullet.borer.derivation
 
 import io.bullet.borer.*
+import MapBasedCodecs.*
 
 import java.nio.charset.StandardCharsets
 
-enum Body {
+enum Body derives Codec.All:
   case Earth, Moon
-  case Asteroid(mass: Double) extends Body
-  case Sun                    extends Body
-}
-
+  case Asteroid(mass: Double)
+  case Sun
+  
 class EnumSpec extends AbstractBorerSpec {
 
   def encode[T: Encoder](value: T): String   = Json.encode(value).toUtf8String
   def decode[T: Decoder](encoded: String): T = Json.decode(encoded getBytes StandardCharsets.UTF_8).to[T].value
 
   test("Enum") {
-    given Codec[Body] = MapBasedCodecs.deriveAllCodecs[Body]
-
     roundTrip(""""Earth"""", Body.Earth: Body)
     roundTrip(""""Moon"""", Body.Moon: Body)
     roundTrip("""{"Asteroid":{"mass":18.3}}""", Body.Asteroid(18.3): Body)

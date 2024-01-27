@@ -24,7 +24,7 @@ import scala.deriving.Mirror
  * available encoders and/or decoders for certain type parameters (like `Encoder.forOption`, for example)
  * then you should never require implicitly available Codecs, but rather Encoders and Decoders separately.
  */
-final case class Codec[A](encoder: Encoder[A], decoder: Decoder[A]):
+case class Codec[A](encoder: Encoder[A], decoder: Decoder[A]):
   private given Encoder[A] = encoder
   private given Decoder[A] = decoder
 
@@ -96,3 +96,9 @@ object Codec:
 
     implicit def default[A: Encoder: Decoder, B: Encoder: Decoder]: Codec[Either[A, B]] =
       Codec(Encoder.ForEither.default, Decoder.ForEither.default)
+
+  /**
+   * Helper type serving only as the target of a `derives Codec.All` clause.
+   * The `borer-derivation` module can then provide the respective `derived` method on the companion object.
+   */
+  case class All[A] private[borer](delegate: Codec[A])
