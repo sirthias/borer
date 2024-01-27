@@ -185,7 +185,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.13.0
+<i class="md-icon" title="Version">label_outline</i> 1.14.0
 </label>
 </li>
 </ul>
@@ -201,20 +201,20 @@ sirthias/borer/
 <p>This is how they are enabled:</p>
 <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/StringNumbersSpec.scala#L17-L25" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Decoder, Encoder}
 
-import Encoder.StringNumbers.*  // enables number-as-strings encoding
-import Encoder.StringBooleans.* // enables booleans-as-strings encoding
-import Encoder.StringNulls.*    // enables null-as-strings encoding
+import Encoder.StringNumbers.given  // enables number-as-strings encoding
+import Encoder.StringBooleans.given // enables booleans-as-strings encoding
+import Encoder.StringNulls.given    // enables null-as-strings encoding
 
-import Decoder.StringNumbers.*  // enables number-as-strings decoding
-import Decoder.StringBooleans.* // enables booleans-as-strings decoding
-import Decoder.StringNulls.*    // enables null-as-strings decoding</code></pre>
+import Decoder.StringNumbers.given  // enables number-as-strings decoding
+import Decoder.StringBooleans.given // enables booleans-as-strings decoding
+import Decoder.StringNulls.given    // enables null-as-strings decoding</code></pre>
 <p>As always these imports are &ldquo;active&rdquo; throughout the complete scope in which they are visible.</p>
 <p>Here is an example demonstrating how to encode numbers and booleans as strings:</p>
 <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/StringNumbersSpec.scala#L38-L50" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Json, Encoder, Codec}
 import io.bullet.borer.derivation.MapBasedCodecs.*
 
-import Encoder.StringNumbers.*  // enables number-as-strings encoding
-import Encoder.StringBooleans.* // enables booleans-as-strings encoding
+import Encoder.StringNumbers.given  // enables number-as-strings encoding
+import Encoder.StringBooleans.given // enables booleans-as-strings encoding
 
 case class Dog(age: Int, male: Boolean, name: String) derives Codec
 
@@ -232,7 +232,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.13.0
+1.14.0
 </span>
 </div>
 </article>

@@ -192,7 +192,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.13.0
+<i class="md-icon" title="Version">label_outline</i> 1.14.0
 </label>
 </li>
 </ul>
@@ -235,7 +235,7 @@ Json
 Dog(age = 4, name = &quot;&quot;) // the `Default[String]` provides an empty String</code></pre>
 <h2><a href="#nulloptions" name="nulloptions" class="anchor"><span class="anchor-link"></span></a><code>NullOptions</code></h2>
 <p>Sometimes it&rsquo;s convenient to map &ldquo;nullable&rdquo; fields to Options, i.e. <code>null</code> to <code>None</code> and non-null to <code>Some</code>. This can easily be done with this import:</p>
-<pre class="prettyprint"><code class="language-scala">import io.bullet.borer.NullOptions._
+<pre class="prettyprint"><code class="language-scala">import io.bullet.borer.NullOptions.given
 </code></pre>
 <p>Here is how <code>NullOptions</code> are implemented:</p>
 <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/NullOptions.scala#L12-L33" target="_blank" title="Go to snippet source">source</a><code class="language-scala">/**
@@ -244,18 +244,18 @@ Dog(age = 4, name = &quot;&quot;) // the `Default[String]` provides an empty Str
  * you can import the members of this object with
  *
  * {{{
- * import io.bullet.borer.NullOptions.*
+ * import io.bullet.borer.NullOptions.given
  * }}}
  */
 object NullOptions:
 
-  implicit def encoder[T: Encoder]: Encoder[Option[T]] =
+  given encoder[T: Encoder]: Encoder[Option[T]] =
     Encoder {
       case (w, Some(x)) =&gt; w.write(x)
       case (w, None)    =&gt; w.writeNull()
     }
 
-  implicit def decoder[T: Decoder]: Decoder[Option[T]] =
+  given decoder[T: Decoder]: Decoder[Option[T]] =
     Decoder { r =&gt;
       if (r.tryReadNull()) None
       else Some(r.read[T]())
@@ -270,7 +270,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.13.0
+1.14.0
 </span>
 </div>
 </article>

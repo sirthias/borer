@@ -194,7 +194,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.13.0
+<i class="md-icon" title="Version">label_outline</i> 1.14.0
 </label>
 </li>
 </ul>
@@ -259,10 +259,10 @@ case object Yeti                                            extends Animal</code
 import io.bullet.borer.derivation.MapBasedCodecs.*
 
 given Codec[Animal] = {
-  implicit val dogCodec  = deriveCodec[Dog]
-  implicit val catCodec  = deriveCodec[Cat]
-  implicit val fishCodec = deriveCodec[Fish]
-  implicit val yetiCodec = deriveCodec[Yeti.type]
+  given Codec[Dog]       = deriveCodec[Dog]
+  given Codec[Cat]       = deriveCodec[Cat]
+  given Codec[Fish]      = deriveCodec[Fish]
+  given Codec[Yeti.type] = deriveCodec[Yeti.type]
   deriveCodec[Animal]
 }</code></pre>
 <p>This gives you full control but can be a bit tedious for larger ADT hierarchies.</p>
@@ -293,9 +293,37 @@ object Color:
 
 val color = Color(255, 0, 0)
 
-Json.encode(color).toUtf8String ==&gt; &quot;&quot;&quot;{&quot;r&quot;:255,&quot;g&quot;:0,&quot;b&quot;:0}&quot;&quot;&quot;</code></pre><div class="callout note "><div class="callout-title">Note</div>
-<p>The <code>derives</code> clause only ever generates a single <code>Encoder</code>, <code>Decoder</code> or <code>Codec</code> for the type that is annoted with it. This means that you cannot use it to generate a call to <code>deriveAllEncoders</code>, <code>deriveAllDecoders</code> or <code>deriveAllCodecs</code> (see chapter on <a href="#fully-automatic-derivation">Fully-Automatic Derivation</a> above).</p>
-<p>If you want to have <em>borer</em> automatically construct the type classes for a whole ADT hierarchy you&rsquo;ll still have to resort to an explicit <code>given</code> instance with a call to the respective <code>deriveAllXXX</code>.</p></div>
+Json.encode(color).toUtf8String ==&gt; &quot;&quot;&quot;{&quot;r&quot;:255,&quot;g&quot;:0,&quot;b&quot;:0}&quot;&quot;&quot;</code></pre>
+<h3><a href="#derives-for-enums-and-adts" name="derives-for-enums-and-adts" class="anchor"><span class="anchor-link"></span></a><code>derives</code> for Enums and ADTs</h3>
+<p>The <code>derives Encoder</code>, <code>derives Decoder</code> and <code>derives Codec</code> clauses shown above only ever generate calls to <code>deriveEncoder</code>, <code>deriveDecoder</code> and <code>deriveCodec</code>, respectively.<br> Often times, however, we want to generate calls to <code>deriveAllEncoders</code> and friends instead so as to make use of <a href="#fully-automatic-derivation">Fully-Automatic Derivation</a>.</p>
+<p>This is possible via the following clauses:</p>
+<ul>
+  <li><code>derives Encoder.All</code></li>
+  <li><code>derives Decoder.All</code></li>
+  <li><code>derives Codec.All</code></li>
+</ul>
+<p>Here is an example:</p>
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L157-L167" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Codec, Json}
+import io.bullet.borer.derivation.MapBasedCodecs.*
+
+enum Body derives Codec.All:
+  case Sun, Earth, Moon
+  case Asteroid(mass: Double)
+
+val body: Body = Body.Asteroid(1.23)
+
+// Json.encode(body).toByteArray or
+Json.encode(body).toUtf8String ==&gt; &quot;&quot;&quot;{&quot;Asteroid&quot;:{&quot;mass&quot;:1.23}}&quot;&quot;&quot;</code></pre>
+<p>And this is what the <code>derives Codec.All</code> clause generates:</p>
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L173-L181" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Codec
+import io.bullet.borer.derivation.MapBasedCodecs.*
+
+enum Body:
+  case Sun, Earth, Moon
+  case Asteroid(mass: Double)
+
+object Body:
+  given Codec[Body] = deriveAllCodecs</code></pre>
 </div>
 <div>
 <a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-derivation/basics.md" title="Edit this page" class="md-source-file md-edit">
@@ -304,7 +332,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.13.0
+1.14.0
 </span>
 </div>
 </article>

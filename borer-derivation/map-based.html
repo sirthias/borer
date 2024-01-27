@@ -196,7 +196,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.13.0
+<i class="md-icon" title="Version">label_outline</i> 1.14.0
 </label>
 </li>
 </ul>
@@ -276,7 +276,7 @@ Json.encode(animal).toUtf8String ==&gt; &quot;&quot;&quot;{&quot;Dog&quot;:{&quo
 }
 </code></pre>
 <p>This alternative ADT encoding can be switched to by making the result of a call to <code>AdtEncodingStrategy.flat()</code> implicitly available:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L157-L169" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{AdtEncodingStrategy, Json, Codec}
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L187-L199" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{AdtEncodingStrategy, Json, Codec}
 import io.bullet.borer.derivation.MapBasedCodecs.*
 
 // this enables the flat ADT encoding
@@ -305,7 +305,7 @@ Json.encode(animal).toUtf8String ==&gt; &quot;&quot;&quot;{&quot;_type&quot;:&qu
 <p>Map-based codecs support missing and extra members.</p>
 <p>By default a member whose value matches the default value is not written to the output at all during encoding. This can be changed by bringing a customized <code>io.bullet.borer.derivation.DerivationConfig</code> instance into scope.</p>
 <p>During decoding the type&rsquo;s <code>Decoder</code> will use the potentially defined default value for all missing members, e.g.:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L215-L223" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Json, Codec}
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L245-L253" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Json, Codec}
 import io.bullet.borer.derivation.MapBasedCodecs.*
 
 case class Dog(age: Int, name: String = &quot;&lt;unknown&gt;&quot;) derives Codec
@@ -318,7 +318,7 @@ Json
 <p>Also, <code>Encoder</code>/<code>Decoder</code> type classes can implement the <code>Encoder.DefaultValueAware</code> / <code>Decoder.DefaultValueAware</code> trait in order to alter their behavior in the presence of a default value.</p>
 <p>This is used, for example, by the pre-defined encoder and decoder for <code>Option[T]</code>, which change their encoding/decoding strategy, if a <code>None</code> default value is defined for a case class member. In this case the optional value will only be written if it&rsquo;s defined (and then without any wrapping structure). If the option is undefined nothing is written at all.</p>
 <p>Here is the actual implementation of <em>borer</em>&rsquo;s <code>Encoder</code> for <code>Option</code>:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Encoder.scala#L196-L215" target="_blank" title="Go to snippet source">source</a><code class="language-scala">implicit def forOption[T: Encoder]: Encoder.DefaultValueAware[Option[T]] =
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Encoder.scala#L206-L225" target="_blank" title="Go to snippet source">source</a><code class="language-scala">given forOption[T: Encoder]: Encoder.DefaultValueAware[Option[T]] =
   new Encoder.DefaultValueAware[Option[T]] {
 
     def write(w: Writer, value: Option[T]) =
@@ -343,7 +343,7 @@ Json
 <h3><a href="#customized-member-keys" name="customized-member-keys" class="anchor"><span class="anchor-link"></span></a>Customized Member Keys</h3>
 <p><em>borer</em> supports customizing the name of case class members in the encoding with the same <code>@key</code> annotation, that is also used for custom ADT type-ids (see <a href="array-based.html">Array-Based Codec</a> and the <code>@key</code> sources <a href="https://github.com/sirthias/borer/tree/master/derivation/src/main/scala/io/bullet/borer/derivation/key.scala">here</a> for more info).</p>
 <p>Simply annotate a case class member do provide a custom name:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L229-L236" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Json, Codec}
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L259-L266" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Json, Codec}
 import io.bullet.borer.derivation.key
 import io.bullet.borer.derivation.MapBasedCodecs.*
 
@@ -362,7 +362,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.13.0
+1.14.0
 </span>
 </div>
 </article>

@@ -194,7 +194,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.13.0
+<i class="md-icon" title="Version">label_outline</i> 1.14.0
 </label>
 </li>
 </ul>
@@ -232,7 +232,7 @@ case class Dog(age: Int, name: String)                      extends Animal
 case class Cat(weight: Double, color: String, home: String) extends Animal
 case class Fish(color: String)                              extends Animal
 case object Yeti                                            extends Animal</code></pre>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L175-L187" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Codec, Json}
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L205-L217" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Codec, Json}
 import io.bullet.borer.derivation.MapBasedCodecs.*
 
 // custom codec only for `Fish`
@@ -240,7 +240,7 @@ given Codec[Fish] =
   Codec.bimap[Int, Fish](_ =&gt; 0, _ =&gt; Fish(&quot;red&quot;))
 
 // let borer derive the codecs for the rest of the Animal ADT
-implicit val animalCodec = deriveAllCodecs[Animal]
+given Codec[Animal] = deriveAllCodecs
 
 val animal: Animal = Fish(&quot;blue&quot;)
 
@@ -261,7 +261,7 @@ import io.bullet.borer.derivation.MapBasedCodecs.*
 
 given Codec[Animal] = deriveAllCodecs[Animal]</code></pre>
 <p>It does <strong>not</strong> give you an <code>Encoder[Dog]</code> or a <code>Decoder[Cat]</code>!<br> If you want codecs for specific ADT sub-types like <code>Dog</code> or <code>Cat</code> you need to define them in addition to the codec for the ADT super-type, e.g. like this:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L193-L198" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Codec
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L223-L228" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Codec
 import io.bullet.borer.derivation.MapBasedCodecs.*
 
 given Codec[Dog]    = deriveCodec[Dog]
@@ -275,7 +275,7 @@ val animal: Animal = Dog(2, &quot;Rex&quot;)
 // Json.encode(animal).toByteArray or
 Json.encode(animal).toUtf8String ==&gt; &quot;&quot;&quot;{&quot;Dog&quot;:{&quot;age&quot;:2,&quot;name&quot;:&quot;Rex&quot;}}&quot;&quot;&quot;</code></pre>
 <p>However, note that the encoding of a <code>Dog</code> as an <code>Animal</code> is not the same as the encoding of the <code>Dog</code> itself!! The former includes the wrapping layer with the type-id while the latter doesn&rsquo;t:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L203-L207" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Json
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L233-L237" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Json
 
 val dog = Dog(2, &quot;Rex&quot;)
 Json.encode(dog: Animal).toUtf8String ==&gt; &quot;&quot;&quot;{&quot;Dog&quot;:{&quot;age&quot;:2,&quot;name&quot;:&quot;Rex&quot;}}&quot;&quot;&quot;
@@ -284,23 +284,23 @@ Json.encode(dog        ).toUtf8String ==&gt; &quot;&quot;&quot;{&quot;age&quot;:
 <p>So, while explicit upcasts are sometimes what you want there are also cases where they are not what you want. The exact target types of your (de)serializations depends on your specific use case and, as such, should be chosen carefully.</p>
 <h3><a href="#recursive-adts" name="recursive-adts" class="anchor"><span class="anchor-link"></span></a>Recursive ADTs</h3>
 <p>Before Scala 3 the codecs for non-generic ADTs were mostly assigned to an <code>implicit val</code> in order to not be recreated on every use. If the <code>ADT</code> is recursive this <code>val</code> had to be converted into an <code>implicit lazy val</code> with an explicit type annotation instead, as in this example:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L242-L249" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Codec
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L272-L279" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Codec
 import io.bullet.borer.derivation.MapBasedCodecs.*
 
 sealed trait TreeNode
 case object Leaf                                 extends TreeNode
 case class Node(left: TreeNode, right: TreeNode) extends TreeNode
 
-implicit lazy val codec: Codec[TreeNode] = deriveAllCodecs[TreeNode]</code></pre>
+implicit lazy val codec: Codec[TreeNode] = deriveAllCodecs</code></pre>
 <p>While this still works with Scala 3 we can now resort to a simple <code>given</code> definition for all use-cases:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L255-L262" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Codec
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L285-L292" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Codec
 import io.bullet.borer.derivation.MapBasedCodecs.*
 
 sealed trait TreeNode
 case object Leaf                                 extends TreeNode
 case class Node(left: TreeNode, right: TreeNode) extends TreeNode
 
-given Codec[TreeNode] = deriveAllCodecs[TreeNode]</code></pre>
+given Codec[TreeNode] = deriveAllCodecs</code></pre>
 <p>The Scala 3 compiler compiles all such <code>given</code> definitions into the equivalent of <code>lazy val</code>s under the hood, so we don&rsquo;t have to make the distinction ourselves anymore.</p>
 </div>
 <div>
@@ -310,7 +310,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.13.0
+1.14.0
 </span>
 </div>
 </article>
