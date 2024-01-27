@@ -86,7 +86,7 @@ final class Writer(
 
   def writeEndOfInput(): this.type = { receiver.onEndOfInput(); this }
 
-  def write[T](value: T)(implicit encoder: Encoder[T]): this.type =
+  def write[T](value: T)(using encoder: Encoder[T]): this.type =
     encoder.write(this, value).asInstanceOf[this.type]
 
   def writeEmptyArray(): this.type = writeArrayOpen(0).writeArrayClose()
@@ -199,4 +199,4 @@ object Writer:
     val MapStart   = Script(_.writeMapStart())
     val Break      = Script(_.writeBreak())
 
-    implicit val encoder: Encoder[Script] = Encoder((w, x) => x.encode(w))
+    given Encoder[Script] = Encoder((w, x) => x.encode(w))

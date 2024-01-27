@@ -61,7 +61,7 @@ object Encoder extends LowPrioEncoders:
    * Creates an [[Encoder]] that encodes a product instance as a simple array of values.
    * Used, for example, as the default 'given' encoder for tuples.
    */
-  inline def forProduct[T <: Product](implicit m: Mirror.ProductOf[T]): Encoder[T] =
+  inline def forProduct[T <: Product: Mirror.ProductOf]: Encoder[T] =
     io.bullet.borer.internal.BasicProductCodec.encoder[T]
 
   /**
@@ -108,7 +108,7 @@ object Encoder extends LowPrioEncoders:
     def concat(other: Encoder[T], maxBufferSize: Int = 16384): Encoder[T] =
       new Encoder.ConcatEncoder(underlying, other, maxBufferSize)
 
-  implicit def fromCodec[T](implicit codec: Codec[T]): Encoder[T] = codec.encoder
+  given [T](using codec: Codec[T]): Encoder[T]  = codec.encoder
   given [T](using ev: Codec.All[T]): Encoder[T] = ev.delegate.encoder
 
   /**
@@ -122,29 +122,29 @@ object Encoder extends LowPrioEncoders:
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  implicit val forNull: Encoder[Null]       = Encoder((w, _) => w.writeNull())
-  implicit val forBoolean: Encoder[Boolean] = Encoder(_ writeBoolean _)
-  implicit val forChar: Encoder[Char]       = Encoder(_ writeChar _)
-  implicit val forByte: Encoder[Byte]       = Encoder(_ writeByte _)
-  implicit val forShort: Encoder[Short]     = Encoder(_ writeShort _)
-  implicit val forInt: Encoder[Int]         = Encoder(_ writeInt _)
-  implicit val forLong: Encoder[Long]       = Encoder(_ writeLong _)
-  implicit val forFloat: Encoder[Float]     = Encoder(_ writeFloat _)
-  implicit val forDouble: Encoder[Double]   = Encoder(_ writeDouble _)
-  implicit val forString: Encoder[String]   = Encoder(_ writeString _)
+  given forNull: Encoder[Null]       = Encoder((w, _) => w.writeNull())
+  given forBoolean: Encoder[Boolean] = Encoder(_ writeBoolean _)
+  given forChar: Encoder[Char]       = Encoder(_ writeChar _)
+  given forByte: Encoder[Byte]       = Encoder(_ writeByte _)
+  given forShort: Encoder[Short]     = Encoder(_ writeShort _)
+  given forInt: Encoder[Int]         = Encoder(_ writeInt _)
+  given forLong: Encoder[Long]       = Encoder(_ writeLong _)
+  given forFloat: Encoder[Float]     = Encoder(_ writeFloat _)
+  given forDouble: Encoder[Double]   = Encoder(_ writeDouble _)
+  given forString: Encoder[String]   = Encoder(_ writeString _)
 
-  implicit def forBoxedBoolean: Encoder[JBoolean] = forBoolean.asInstanceOf[Encoder[JBoolean]]
-  implicit def forBoxedChar: Encoder[Character]   = forChar.asInstanceOf[Encoder[Character]]
-  implicit def forBoxedByte: Encoder[JByte]       = forByte.asInstanceOf[Encoder[JByte]]
-  implicit def forBoxedShort: Encoder[JShort]     = forShort.asInstanceOf[Encoder[JShort]]
-  implicit def forBoxedInt: Encoder[Integer]      = forInt.asInstanceOf[Encoder[Integer]]
-  implicit def forBoxedLong: Encoder[JLong]       = forLong.asInstanceOf[Encoder[JLong]]
-  implicit def forBoxedFloat: Encoder[JFloat]     = forFloat.asInstanceOf[Encoder[JFloat]]
-  implicit def forBoxedDouble: Encoder[JDouble]   = forDouble.asInstanceOf[Encoder[JDouble]]
+  given forBoxedBoolean: Encoder[JBoolean] = forBoolean.asInstanceOf[Encoder[JBoolean]]
+  given forBoxedChar: Encoder[Character]   = forChar.asInstanceOf[Encoder[Character]]
+  given forBoxedByte: Encoder[JByte]       = forByte.asInstanceOf[Encoder[JByte]]
+  given forBoxedShort: Encoder[JShort]     = forShort.asInstanceOf[Encoder[JShort]]
+  given forBoxedInt: Encoder[Integer]      = forInt.asInstanceOf[Encoder[Integer]]
+  given forBoxedLong: Encoder[JLong]       = forLong.asInstanceOf[Encoder[JLong]]
+  given forBoxedFloat: Encoder[JFloat]     = forFloat.asInstanceOf[Encoder[JFloat]]
+  given forBoxedDouble: Encoder[JDouble]   = forDouble.asInstanceOf[Encoder[JDouble]]
 
-  implicit val forUnit: Encoder[Unit] = Encoder((w, _) => w.writeInt(0))
+  given forUnit: Encoder[Unit] = Encoder((w, _) => w.writeInt(0))
 
-  implicit val forByteArrayDefault: Encoder[Array[Byte]] = forByteArray(BaseEncoding.base64)
+  given forByteArrayDefault: Encoder[Array[Byte]] = forByteArray(BaseEncoding.base64)
 
   def forByteArray(jsonBaseEncoding: BaseEncoding): Encoder[Array[Byte]] =
     Encoder { (w, x) =>
@@ -152,7 +152,7 @@ object Encoder extends LowPrioEncoders:
       else w.writeBytes(x)
     }
 
-  implicit val forJBigInteger: Encoder[JBigInteger] =
+  given forJBigInteger: Encoder[JBigInteger] =
     Encoder { (w, x) =>
       x.bitLength match
         case n if n < 32        => w.writeInt(x.intValue)
@@ -168,9 +168,9 @@ object Encoder extends LowPrioEncoders:
         case _ => w.writeNumberString(x.toString(10))
     }
 
-  implicit val forBigInt: Encoder[BigInt] = forJBigInteger.contramap(_.bigInteger)
+  given forBigInt: Encoder[BigInt] = forJBigInteger.contramap(_.bigInteger)
 
-  implicit val forJBigDecimal: Encoder[JBigDecimal] =
+  given forJBigDecimal: Encoder[JBigDecimal] =
     Encoder { (w, x) =>
       if (w.writingCbor)
         if (x.scale != 0) w.writeTag(Tag.DecimalFraction).writeArrayHeader(2).writeInt(x.scale)
@@ -179,23 +179,23 @@ object Encoder extends LowPrioEncoders:
       else w.write(x.unscaledValue)
     }
 
-  implicit val forBigDecimal: Encoder[BigDecimal] = forJBigDecimal.contramap(_.bigDecimal)
+  given forBigDecimal: Encoder[BigDecimal] = forJBigDecimal.contramap(_.bigDecimal)
 
-  implicit val forByteArrayIterator: Encoder[Iterator[Array[Byte]]] =
+  given forByteArrayIterator: Encoder[Iterator[Array[Byte]]] =
     Encoder { (w, x) =>
       w.writeBytesStart()
       while (x.hasNext) w.writeBytes(x.next())
       w.writeBreak()
     }
 
-  implicit def forBytesIterator[Bytes: ByteAccess]: Encoder[Iterator[Bytes]] =
+  given forBytesIterator[Bytes: ByteAccess]: Encoder[Iterator[Bytes]] =
     Encoder { (w, x) =>
       w.writeBytesStart()
       while (x.hasNext) w.writeBytes(x.next())
       w.writeBreak()
     }
 
-  implicit val forStringIterator: Encoder[Iterator[String]] =
+  given forStringIterator: Encoder[Iterator[String]] =
     Encoder { (w, x) =>
       w.writeTextStart()
       while (x.hasNext) w.writeString(x.next())
@@ -203,7 +203,7 @@ object Encoder extends LowPrioEncoders:
     }
 
   // #option-encoder
-  implicit def forOption[T: Encoder]: Encoder.DefaultValueAware[Option[T]] =
+  given forOption[T: Encoder]: Encoder.DefaultValueAware[Option[T]] =
     new Encoder.DefaultValueAware[Option[T]] {
 
       def write(w: Writer, value: Option[T]) =
@@ -225,7 +225,7 @@ object Encoder extends LowPrioEncoders:
 
   // #option-encoder
 
-  implicit def forIndexedSeq[T: Encoder, M[X] <: IndexedSeq[X]]: DefaultValueAware[M[T]] =
+  given forIndexedSeq[T: Encoder, M[X] <: IndexedSeq[X]]: DefaultValueAware[M[T]] =
     new DefaultValueAware[M[T]] {
       def write(w: Writer, value: M[T]) = w.writeIndexedSeq(value)
 
@@ -238,7 +238,7 @@ object Encoder extends LowPrioEncoders:
         else this
     }
 
-  implicit def forLinearSeq[T: Encoder, M[X] <: LinearSeq[X]]: DefaultValueAware[M[T]] =
+  given forLinearSeq[T: Encoder, M[X] <: LinearSeq[X]]: DefaultValueAware[M[T]] =
     new DefaultValueAware[M[T]] {
       def write(w: Writer, value: M[T]) = w.writeLinearSeq(value)
 
@@ -251,7 +251,7 @@ object Encoder extends LowPrioEncoders:
         else this
     }
 
-  implicit def forMap[A: Encoder, B: Encoder, M[X, Y] <: Map[X, Y]]: DefaultValueAware[M[A, B]] =
+  given forMap[A: Encoder, B: Encoder, M[X, Y] <: Map[X, Y]]: DefaultValueAware[M[A, B]] =
     new DefaultValueAware[M[A, B]] {
       def write(w: Writer, value: M[A, B]) = w.writeMap(value)
 
@@ -264,14 +264,14 @@ object Encoder extends LowPrioEncoders:
         else this
     }
 
-  implicit def forArray[T: Encoder]: Encoder[Array[T]] =
+  given forArray[T: Encoder]: Encoder[Array[T]] =
     Encoder { (w, x) =>
       @tailrec def rec(w: Writer, ix: Int): w.type = if (ix < x.length) rec(w.write(x(ix)), ix + 1) else w
       if (w.writingJson) rec(w.writeArrayStart(), 0).writeBreak()
       else rec(w.writeArrayHeader(x.length), 0)
     }
 
-  implicit inline def forTuple[T <: Tuple: Mirror.ProductOf]: Encoder[T] = Encoder.forProduct[T]
+  inline given forTuple[T <: Tuple: Mirror.ProductOf]: Encoder[T] = Encoder.forProduct[T]
 
   /**
    * The default [[Encoder]] for [[Either]] is not automatically in scope,
@@ -279,7 +279,7 @@ object Encoder extends LowPrioEncoders:
    */
   object ForEither:
 
-    implicit def default[A: Encoder, B: Encoder]: Encoder[Either[A, B]] =
+    given default[A: Encoder, B: Encoder]: Encoder[Either[A, B]] =
       Encoder { (w, x) =>
         if (w.writingJson) w.writeArrayStart() else w.writeMapHeader(1)
         x match
@@ -291,7 +291,7 @@ object Encoder extends LowPrioEncoders:
     /**
      * An [[Encoder]] that unpacks the either and writes its content without any wrapping or type information.
      */
-    implicit def raw[A: Encoder, B: Encoder]: Encoder[Either[A, B]] =
+    given raw[A: Encoder, B: Encoder]: Encoder[Either[A, B]] =
       Encoder {
         case (w, Left(x))  => w ~ x
         case (w, Right(x)) => w ~ x
@@ -301,28 +301,28 @@ object Encoder extends LowPrioEncoders:
   def toStringEncoder[T]: Encoder[T]         = _toStringEncoder.asInstanceOf[Encoder[T]]
 
   object StringNumbers:
-    implicit def charEncoder: Encoder[Char]     = Encoder.toStringEncoder[Char]
-    implicit def byteEncoder: Encoder[Byte]     = Encoder.toStringEncoder[Byte]
-    implicit def shortEncoder: Encoder[Short]   = Encoder.toStringEncoder[Short]
-    implicit def intEncoder: Encoder[Int]       = Encoder.toStringEncoder[Int]
-    implicit def longEncoder: Encoder[Long]     = Encoder.toStringEncoder[Long]
-    implicit def floatEncoder: Encoder[Float]   = Encoder.toStringEncoder[Float]
-    implicit def doubleEncoder: Encoder[Double] = Encoder.toStringEncoder[Double]
+    given charEncoder: Encoder[Char]     = Encoder.toStringEncoder[Char]
+    given byteEncoder: Encoder[Byte]     = Encoder.toStringEncoder[Byte]
+    given shortEncoder: Encoder[Short]   = Encoder.toStringEncoder[Short]
+    given intEncoder: Encoder[Int]       = Encoder.toStringEncoder[Int]
+    given longEncoder: Encoder[Long]     = Encoder.toStringEncoder[Long]
+    given floatEncoder: Encoder[Float]   = Encoder.toStringEncoder[Float]
+    given doubleEncoder: Encoder[Double] = Encoder.toStringEncoder[Double]
 
-    implicit def boxedCharEncoder: Encoder[Character] = forChar.asInstanceOf[Encoder[Character]]
-    implicit def boxedByteEncoder: Encoder[JByte]     = forByte.asInstanceOf[Encoder[JByte]]
-    implicit def boxedShortEncoder: Encoder[JShort]   = forShort.asInstanceOf[Encoder[JShort]]
-    implicit def boxedIntEncoder: Encoder[Integer]    = forInt.asInstanceOf[Encoder[Integer]]
-    implicit def boxedLongEncoder: Encoder[JLong]     = forLong.asInstanceOf[Encoder[JLong]]
-    implicit def boxedFloatEncoder: Encoder[JFloat]   = forFloat.asInstanceOf[Encoder[JFloat]]
-    implicit def boxedDoubleEncoder: Encoder[JDouble] = forDouble.asInstanceOf[Encoder[JDouble]]
+    given boxedCharEncoder: Encoder[Character] = forChar.asInstanceOf[Encoder[Character]]
+    given boxedByteEncoder: Encoder[JByte]     = forByte.asInstanceOf[Encoder[JByte]]
+    given boxedShortEncoder: Encoder[JShort]   = forShort.asInstanceOf[Encoder[JShort]]
+    given boxedIntEncoder: Encoder[Integer]    = forInt.asInstanceOf[Encoder[Integer]]
+    given boxedLongEncoder: Encoder[JLong]     = forLong.asInstanceOf[Encoder[JLong]]
+    given boxedFloatEncoder: Encoder[JFloat]   = forFloat.asInstanceOf[Encoder[JFloat]]
+    given boxedDoubleEncoder: Encoder[JDouble] = forDouble.asInstanceOf[Encoder[JDouble]]
 
   object StringBooleans:
-    implicit val booleanEncoder: Encoder[Boolean]       = Encoder((w, x) => w.writeString(if (x) "true" else "false"))
-    implicit def boxedBooleanEncoder: Encoder[JBoolean] = forBoolean.asInstanceOf[Encoder[JBoolean]]
+    given booleanEncoder: Encoder[Boolean]       = Encoder((w, x) => w.writeString(if (x) "true" else "false"))
+    given boxedBooleanEncoder: Encoder[JBoolean] = forBoolean.asInstanceOf[Encoder[JBoolean]]
 
   object StringNulls:
-    implicit val nullEncoder: Encoder[Null] = Encoder((w, _) => w.writeString("null"))
+    given nullEncoder: Encoder[Null] = Encoder((w, _) => w.writeString("null"))
 
   /**
    * Creates a new [[Encoder]] which emits the flat, concatenated encoding of two other encoders.
@@ -423,7 +423,7 @@ object Encoder extends LowPrioEncoders:
 
 sealed abstract class LowPrioEncoders:
 
-  implicit final def forIterableOnce[T: Encoder, M[X] <: IterableOnce[X]]: Encoder[M[T]] =
+  given forIterableOnce[T: Encoder, M[X] <: IterableOnce[X]]: Encoder[M[T]] =
     new Encoder.DefaultValueAware[M[T]] { self =>
       def write(w: Writer, value: M[T]) =
         value match
@@ -444,7 +444,7 @@ sealed abstract class LowPrioEncoders:
         ks == 0 || (ks < 0) && value.iterator.isEmpty
     }
 
-  implicit final def forIterator[T: Encoder]: Encoder[Iterator[T]] = Encoder(_ writeIterator _)
+  given forIterator[T: Encoder]: Encoder[Iterator[T]] = Encoder(_ writeIterator _)
 
 /**
  * An [[AdtEncoder]] is an [[Encoder]] which encodes its values with an envelope holding the value's type id.

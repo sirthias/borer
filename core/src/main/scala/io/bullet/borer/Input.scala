@@ -116,7 +116,7 @@ object Input
     def padOctaByte(remaining: Int): Long
     def padBytes(rest: Bytes, missing: Long): Bytes
 
-  implicit final class InputOps[Bytes](val underlying: Input[Bytes]) extends AnyVal:
+  extension [Bytes](underlying: Input[Bytes])
     def position(cursor: Long): Input.Position = Input.Position(underlying, cursor)
 
   // #provider
@@ -133,12 +133,10 @@ object Input
   /**
    * The trivial provider for an already existing [[Input]].
    */
-  implicit def provider[B: ByteAccess]: Provider[Input[B]] =
-    new Provider[Input[B]] {
-      type Bytes = B
-      def byteAccess: ByteAccess[B]            = implicitly[ByteAccess[B]]
-      def apply(value: Input[B]): Input[Bytes] = value
-    }
+  given [B](using ba: ByteAccess[B]): Provider[Input[B]] with
+    type Bytes = B
+    def byteAccess: ByteAccess[B]            = ba
+    def apply(value: Input[B]): Input[Bytes] = value
 
-  final case class Position(input: Input[_], index: Long):
+  case class Position(input: Input[_], index: Long):
     override def toString = s"input position $index"

@@ -15,10 +15,10 @@ import io.bullet.borer.{ByteAccess, Input}
 
 trait FromFileInput { this: FromByteArrayInput with FromInputStreamInput with FromIteratorInput =>
 
-  implicit object FromFileProvider extends Input.Provider[File]:
+  given FromFileProvider: Input.Provider[File] with
     type Bytes = Array[Byte]
-    def byteAccess         = ByteAccess.ForByteArray
-    def apply(value: File) = fromFile(value)
+    def byteAccess: ByteAccess.ForByteArray.type = ByteAccess.ForByteArray
+    def apply(value: File): Input[Array[Byte]]   = fromFile(value)
 
   def fromFile(file: File, bufferSize: Int = 16384): Input[Array[Byte]] =
     if (bufferSize < 256) throw new IllegalArgumentException(s"bufferSize must be >= 256 but was $bufferSize")

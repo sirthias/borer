@@ -15,9 +15,8 @@ import io.bullet.borer.Output.ToValueProvider
 
 trait ToOutputStreamOutput:
 
-  implicit object ToOutputStreamProvider extends ToValueProvider[OutputStream]:
+  given ToOutputStreamProvider: ToValueProvider[OutputStream] with
     type Out = ToOutputStream
-
     def apply(outputStream: OutputStream, bufferSize: Int, allowBufferCaching: Boolean) =
       new ToOutputStream(outputStream)
 
@@ -34,7 +33,7 @@ trait ToOutputStreamOutput:
     final def writeBytes(a: Byte, b: Byte, c: Byte, d: Byte): Self =
       writeByte(a).writeByte(b).writeByte(c).writeByte(d)
 
-    final def writeBytes[Bytes](bytes: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Self =
+    final def writeBytes[Bytes](bytes: Bytes)(using byteAccess: ByteAccess[Bytes]): Self =
       outputStream.write(byteAccess.toByteArray(bytes))
       this.asInstanceOf[Self]
 

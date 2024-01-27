@@ -13,7 +13,7 @@ class NullOptionsSpec extends ByteArrayJsonSpec:
   case class Foo(int: Int, string: Option[String])
 
   given Codec[Foo] =
-    import NullOptions.*
+    import NullOptions.given
     Codec.forProduct[Foo]
 
   test("NullOptions") {

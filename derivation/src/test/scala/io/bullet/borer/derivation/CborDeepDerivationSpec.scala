@@ -19,7 +19,7 @@ class CborDeepDerivationSpec extends AbstractBorerSpec {
 
   test("mixed id types") {
     import MapBasedCodecs.*
-    
+
     sealed trait Ax derives Codec.All
     @key(2) case object B extends Ax
     case object C         extends Ax

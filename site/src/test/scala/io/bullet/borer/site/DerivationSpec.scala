@@ -89,10 +89,10 @@ class DerivationSpec extends BorerSuite {
       import io.bullet.borer.derivation.MapBasedCodecs.*
 
       given Codec[Animal] = {
-        implicit val dogCodec  = deriveCodec[Dog]
-        implicit val catCodec  = deriveCodec[Cat]
-        implicit val fishCodec = deriveCodec[Fish]
-        implicit val yetiCodec = deriveCodec[Yeti.type]
+        given Codec[Dog]       = deriveCodec[Dog]
+        given Codec[Cat]       = deriveCodec[Cat]
+        given Codec[Fish]      = deriveCodec[Fish]
+        given Codec[Yeti.type] = deriveCodec[Yeti.type]
         deriveCodec[Animal]
       }
       // #adt-semi-automatic-codec-derivation
@@ -210,7 +210,7 @@ class DerivationSpec extends BorerSuite {
         Codec.bimap[Int, Fish](_ => 0, _ => Fish("red"))
 
       // let borer derive the codecs for the rest of the Animal ADT
-      implicit val animalCodec = deriveAllCodecs[Animal]
+      given Codec[Animal] = deriveAllCodecs
 
       val animal: Animal = Fish("blue")
 
@@ -276,7 +276,7 @@ class DerivationSpec extends BorerSuite {
     case object Leaf                                 extends TreeNode
     case class Node(left: TreeNode, right: TreeNode) extends TreeNode
 
-    implicit lazy val codec: Codec[TreeNode] = deriveAllCodecs[TreeNode]
+    implicit lazy val codec: Codec[TreeNode] = deriveAllCodecs
     // #recursive-adt-old
   }
 
@@ -289,7 +289,7 @@ class DerivationSpec extends BorerSuite {
     case object Leaf                                 extends TreeNode
     case class Node(left: TreeNode, right: TreeNode) extends TreeNode
 
-    given Codec[TreeNode] = deriveAllCodecs[TreeNode]
+    given Codec[TreeNode] = deriveAllCodecs
     // #recursive-adt-new
   }
 }

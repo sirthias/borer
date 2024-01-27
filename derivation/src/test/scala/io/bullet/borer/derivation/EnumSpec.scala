@@ -17,7 +17,7 @@ enum Body derives Codec.All:
   case Earth, Moon
   case Asteroid(mass: Double)
   case Sun
-  
+
 class EnumSpec extends AbstractBorerSpec {
 
   def encode[T: Encoder](value: T): String   = Json.encode(value).toUtf8String

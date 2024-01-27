@@ -42,7 +42,7 @@ object SpecializeJsonParserPlugin extends AutoPlugin {
       RewriteRule.ReplaceFirst("JsonParser[Bytes]", "DirectJsonParser"),
       RewriteRule.ReplaceFirst("Input[Bytes]", "io.bullet.borer.input.DirectFromByteArrayInput"),
       RewriteRule.ReplaceFirst("extends Parser[Bytes]", "extends Parser[Array[Byte]]"),
-      RewriteRule.DeleteFirst("(\n    implicit byteAccess: ByteAccess[Bytes])"),
+      RewriteRule.DeleteFirst("(\n    using byteAccess: ByteAccess[Bytes])"),
       RewriteRule.ReplaceFirst("padBytes(rest: Bytes", "padBytes(rest: Array[Byte]"),
       RewriteRule.ReplaceFirst("byteAccess.toByteArray(bytes)", "bytes"),
       RewriteRule.Truncate("private[borer] object JsonParser")

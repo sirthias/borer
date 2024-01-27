@@ -60,8 +60,8 @@ object circe {
                 value.toBigDecimal match {
                   case Some(bigDecimal) =>
                     bigDecimal.toBigIntExact match {
-                      case Some(bigInt) => w.write(bigInt)(Encoder.forBigInt)
-                      case None         => w.write(bigDecimal)(Encoder.forBigDecimal)
+                      case Some(bigInt) => w.write(bigInt)(using Encoder.forBigInt)
+                      case None         => w.write(bigDecimal)(using Encoder.forBigDecimal)
                     }
                   case None =>
                     throw new NumberFormatException(s"The circe JsonNumber `$value` cannot be represented in CBOR")

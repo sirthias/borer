@@ -147,7 +147,7 @@ object Logging:
     def onLevelExited(levelType: ElementType, break: Boolean): Unit =
       render(if (levelType.isInstanceOf[ElementType.MapEntry]) "}" else "]", levelClose = true)
 
-    def formatBytes[Bytes](opener: String, value: Bytes)(implicit ba: ByteAccess[Bytes]): String =
+    def formatBytes[Bytes](opener: String, value: Bytes)(using ba: ByteAccess[Bytes]): String =
       ba.toByteArray(value)
         .take(maxShownByteArrayPrefixLen)
         .map(x => f"${x & 0xFF}%02X")
@@ -158,7 +158,7 @@ object Logging:
       val y = if (negative) x.not else x
       s"${y.toString}LL"
 
-    def formatString[Bytes](value: Bytes)(implicit ba: ByteAccess[Bytes]): String =
+    def formatString[Bytes](value: Bytes)(using ba: ByteAccess[Bytes]): String =
       formatString(new String(ba.toByteArray(value), UTF_8))
 
     def formatString(value: String): String =

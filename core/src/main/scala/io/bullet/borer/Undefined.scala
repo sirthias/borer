@@ -13,11 +13,8 @@ package io.bullet.borer
  */
 case object Undefined:
 
-  implicit val codec: Codec[Undefined.type] =
-    Codec[Undefined.type](
-      encoder = (w, _) => w.writeUndefined(),
-      decoder = { r =>
-        r.readUndefined()
-        Undefined
-      }
-    )
+  given Encoder[Undefined.type] = Encoder((w, _) => w.writeUndefined())
+  given Decoder[Undefined.type] = Decoder { r =>
+    r.readUndefined()
+    Undefined
+  }

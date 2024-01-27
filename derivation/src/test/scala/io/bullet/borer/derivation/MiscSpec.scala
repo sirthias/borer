@@ -35,22 +35,22 @@ class MiscSpec extends AbstractBorerSpec {
   }
 
   test("Generic Case Class with fixed codec") {
-    implicit val codec: Codec[CaseClassT[Double]] = ArrayBasedCodecs.deriveCodec[CaseClassT[Double]]
+    given Codec[CaseClassT[Double]] = ArrayBasedCodecs.deriveCodec
     roundTrip("""["foo",18.1]""", CaseClassT("foo", 18.1))
   }
 
   test("Generic Case Class with generic codec") {
-    implicit def codec[T: Encoder: Decoder]: Codec[CaseClassT[T]] = ArrayBasedCodecs.deriveCodec[CaseClassT[T]]
+    given [T: Encoder: Decoder]: Codec[CaseClassT[T]] = ArrayBasedCodecs.deriveCodec
     roundTrip("""["foo",18.1]""", CaseClassT("foo", 18.1))
   }
 
   test("Unary Case Class with custom apply") {
-    implicit val codec: Codec[CaseClass1] = ArrayBasedCodecs.deriveCodec[CaseClass1]
+    given Codec[CaseClass1] = ArrayBasedCodecs.deriveCodec
     roundTrip("false", CaseClass1(false))
   }
 
   test("Generic unary Case Class") {
-    implicit def codec[T: Encoder: Decoder]: Codec[CaseClass1T[T]] = ArrayBasedCodecs.deriveCodec[CaseClass1T[T]]
+    given [T: Encoder: Decoder]: Codec[CaseClass1T[T]] = ArrayBasedCodecs.deriveCodec
     roundTrip(""""foo"""", CaseClass1T("foo"))
   }
 
@@ -67,62 +67,61 @@ class MiscSpec extends AbstractBorerSpec {
   }
 
   test("<compact-map> - unary") {
-    implicit val codec = CompactMapBasedCodecs.deriveCodec[CaseClass1]
+    given Codec[CaseClass1] = CompactMapBasedCodecs.deriveCodec
     roundTrip("false", CaseClass1(false))
   }
 
   test("<compact-map> - non-unary") {
-    implicit val codec = CompactMapBasedCodecs.deriveCodec[CaseClass3]
+    given Codec[CaseClass3] = CompactMapBasedCodecs.deriveCodec
     roundTrip("""{"abc":42,"d":"","efghi":true}""", CaseClass3(42, "", efghi = true))
   }
 
   test("Missing map member with @key annotation") {
-    final case class Foo(x: Int, @key("z") y: String)
+    case class Foo(x: Int, @key("z") y: String)
 
-    implicit val codec = MapBasedCodecs.deriveCodec[Foo]
-    val errorMsg       = """Cannot decode `Foo` instance due to missing map key "z" (input position 7)"""
+    given Codec[Foo] = MapBasedCodecs.deriveCodec
+    val errorMsg     = """Cannot decode `Foo` instance due to missing map key "z" (input position 7)"""
     assertMatch(Json.decode("""{"x":42}""" getBytes StandardCharsets.UTF_8).to[Foo].valueEither) {
       case Left(e: Borer.Error.InvalidInputData[_]) if e.getMessage == errorMsg => // ok
     }
   }
 
   test("encodeCaseClassMemberDefaultValues = true") {
-    final case class Foo(x: Int, y: String = "bar");
+    case class Foo(x: Int, y: String = "bar");
     {
-      implicit val codec = MapBasedCodecs.deriveCodec[Foo]
+      given Codec[Foo] = MapBasedCodecs.deriveCodec
       verifyEncoding(Foo(42), """{"x":42}""")
     }
     {
       given DerivationConfig = DerivationConfig(encodeCaseClassMemberDefaultValues = true)
-      implicit val codec     = MapBasedCodecs.deriveCodec[Foo]
+      given Codec[Foo]       = MapBasedCodecs.deriveCodec
       verifyEncoding(Foo(42), """{"x":42,"y":"bar"}""")
     }
   }
 
   test("Custom 'Unit' type") {
     sealed trait Unit
-    implicit val unitDecoder: Decoder[Unit] = Decoder { r =>
-      r.readNull(); null
+    given Decoder[Unit] = Decoder { r =>
+      r.readNull()
+      null
     }
 
-    final case class Foo(value: Double, unit: Unit)
-    implicit val fooDecoder: Decoder[Foo] = MapBasedCodecs.deriveDecoder
+    case class Foo(value: Double, unit: Unit)
+    given Decoder[Foo] = MapBasedCodecs.deriveDecoder
     verifyDecoding("null", null)
   }
 
   test("Type alias") {
     type Foo = String
     case class Bar(bar: Foo)
-    implicit val barCodec: Codec[Bar] = MapBasedCodecs.deriveCodec
+    given Codec[Bar] = MapBasedCodecs.deriveCodec
     roundTrip("""{"bar":"yeah"}""", Bar("yeah"))
   }
 
   test("Dom Renderer") {
-    case class Bar(stringSeq: Seq[String], double: Double)
-    case class Foo(int: Int, bar: Bar, doubleOpt: Option[Double], boolOpt: Option[Boolean])
-
-    implicit val barEncoder: Encoder[Bar] = MapBasedCodecs.deriveEncoder
-    implicit val fooEncoder: Encoder[Foo] = MapBasedCodecs.deriveEncoder
+    import MapBasedCodecs.*
+    case class Bar(stringSeq: Seq[String], double: Double) derives Encoder
+    case class Foo(int: Int, bar: Bar, doubleOpt: Option[Double], boolOpt: Option[Boolean]) derives Encoder
 
     val foo = Foo(42, Bar(List("abc", "def"), 18.34), None, Some(true))
 

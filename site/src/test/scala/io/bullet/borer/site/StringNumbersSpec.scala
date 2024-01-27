@@ -16,13 +16,13 @@ class StringNumbersSpec extends BorerSuite {
     // #imports
     import io.bullet.borer.{Decoder, Encoder}
 
-    import Encoder.StringNumbers.*  // enables number-as-strings encoding
-    import Encoder.StringBooleans.* // enables booleans-as-strings encoding
-    import Encoder.StringNulls.*    // enables null-as-strings encoding
+    import Encoder.StringNumbers.given  // enables number-as-strings encoding
+    import Encoder.StringBooleans.given // enables booleans-as-strings encoding
+    import Encoder.StringNulls.given    // enables null-as-strings encoding
 
-    import Decoder.StringNumbers.*  // enables number-as-strings decoding
-    import Decoder.StringBooleans.* // enables booleans-as-strings decoding
-    import Decoder.StringNulls.*    // enables null-as-strings decoding
+    import Decoder.StringNumbers.given  // enables number-as-strings decoding
+    import Decoder.StringBooleans.given // enables booleans-as-strings decoding
+    import Decoder.StringNulls.given    // enables null-as-strings decoding
     // #imports
 
     intEncoder.hashCode() ^
@@ -38,8 +38,8 @@ class StringNumbersSpec extends BorerSuite {
     import io.bullet.borer.{Json, Encoder, Codec}
     import io.bullet.borer.derivation.MapBasedCodecs.*
 
-    import Encoder.StringNumbers.*  // enables number-as-strings encoding
-    import Encoder.StringBooleans.* // enables booleans-as-strings encoding
+    import Encoder.StringNumbers.given  // enables number-as-strings encoding
+    import Encoder.StringBooleans.given // enables booleans-as-strings encoding
 
     case class Dog(age: Int, male: Boolean, name: String) derives Codec
 

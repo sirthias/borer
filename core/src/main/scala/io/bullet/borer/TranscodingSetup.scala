@@ -63,7 +63,7 @@ object TranscodingSetup:
       this.prefixOnly = true
       this
 
-    def to[T](implicit decoder: Decoder[T]): Sealed[T] =
+    def to[T](using decoder: Decoder[T]): Sealed[T] =
       this.decoder = decoder.asInstanceOf[Decoder[AnyRef]]
       this.asInstanceOf[Sealed[T]]
 

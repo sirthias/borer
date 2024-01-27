@@ -30,7 +30,7 @@ private[borer] object BasicProductCodec:
     inline erasedValue[Fields] match
       case EmptyTuple => w
       case _: (t *: ts) =>
-        encRec[T, ts](w.write(x.productElement(n).asInstanceOf[t])(summonInline[Encoder[t]]), x, n + 1)
+        encRec[T, ts](w.write(x.productElement(n).asInstanceOf[t])(using summonInline[Encoder[t]]), x, n + 1)
 
   inline def decoder[T <: Product](using m: Mirror.ProductOf[T]): Decoder[T] =
     type Fields = m.MirroredElemTypes
@@ -38,7 +38,7 @@ private[borer] object BasicProductCodec:
       case _: EmptyTuple =>
         Decoder[T](r => r.readArrayClose(r.readArrayOpen(0), m.fromProduct(EmptyTuple)))
       case _: (t *: EmptyTuple) =>
-        Decoder[T](r => m.fromProduct(Tuple1(r.read[t]()(summonInline[Decoder[t]]))))
+        Decoder[T](r => m.fromProduct(Tuple1(r.read[t]()(using summonInline[Decoder[t]]))))
       case _ =>
         val arity = constValue[Size[Fields]]
         Decoder[T](r => r.readArrayClose(r.readArrayOpen(arity), m.fromProduct(decRec[Fields](r))))
@@ -46,4 +46,4 @@ private[borer] object BasicProductCodec:
   private inline def decRec[T <: Tuple](r: Reader): T =
     inline erasedValue[T] match
       case EmptyTuple   => EmptyTuple.asInstanceOf[T]
-      case _: (t *: ts) => (r.read[t]()(summonInline[Decoder[t]]) *: decRec[ts](r)).asInstanceOf[T]
+      case _: (t *: ts) => (r.read[t]()(using summonInline[Decoder[t]]) *: decRec[ts](r)).asInstanceOf[T]

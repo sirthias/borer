@@ -34,7 +34,7 @@ final private[borer] class Receptacle extends Receiver with java.lang.Cloneable:
   inline def charBufValue: Array[Char] = _obj.asInstanceOf[Array[Char]]
   inline def tagValue: Tag             = _obj.asInstanceOf[Tag]
 
-  inline def getBytes[Bytes](implicit byteAccess: ByteAccess[Bytes]): Bytes =
+  inline def getBytes[Bytes](using byteAccess: ByteAccess[Bytes]): Bytes =
     byteAccess.convert(_obj)(_byteAccess)
 
   def onNull(): Unit = ()
@@ -59,7 +59,7 @@ final private[borer] class Receptacle extends Receiver with java.lang.Cloneable:
 
   def onNumberString(value: String): Unit = _obj = value
 
-  def onBytes[Bytes](value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Unit =
+  def onBytes[Bytes](value: Bytes)(using byteAccess: ByteAccess[Bytes]): Unit =
     _obj = value
     _byteAccess = byteAccess.asInstanceOf[ByteAccess[Any]]
 
@@ -73,7 +73,7 @@ final private[borer] class Receptacle extends Receiver with java.lang.Cloneable:
     _obj = buffer
     _int = length
 
-  def onText[Bytes](value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Unit =
+  def onText[Bytes](value: Bytes)(using byteAccess: ByteAccess[Bytes]): Unit =
     _obj = value
     _byteAccess = byteAccess.asInstanceOf[ByteAccess[Any]]
 

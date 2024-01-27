@@ -49,7 +49,7 @@ final private[borer] class CborRenderer(var out: Output) extends Renderer:
   def onNumberString(value: String): Unit =
     throw new Borer.Error.InvalidInputData(out, s"The CBOR renderer doesn't support writing number strings")
 
-  def onBytes[Bytes](value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Unit =
+  def onBytes[Bytes](value: Bytes)(using byteAccess: ByteAccess[Bytes]): Unit =
     out = writeInteger(byteAccess.sizeOf(value), 0x40).writeBytes(value)
 
   def onBytesStart(): Unit =
@@ -61,7 +61,7 @@ final private[borer] class CborRenderer(var out: Output) extends Renderer:
   def onChars(buffer: Array[Char], length: Int): Unit =
     onText(Utf8.encode(if (length == buffer.length) buffer else java.util.Arrays.copyOfRange(buffer, 0, length)))
 
-  def onText[Bytes](value: Bytes)(implicit byteAccess: ByteAccess[Bytes]): Unit =
+  def onText[Bytes](value: Bytes)(using byteAccess: ByteAccess[Bytes]): Unit =
     out = writeInteger(byteAccess.sizeOf(value), 0x60).writeBytes(value)
 
   def onTextStart(): Unit =

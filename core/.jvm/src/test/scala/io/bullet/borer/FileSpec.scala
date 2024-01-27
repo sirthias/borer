@@ -16,12 +16,12 @@ import scala.io.Source
 
 class FileSpec extends BorerSuite:
 
-  final case class Foo(
+  case class Foo(
       string: String = "This is a really long text for testing writing to a file",
       int: Int = 42,
       double: Double = 0.0)
 
-  implicit val fooCodec: Codec[Foo] = Codec.forProduct[Foo]
+  given Codec[Foo] = Codec.forProduct[Foo]
 
   test("small file") {
     val tempFile = File.createTempFile("borer", ".json")

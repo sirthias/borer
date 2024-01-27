@@ -14,8 +14,8 @@ class NullableSpec extends ByteArrayJsonSpec:
   case class Bar(foo: Nullable[Option[Foo]])
 
   // derivation makes this easy but we don't want to depend on it here
-  implicit val fooCodec: Codec[Foo] = Codec.forProduct[Foo]
-  implicit val barCodec: Codec[Bar] = Codec.forProduct[Bar]
+  given Codec[Foo] = Codec.forProduct[Foo]
+  given Codec[Bar] = Codec.forProduct[Bar]
 
   test("predefined default values") {
     roundTrip("""[12,"foo"]""", Foo(12, "foo"))

@@ -15,18 +15,18 @@ package io.bullet.borer
  * you can import the members of this object with
  *
  * {{{
- * import io.bullet.borer.NullOptions.*
+ * import io.bullet.borer.NullOptions.given
  * }}}
  */
 object NullOptions:
 
-  implicit def encoder[T: Encoder]: Encoder[Option[T]] =
+  given encoder[T: Encoder]: Encoder[Option[T]] =
     Encoder {
       case (w, Some(x)) => w.write(x)
       case (w, None)    => w.writeNull()
     }
 
-  implicit def decoder[T: Decoder]: Decoder[Option[T]] =
+  given decoder[T: Decoder]: Decoder[Option[T]] =
     Decoder { r =>
       if (r.tryReadNull()) None
       else Some(r.read[T]())

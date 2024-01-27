@@ -13,10 +13,10 @@ import io.bullet.borer.{ByteAccess, Input}
 
 trait FromByteBufferInput:
 
-  implicit object FromByteBufferProvider extends Input.Provider[ByteBuffer]:
+  given FromByteBufferProvider: Input.Provider[ByteBuffer] with
     type Bytes = Array[Byte]
-    def byteAccess               = ByteAccess.ForByteArray
-    def apply(value: ByteBuffer) = fromByteBuffer(value)
+    def byteAccess: ByteAccess.ForByteArray.type     = ByteAccess.ForByteArray
+    def apply(value: ByteBuffer): Input[Array[Byte]] = fromByteBuffer(value)
 
   def fromByteBuffer(value: ByteBuffer): Input[Array[Byte]] =
     if (value.order() != ByteOrder.BIG_ENDIAN)

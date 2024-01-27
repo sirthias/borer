@@ -242,7 +242,7 @@ final class InputReader[Config <: Reader.Config](
       case _             => unexpectedDataItem(expected = "Bytes")
   def hasBytes: Boolean = hasAnyOf(DI.Bytes | DI.BytesStart)
 
-  def readSizedBytes[Bytes]()(implicit byteAccess: ByteAccess[Bytes]): Bytes =
+  def readSizedBytes[Bytes]()(using byteAccess: ByteAccess[Bytes]): Bytes =
     if (hasSizedBytes) ret(receptacle.getBytes)
     else unexpectedDataItem(expected = "Bounded Bytes")
   def hasSizedBytes: Boolean = has(DI.Bytes)
@@ -252,12 +252,12 @@ final class InputReader[Config <: Reader.Config](
   def hasBytesStart: Boolean       = has(DI.BytesStart)
   def tryReadBytesStart(): Boolean = clearIfTrue(hasBytesStart)
 
-  def readUnsizedBytes[Bytes]()(implicit byteAccess: ByteAccess[Bytes]): Bytes =
+  def readUnsizedBytes[Bytes]()(using byteAccess: ByteAccess[Bytes]): Bytes =
     if (hasUnsizedBytes) bufferUnsizedBytes().readSizedBytes()
     else unexpectedDataItem(expected = "Unbounded Bytes")
   def hasUnsizedBytes: Boolean = hasBytesStart
 
-  def bufferUnsizedBytes[Bytes]()(implicit byteAccess: ByteAccess[Bytes]): this.type =
+  def bufferUnsizedBytes[Bytes]()(using byteAccess: ByteAccess[Bytes]): this.type =
     if (tryReadBytesStart())
       var result = byteAccess.empty
       while (!tryReadBreak()) result = byteAccess.concat(result, readBytes())
@@ -393,7 +393,7 @@ final class InputReader[Config <: Reader.Config](
       case _            => unexpectedDataItem(expected = "Text-Bytes")
   def hasTextBytes: Boolean = hasAnyOf(DI.Text | DI.TextStart)
 
-  def readSizedTextBytes[Bytes]()(implicit byteAccess: ByteAccess[Bytes]): Bytes =
+  def readSizedTextBytes[Bytes]()(using byteAccess: ByteAccess[Bytes]): Bytes =
     if (hasSizedTextBytes) ret(receptacle.getBytes)
     else unexpectedDataItem(expected = "Bounded Text-Bytes")
   def hasSizedTextBytes: Boolean = has(DI.Text)
@@ -403,7 +403,7 @@ final class InputReader[Config <: Reader.Config](
   def hasTextStart: Boolean       = has(DI.TextStart)
   def tryReadTextStart(): Boolean = clearIfTrue(hasTextStart)
 
-  def readUnsizedTextBytes[Bytes]()(implicit byteAccess: ByteAccess[Bytes]): Bytes =
+  def readUnsizedTextBytes[Bytes]()(using byteAccess: ByteAccess[Bytes]): Bytes =
     if (hasUnsizedTextBytes) bufferUnsizedTextBytes().readSizedTextBytes()
     else unexpectedDataItem(expected = "Unbounded Text Bytes")
   def hasUnsizedTextBytes: Boolean = hasTextStart
@@ -411,7 +411,7 @@ final class InputReader[Config <: Reader.Config](
   /**
    * If the current data item is an unsized Text item it'll be buffered and converted into a sized text item.
    */
-  def bufferUnsizedTextBytes[Bytes]()(implicit byteAccess: ByteAccess[Bytes]): this.type =
+  def bufferUnsizedTextBytes[Bytes]()(using byteAccess: ByteAccess[Bytes]): this.type =
     if (tryReadTextStart())
       var result = byteAccess.empty
       while (!tryReadBreak()) result = byteAccess.concat(result, readTextBytes())
@@ -500,9 +500,9 @@ final class InputReader[Config <: Reader.Config](
   def readEndOfInput(): Unit       = if (!hasEndOfInput) unexpectedDataItem(expected = "End-of-Input")
   def tryReadEndOfInput(): Boolean = hasEndOfInput
 
-  inline def read[T]()(implicit decoder: Decoder[T]): T = decoder.read(this)
+  inline def read[T]()(using decoder: Decoder[T]): T = decoder.read(this)
 
-  def readUntilBreak[M[_], T: Decoder]()(implicit factory: Factory[T, M[T]]): M[T] =
+  def readUntilBreak[M[_], T: Decoder]()(using factory: Factory[T, M[T]]): M[T] =
     @tailrec def rec(b: mutable.Builder[T, M[T]]): M[T] =
       if (tryReadBreak()) b.result() else rec(b += read[T]())
     rec(factory.newBuilder)

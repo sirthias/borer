@@ -78,7 +78,7 @@ class JsonDeepDerivationSpec extends AbstractBorerSpec {
     case class Leaf[T](value: T)                        extends Node[T]
     case class Branch[T](left: Node[T], right: Node[T]) extends Node[T]
 
-    implicit def codec[T: Encoder: Decoder]: Codec[Node[T]] = ArrayBasedCodecs.deriveAllCodecs[Node[T]]
+    given [T: Encoder: Decoder]: Codec[Node[T]] = ArrayBasedCodecs.deriveAllCodecs[Node[T]]
 
     roundTrip(
       """["Branch",[["Branch",[["Leaf",1],["Branch",[["Empty",[]],["Leaf",2]]]]],["Leaf",3]]]""",
@@ -93,8 +93,8 @@ class JsonDeepDerivationSpec extends AbstractBorerSpec {
     case class Literal(value: Int)               extends Factor
     case class Parens(expr: Expr)                extends Factor
 
-    implicit lazy val factorCodec: Codec[Factor] = ArrayBasedCodecs.deriveAllCodecs[Factor]
-    implicit lazy val exprCodec: Codec[Expr]     = ArrayBasedCodecs.deriveAllCodecs[Expr]
+    given Codec[Factor] = ArrayBasedCodecs.deriveAllCodecs
+    given Codec[Expr]   = ArrayBasedCodecs.deriveAllCodecs
 
     roundTrip(
       """["Add",[["Literal",18],["Parens",["Add",[["Literal",2],["Mult",[["Literal",3],["Literal",4]]]]]]]]""",
@@ -132,8 +132,8 @@ class JsonDeepDerivationSpec extends AbstractBorerSpec {
     sealed trait B             extends A
     case class C(x: Option[B]) extends B
 
-    implicit lazy val bCodec: Codec[B] = MapBasedCodecs.deriveAllCodecs[B]
-    implicit val aCodec                = MapBasedCodecs.deriveCodec[A]
+    given Codec[B] = MapBasedCodecs.deriveAllCodecs
+    given Codec[A] = MapBasedCodecs.deriveCodec
 
     roundTrip("""{"C":{"x":[]}}""", C(None): A)
   }

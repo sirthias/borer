@@ -16,7 +16,7 @@ import scala.annotation.tailrec
 
 trait ToByteArrayOutput:
 
-  implicit object ToByteArrayProvider extends ToTypeProvider[Array[Byte]]:
+  given ToByteArrayProvider: ToTypeProvider[Array[Byte]] with
     type Out = ToByteArray
     def apply(bufferSize: Int, allowBufferCaching: Boolean) = new ToByteArray(bufferSize, allowBufferCaching)
 
@@ -77,7 +77,7 @@ trait ToByteArrayOutput:
         this
       else writeByte(a).writeByte(b).writeByte(c).writeByte(d)
 
-    def writeBytes[Bytes](bytes: Bytes)(implicit byteAccess: ByteAccess[Bytes]): this.type =
+    def writeBytes[Bytes](bytes: Bytes)(using byteAccess: ByteAccess[Bytes]): this.type =
       @tailrec def rec(rest: Bytes): this.type =
         val remaining = bufferSize - currentChunkBufferCursor
         val len       = byteAccess.sizeOf(rest)

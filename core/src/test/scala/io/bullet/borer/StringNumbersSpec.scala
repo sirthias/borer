@@ -9,8 +9,8 @@
 package io.bullet.borer
 
 class StringNumbersSpec extends ByteArrayJsonSpec:
-  import Decoder.StringNumbers._
-  import Decoder.StringBooleans._
+  import Decoder.StringNumbers.given
+  import Decoder.StringBooleans.given
 
   test("Issue 567") {
     verifyDecoding(""""42"""", java.lang.Integer.valueOf(42))

@@ -64,9 +64,9 @@ class CborFlatAdtEncodingSpec extends AbstractBorerSpec {
     case class Good[+T](value: T) extends Result[T]
     case object Bad               extends Result[Nothing]
 
-    implicit def goodCodec[T: Encoder: Decoder]: Codec[Good[T]]     = deriveCodec[Good[T]]
-    implicit val badCodec: Codec[Bad.type]                          = deriveCodec[Bad.type]
-    implicit def resultCodec[T: Encoder: Decoder]: Codec[Result[T]] = deriveCodec[Result[T]]
+    given [T: Encoder: Decoder]: Codec[Good[T]]   = deriveCodec[Good[T]]
+    given Codec[Bad.type]                         = deriveCodec[Bad.type]
+    given [T: Encoder: Decoder]: Codec[Result[T]] = deriveCodec[Result[T]]
 
     val goodDog = Good(Dog(2, "Lolle"))
 

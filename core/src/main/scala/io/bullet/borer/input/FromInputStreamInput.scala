@@ -20,7 +20,7 @@ trait FromInputStreamInput { this: FromByteArrayInput with FromIteratorInput =>
     def byteAccess                = ByteAccess.ForByteArray
     def apply(value: InputStream) = fromInputStream(value)
 
-  implicit def FromInputStreamProvider[T <: InputStream]: Input.Provider[T] =
+  given FromInputStreamProvider[T <: InputStream]: Input.Provider[T] =
     FromInputStreamProvider.asInstanceOf[Input.Provider[T]]
 
   def fromInputStream(inputStream: InputStream, bufferSize: Int = 16384): Input[Array[Byte]] =

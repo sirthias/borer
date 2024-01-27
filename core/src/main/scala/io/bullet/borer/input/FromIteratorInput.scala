@@ -9,25 +9,25 @@
 package io.bullet.borer.input
 
 import io.bullet.borer._
-import io.bullet.borer.internal.Util.RichIterator
+import io.bullet.borer.internal.Util.prepend
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 
 trait FromIteratorInput:
 
-  implicit def FromIteratorProvider[T](implicit p: Input.Provider[T]): Input.Provider[Iterator[T]] =
+  given [T](using p: Input.Provider[T]): Input.Provider[Iterator[T]] =
     new Input.Provider[Iterator[T]] {
       type Bytes = p.Bytes
-      implicit def byteAccess       = p.byteAccess
-      def apply(value: Iterator[T]) = fromIterator[p.Bytes](value.map(p(_)))
+      given byteAccess: ByteAccess[p.Bytes]         = p.byteAccess
+      def apply(value: Iterator[T]): Input[p.Bytes] = fromIterator[p.Bytes](value.map(p(_)))
     }
 
   def fromIterator[Bytes: ByteAccess](value: Iterator[Input[Bytes]]): Input[Bytes] =
     new FromIterator(value)
 
   final private class FromIterator[Bytes](private[this] var inputIterator: Iterator[Input[Bytes]])(
-      implicit byteAccess: ByteAccess[Bytes])
+      using byteAccess: ByteAccess[Bytes])
       extends Input.PaddingProvider[Bytes] with Input[Bytes]:
 
     private[this] var history                = List.empty[Input[Bytes]]
@@ -63,14 +63,14 @@ trait FromIteratorInput:
           history match
             case head :: tail =>
               history = tail
-              rollBackOne(head, inputStart, target, input +: remainingInputs)
+              rollBackOne(head, inputStart, target, remainingInputs.prepend(input))
             case Nil => throw new IllegalStateException // rollback too far?
 
       val currentCursor = cursorOf(current)
       if (currentCursor < numberOfBytes)
         current.unread(currentCursor.toInt)
         val target = currentStart + currentCursor - numberOfBytes
-        inputIterator = rollBackOne(previous, currentStart, target, current +: inputIterator)
+        inputIterator = rollBackOne(previous, currentStart, target, inputIterator.prepend(current))
       else current.unread(numberOfBytes)
       this
 

@@ -216,13 +216,13 @@ object Dom:
       rec(HashMap.empty)
 
     final def to[M[A, B] <: Map[A, B]](
-        implicit fac: Factory[(Element, Element), M[Element, Element]]): M[Element, Element] =
+        using fac: Factory[(Element, Element), M[Element, Element]]): M[Element, Element] =
       val b = fac.newBuilder
       b ++= (keys zip values)
       b.result()
 
     final def toStringKeyed[M[A, B] <: Map[A, B]](
-        implicit fac: Factory[(String, Element), M[String, Element]]): Either[Element, M[String, Element]] =
+        using fac: Factory[(String, Element), M[String, Element]]): Either[Element, M[String, Element]] =
       val k = keys
       val v = values
       @tailrec def rec(b: mutable.Builder[(String, Element), M[String, Element]]): Either[Element, M[String, Element]] =
@@ -286,8 +286,8 @@ object Dom:
 
     @implicitNotFound("Key type must be either `String` or a subtype of `Dom.Element`, not `${T}`")
     sealed trait StringOrElem[T] // phantom type proving that `T` is either `String` or `Dom.Element`
-    implicit def stringStringOrElem: StringOrElem[String]           = null
-    implicit def elementStringOrElem[T <: Element]: StringOrElem[T] = null
+    given stringStringOrElem: StringOrElem[String]           = null
+    given elementStringOrElem[T <: Element]: StringOrElem[T] = null
 
     private def construct(entries: Iterator[(AnyRef, Element)], sizeHint: Int = -1): Array[Element] =
       val elements = new mutable.ArrayBuilder.ofRef[Element]
@@ -312,7 +312,7 @@ object Dom:
 
   final case class TaggedElem(tag: Tag, value: Element) extends Element(DIS.Tag)
 
-  implicit def encoder[T <: Element]: Encoder[T] = elementEncoder.asInstanceOf[Encoder[T]]
+  given [T <: Element]: Encoder[T] = elementEncoder.asInstanceOf[Encoder[T]]
 
   val elementEncoder: Encoder[Element] =
     val writeElement = (w: Writer, x: Element) => w.write(x)
@@ -364,7 +364,7 @@ object Dom:
         case DIS.Tag => val n = x.asInstanceOf[TaggedElem]; w.writeTag(n.tag).write(n.value)
     }
 
-  implicit def decoder[T <: Element]: Decoder[T] = elementDecoder.asInstanceOf[Decoder[T]]
+  given [T <: Element]: Decoder[T] = elementDecoder.asInstanceOf[Decoder[T]]
 
   val elementDecoder: Decoder[Element] =
     val bytesDecoder: Decoder[Vector[AbstractBytesElem]] = Decoder { r =>
@@ -399,10 +399,10 @@ object Dom:
         case DIS.NumberString => NumberStringElem(r.readNumberString())
 
         case DIS.Bytes      => ByteArrayElem(r.readByteArray())
-        case DIS.BytesStart => BytesStreamElem(r.read()(bytesDecoder))
+        case DIS.BytesStart => BytesStreamElem(r.read()(using bytesDecoder))
 
         case DIS.Chars | DIS.String | DIS.Text => StringElem(r.readString())
-        case DIS.TextStart                     => TextStreamElem(r.read()(textDecoder))
+        case DIS.TextStart                     => TextStreamElem(r.read()(using textDecoder))
 
         case DIS.SimpleValue => SimpleValueElem(SimpleValue(r.readSimpleValue()))
 

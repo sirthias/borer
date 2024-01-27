@@ -46,7 +46,7 @@ object DecodingSetup:
       defaultConfig: Config,
       defaultWrapper: Receiver.Transformer[Config],
       parserCreator: Parser.Creator[Bytes, Config],
-      target: Target)(implicit p: Input.Provider[V])
+      target: Target)(using p: Input.Provider[V])
       extends CommonApi.Impl[Config](defaultConfig, defaultWrapper) with Api[Config] with Sealed[AnyRef]:
 
     private[this] var prefixOnly: Boolean      = _
@@ -56,7 +56,7 @@ object DecodingSetup:
       this.prefixOnly = true
       this
 
-    def to[T](implicit decoder: Decoder[T]): Sealed[T] =
+    def to[T](using decoder: Decoder[T]): Sealed[T] =
       this.decoder = decoder.asInstanceOf[Decoder[AnyRef]]
       this.asInstanceOf[Sealed[T]]
 

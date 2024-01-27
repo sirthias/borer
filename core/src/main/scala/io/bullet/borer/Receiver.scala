@@ -69,7 +69,7 @@ object Receiver:
     def onNumberString(value: String): Unit              = default(s"the NumberString `$value`")
 
     def onBytes[Bytes: ByteAccess](value: Bytes): Unit =
-      default(s"a `Bytes` value of length ${implicitly[ByteAccess[Bytes]].sizeOf(value)}")
+      default(s"a `Bytes` value of length ${summon[ByteAccess[Bytes]].sizeOf(value)}")
     def onBytesStart(): Unit = default("`BytesStart`")
 
     def onString(value: String): Unit =
@@ -77,7 +77,7 @@ object Receiver:
     def onChars(buffer: Array[Char], length: Int): Unit = default(s"Chars with length $length")
 
     def onText[Bytes: ByteAccess](value: Bytes): Unit =
-      default(s"a `Text` value of length ${implicitly[ByteAccess[Bytes]].sizeOf(value)}")
+      default(s"a `Text` value of length ${summon[ByteAccess[Bytes]].sizeOf(value)}")
     def onTextStart(): Unit               = default("`TextStart`")
     def onArrayHeader(length: Long): Unit = default(s"`ArrayHeader($length)")
     def onArrayStart(): Unit              = default("`ArrayStart`")

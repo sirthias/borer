@@ -13,10 +13,10 @@ import io.bullet.borer.internal.ByteArrayAccess
 
 trait FromByteArrayInput:
 
-  implicit object FromByteArrayProvider extends Input.Provider[Array[Byte]]:
+  given FromByteArrayProvider: Input.Provider[Array[Byte]] with
     type Bytes = Array[Byte]
-    def byteAccess                = ByteAccess.ForByteArray
-    def apply(value: Array[Byte]) = fromByteArray(value)
+    def byteAccess: ByteAccess.ForByteArray.type      = ByteAccess.ForByteArray
+    def apply(value: Array[Byte]): Input[Array[Byte]] = fromByteArray(value)
 
   def fromByteArray(value: Array[Byte]): Input[Array[Byte]] = new FromByteArray(value)
 

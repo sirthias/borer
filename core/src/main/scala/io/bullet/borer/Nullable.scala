@@ -10,55 +10,44 @@ package io.bullet.borer
 
 import scala.language.implicitConversions
 
-final case class Default[+T](defaultValue: T)
+case class Default[+T](defaultValue: T)
 
 object Default:
-  implicit val boolean: Default[Boolean] = Default(false)
-  implicit val byte: Default[Byte]       = Default(0: Byte)
-  implicit val short: Default[Short]     = Default(0: Short)
-  implicit val int: Default[Int]         = Default(0)
-  implicit val long: Default[Long]       = Default(0L)
-  implicit val string: Default[String]   = Default("")
-  implicit val float: Default[Float]     = Default(0.0f)
-  implicit val double: Default[Double]   = Default(0.0)
+  given boolean: Default[Boolean] = Default(false)
+  given byte: Default[Byte]       = Default(0: Byte)
+  given short: Default[Short]     = Default(0: Short)
+  given int: Default[Int]         = Default(0)
+  given long: Default[Long]       = Default(0L)
+  given string: Default[String]   = Default("")
+  given float: Default[Float]     = Default(0.0f)
+  given double: Default[Double]   = Default(0.0)
 
-  inline def of[T](implicit d: Default[T]): T = d.defaultValue
+  inline def of[T](using d: Default[T]): T = d.defaultValue
 
   def orValue[T: Default](value: T): T = if (value == null) Default.of[T] else value
 
-  private[this] val optionDefault            = Default(None)
-  implicit def option[T]: Default[Option[T]] = optionDefault
+  private[this] val optionDefault     = Default(None)
+  given option[T]: Default[Option[T]] = optionDefault
 
-final case class Nullable[+T](
-    value: T): // extends AnyVal // FIXME: re-enable value class after fix of https://github.com/lampepfl/dotty/issues/11264
+opaque type Nullable[T] <: T = T
 
-  // for efficient unapply
-  def isEmpty = false
-  def get: T  = value
+object Nullable:
 
-  override def toString = s"Nullable($value)"
+  implicit def apply[T](value: T): Nullable[T] = value
 
-object Nullable extends LowPrioNullable:
+  def getOrDefault[T: Default](value: Nullable[T]): T = Default.orValue(value)
 
-  implicit def apply[T](value: T): Nullable[T]    = new Nullable(value)
-  def unapply[T](value: Nullable[T]): Nullable[T] = value
-
-  def getOrDefault[T: Default](nullable: Nullable[T]): T = Default.orValue(nullable.value)
-
-  implicit def optionEncoder[T: Encoder]: Encoder[Nullable[Option[T]]] =
-    Encoder { (w, nullable) =>
-      nullable.value match
-        case Some(x) => w.write(x)
-        case None    => w.writeNull()
+  given optionEncoder[T: Encoder]: Encoder[Nullable[Option[T]]] =
+    Encoder {
+      case (w, Some(x)) => w.write(x)
+      case (w, None)    => w.writeNull()
     }
 
-  implicit def optionDecoder[T: Decoder]: Decoder[Nullable[Option[T]]] =
-    Decoder(r => new Nullable(if (r.tryReadNull()) None else Some(r.read[T]())))
+  given optionDecoder[T: Decoder]: Decoder[Nullable[Option[T]]] =
+    Decoder(r => if (r.tryReadNull()) None else Some(r.read[T]()))
 
-sealed abstract class LowPrioNullable:
+  given encoder[T: Encoder]: Encoder[Nullable[T]] =
+    Encoder((w, x) => w.write(x))
 
-  implicit def encoder[T: Encoder]: Encoder[Nullable[T]] =
-    Encoder((w, x) => w.write(x.value))
-
-  implicit def decoder[T: Decoder: Default]: Decoder[Nullable[T]] =
-    Decoder(r => new Nullable(if (r.tryReadNull()) Default.of[T] else r.read[T]()))
+  given decoder[T: Decoder: Default]: Decoder[Nullable[T]] =
+    Decoder(r => if (r.tryReadNull()) Default.of[T] else r.read[T]())

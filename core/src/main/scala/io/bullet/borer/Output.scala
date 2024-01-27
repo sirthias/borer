@@ -60,7 +60,7 @@ object Output
 
   // #provider
 
-  implicit final class OutputOps(val underlying: Output) extends AnyVal:
+  extension (underlying: Output)
     inline def writeAsByte(i: Int): underlying.Self = underlying.writeByte(i.toByte)
 
     inline def writeAsByte(c: Char): underlying.Self           = underlying.writeByte(c.toByte)

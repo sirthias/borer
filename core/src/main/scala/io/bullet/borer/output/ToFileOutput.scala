@@ -14,7 +14,7 @@ import io.bullet.borer.Output.ToValueProvider
 
 trait ToFileOutput { this: ToOutputStreamOutput =>
 
-  implicit object ToFileProvider extends ToValueProvider[File]:
+  given ToFileProvider: ToValueProvider[File] with
     type Out = ToFile
     def apply(file: File, bufferSize: Int, allowBufferCaching: Boolean) = new ToFile(file, bufferSize)
 

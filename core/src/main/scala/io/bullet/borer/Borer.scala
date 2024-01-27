@@ -25,7 +25,7 @@ case object Cbor extends Target:
   /**
    * Entry point into the CBOR decoding mini-DSL.
    */
-  def decode[T](value: T)(implicit p: Input.Provider[T]): DecodingSetup.Api[DecodingConfig] =
+  def decode[T](value: T)(using p: Input.Provider[T]): DecodingSetup.Api[DecodingConfig] =
     new DecodingSetup.Impl[T, p.Bytes, DecodingConfig](
       value,
       DecodingConfig.default,
@@ -61,7 +61,7 @@ case object Cbor extends Target:
       value: T,
       config: DecodingConfig = DecodingConfig.default,
       receiverWrapper: Receiver.Transformer[DecodingConfig] = CborValidation.wrapper)(
-      implicit p: Input.Provider[T]): Reader =
+      using p: Input.Provider[T]): Reader =
     new InputReader(new CborParser(p(value))(using p.byteAccess, config), null, receiverWrapper, config, this)
 
   /**
@@ -184,7 +184,7 @@ case object Json extends Target:
   /**
    * Entry point into the JSON decoding mini-DSL.
    */
-  def decode[T](value: T)(implicit p: Input.Provider[T]): DecodingSetup.Api[DecodingConfig] =
+  def decode[T](value: T)(using p: Input.Provider[T]): DecodingSetup.Api[DecodingConfig] =
     new DecodingSetup.Impl[T, p.Bytes, DecodingConfig](
       value,
       DecodingConfig.default,
@@ -220,9 +220,9 @@ case object Json extends Target:
       value: T,
       config: DecodingConfig = DecodingConfig.default,
       receiverWrapper: Receiver.Transformer[DecodingConfig] = Receiver.nopTransformer)(
-      implicit p: Input.Provider[T]): Reader =
+      using p: Input.Provider[T]): Reader =
     val directParser = io.bullet.borer.json.DirectParser(value, config)
-    val parser       = if (directParser ne null) null else new JsonParser(p(value), config)(p.byteAccess)
+    val parser       = if (directParser ne null) null else new JsonParser(p(value), config)(using p.byteAccess)
     new InputReader(parser, directParser, receiverWrapper, config, Json)
 
   final case class EncodingConfig(
@@ -318,7 +318,7 @@ sealed abstract class Target:
 
   def encode[T: Encoder](value: T): EncodingSetup.Api[_]
 
-  def decode[T](input: T)(implicit w: Input.Provider[T]): DecodingSetup.Api[_]
+  def decode[T](input: T)(using w: Input.Provider[T]): DecodingSetup.Api[_]
 
   def transEncode[T: Encoder](value: T): TranscodingSetup.EncodingApi[_, _]
 

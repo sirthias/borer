@@ -63,9 +63,9 @@ class JsonFlatAdtEncodingSpec extends AbstractBorerSpec {
     case class Good[+T](value: T) extends Result[T]
     case object Bad               extends Result[Nothing]
 
-    implicit def goodCodec[T: Encoder: Decoder]: Codec[Good[T]]     = MapBasedCodecs.deriveCodec[Good[T]]
-    implicit val badCodec: Codec[Bad.type]                          = MapBasedCodecs.deriveCodec[Bad.type]
-    implicit def resultCodec[T: Encoder: Decoder]: Codec[Result[T]] = MapBasedCodecs.deriveCodec[Result[T]]
+    given [T: Encoder: Decoder]: Codec[Good[T]]   = MapBasedCodecs.deriveCodec
+    given Codec[Bad.type]                         = MapBasedCodecs.deriveCodec
+    given [T: Encoder: Decoder]: Codec[Result[T]] = MapBasedCodecs.deriveCodec
 
     val goodDog = Good(Dog(2, "Lolle"))
     roundTrip("""{"value":{"age":2,"name":"Lolle"}}""", goodDog)

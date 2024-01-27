@@ -57,12 +57,12 @@ object EncodingSetup:
     /**
      * Encodes an instance of T to the given type `R` type using the configured options.
      */
-    def to[R](implicit op: Output.ToTypeProvider[R]): Sealed[op.Out, R]
+    def to[R](using op: Output.ToTypeProvider[R]): Sealed[op.Out, R]
 
     /**
      * Encodes an instance of T to the given `target` using the configured options.
      */
-    def to[R](target: R)(implicit op: Output.ToValueProvider[R]): Sealed[op.Out, R]
+    def to[R](target: R)(using op: Output.ToValueProvider[R]): Sealed[op.Out, R]
 
   sealed trait Sealed[Out <: Output, Result]:
 
@@ -110,11 +110,11 @@ object EncodingSetup:
 
     def toByteBufferEither: Either[Borer.Error[Output], ByteBuffer] = to[ByteBuffer].resultEither
 
-    def to[R](implicit op: Output.ToTypeProvider[R]): Sealed[op.Out, R] =
+    def to[R](using op: Output.ToTypeProvider[R]): Sealed[op.Out, R] =
       _output = op(config.bufferSize, config.allowBufferCaching)
       this.asInstanceOf[Sealed[op.Out, R]]
 
-    def to[R](target: R)(implicit op: Output.ToValueProvider[R]): Sealed[op.Out, R] =
+    def to[R](target: R)(using op: Output.ToValueProvider[R]): Sealed[op.Out, R] =
       _output = op(target, config.bufferSize, config.allowBufferCaching)
       this.asInstanceOf[Sealed[op.Out, R]]
 

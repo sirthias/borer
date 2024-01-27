@@ -198,10 +198,10 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
     test("<array-based> ADT") {
       import ADT._
 
-      implicit val dogCodec: Codec[Dog]       = deriveCodec[Dog]
-      implicit val catCodec: Codec[Cat]       = deriveCodec[Cat]
-      implicit val mouseCodec: Codec[Mouse]   = deriveCodec[Mouse]
-      implicit val animalCodec: Codec[Animal] = deriveCodec[Animal]
+      given Codec[Dog]    = deriveCodec[Dog]
+      given Codec[Cat]    = deriveCodec[Cat]
+      given Codec[Mouse]  = deriveCodec[Mouse]
+      given Codec[Animal] = deriveCodec[Animal]
 
       val animals: List[Animal] = List(
         Dog(12, "Fred"),
@@ -218,9 +218,9 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
     test("<array-based> ADT Key Collision") {
       import AdtWithKeyCollision._
 
-      implicit val dogCodec: Codec[Dog]     = deriveCodec[Dog]
-      implicit val catCodec: Codec[Cat]     = deriveCodec[Cat]
-      implicit val mouseCodec: Codec[Mouse] = deriveCodec[Mouse]
+      given Codec[Dog]   = deriveCodec[Dog]
+      given Codec[Cat]   = deriveCodec[Cat]
+      given Codec[Mouse] = deriveCodec[Mouse]
 
       compileErrors("deriveEncoder[Animal]") ==>
       """|error: @key collision: sub types `Cat` and `Dog` of ADT `Animal` share the same type id `Dog`
@@ -239,13 +239,9 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
     }
 
     test("<array-based> Case Objects") {
-      sealed trait CaseObjectAdt
+      sealed trait CaseObjectAdt derives Codec.All
       case class Err(reason: String) extends CaseObjectAdt
       case object Ok                 extends CaseObjectAdt
-
-      implicit val errCodec: Codec[Err]           = deriveCodec[Err]
-      implicit val okCodec: Codec[Ok.type]        = deriveCodec[Ok.type]
-      implicit val adtCodec: Codec[CaseObjectAdt] = deriveCodec[CaseObjectAdt]
 
       val values: List[CaseObjectAdt] = List(Err("foo"), Ok)
       val encoded                     = encode(values)
@@ -254,11 +250,9 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
     }
 
     test("<array-based> Basic Type with custom Codec") {
-      case class Bar(i: Int, s: String)
-
-      import Encoder.StringNumbers._
-      import Decoder.StringNumbers._
-      implicit val barCodec: Codec[Bar] = deriveCodec[Bar]
+      import Encoder.StringNumbers.given
+      import Decoder.StringNumbers.given
+      case class Bar(i: Int, s: String) derives Codec
 
       val bar     = Bar(42, "bar")
       val encoded = encode(bar)
@@ -382,11 +376,8 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
     // FORMAT: ON
 
     test("<map-based> Option with default value None") {
-      case class Qux0(int: Int)
-      case class Qux(int: Int, optDouble: Option[Double] = None)
-
-      implicit val qux0Codec = deriveCodec[Qux0]
-      implicit val quxCodec  = deriveCodec[Qux]
+      case class Qux0(int: Int) derives Codec
+      case class Qux(int: Int, optDouble: Option[Double] = None) derives Codec
 
       val qux0        = Qux0(42)
       val quxWithNone = Qux(42)
@@ -403,11 +394,8 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
     }
 
     test("<map-based> List with default value Nil") {
-      case class Qux0(int: Int)
-      case class Qux(int: Int, optList: List[Float] = Nil)
-
-      implicit val qux0Codec = deriveCodec[Qux0]
-      implicit val quxCodec  = deriveCodec[Qux]
+      case class Qux0(int: Int) derives Codec
+      case class Qux(int: Int, optList: List[Float] = Nil) derives Codec
 
       val qux0       = Qux0(42)
       val quxWithNil = Qux(42)
@@ -435,10 +423,10 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
       import ADT._
 
       try {
-        implicit val dogCodec    = deriveCodec[Dog]
-        implicit val catCodec    = deriveCodec[Cat]
-        implicit val mouseCodec  = deriveCodec[Mouse]
-        implicit val animalCodec = deriveCodec[Animal]
+        given Codec[Dog]    = deriveCodec
+        given Codec[Cat]    = deriveCodec
+        given Codec[Mouse]  = deriveCodec
+        given Codec[Animal] = deriveCodec
 
         val animals: List[Animal] = List(
           Dog(12, "Fred"),
@@ -471,18 +459,14 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
       sealed trait C       extends A
       case class D(a: Int) extends B with C
 
-      implicit val d = deriveCodec[D]
-      implicit val a = deriveCodec[A]
+      given Codec[D] = deriveCodec
+      given Codec[A] = deriveCodec
     }
 
     test("<map-based> Case Objects") {
-      sealed trait CaseObjectAdt
+      sealed trait CaseObjectAdt derives Codec.All
       case class Err(reason: String) extends CaseObjectAdt
       case object Ok                 extends CaseObjectAdt
-
-      implicit val errCodec = deriveCodec[Err]
-      implicit val okCodec  = deriveCodec[Ok.type]
-      implicit val adtCodec = deriveCodec[CaseObjectAdt]
 
       val values: List[CaseObjectAdt] = List(Err("foo"), Ok)
       val encoded                     = encode(values)
@@ -491,11 +475,9 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
     }
 
     test("<map-based> Basic Type with custom Codec") {
-      case class Bar(i: Int, s: String)
-
-      import Encoder.StringNumbers._
-      import Decoder.StringNumbers._
-      implicit val barCodec = deriveCodec[Bar]
+      import Encoder.StringNumbers.given
+      import Decoder.StringNumbers.given
+      case class Bar(i: Int, s: String) derives Codec
 
       val bar     = Bar(42, "bar")
       val encoded = encode(bar)

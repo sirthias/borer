@@ -73,7 +73,7 @@ object ByteAccess:
   /**
    * The default [[ByteAccess]] for plain byte arrays.
    */
-  implicit object ForByteArray extends ByteAccess[Array[Byte]]:
+  given ForByteArray: ByteAccess[Array[Byte]] with
     type Out = Output.ToByteArray
 
     inline def empty = Array.emptyByteArray
@@ -121,7 +121,7 @@ object ByteAccess:
         else a
       else b
 
-    def convert[B](value: B)(implicit byteAccess: ByteAccess[B]): Array[Byte] =
+    def convert[B](value: B)(using byteAccess: ByteAccess[B]): Array[Byte] =
       value match
         case x: Array[Byte] => x
         case x              => byteAccess.toByteArray(x)
@@ -129,7 +129,7 @@ object ByteAccess:
   /**
    * The default [[ByteAccess]] for [[ByteBuffer]].
    */
-  implicit object ForByteBuffer extends ByteAccess[ByteBuffer]:
+  given ForByteBuffer: ByteAccess[ByteBuffer] with
     type Out = Output.ToByteBuffer
 
     val empty = ByteBuffer.wrap(Array.emptyByteArray)
@@ -181,7 +181,7 @@ object ByteAccess:
         else a
       else b
 
-    def convert[B](value: B)(implicit byteAccess: ByteAccess[B]): ByteBuffer =
+    def convert[B](value: B)(using byteAccess: ByteAccess[B]): ByteBuffer =
       value match
         case x: ByteBuffer => x
         case x             => fromByteArray(byteAccess.toByteArray(x))

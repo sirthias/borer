@@ -64,7 +64,7 @@ private[borer] object Util:
 
   inline def typeName[T](using m: Mirror.Of[T]): String = valueOf[m.MirroredLabel]
 
-  def emptyArray[T](implicit ct: ClassTag[T]): Array[T] =
+  def emptyArray[T](using ct: ClassTag[T]): Array[T] =
     (ct.runtimeClass match {
       case java.lang.Byte.TYPE      => Array.emptyByteArray
       case java.lang.Short.TYPE     => Array.emptyShortArray
@@ -135,22 +135,20 @@ private[borer] object Util:
       else aLen - b.length
     rec(0)
 
-  implicit final class RichIterator[T](val underlying: Iterator[T]) extends AnyVal:
-
-    def +:(element: T): Iterator[T] =
+  extension [T](underlying: Iterator[T])
+    def prepend(element: T): Iterator[T] =
       new Iterator[T] {
         private[this] var pending = true
-        def hasNext               = pending || underlying.hasNext
+        def hasNext: Boolean      = pending || underlying.hasNext
 
-        def next() =
+        def next(): T =
           if (pending)
             pending = false
             element
           else underlying.next()
       }
 
-  implicit class StringInterpolators(val sc: StringContext) extends AnyVal:
-
+  extension (sc: StringContext)
     def hex(args: Any*): Array[Byte] =
       val hexString = sc.s(args: _*)
       try

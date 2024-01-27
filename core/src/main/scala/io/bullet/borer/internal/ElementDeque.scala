@@ -34,7 +34,7 @@ final private[borer] class ElementDeque(val maxBufferSize: Int, val next: Elemen
       def onDouble(value: Double): Unit = ret(byteBuffer.prepend9(DIS.Double, java.lang.Double.doubleToLongBits(value)))
       def onNumberString(value: String): Unit = ret(byteBuffer.prepend1(DIS.NumberString) && objBuffer.prepend(value))
 
-      def onBytes[Bytes](value: Bytes)(implicit ba: ByteAccess[Bytes]): Unit =
+      def onBytes[Bytes](value: Bytes)(using ba: ByteAccess[Bytes]): Unit =
         ret(byteBuffer.prepend1(DIS.Bytes) && objBuffer.prepend(ba) && objBuffer.prepend(value.asInstanceOf[AnyRef]))
 
       def onBytesStart(): Unit          = ret(byteBuffer.prepend1(DIS.BytesStart))
@@ -43,7 +43,7 @@ final private[borer] class ElementDeque(val maxBufferSize: Int, val next: Elemen
       def onChars(buffer: Array[Char], length: Int): Unit =
         ret(byteBuffer.prepend1(DIS.String) && objBuffer.prepend(new String(buffer, 0, length)))
 
-      def onText[Bytes](value: Bytes)(implicit ba: ByteAccess[Bytes]): Unit =
+      def onText[Bytes](value: Bytes)(using ba: ByteAccess[Bytes]): Unit =
         ret(byteBuffer.prepend1(DIS.Text) && objBuffer.prepend(ba) && objBuffer.prepend(value.asInstanceOf[AnyRef]))
 
       def onTextStart(): Unit               = ret(byteBuffer.prepend1(DIS.TextStart))
@@ -73,7 +73,7 @@ final private[borer] class ElementDeque(val maxBufferSize: Int, val next: Elemen
       def onDouble(value: Double): Unit = ret(byteBuffer.append9(DIS.Double, java.lang.Double.doubleToLongBits(value)))
       def onNumberString(value: String): Unit = ret(byteBuffer.append1(DIS.NumberString) && objBuffer.append(value))
 
-      def onBytes[Bytes](value: Bytes)(implicit ba: ByteAccess[Bytes]): Unit =
+      def onBytes[Bytes](value: Bytes)(using ba: ByteAccess[Bytes]): Unit =
         ret(byteBuffer.append1(DIS.Bytes) && objBuffer.append(value.asInstanceOf[AnyRef]) && objBuffer.append(ba))
 
       def onBytesStart(): Unit          = ret(byteBuffer.append1(DIS.BytesStart))
@@ -82,7 +82,7 @@ final private[borer] class ElementDeque(val maxBufferSize: Int, val next: Elemen
       def onChars(buffer: Array[Char], length: Int): Unit =
         ret(byteBuffer.append1(DIS.String) && objBuffer.append(new String(buffer, 0, length)))
 
-      def onText[Bytes](value: Bytes)(implicit ba: ByteAccess[Bytes]): Unit =
+      def onText[Bytes](value: Bytes)(using ba: ByteAccess[Bytes]): Unit =
         ret(byteBuffer.append1(DIS.Text) && objBuffer.append(value.asInstanceOf[AnyRef]) && objBuffer.append(ba))
 
       def onTextStart(): Unit               = ret(byteBuffer.append1(DIS.TextStart))

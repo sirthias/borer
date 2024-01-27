@@ -49,7 +49,7 @@ import scala.annotation.{switch, tailrec}
  * @see https://tools.ietf.org/html/rfc8259
  */
 final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config: JsonParser.Config)(
-    implicit byteAccess: ByteAccess[Bytes])
+    using byteAccess: ByteAccess[Bytes])
     extends Parser[Bytes]:
 
   import JsonParser._
@@ -724,7 +724,7 @@ private[borer] object JsonParser:
     def allowBufferCaching: Boolean
 
   final private[this] val _creator: Parser.Creator[Any, JsonParser.Config] =
-    (input, byteAccess, config) => new JsonParser(input, config)(byteAccess)
+    (input, byteAccess, config) => new JsonParser(input, config)(using byteAccess)
 
   def creator[Bytes, Conf <: JsonParser.Config]: Parser.Creator[Bytes, Conf] =
     _creator.asInstanceOf[Parser.Creator[Bytes, Conf]]

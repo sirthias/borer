@@ -24,5 +24,5 @@ final case class DerivationConfig(
 )
 
 object DerivationConfig {
-  implicit val default: DerivationConfig = DerivationConfig()
+  given default: DerivationConfig = DerivationConfig()
 }

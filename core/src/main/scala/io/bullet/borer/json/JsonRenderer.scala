@@ -204,7 +204,7 @@ final private[borer] class JsonRenderer(var out: Output) extends Renderer:
       .writeAsBytes('\\', 'u', '0', '0')
       .writeBytes(lowerHexDigit(c.toInt >> 4).toByte, lowerHexDigit(c.toInt).toByte)
 
-  def onText[Bytes](value: Bytes)(implicit ba: ByteAccess[Bytes]): Unit =
+  def onText[Bytes: ByteAccess](value: Bytes): Unit =
     failUnsupported(out, "text byte strings")
 
   def onTextStart(): Unit =

@@ -26,7 +26,7 @@ Sometimes it's convenient to map "nullable" fields to Options, i.e. `null` to `N
 This can easily be done with this import:
 
 ```scala
-import io.bullet.borer.NullOptions._
+import io.bullet.borer.NullOptions.given
 ```
 
 Here is how `NullOptions` are implemented:
