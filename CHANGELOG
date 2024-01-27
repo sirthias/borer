@@ -1,3 +1,14 @@
+Version 1.14.0 (2024-01-27)
+---------------------------
+
+- Enabled `derives Encoder.All`, `derives Decoder.All` and `derives Codec.All`
+- Added `mapOption` and `mapEither` decoder transformers
+- Added `bimapOption` and `bimapEither` to codecs
+- Migrated from `implicit` to `given` and `using` where easily possible
+- Removed @inline and replaced with `inline` where it seems like a good idea
+- Switched ScalaJS source maps from local to globally reachable paths (#684)
+
+
 Version 1.13.0 (2023-12-22)
 ---------------------------
 
