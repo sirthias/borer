@@ -1,7 +1,7 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import sbt.*
 
-def scala3 = "3.3.1"
+def scala3 = "3.3.3"
 
 inThisBuild(
   List(
@@ -54,7 +54,7 @@ lazy val commonSettings = Seq(
     // "-Ydebug-error",
     // "-Wunused:all" // disabled until https://github.com/lampepfl/dotty/issues/17315 is resolved
   ) ++ {
-    val local = (LocalRootProject / baseDirectory).value.toURI
+    val local  = (LocalRootProject / baseDirectory).value.toURI
     val remote = s"https://raw.githubusercontent.com/sirthias/borer/${git.gitHeadCommit.value.get}/"
     s"-scalajs-mapSourceURI:$local->$remote" :: Nil
   },
@@ -317,7 +317,7 @@ lazy val site = project
       munit.value
     ),
     com.github.sbt.git.SbtGit.GitKeys.gitRemoteRepo := scmInfo.value.get.connection.drop("scm:git:".length),
-    ghpagesNoJekyll                               := true,
+    ghpagesNoJekyll                                 := true,
     ParadoxMaterialThemePlugin.paradoxMaterialThemeSettings(Compile),
     Compile / paradoxMaterialTheme := {
       ParadoxMaterialTheme()
