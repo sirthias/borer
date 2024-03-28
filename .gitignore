@@ -15,4 +15,3 @@ project/plugins/target
 project/plugins/project/build.properties
 buildinfo.properties
 proguard-sbt.txt
-/.idea/
