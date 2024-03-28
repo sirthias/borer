@@ -299,7 +299,6 @@ lazy val site = project
     `compat-scodec-jvm`
   )
   .enablePlugins(
-    ParadoxPlugin,
     ParadoxMaterialThemePlugin,
     ParadoxSitePlugin,
     GhpagesPlugin
