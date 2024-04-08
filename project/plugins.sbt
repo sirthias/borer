@@ -9,7 +9,7 @@ addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject"   % "1.3.2")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh"                    % "0.4.7")
 addSbtPlugin("io.bullet"          % "sbt-paradox-material-theme" % "0.7.0")
 addSbtPlugin(("com.github.sbt" % "sbt-ghpages"      % "0.7.0").exclude("org.scala-lang.modules", "scala-xml_2.12"))
-addSbtPlugin("com.github.sbt"  % "sbt-site-paradox" % "1.6.0")
+addSbtPlugin("com.github.sbt"  % "sbt-site-paradox" % "1.7.0")
 
 libraryDependencies ++= Seq(
   "io.bullet" %% "borer-core"       % "1.7.2",
