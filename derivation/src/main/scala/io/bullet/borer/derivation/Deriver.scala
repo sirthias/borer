@@ -405,11 +405,17 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
    * breaking dependency cycles.
    */
   final def subtypesNeedingTypeclassDerivation[F[_] : Type](rootNode: AdtTypeNode): (List[TypeRepr], List[TypeRepr]) = {
-    val subNodes = flattenedSubs[F](rootNode, deepRecurse = false, includeEnumSingletonCases = false)
+    val subNodesInclSingletonCases = flattenedSubs[F](rootNode, deepRecurse = false, includeEnumSingletonCases = true)
+    val (singletonCases, subNodes) = subNodesInclSingletonCases.partition(_._1.isEnumSingletonCase)
     if (subNodes.isEmpty)
-      fail(
-        s"""Could not find any sub-types of `$theTname`, likely because `$theTname` is not a fully closed ADT.
-           |Do you maybe have a `sealed trait` somewhere, which has no subclasses?""".stripMargin)
+      fail {
+        if (singletonCases.isEmpty)
+          s"""Could not find any sub-types of `$theTname`, likely because `$theTname` is not a fully closed ADT.
+             |Do you maybe have a `sealed trait` somewhere, which has no subclasses?""".stripMargin
+        else
+          s"""This enum does not define any sub-classes.
+             |You can therefore replace the `deriveAll` with a simple `derive`""".stripMargin
+      }
 
     val subTypesWithoutTC = subNodes.toList.collect { case (node, false) => node.tpe }
     if (subTypesWithoutTC.isEmpty)
