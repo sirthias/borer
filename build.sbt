@@ -68,7 +68,7 @@ lazy val commonSettings = Seq(
   resolvers += "Apache Pekko Staging".at("https://repository.apache.org/content/groups/staging"),
 
   // file headers
-  headerLicense := Some(HeaderLicense.MPLv2("2019-2023", "Mathias Doenitz")),
+  headerLicense := Some(HeaderLicense.MPLv2("2019-2024", "Mathias Doenitz")),
   testFrameworks += new TestFramework("utest.runner.Framework"),
   console / initialCommands := """import io.bullet.borer._""",
 
@@ -352,8 +352,8 @@ lazy val site = project
 def welcomeMessage = Def.setting {
   import scala.Console
 
-  def red(text: String): String  = s"${Console.RED}$text${Console.RESET}"
-  def item(text: String): String = s"${Console.GREEN}▶ ${Console.CYAN}$text${Console.RESET}"
+  def red(text: String): String  = s"${scala.Console.RED}$text${scala.Console.RESET}"
+  def item(text: String): String = s"${scala.Console.GREEN}▶ ${scala.Console.CYAN}$text${scala.Console.RESET}"
 
   s"""|${red(" _                            ")}
       |${red("| |                           ")}

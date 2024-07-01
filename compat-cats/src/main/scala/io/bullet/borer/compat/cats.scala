@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2023 Mathias Doenitz
+ * Copyright (c) 2019-2024 Mathias Doenitz
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,10 +8,10 @@
 
 package io.bullet.borer.compat
 
-import _root_.cats.data._
+import _root_.cats.data.*
 import _root_.cats.Order
-import _root_.cats.instances.order._
-import io.bullet.borer._
+import _root_.cats.instances.order.*
+import io.bullet.borer.*
 
 import scala.collection.immutable.{SortedMap, SortedSet}
 

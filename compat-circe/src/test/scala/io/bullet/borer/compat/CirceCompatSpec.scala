@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2023 Mathias Doenitz
+ * Copyright (c) 2019-2024 Mathias Doenitz
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,11 +9,11 @@
 package io.bullet.borer.compat
 
 import io.bullet.borer.{BorerSuite, Cbor, Json}
-import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.*
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 class CirceCompatSpec extends BorerSuite {
-  import circe._
+  import circe.*
 
   final case class Foo(byte: Byte, short: Short, char: Char, int: Int, long: Long, list: List[String], bar: Bar)
   final case class Bar(boolean: Boolean, nll: Null, float: Float, double: Double, string: String, bd: BigDecimal)
