@@ -1,3 +1,10 @@
+Version 1.14.1 (2024-07-01)
+---------------------------
+
+- Fixed codec derivation of Enums extending other types (#685)
+- Improved `deriveAll` error message for simple enums
+
+
 Version 1.14.0 (2024-01-27)
 ---------------------------
 
