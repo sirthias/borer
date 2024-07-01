@@ -55,11 +55,11 @@ sealed trait SuperBody5 derives Codec.All
 
 object SuperBody5:
   case class AltCase(x: Int) extends SuperBody5
-  case object AltSingle extends SuperBody5
+  case object AltSingle      extends SuperBody5
 
-  sealed trait SubBody extends SuperBody5 derives Codec.All
+  sealed trait SubBody      extends SuperBody5 derives Codec.All
   case class AltSub(x: Int) extends SubBody
-  case object AltSubSingle extends SubBody
+  case object AltSubSingle  extends SubBody
 
   enum Body5 extends SuperBody5 derives Codec.All:
     case Earth, Moon, Sun
