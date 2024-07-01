@@ -141,9 +141,7 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
     @threadUnsafe lazy val name: String = if (tpe.isSingleton) tpe.termSymbol.name else tpe.typeSymbol.name
     def annotations: List[Term]                       = tpe.typeSymbol.annotations
     def containedIn(list: List[AdtTypeNode]): Boolean = list.exists(_ eq this)
-    def isEnum: Boolean                               = isRoot && tpe.typeSymbol.flags.is(Flags.Enum)
-    def isEnumSingletonCase: Boolean =
-      !isRoot && tpe.typeSymbol.flags.is(Flags.Enum | Flags.Abstract | Flags.Sealed)
+    def isEnumSingletonCase: Boolean = tpe.isSingleton && parent.exists(_.tpe.typeSymbol.flags.is(Flags.Enum))
     def isAbstract: Boolean =
       val flags = tpe.typeSymbol.flags
       flags.is(Flags.Trait) || flags.is(Flags.Abstract) || flags.is(Flags.JavaDefined)
@@ -153,9 +151,11 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
     def nodePath(suffix: List[AdtTypeNode] = Nil): List[AdtTypeNode] =
       if (isRoot) suffix else parent.get.nodePath(this :: suffix)
 
-    def enumRef(rootNode: AdtTypeNode): Expr[T] =
-      val companion = rootNode.tpe.typeSymbol.companionModule
+    def enumRef: Expr[T] =
+      val companion = parent.getOrElse(fail("Illegal state in macro logic")).tpe.typeSymbol.companionModule
       Select.unique(Ref(companion), name).asExprOf[T]
+
+    def allSubs: Iterator[AdtTypeNode] = Iterator.single(this) ++ subs.flatMap(_.allSubs)
 
     /////////////////// internal ////////////////////
 
@@ -246,7 +246,7 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
       if (ix < typeIdsAndNodesSorted.length) {
         val (typeId, sub) = typeIdsAndNodesSorted(ix)
         if (sub.isEnumSingletonCase) {
-          val enumRef = sub.enumRef(rootNode).asExprOf[AnyRef]
+          val enumRef = sub.enumRef.asExprOf[AnyRef]
           val writeTypeId = typeId match
             case x: Long   => '{ $w.writeLong(${ Expr(x) }) }
             case x: String => '{ $w.writeString(${ Expr(x) }) }
@@ -290,7 +290,7 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
           val (typeId, sub) = array(mid)
           val cmp           = comp(typeId)
           val readAdtVal =
-            if (sub.isEnumSingletonCase) sub.enumRef(rootNode)
+            if (sub.isEnumSingletonCase) sub.enumRef
             else {
               val readTpe = sub.nodePath().find(abstracts.contains).map(_.tpe) getOrElse sub.tpe
               readTpe.asType match {

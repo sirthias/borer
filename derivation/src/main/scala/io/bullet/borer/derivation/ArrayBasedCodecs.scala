@@ -268,7 +268,7 @@ object ArrayBasedCodecs extends DerivationApi {
             def readWithEnvelope(self: Expr[DerivedAdtDecoder[T]], r: Expr[Reader])(using Quotes): Expr[T] =
               val res0: Expr[T] = '{ $r.readArrayClose($r.readArrayOpen(2), ${ read0(self, r) }) }
               val res1: Expr[T] =
-                if (rootNode.isEnum && rootNode.subs.exists(x => x.isEnumSingletonCase && x.key.isInstanceOf[String])) {
+                if (rootNode.allSubs.exists(x => x.isEnumSingletonCase && x.key.isInstanceOf[String])) {
                   val readStringSingleton = methodBody.derive(
                     self,
                     r,
@@ -276,7 +276,7 @@ object ArrayBasedCodecs extends DerivationApi {
                     tid => '{ $r.tryReadStringCompare(${ Expr(tid.asInstanceOf[String]) }) })
                   '{ if ($r.hasString) $readStringSingleton else $res0 }
                 } else res0
-              if (rootNode.isEnum && rootNode.subs.exists(x => x.isEnumSingletonCase && x.key.isInstanceOf[Long])) {
+              if (rootNode.allSubs.exists(x => x.isEnumSingletonCase && x.key.isInstanceOf[Long])) {
                 val readLongSingleton = methodBody.derive(
                   self,
                   r,

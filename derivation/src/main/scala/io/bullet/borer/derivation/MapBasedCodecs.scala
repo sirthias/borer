@@ -543,7 +543,7 @@ object MapBasedCodecs extends DerivationApi {
                   result
                 }
               val res1: Expr[T] =
-                if (rootNode.isEnum && rootNode.subs.exists(x => x.isEnumSingletonCase && x.key.isInstanceOf[String])) {
+                if (rootNode.allSubs.exists(x => x.isEnumSingletonCase && x.key.isInstanceOf[String])) {
                   val readStringSingleton = methodBody.derive(
                     self,
                     r,
@@ -551,7 +551,7 @@ object MapBasedCodecs extends DerivationApi {
                     tid => '{ $r.tryReadStringCompare(${ Expr(tid.asInstanceOf[String]) }) })
                   '{ if ($r.hasString) $readStringSingleton else $res0 }
                 } else res0
-              if (rootNode.isEnum && rootNode.subs.exists(x => x.isEnumSingletonCase && x.key.isInstanceOf[Long])) {
+              if (rootNode.allSubs.exists(x => x.isEnumSingletonCase && x.key.isInstanceOf[Long])) {
                 val readLongSingleton = methodBody.derive(
                   self,
                   r,
