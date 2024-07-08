@@ -132,7 +132,7 @@ object Decoder extends LowPrioDecoders:
   /**
    * Type class for turning arbitrary errors into decoding failures.
    */
-  trait DecodingError[E]:
+  trait DecodingError[-E]:
     def raise(error: E, reader: Reader): Nothing
 
   object DecodingError:
