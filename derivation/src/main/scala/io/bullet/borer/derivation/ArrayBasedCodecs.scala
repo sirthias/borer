@@ -335,6 +335,8 @@ object ArrayBasedCodecs extends DerivationApi {
         case enc: AdtEncoder[A] => enc.write(w, value)
         case enc                => enc.write(w.writeArrayOpen(2).writeString(typeId), value).writeArrayClose()
       }
+
+    final def enumCasesAsProduct: Boolean = false
   }
 
   abstract class ArrayBasedAdtDecoder[T] extends DerivedAdtDecoder[T]
