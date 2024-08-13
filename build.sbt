@@ -119,7 +119,7 @@ val `circe-core`    = Def.setting("io.circe"          %%% "circe-core"        % 
 val `circe-parser`  = Def.setting("io.circe"          %%% "circe-parser"      % "0.14.8")
 val `circe-generic` = Def.setting("io.circe"          %%% "circe-generic"     % "0.14.8")
 val `scodec-bits`   = Def.setting("org.scodec"        %%% "scodec-bits"       % "1.2.0")
-val munit           = Def.setting("org.scalameta"     %%% "munit"             % "1.0.0" % Test)
+val munit           = Def.setting("org.scalameta"     %%% "munit"             % "1.0.1" % Test)
 val macrolizer      = Def.setting("io.bullet"         %%% "macrolizer"        % "0.6.2" % "compile-internal, test-internal")
 // format: ON
 
