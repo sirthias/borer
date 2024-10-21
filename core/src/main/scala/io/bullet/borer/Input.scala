@@ -8,13 +8,7 @@
 
 package io.bullet.borer
 
-import io.bullet.borer.input.{
-  FromByteArrayInput,
-  FromByteBufferInput,
-  FromFileInput,
-  FromInputStreamInput,
-  FromIteratorInput
-}
+import io.bullet.borer.input.*
 
 /**
  * Mutable abstraction wrapping some source of bytes to serve as parser input.
@@ -36,7 +30,7 @@ trait Input[Bytes]:
    *       So any input will never have to cache more that the last 255 bytes from the head of the input.
    *
    * Also: Decoding CBOR never needs unreading, so if your use case doesn't have to support JSON
-   *       then it's file to simply "implement" this method with `???`.
+   *       then it's fine to simply "implement" this method with `???`.
    */
   def unread(numberOfBytes: Int): this.type
 
