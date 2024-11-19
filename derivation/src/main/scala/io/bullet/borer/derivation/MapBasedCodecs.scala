@@ -617,6 +617,8 @@ object MapBasedCodecs extends DerivationApi {
           enc.write(w.writeString(typeId), value)
           strategy.writeAdtEnvelopeClose(w, typeName)
       }
+
+    final def enumCasesAsProduct: Boolean = strategy.enumCasesAsProduct
   }
 
   abstract class MapBasedAdtDecoder[T] extends DerivedAdtDecoder[T]

@@ -15,7 +15,13 @@ import io.bullet.borer.internal.{ElementDeque, Util}
 
 import scala.annotation.tailrec
 
-sealed abstract class AdtEncodingStrategy:
+sealed abstract class AdtEncodingStrategy(private var enumCasesAsProduct0: Boolean = false):
+  final def enumCasesAsProduct: Boolean = enumCasesAsProduct0
+  final def withEnumCasesAsProduct(enumCasesAsProduct: Boolean): this.type = {
+    enumCasesAsProduct0 = enumCasesAsProduct
+    this
+  }
+
   def writeAdtEnvelopeOpen(w: Writer, typeName: String): w.type
   def writeAdtEnvelopeClose(w: Writer, typeName: String): w.type
 
