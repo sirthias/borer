@@ -30,7 +30,7 @@ The artifacts for _borer_ live on Maven Central and can be tied into your projec
   group5="io.bullet" artifact5="borer-compat-scodec_3" version6="$project.version$"
 }
 
-The current _borer_ is available for [Scala] 3.x only, both for the JVM as well as [scala.js].
+The current _borer_ is available for [Scala] 3.x only, it's available for the JVM, [scala.js] as well as [Scala Native].
 
 The latest version supporting Scala 2.13 is `1.8.0`.  
 The latest version supporting Scala 2.12 is `1.7.2`.
@@ -38,6 +38,7 @@ The latest version supporting Scala 2.12 is `1.7.2`.
 
   [Scala]: https://www.scala-lang.org/
   [scala.js]: https://www.scala-js.org/
+  [Scala Native]: https://scala-native.org/
   [akka-actor]: https://doc.akka.io/docs/akka/2.5/actors.html#dependency
   [akka-stream]: https://doc.akka.io/docs/akka/current/stream/index.html
   [akka-http]: https://doc.akka.io/docs/akka-http/current/index.html

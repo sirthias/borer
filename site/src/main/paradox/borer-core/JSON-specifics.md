@@ -92,7 +92,7 @@ Comparison with other Scala JSON Libraries
 - very mature
 - allows for extensive DOM-manipulation
 - many integration option already available
-- compatible with [scala.js]
+- compatible with [scala.js] and [Scala Native]
 
 @@@
 
@@ -123,8 +123,9 @@ Comparison with other Scala JSON Libraries
 - no direct support for case classes w/ more than 22 members
 - no type class derivation for ADTs
 - _borer_ decodes [JSON] more than 3 times as fast
-- not compatible with [scala.js]    
+- not compatible with [scala.js] and [Scala Native]
 - no [CBOR] support
+- no updates since Dec 2021
 
 @@@
 
@@ -147,6 +148,7 @@ Comparison with other Scala JSON Libraries
 - no support for case classes w/ more than 64 members
 - no support for manual (no-macro) codec construction
 - _borer_ decodes [JSON] more than 4 times as fast
+- no [Scala Native] support
 - no [CBOR] support
     
 @@@
@@ -167,7 +169,7 @@ Comparison with other Scala JSON Libraries
      
 - no type class-based API
 - several non-Scala dependencies
-- not compatible with [scala.js]
+- not compatible with [scala.js] and [Scala Native]
 - _borer_ decodes [JSON] about 20% faster
 
 @@@
@@ -183,7 +185,7 @@ Comparison with other Scala JSON Libraries
 - very high performance (about 15% faster [JSON] decoding than _borer_)
 - support out of the box for _all_ Scala collections and `java.time.*` classes
 - highly configurable
-- has [scala.js] support
+- compatible with [scala.js] and [Scala Native]
 
 @@@
 
@@ -198,15 +200,15 @@ Comparison with other Scala JSON Libraries
 
 ---
 
-  [CBOR]: http://cbor.io/
-  [JSON]: http://json.org/
+  [CBOR]: https://cbor.io/
+  [JSON]: https://json.org/
   [RFC 4648]: https://tools.ietf.org/html/rfc4648
   [base64]: https://tools.ietf.org/html/rfc4648#section-4
   [Circe]: https://circe.github.io/circe/
   [spray-json]: https://github.com/spray/spray-json/
   [json-benchmark-files]: https://github.com/sirthias/borer/tree/master/benchmarks/src/main/resources
   [Jackson Scala]: https://github.com/FasterXML/jackson-module-scala
-  [µPickle]: http://www.lihaoyi.com/upickle/
+  [µPickle]: https://com-lihaoyi.github.io/upickle/
   [Jsoniter Scala]: https://github.com/plokhotnyuk/jsoniter-scala
   [MessagePack]: https://msgpack.org/
   [scala.js]: https://www.scala-js.org/
