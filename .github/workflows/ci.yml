@@ -29,8 +29,6 @@ jobs:
 
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
-        with:
-          sbt-runner-version: 3.3.3
       - name: Cache scala dependencies
         uses: coursier/cache-action@v6
       - name: Lint code
@@ -58,8 +56,6 @@ jobs:
           check-latest: true
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
-        with:
-          sbt-runner-version: 3.3.3
       - name: Cache scala dependencies
         uses: coursier/cache-action@v6
       - name: Setup node
