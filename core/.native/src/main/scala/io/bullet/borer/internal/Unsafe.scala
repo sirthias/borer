@@ -10,19 +10,13 @@ package io.bullet.borer.internal
 
 import java.lang.{Long => JLong}
 import java.nio.ByteOrder
-
-import scala.scalanative.unsafe._
-
-import scala.annotation.{nowarn, tailrec}
-import scala.util.control.NonFatal
+import scala.annotation.nowarn
+import scala.annotation.tailrec
+import scala.scalanative.runtime.ffi.memcpy
+import scala.scalanative.unsafe.*
 import scala.scalanative.unsigned.USize
 
 object Unsafe:
-  import NativeCopy.memcpy
-
-  @extern
-  private[Unsafe] object NativeCopy:
-    def memcpy(dst: Ptr[Byte], src: Ptr[Byte], n: CSize): Ptr[Byte] = extern
 
   def byteArrayAccess: ByteArrayAccess =
     ByteOrder.nativeOrder() match
@@ -63,7 +57,7 @@ object Unsafe:
             rec(0)
           else source
         val target = new Array[Byte](source.length << 1)
-        memcpy(target.at(0), copySource.at(0).asInstanceOf[Ptr[Byte]], target.length.toSize.toUSize)
+        memcpy(target.at(0), copySource.at(0), target.length.toSize.toUSize)
         target
       else Array.emptyByteArray
 
@@ -80,7 +74,7 @@ object Unsafe:
             rec(0)
           else source
         val target = new Array[Byte](source.length << 2)
-        memcpy(target.at(0), copySource.at(0).asInstanceOf[Ptr[Byte]], target.length.toSize.toUSize)
+        memcpy(target.at(0), copySource.at(0), target.length.toSize.toUSize)
         target
       else Array.emptyByteArray
 
@@ -97,7 +91,7 @@ object Unsafe:
             rec(0)
           else source
         val target = new Array[Byte](source.length << 3)
-        memcpy(target.at(0), copySource.at(0).asInstanceOf[Ptr[Byte]], target.length.toSize.toUSize)
+        memcpy(target.at(0), copySource.at(0), target.length.toSize.toUSize)
         target
       else Array.emptyByteArray
 
@@ -119,7 +113,7 @@ object Unsafe:
             else copySource
           rec(0)
         val target = new Array[Byte](source.length << 2)
-        memcpy(target.at(0), copySource.at(0).asInstanceOf[Ptr[Byte]], target.length.toSize.toUSize)
+        memcpy(target.at(0), copySource.at(0), target.length.toSize.toUSize)
         target
       else Array.emptyByteArray
 
@@ -141,7 +135,7 @@ object Unsafe:
             else copySource
           rec(0)
         val target = new Array[Byte](source.length << 3)
-        memcpy(target.at(0), copySource.at(0).asInstanceOf[Ptr[Byte]], target.length.toSize.toUSize)
+        memcpy(target.at(0), copySource.at(0), target.length.toSize.toUSize)
         target
       else Array.emptyByteArray
 
@@ -150,7 +144,7 @@ object Unsafe:
         if ((source.length & 1) != 0)
           throw new IllegalArgumentException(s"source Array[Byte] has illegal length: ${source.length}")
         val target = new Array[Short](source.length >> 1)
-        memcpy(target.at(0).asInstanceOf[Ptr[Byte]], source.at(0), source.length.toSize.toUSize)
+        memcpy(target.at(0), source.at(0), source.length.toSize.toUSize)
         if (this.byteOrder != byteOrder)
           @tailrec def rec(ix: Int): Array[Short] =
             if (ix < target.length)
@@ -166,7 +160,7 @@ object Unsafe:
         if ((source.length & 3) != 0)
           throw new IllegalArgumentException(s"source Array[Byte] has illegal length: ${source.length}")
         val target = new Array[Int](source.length >> 2)
-        memcpy(target.at(0).asInstanceOf[Ptr[Byte]], source.at(0), source.length.toSize.toUSize)
+        memcpy(target.at(0), source.at(0), source.length.toSize.toUSize)
         if (this.byteOrder != byteOrder)
           @tailrec def rec(ix: Int): Array[Int] =
             if (ix < target.length)
@@ -182,7 +176,7 @@ object Unsafe:
         if ((source.length & 7) != 0)
           throw new IllegalArgumentException(s"source Array[Byte] has illegal length: ${source.length}")
         val target = new Array[Long](source.length >> 3)
-        memcpy(target.at(0).asInstanceOf[Ptr[Byte]], source.at(0), source.length.toSize.toUSize)
+        memcpy(target.at(0), source.at(0), source.length.toSize.toUSize)
         if (this.byteOrder != byteOrder)
           @tailrec def rec(ix: Int): Array[Long] =
             if (ix < target.length)
@@ -198,7 +192,7 @@ object Unsafe:
         if ((source.length & 3) != 0)
           throw new IllegalArgumentException(s"source Array[Byte] has illegal length: ${source.length}")
         val ints = new Array[Int](source.length >> 2)
-        memcpy(ints.at(0).asInstanceOf[Ptr[Byte]], source.at(0), source.length.toSize.toUSize)
+        memcpy(ints.at(0), source.at(0), source.length.toSize.toUSize)
         val target = new Array[Float](ints.length)
         if (this.byteOrder != byteOrder)
           @tailrec def rec(ix: Int): Array[Float] =
@@ -221,7 +215,7 @@ object Unsafe:
         if ((source.length & 7) != 0)
           throw new IllegalArgumentException(s"source Array[Byte] has illegal length: ${source.length}")
         val longs = new Array[Long](source.length >> 3)
-        memcpy(longs.at(0).asInstanceOf[Ptr[Byte]], source.at(0), source.length.toSize.toUSize)
+        memcpy(longs.at(0), source.at(0), source.length.toSize.toUSize)
         val target = new Array[Double](longs.length)
         if (this.byteOrder != byteOrder)
           @tailrec def rec(ix: Int): Array[Double] =
