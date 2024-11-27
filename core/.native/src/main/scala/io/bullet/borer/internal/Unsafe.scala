@@ -253,7 +253,7 @@ object Unsafe:
     def setOctaByteBigEndian(byteArray: Array[Byte], ix: Int, value: Long): Unit =
       _setOctaByteBigEndian(byteArray, ix, JLong.reverseBytes(value))
 
-  final class BigEndianByteArrayAccess extends UnsafeByteArrayAccess(ByteOrder.LITTLE_ENDIAN):
+  final class BigEndianByteArrayAccess extends UnsafeByteArrayAccess(ByteOrder.BIG_ENDIAN):
 
     def doubleByteBigEndian(byteArray: Array[Byte], ix: Int): Char =
       _doubleByteBigEndian(byteArray, ix)
