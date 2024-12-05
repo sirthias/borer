@@ -10,12 +10,14 @@ package io.bullet.borer.internal
 
 import io.bullet.borer.*
 
-import scala.deriving.*
 import scala.compiletime.*
+import scala.deriving.*
 import scala.Tuple.Size
+import scala.annotation.nowarn
 
 private[borer] object BasicProductCodec:
 
+  @nowarn("msg=anonymous class definition will be duplicated at each inline site")
   inline def encoder[T <: Product](using m: Mirror.ProductOf[T]): Encoder[T] =
     type Fields = m.MirroredElemTypes
     inline erasedValue[Fields] match
@@ -32,6 +34,7 @@ private[borer] object BasicProductCodec:
       case _: (t *: ts) =>
         encRec[T, ts](w.write(x.productElement(n).asInstanceOf[t])(using summonInline[Encoder[t]]), x, n + 1)
 
+  @nowarn("msg=anonymous class definition will be duplicated at each inline site")
   inline def decoder[T <: Product](using m: Mirror.ProductOf[T]): Decoder[T] =
     type Fields = m.MirroredElemTypes
     inline erasedValue[Fields] match

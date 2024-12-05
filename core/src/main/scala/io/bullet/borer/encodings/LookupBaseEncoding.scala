@@ -8,7 +8,7 @@
 
 package io.bullet.borer.encodings
 
-abstract class LookupBaseEncoding(_name: String, _bitsPerChar: Int, alphabet: String)
+abstract class LookupBaseEncoding(_name: String, _bitsPerChar: Int, val alphabet: String)
     extends BaseEncoding(_name, _bitsPerChar):
 
   protected val alphabetChars = alphabet.toCharArray
