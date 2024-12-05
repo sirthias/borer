@@ -36,6 +36,12 @@ addCommandAlias(
     .mkString("; ", "/test ; ", "/test")
 )
 
+addCommandAlias(
+  "testNative",
+  Seq("coreNative", "derivationNative", "compat-catsNative", "compat-circeNative", "compat-scodecNative")
+    .mkString("; ", "/test ; ", "/test")
+)
+
 lazy val commonSettings = Seq(
   scalaVersion := scala3,
   scalacOptions ++= Seq(
@@ -126,13 +132,13 @@ val macrolizer      = Def.setting("io.bullet"         %%% "macrolizer"        % 
 /////////////////////// PROJECTS /////////////////////////
 
 lazy val borer = (project in file("."))
-  .aggregate(`core-jvm`, `core-js`)
+  .aggregate(`core-jvm`, `core-js`, `core-native`)
   .aggregate(`compat-akka`)
   .aggregate(`compat-pekko`)
-  .aggregate(`compat-cats-jvm`, `compat-cats-js`)
-  .aggregate(`compat-circe-jvm`, `compat-circe-js`)
-  .aggregate(`compat-scodec-jvm`, `compat-scodec-js`)
-  .aggregate(`derivation-jvm`, `derivation-js`)
+  .aggregate(`compat-cats-jvm`, `compat-cats-js`, `compat-cats-native`)
+  .aggregate(`compat-circe-jvm`, `compat-circe-js`, `compat-circe-native`)
+  .aggregate(`compat-scodec-jvm`, `compat-scodec-js`, `compat-scodec-native`)
+  .aggregate(`derivation-jvm`, `derivation-js`, `derivation-native`)
   // .aggregate(benchmarks)
   .aggregate(site)
   .settings(commonSettings)
@@ -142,9 +148,10 @@ lazy val borer = (project in file("."))
     onLoadMessage  := welcomeMessage.value
   )
 
-lazy val `core-jvm` = core.jvm.enablePlugins(SpecializeJsonParserPlugin)
-lazy val `core-js`  = core.js
-lazy val core = crossProject(JSPlatform, JVMPlatform)
+lazy val `core-jvm`    = core.jvm.enablePlugins(SpecializeJsonParserPlugin)
+lazy val `core-js`     = core.js
+lazy val `core-native` = core.native.enablePlugins(SpecializeJsonParserPlugin)
+lazy val core = crossProject(JSPlatform, NativePlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .enablePlugins(AutomateHeaderPlugin)
@@ -155,6 +162,11 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
     libraryDependencies ++= Seq(munit.value),
   )
   .jvmSettings(
+    Compile / specializeJsonParser / sourceDirectory := baseDirectory.value.getParentFile / "src" / "main",
+    Compile / specializeJsonParser / sourceManaged := baseDirectory.value / "target" / "scala" / "src_managed" / "main",
+    Compile / managedSourceDirectories += (Compile / specializeJsonParser / sourceManaged).value
+  )
+  .nativeSettings(
     Compile / specializeJsonParser / sourceDirectory := baseDirectory.value.getParentFile / "src" / "main",
     Compile / specializeJsonParser / sourceManaged := baseDirectory.value / "target" / "scala" / "src_managed" / "main",
     Compile / managedSourceDirectories += (Compile / specializeJsonParser / sourceManaged).value
@@ -197,7 +209,10 @@ lazy val `compat-cats-jvm` = `compat-cats`.jvm
 lazy val `compat-cats-js` = `compat-cats`.js
   .dependsOn(`core-js` % "compile->compile;test->test")
   .dependsOn(`derivation-js` % "test->compile")
-lazy val `compat-cats` = crossProject(JSPlatform, JVMPlatform)
+lazy val `compat-cats-native` = `compat-cats`.native
+  .dependsOn(`core-native` % "compile->compile;test->test")
+  .dependsOn(`derivation-native` % "test->compile")
+lazy val `compat-cats` = crossProject(JSPlatform, NativePlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .enablePlugins(AutomateHeaderPlugin)
@@ -215,7 +230,10 @@ lazy val `compat-circe-jvm` = `compat-circe`.jvm
 lazy val `compat-circe-js` = `compat-circe`.js
   .dependsOn(`core-js` % "compile->compile;test->test")
   .dependsOn(`derivation-js` % "test->compile")
-lazy val `compat-circe` = crossProject(JSPlatform, JVMPlatform)
+lazy val `compat-circe-native` = `compat-circe`.native
+  .dependsOn(`core-native` % "compile->compile;test->test")
+  .dependsOn(`derivation-native` % "test->compile")
+lazy val `compat-circe` = crossProject(JSPlatform, NativePlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .enablePlugins(AutomateHeaderPlugin)
@@ -238,7 +256,10 @@ lazy val `compat-scodec-jvm` = `compat-scodec`.jvm
 lazy val `compat-scodec-js` = `compat-scodec`.js
   .dependsOn(`core-js` % "compile->compile;test->test")
   .dependsOn(`derivation-js` % "test->compile")
-lazy val `compat-scodec` = crossProject(JSPlatform, JVMPlatform)
+lazy val `compat-scodec-native` = `compat-scodec`.native
+  .dependsOn(`core-native` % "compile->compile;test->test")
+  .dependsOn(`derivation-native` % "test->compile")
+lazy val `compat-scodec` = crossProject(JSPlatform, NativePlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .enablePlugins(AutomateHeaderPlugin)
@@ -257,7 +278,9 @@ lazy val `derivation-jvm` = derivation.jvm
   .dependsOn(`core-jvm` % "compile->compile;test->test")
 lazy val `derivation-js` = derivation.js
   .dependsOn(`core-js` % "compile->compile;test->test")
-lazy val derivation = crossProject(JSPlatform, JVMPlatform)
+lazy val `derivation-native` = derivation.native
+  .dependsOn(`core-native` % "compile->compile;test->test")
+lazy val derivation = crossProject(JSPlatform, NativePlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .enablePlugins(AutomateHeaderPlugin)
@@ -265,7 +288,7 @@ lazy val derivation = crossProject(JSPlatform, JVMPlatform)
   .settings(releaseSettings)
   .settings(
     moduleName := "borer-derivation",
-    libraryDependencies ++= Seq(macrolizer.value, munit.value),
+    libraryDependencies ++= Seq(/* macrolizer.value, */ munit.value), // TODO port macrolizer to scala native
   )
   .jsSettings(scalajsSettings: _*)
 
