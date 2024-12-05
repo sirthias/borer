@@ -8,21 +8,14 @@
 
 package io.bullet.borer
 
-import java.lang.{
-  Boolean as JBoolean,
-  Byte as JByte,
-  Double as JDouble,
-  Float as JFloat,
-  Long as JLong,
-  Short as JShort
-}
-import java.math.{BigDecimal as JBigDecimal, BigInteger as JBigInteger}
 import io.bullet.borer.encodings.BaseEncoding
 import io.bullet.borer.internal.Util
 
-import scala.annotation.{tailrec, threadUnsafe}
-import scala.collection.immutable.{HashMap, ListMap, TreeMap}
+import java.lang.{Boolean as JBoolean, Byte as JByte, Double as JDouble, Float as JFloat, Long as JLong, Short as JShort}
+import java.math.{BigDecimal as JBigDecimal, BigInteger as JBigInteger}
+import scala.annotation.{nowarn, tailrec, threadUnsafe}
 import scala.collection.{mutable, Factory}
+import scala.collection.immutable.{HashMap, ListMap, TreeMap}
 import scala.deriving.Mirror
 import scala.reflect.ClassTag
 
@@ -33,7 +26,7 @@ trait Decoder[T]:
   def read(r: Reader): T
 
 object Decoder extends LowPrioDecoders:
-  import io.bullet.borer.{DataItem => DI}
+  import io.bullet.borer.DataItem as DI
 
   /**
    * A [[Decoder]] that might change its encoding strategy if [[T]] has a default value.
@@ -88,6 +81,7 @@ object Decoder extends LowPrioDecoders:
      * Maps the result of the underlying [[Decoder]] with the given function.
      * If the function returns `None` decoding will fail with a [[Borer.Error.ValidationFailure]].
      */
+    @nowarn("msg=anonymous class definition will be duplicated at each inline site")
     inline def mapOption[B: Mirror.Of](f: A => Option[B]): Decoder[B] =
       Decoder(r => f(underlying.read(r)).getOrElse(r.unexpectedDataItem(Util.typeName[B])))
 
