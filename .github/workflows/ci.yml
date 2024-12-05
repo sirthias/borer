@@ -6,7 +6,7 @@ env:
 on:
   pull_request:
   push:
-    branches: ['master']
+    branches: [ 'master' ]
   release:
     types:
       - published
@@ -32,7 +32,7 @@ jobs:
       - name: Cache scala dependencies
         uses: coursier/cache-action@v6
       - name: Lint code
-        run: sbt ++3.3.3 check
+        run: sbt ++3.3.4 check
 
   test:
     runs-on: ubuntu-24.04
@@ -40,9 +40,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: ['11', '17', '21']
-        scala: ['3.3.3']
-        platform: ['JVM', 'JS', 'Native']
+        java: [ '11', '17', '21' ]
+        scala: [ '3.3.4' ]
+        platform: [ 'JVM', 'JS' , 'Native' ]
     steps:
       - name: Checkout current branch
         uses: actions/checkout@v4
@@ -68,7 +68,7 @@ jobs:
 
   ci:
     runs-on: ubuntu-24.04
-    needs: [lint, test]
+    needs: [ lint, test ]
     steps:
       - name: Aggregate of lint, and all tests
         run: echo "ci passed"
