@@ -22,10 +22,11 @@ low-level data items one would use this approach:
 But on a slightly higher level the `Writer` also gives you a way to write arrays (and maps) without having distinguish
 between [CBOR] and [JSON] yourself:
 
-@@snip [-]($test$/JsonSpecificsSpec.scala) { #writeArrayOpen-close } 
+@@snip [-]($test$/JsonSpecificsSpec.scala) { #writeArrayOpen-close }
 
 As long as you rely on the somewhat higher-level parts of the `Reader` and `Writer` APIs or construct your
-(de)serialization purely logic from _borer_'s built-in or (and/or @ref:[derived](../borer-derivation/index.md)) Encoders and
+(de)serialization purely logic from _borer_'s built-in or (and/or @ref:[derived](../borer-derivation/index.md)) Encoders
+and
 Decoders, your application will support both [CBOR] and [JSON] at the same time without any special casing whatsoever.
 
 
@@ -38,7 +39,7 @@ This is typically worked around by mapping binary data to a "Base Encoding", e.g
 In order to give your application an easy and flexible way to integrate with other systems _borer_ supports a number
 of base encodings out of the box, specifically:
 
-- [base16](https://tools.ietf.org/html/rfc4648#section-8)  
+- [base16](https://tools.ietf.org/html/rfc4648#section-8)
 - [base32](https://tools.ietf.org/html/rfc4648#section-6)
 - [base32hex](https://tools.ietf.org/html/rfc4648#section-7)
 - [base32crockford](https://en.wikipedia.org/wiki/Base32#Crockford's_Base32)
@@ -51,6 +52,15 @@ The default [JSON] encoding for `Array[Byte]` is [base64].
 In order to switch to a different base encoding in a particular scope define the a pair of implicits as in this example:
 
 @@snip [-]($test$/JsonSpecificsSpec.scala) { #alternative-base-encoding }
+
+
+JSON Pretty Printing
+--------------------
+
+Normally _borer_ will output JSON in the most compact form, with no whitespace padding anywhere.
+However, you can enable "pretty" JSON rendering as shown here:
+
+@@snip [-]($test$/JsonSpecificsSpec.scala) { #json-pretty-printing }
 
 
 When (not) to use _borer_ for JSON
@@ -67,15 +77,6 @@ However, if all you need is an efficient way to convert raw network- or disk-byt
 from your data model types, with no (or few) dependencies and maybe even with the option to target [CBOR] with no
 additional work required from your side, then _borer_ should be a good choice.
 
-@@@ note
-
-Since _borer_ doesn't really work with `String` and `Char`, but rather raw bytes only, it also doesn't support
-encoding to a "pretty", i.e. nicely formatted, JSON representation.<br>
-_borer_ always outputs [JSON] in the most compact form.
-(It can, of course, read "pretty" [JSON] documents without any issue.)  
-
-@@@
-
 
 Comparison with other Scala JSON Libraries
 ------------------------------------------
@@ -88,7 +89,7 @@ Comparison with other Scala JSON Libraries
 : AST/DOM- and type-class-based design
 
 @@@ div { .pros }
- 
+
 - very mature
 - allows for extensive DOM-manipulation
 - many integration option already available
@@ -111,7 +112,7 @@ Comparison with other Scala JSON Libraries
 : AST/DOM- and type-class-based design
 
 @@@ div { .pros }
- 
+
 - zero dependencies
 
 @@@
@@ -137,7 +138,7 @@ Comparison with other Scala JSON Libraries
 @@@ div { .pros }
 
 - zero dependencies
-- optional DOM 
+- optional DOM
 - also supports [MessagePack]
 - compatible with [scala.js]
 
@@ -150,7 +151,7 @@ Comparison with other Scala JSON Libraries
 - _borer_ decodes [JSON] more than 4 times as fast
 - no [Scala Native] support
 - no [CBOR] support
-    
+
 @@@
 
 ---
@@ -166,7 +167,7 @@ Comparison with other Scala JSON Libraries
 @@@
 
 @@@ div { .cons }
-     
+
 - no type class-based API
 - several non-Scala dependencies
 - not compatible with [scala.js] and [Scala Native]
@@ -200,15 +201,26 @@ Comparison with other Scala JSON Libraries
 
 ---
 
-  [CBOR]: https://cbor.io/
-  [JSON]: https://json.org/
-  [RFC 4648]: https://tools.ietf.org/html/rfc4648
-  [base64]: https://tools.ietf.org/html/rfc4648#section-4
-  [Circe]: https://circe.github.io/circe/
-  [spray-json]: https://github.com/spray/spray-json/
-  [json-benchmark-files]: https://github.com/sirthias/borer/tree/master/benchmarks/src/main/resources
-  [Jackson Scala]: https://github.com/FasterXML/jackson-module-scala
-  [µPickle]: https://com-lihaoyi.github.io/upickle/
-  [Jsoniter Scala]: https://github.com/plokhotnyuk/jsoniter-scala
-  [MessagePack]: https://msgpack.org/
-  [scala.js]: https://www.scala-js.org/
+[CBOR]: https://cbor.io/
+
+[JSON]: https://json.org/
+
+[RFC 4648]: https://tools.ietf.org/html/rfc4648
+
+[base64]: https://tools.ietf.org/html/rfc4648#section-4
+
+[Circe]: https://circe.github.io/circe/
+
+[spray-json]: https://github.com/spray/spray-json/
+
+[json-benchmark-files]: https://github.com/sirthias/borer/tree/master/benchmarks/src/main/resources
+
+[Jackson Scala]: https://github.com/FasterXML/jackson-module-scala
+
+[µPickle]: https://com-lihaoyi.github.io/upickle/
+
+[Jsoniter Scala]: https://github.com/plokhotnyuk/jsoniter-scala
+
+[MessagePack]: https://msgpack.org/
+
+[scala.js]: https://www.scala-js.org/

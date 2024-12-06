@@ -72,4 +72,52 @@ class JsonSpecificsSpec extends BorerSuite {
     }
     // #alternative-base-encoding
   }
+
+  test("json pretty printing") {
+    // #json-pretty-printing
+    import io.bullet.borer.{Codec, Json}
+    import io.bullet.borer.derivation.MapBasedCodecs.*
+
+    sealed trait Animal derives Codec.All
+    case class Dog(age: Int, name: String)                      extends Animal
+    case class Cat(weight: Double, color: String, home: String) extends Animal
+    case class Mouse(colorRGB: List[Int], tail: Boolean)        extends Animal
+
+    val animals = List(
+      Dog(5, "Rufus"),
+      Cat(4.7, "red", "next door"),
+      Mouse(colorRGB = List(73, 42, 64), tail = false),
+    )
+
+    Json
+      .encode(animals)
+      .withPrettyRendering(indent = 2) // enables pretty printing
+      .toUtf8String ==>
+    """|[
+       |  {
+       |    "Dog": {
+       |      "age": 5,
+       |      "name": "Rufus"
+       |    }
+       |  },
+       |  {
+       |    "Cat": {
+       |      "weight": 4.7,
+       |      "color": "red",
+       |      "home": "next door"
+       |    }
+       |  },
+       |  {
+       |    "Mouse": {
+       |      "colorRGB": [
+       |        73,
+       |        42,
+       |        64
+       |      ],
+       |      "tail": false
+       |    }
+       |  }
+       |]""".stripMargin
+    // #json-pretty-printing
+  }
 }
