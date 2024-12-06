@@ -184,6 +184,7 @@ sirthias/borer/
   <li><a href="../borer-core/JSON-specifics.html#json-specifics" class="header">JSON Specifics</a>
   <ul>
     <li><a href="../borer-core/JSON-specifics.html#base-encodings-for-binary-data" class="header">Base Encodings for Binary Data</a></li>
+    <li><a href="../borer-core/JSON-specifics.html#json-pretty-printing" class="header">JSON Pretty Printing</a></li>
     <li><a href="../borer-core/JSON-specifics.html#when-not-to-use-for-json" class="header">When (not) to use <em>borer</em> for JSON</a></li>
     <li><a href="../borer-core/JSON-specifics.html#comparison-with-other-scala-json-libraries" class="header">Comparison with other Scala JSON Libraries</a></li>
   </ul></li>
@@ -194,7 +195,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.14.1
+<i class="md-icon" title="Version">label_outline</i> 1.15.0
 </label>
 </li>
 </ul>
@@ -210,6 +211,7 @@ sirthias/borer/
   <li><a href="../borer-core/JSON-specifics.html#json-specifics" class="header">JSON Specifics</a>
   <ul>
     <li><a href="../borer-core/JSON-specifics.html#base-encodings-for-binary-data" class="header">Base Encodings for Binary Data</a></li>
+    <li><a href="../borer-core/JSON-specifics.html#json-pretty-printing" class="header">JSON Pretty Printing</a></li>
     <li><a href="../borer-core/JSON-specifics.html#when-not-to-use-for-json" class="header">When (not) to use <em>borer</em> for JSON</a></li>
     <li><a href="../borer-core/JSON-specifics.html#comparison-with-other-scala-json-libraries" class="header">Comparison with other Scala JSON Libraries</a></li>
   </ul></li>
@@ -223,25 +225,25 @@ sirthias/borer/
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
 <h1><a href="#json-specifics" name="json-specifics" class="anchor"><span class="anchor-link"></span></a>JSON Specifics</h1>
-<p>Since the <a href="http://cbor.io/">CBOR</a> data item primitives are a super-set of what is available in <a href="http://json.org/">JSON</a>, or, said differently, everything in <a href="http://json.org/">JSON</a> has a counterpart in <a href="http://cbor.io/">CBOR</a>, it&rsquo;s not hard for <em>borer</em> to also support encoding to and decoding from <a href="http://json.org/">JSON</a>.</p>
-<p>From <em>borer</em>&rsquo;s point of view <a href="http://json.org/">JSON</a> is simply a slightly different binary format that only supports a subset of the <a href="http://cbor.io/">CBOR</a> data primitives. Like <a href="http://cbor.io/">CBOR</a> <em>borer</em> encodes and decodes <a href="http://json.org/">JSON</a> in a <em>single pass</em>, UTF-8 encoding and decoding to and from raw bytes on the fly.</p>
-<p>All higher-level abstractions (i.e. <code>Writer</code>, <code>Reader</code>, <code>Encoder</code>, <code>Decoder</code>, <code>Codec</code>, etc.) are essentially agnostic to the (de)serialization target format. Nevertheless, the <code>Writer</code> and <code>Reader</code> types do have a <code>target</code> member, which enables custom logic to discriminate between the two variants, if required.<br> Since the underlying <a href="http://json.org/">JSON</a> renderer will throw exceptions on attempts to write data primitives that are not supported in <a href="http://json.org/">JSON</a> (like <a href="http://cbor.io/">CBOR</a> Tags, for example), this is sometimes necessary to efficiently support both formats.</p>
-<p>For example, in order to write an empty array in the most efficient way to both <a href="http://cbor.io/">CBOR</a> and <a href="http://json.org/">JSON</a> using only the most low-level data items one would use this approach:</p>
+<p>Since the <a href="https://cbor.io/">CBOR</a> data item primitives are a super-set of what is available in <a href="https://json.org/">JSON</a>, or, said differently, everything in <a href="https://json.org/">JSON</a> has a counterpart in <a href="https://cbor.io/">CBOR</a>, it&rsquo;s not hard for <em>borer</em> to also support encoding to and decoding from <a href="https://json.org/">JSON</a>.</p>
+<p>From <em>borer</em>&rsquo;s point of view <a href="https://json.org/">JSON</a> is simply a slightly different binary format that only supports a subset of the <a href="https://cbor.io/">CBOR</a> data primitives. Like <a href="https://cbor.io/">CBOR</a> <em>borer</em> encodes and decodes <a href="https://json.org/">JSON</a> in a <em>single pass</em>, UTF-8 encoding and decoding to and from raw bytes on the fly.</p>
+<p>All higher-level abstractions (i.e. <code>Writer</code>, <code>Reader</code>, <code>Encoder</code>, <code>Decoder</code>, <code>Codec</code>, etc.) are essentially agnostic to the (de)serialization target format. Nevertheless, the <code>Writer</code> and <code>Reader</code> types do have a <code>target</code> member, which enables custom logic to discriminate between the two variants, if required.<br> Since the underlying <a href="https://json.org/">JSON</a> renderer will throw exceptions on attempts to write data primitives that are not supported in <a href="https://json.org/">JSON</a> (like <a href="https://cbor.io/">CBOR</a> Tags, for example), this is sometimes necessary to efficiently support both formats.</p>
+<p>For example, in order to write an empty array in the most efficient way to both <a href="https://cbor.io/">CBOR</a> and <a href="https://json.org/">JSON</a> using only the most low-level data items one would use this approach:</p>
 <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/JsonSpecificsSpec.scala#L18-L22" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Writer
 
 def writeEmptyArray(w: Writer): w.type =
   if (w.writingJson) w.writeArrayStart().writeBreak()
   else w.writeArrayHeader(0) // fixed-sized Arrays are not supported in JSON</code></pre>
-<p>But on a slightly higher level the <code>Writer</code> also gives you a way to write arrays (and maps) without having distinguish between <a href="http://cbor.io/">CBOR</a> and <a href="http://json.org/">JSON</a> yourself:</p>
+<p>But on a slightly higher level the <code>Writer</code> also gives you a way to write arrays (and maps) without having distinguish between <a href="https://cbor.io/">CBOR</a> and <a href="https://json.org/">JSON</a> yourself:</p>
 <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/JsonSpecificsSpec.scala#L37-L42" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Writer
 
 def writeAsUnaryArray(w: Writer, s: String): w.type =
   w.writeArrayOpen(1) // automatically chooses the most efficient
     .writeString(s)
     .writeArrayClose() // way to write an array of size one</code></pre>
-<p>As long as you rely on the somewhat higher-level parts of the <code>Reader</code> and <code>Writer</code> APIs or construct your (de)serialization purely logic from <em>borer</em>&rsquo;s built-in or (and/or <a href="../borer-derivation/index.html">derived</a>) Encoders and Decoders, your application will support both <a href="http://cbor.io/">CBOR</a> and <a href="http://json.org/">JSON</a> at the same time without any special casing whatsoever.</p>
+<p>As long as you rely on the somewhat higher-level parts of the <code>Reader</code> and <code>Writer</code> APIs or construct your (de)serialization purely logic from <em>borer</em>&rsquo;s built-in or (and/or <a href="../borer-derivation/index.html">derived</a>) Encoders and Decoders, your application will support both <a href="https://cbor.io/">CBOR</a> and <a href="https://json.org/">JSON</a> at the same time without any special casing whatsoever.</p>
 <h2><a href="#base-encodings-for-binary-data" name="base-encodings-for-binary-data" class="anchor"><span class="anchor-link"></span></a>Base Encodings for Binary Data</h2>
-<p>One big drawback of <a href="http://json.org/">JSON</a> over <a href="http://cbor.io/">CBOR</a> is that <a href="http://json.org/">JSON</a> doesn&rsquo;t provide any &ldquo;first-class&rdquo; representation of binary data. This is typically worked around by mapping binary data to a &ldquo;Base Encoding&rdquo;, e.g. the ones defined by <a href="https://tools.ietf.org/html/rfc4648">RFC 4648</a>.</p>
+<p>One big drawback of <a href="https://json.org/">JSON</a> over <a href="https://cbor.io/">CBOR</a> is that <a href="https://json.org/">JSON</a> doesn&rsquo;t provide any &ldquo;first-class&rdquo; representation of binary data. This is typically worked around by mapping binary data to a &ldquo;Base Encoding&rdquo;, e.g. the ones defined by <a href="https://tools.ietf.org/html/rfc4648">RFC 4648</a>.</p>
 <p>In order to give your application an easy and flexible way to integrate with other systems <em>borer</em> supports a number of base encodings out of the box, specifically:</p>
 <ul>
   <li><a href="https://tools.ietf.org/html/rfc4648#section-8">base16</a></li>
@@ -252,7 +254,7 @@ def writeAsUnaryArray(w: Writer, s: String): w.type =
   <li><a href="https://tools.ietf.org/html/rfc4648#section-4">base64</a></li>
   <li><a href="https://tools.ietf.org/html/rfc4648#section-5">base64url</a></li>
 </ul>
-<p>The default <a href="http://json.org/">JSON</a> encoding for <code>Array[Byte]</code> is <a href="https://tools.ietf.org/html/rfc4648#section-4">base64</a>.</p>
+<p>The default <a href="https://json.org/">JSON</a> encoding for <code>Array[Byte]</code> is <a href="https://tools.ietf.org/html/rfc4648#section-4">base64</a>.</p>
 <p>In order to switch to a different base encoding in a particular scope define the a pair of implicits as in this example:</p>
 <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/JsonSpecificsSpec.scala#L57-L72" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Decoder, Encoder, Json}
 import io.bullet.borer.encodings.BaseEncoding
@@ -270,10 +272,54 @@ Json.encode(binaryData).toUtf8String ==&gt; &quot;&quot;&quot;&quot;3q2+7w==&quo
 
   Json.encode(binaryData).toUtf8String ==&gt; &quot;&quot;&quot;&quot;54s575a&quot;&quot;&quot;&quot;
 }</code></pre>
+<h2><a href="#json-pretty-printing" name="json-pretty-printing" class="anchor"><span class="anchor-link"></span></a>JSON Pretty Printing</h2>
+<p>Normally <em>borer</em> will output JSON in the most compact form, with no whitespace padding anywhere. However, you can enable &ldquo;pretty&rdquo; JSON rendering as shown here:</p>
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/JsonSpecificsSpec.scala#L78-L120" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Codec, Json}
+import io.bullet.borer.derivation.MapBasedCodecs.*
+
+sealed trait Animal derives Codec.All
+case class Dog(age: Int, name: String)                      extends Animal
+case class Cat(weight: Double, color: String, home: String) extends Animal
+case class Mouse(colorRGB: List[Int], tail: Boolean)        extends Animal
+
+val animals = List(
+  Dog(5, &quot;Rufus&quot;),
+  Cat(4.7, &quot;red&quot;, &quot;next door&quot;),
+  Mouse(colorRGB = List(73, 42, 64), tail = false),
+)
+
+Json
+  .encode(animals)
+  .withPrettyRendering(indent = 2) // enables pretty printing
+  .toUtf8String ==&gt;
+&quot;&quot;&quot;|[
+   |  {
+   |    &quot;Dog&quot;: {
+   |      &quot;age&quot;: 5,
+   |      &quot;name&quot;: &quot;Rufus&quot;
+   |    }
+   |  },
+   |  {
+   |    &quot;Cat&quot;: {
+   |      &quot;weight&quot;: 4.7,
+   |      &quot;color&quot;: &quot;red&quot;,
+   |      &quot;home&quot;: &quot;next door&quot;
+   |    }
+   |  },
+   |  {
+   |    &quot;Mouse&quot;: {
+   |      &quot;colorRGB&quot;: [
+   |        73,
+   |        42,
+   |        64
+   |      ],
+   |      &quot;tail&quot;: false
+   |    }
+   |  }
+   |]&quot;&quot;&quot;.stripMargin</code></pre>
 <h2><a href="#when-not-to-use-for-json" name="when-not-to-use-for-json" class="anchor"><span class="anchor-link"></span></a>When (not) to use <em>borer</em> for JSON</h2>
-<p>Since <em>borer</em> treats <a href="http://json.org/">JSON</a> as a binary format and reads/writes from/to raw bytes it isn&rsquo;t optimized for consuming or producing Strings as input or output. (Strings have to first be UTF-8 encoded in order to be readable by <em>borer</em>.)<br> So, if you need to frequently consume <code>String</code> input other <a href="http://json.org/">JSON</a> libraries will likely perform better. Also, if you need to manipulate the <a href="http://json.org/">JSON</a> structures in any way between (de)serializing from/to the wire and from/to your data model then <em>borer</em> will not help you and a DOM/AST-based <a href="http://json.org/">JSON</a> solution (like <a href="https://circe.github.io/circe/">Circe</a>) will likely be the better choice.</p>
-<p>However, if all you need is an efficient way to convert raw network- or disk-bytes holding UTF-8 encoded <a href="http://json.org/">JSON</a> to and from your data model types, with no (or few) dependencies and maybe even with the option to target <a href="http://cbor.io/">CBOR</a> with no additional work required from your side, then <em>borer</em> should be a good choice.</p><div class="callout note "><div class="callout-title">Note</div>
-<p>Since <em>borer</em> doesn&rsquo;t really work with <code>String</code> and <code>Char</code>, but rather raw bytes only, it also doesn&rsquo;t support encoding to a &ldquo;pretty&rdquo;, i.e. nicely formatted, JSON representation.<br> <em>borer</em> always outputs <a href="http://json.org/">JSON</a> in the most compact form. (It can, of course, read &ldquo;pretty&rdquo; <a href="http://json.org/">JSON</a> documents without any issue.) </p></div>
+<p>Since <em>borer</em> treats <a href="https://json.org/">JSON</a> as a binary format and reads/writes from/to raw bytes it isn&rsquo;t optimized for consuming or producing Strings as input or output. (Strings have to first be UTF-8 encoded in order to be readable by <em>borer</em>.)<br> So, if you need to frequently consume <code>String</code> input other <a href="https://json.org/">JSON</a> libraries will likely perform better. Also, if you need to manipulate the <a href="https://json.org/">JSON</a> structures in any way between (de)serializing from/to the wire and from/to your data model then <em>borer</em> will not help you and a DOM/AST-based <a href="https://json.org/">JSON</a> solution (like <a href="https://circe.github.io/circe/">Circe</a>) will likely be the better choice.</p>
+<p>However, if all you need is an efficient way to convert raw network- or disk-bytes holding UTF-8 encoded <a href="https://json.org/">JSON</a> to and from your data model types, with no (or few) dependencies and maybe even with the option to target <a href="https://cbor.io/">CBOR</a> with no additional work required from your side, then <em>borer</em> should be a good choice.</p>
 <h2><a href="#comparison-with-other-scala-json-libraries" name="comparison-with-other-scala-json-libraries" class="anchor"><span class="anchor-link"></span></a>Comparison with other Scala JSON Libraries</h2>
 <p>(Additions, corrections, improvement suggestions very welcome, especially to this section!)</p>
 <hr/>
@@ -285,13 +331,13 @@ Json.encode(binaryData).toUtf8String ==&gt; &quot;&quot;&quot;&quot;3q2+7w==&quo
   <li>very mature</li>
   <li>allows for extensive DOM-manipulation</li>
   <li>many integration option already available</li>
-  <li>compatible with <a href="https://www.scala-js.org/">scala.js</a></li>
+  <li>compatible with <a href="https://www.scala-js.org/">scala.js</a> and [Scala Native]</li>
 </ul></div><div class="cons">
 <ul>
   <li>depends on <code>cats-core</code></li>
   <li>type class derivation can be slow (at compile time)</li>
-  <li><em>borer</em> decodes <a href="http://json.org/">JSON</a> more than twice as fast</li>
-  <li>no <a href="http://cbor.io/">CBOR</a> support</li>
+  <li><em>borer</em> decodes <a href="https://json.org/">JSON</a> more than twice as fast</li>
+  <li>no <a href="https://cbor.io/">CBOR</a> support</li>
 </ul></div>
 <hr/>
 <dl>
@@ -306,13 +352,14 @@ Json.encode(binaryData).toUtf8String ==&gt; &quot;&quot;&quot;&quot;3q2+7w==&quo
   <li>essentially unmaintained</li>
   <li>no direct support for case classes w/ more than 22 members</li>
   <li>no type class derivation for ADTs</li>
-  <li><em>borer</em> decodes <a href="http://json.org/">JSON</a> more than 3 times as fast</li>
-  <li>not compatible with <a href="https://www.scala-js.org/">scala.js</a></li>
-  <li>no <a href="http://cbor.io/">CBOR</a> support</li>
+  <li><em>borer</em> decodes <a href="https://json.org/">JSON</a> more than 3 times as fast</li>
+  <li>not compatible with <a href="https://www.scala-js.org/">scala.js</a> and [Scala Native]</li>
+  <li>no <a href="https://cbor.io/">CBOR</a> support</li>
+  <li>no updates since Dec 2021</li>
 </ul></div>
 <hr/>
 <dl>
-  <dt><a href="http://www.lihaoyi.com/upickle/">µPickle</a></dt>
+  <dt><a href="https://com-lihaoyi.github.io/upickle/">µPickle</a></dt>
   <dd>pull-style, type class-based design</dd>
 </dl><div class="pros">
 <ul>
@@ -324,8 +371,9 @@ Json.encode(binaryData).toUtf8String ==&gt; &quot;&quot;&quot;&quot;3q2+7w==&quo
 <ul>
   <li>no support for case classes w/ more than 64 members</li>
   <li>no support for manual (no-macro) codec construction</li>
-  <li><em>borer</em> decodes <a href="http://json.org/">JSON</a> more than 4 times as fast</li>
-  <li>no <a href="http://cbor.io/">CBOR</a> support</li>
+  <li><em>borer</em> decodes <a href="https://json.org/">JSON</a> more than 4 times as fast</li>
+  <li>no [Scala Native] support</li>
+  <li>no <a href="https://cbor.io/">CBOR</a> support</li>
 </ul></div>
 <hr/>
 <dl>
@@ -339,8 +387,8 @@ Json.encode(binaryData).toUtf8String ==&gt; &quot;&quot;&quot;&quot;3q2+7w==&quo
 <ul>
   <li>no type class-based API</li>
   <li>several non-Scala dependencies</li>
-  <li>not compatible with <a href="https://www.scala-js.org/">scala.js</a></li>
-  <li><em>borer</em> decodes <a href="http://json.org/">JSON</a> about 20% faster</li>
+  <li>not compatible with <a href="https://www.scala-js.org/">scala.js</a> and [Scala Native]</li>
+  <li><em>borer</em> decodes <a href="https://json.org/">JSON</a> about 20% faster</li>
 </ul></div>
 <hr/>
 <dl>
@@ -349,16 +397,16 @@ Json.encode(binaryData).toUtf8String ==&gt; &quot;&quot;&quot;&quot;3q2+7w==&quo
 </dl><div class="pros">
 <ul>
   <li>zero dependencies</li>
-  <li>very high performance (about 15% faster <a href="http://json.org/">JSON</a> decoding than <em>borer</em>)</li>
+  <li>very high performance (about 15% faster <a href="https://json.org/">JSON</a> decoding than <em>borer</em>)</li>
   <li>support out of the box for <em>all</em> Scala collections and <code>java.time.*</code> classes</li>
   <li>highly configurable</li>
-  <li>has <a href="https://www.scala-js.org/">scala.js</a> support</li>
+  <li>compatible with <a href="https://www.scala-js.org/">scala.js</a> and [Scala Native]</li>
 </ul></div><div class="cons">
 <ul>
   <li>very low-level core API</li>
   <li>entirely macro-based high-level API</li>
   <li>no pre-defined AST/DOM</li>
-  <li>no <a href="http://cbor.io/">CBOR</a> support</li>
+  <li>no <a href="https://cbor.io/">CBOR</a> support</li>
 </ul></div>
 <hr/>
 </div>
@@ -369,7 +417,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.14.1
+1.15.0
 </span>
 </div>
 </article>
