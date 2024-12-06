@@ -288,7 +288,7 @@ lazy val derivation = crossProject(JSPlatform, NativePlatform, JVMPlatform)
   .settings(releaseSettings)
   .settings(
     moduleName := "borer-derivation",
-    libraryDependencies ++= Seq(/* macrolizer.value, */ munit.value), // TODO port macrolizer to scala native
+    libraryDependencies ++= Seq( /* macrolizer.value, */ munit.value), // TODO port macrolizer to scala native
   )
   .jsSettings(scalajsSettings: _*)
 
@@ -358,7 +358,7 @@ lazy val site = project
       java.awt.Desktop.getDesktop.browse(new java.net.URI(uri))
       state
     },
-    Compile / paradox / version := "1.14.1",
+    Compile / paradox / version := "1.15.0",
     paradoxProperties ++= Map(
       "image.base_url" -> ".../assets/images",
       "github.base_url" -> {
