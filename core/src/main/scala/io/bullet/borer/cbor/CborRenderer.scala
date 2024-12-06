@@ -8,10 +8,10 @@
 
 package io.bullet.borer.cbor
 
-import java.nio.charset.StandardCharsets.UTF_8
-
-import io.bullet.borer._
+import io.bullet.borer.*
 import io.bullet.borer.internal.{Renderer, Util}
+
+import java.nio.charset.StandardCharsets.UTF_8
 
 /**
  * Encapsulates basic CBOR encoding logic.
@@ -111,5 +111,5 @@ final private[borer] class CborRenderer(var out: Output) extends Renderer:
        v += majorType; out
      }).writeByte(v.toByte)
 
-object CborRenderer extends (Output => CborRenderer):
-  def apply(out: Output) = new CborRenderer(out)
+object CborRenderer extends ((Output, Borer.EncodingConfig) => CborRenderer):
+  def apply(out: Output, config: Borer.EncodingConfig) = new CborRenderer(out)

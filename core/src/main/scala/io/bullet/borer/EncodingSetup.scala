@@ -8,11 +8,10 @@
 
 package io.bullet.borer
 
-import java.nio.charset.StandardCharsets.UTF_8
-import java.nio.ByteBuffer
-
 import io.bullet.borer.internal.Renderer
 
+import java.nio.charset.StandardCharsets.UTF_8
+import java.nio.ByteBuffer
 import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 
@@ -80,6 +79,8 @@ object EncodingSetup:
 
   sealed trait JsonApi[T, Config <: Borer.EncodingConfig] extends Api[Config]:
 
+    def withPrettyRendering(indent: Int = 2): this.type
+
     /**
      * Short-cut for encoding to a plain byte array, throwing an exception in case of any failures,
      * and then immediately UTF-8 decoding into a [[String]].
@@ -91,10 +92,13 @@ object EncodingSetup:
       target: Target,
       defaultConfig: Config,
       defaultWrapper: Receiver.Transformer[Config],
-      rendererCreator: Output => Renderer)
+      rendererCreator: (Output, Config) => Renderer)
       extends CommonApi.Impl[Config](defaultConfig, defaultWrapper) with JsonApi[T, Config] with Sealed[Output, Any]:
 
     private[this] var _output: Output = _
+
+    def withPrettyRendering(indent: Int): Impl.this.type =
+      withConfig(config.asInstanceOf[Json.EncodingConfig].copy(indent = indent).asInstanceOf[Config])
 
     def toUtf8String: String = new String(toByteArray, UTF_8)
 
@@ -119,37 +123,37 @@ object EncodingSetup:
       this.asInstanceOf[Sealed[op.Out, R]]
 
     def result: Any =
-      val renderer = rendererCreator(_output)
+      val renderer = rendererCreator(_output, config)
       try render(renderer).out.result()
       catch
         case e: Borer.Error[_] => throw e.withOut(renderer.out)
         case NonFatal(e)       => throw new Borer.Error.General(renderer.out, e)
 
     def resultTry: Try[Any] =
-      val renderer = rendererCreator(_output)
+      val renderer = rendererCreator(_output, config)
       try Success(render(renderer).out.result())
       catch
         case e: Borer.Error[_] => Failure(e.withOut(renderer.out))
         case NonFatal(e)       => Failure(new Borer.Error.General(renderer.out, e))
 
     def resultEither: Either[Borer.Error[Output], Any] =
-      val renderer = rendererCreator(_output)
+      val renderer = rendererCreator(_output, config)
       try Right(render(renderer).out.result())
       catch
         case e: Borer.Error[_] => Left(e.withOut(renderer.out))
         case NonFatal(e)       => Left(new Borer.Error.General(renderer.out, e))
 
-    def output: Output = render(rendererCreator(_output)).out
+    def output: Output = render(rendererCreator(_output, config)).out
 
     def outputTry: Try[Output] =
-      val renderer = rendererCreator(_output)
+      val renderer = rendererCreator(_output, config)
       try Success(render(renderer).out)
       catch
         case e: Borer.Error[_] => Failure(e.withOut(renderer.out))
         case NonFatal(e)       => Failure(new Borer.Error.General(renderer.out, e))
 
     def outputEither: Either[Borer.Error[Output], Output] =
-      val renderer = rendererCreator(_output)
+      val renderer = rendererCreator(_output, config)
       try Right(render(renderer).out)
       catch
         case e: Borer.Error[_] => Left(e.withOut(renderer.out))

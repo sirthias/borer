@@ -8,7 +8,7 @@
 
 package io.bullet.borer
 
-import io.bullet.borer.output.{ToByteArrayOutput, ToByteBufferOutput, ToFileOutput, ToOutputStreamOutput, ToUnitOutput}
+import io.bullet.borer.output.*
 
 import scala.annotation.tailrec
 

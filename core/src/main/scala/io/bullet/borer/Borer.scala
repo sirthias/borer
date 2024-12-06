@@ -8,9 +8,9 @@
 
 package io.bullet.borer
 
-import io.bullet.borer.cbor._
+import io.bullet.borer.cbor.*
 import io.bullet.borer.internal.Util
-import io.bullet.borer.json._
+import io.bullet.borer.json.*
 
 import scala.annotation.unchecked.uncheckedVariance
 
@@ -52,7 +52,7 @@ case object Cbor extends Target:
       output: Output,
       config: EncodingConfig = EncodingConfig.default,
       receiverWrapper: Receiver.Transformer[EncodingConfig] = CborValidation.wrapper): Writer =
-    new Writer(output, receiverWrapper(CborRenderer(output), config), this, config)
+    new Writer(output, receiverWrapper(CborRenderer(output, config), config), this, config)
 
   /**
    * Constructs a new [[Reader]] that reads CBOR from the given [[Input]].
@@ -211,7 +211,7 @@ case object Json extends Target:
       output: Output,
       config: EncodingConfig = EncodingConfig.default,
       receiverWrapper: Receiver.Transformer[EncodingConfig] = Receiver.nopTransformer): Writer =
-    new Writer(output, receiverWrapper(JsonRenderer(output), config), null, config)
+    new Writer(output, receiverWrapper(JsonRenderer(output, config), config), null, config)
 
   /**
    * Constructs a new [[Reader]] that reads JSON from the given [[Input]].
@@ -227,12 +227,14 @@ case object Json extends Target:
 
   final case class EncodingConfig(
       bufferSize: Int = 1024,
-      allowBufferCaching: Boolean = true
+      allowBufferCaching: Boolean = true,
+      indent: Int = 0
   ) extends Borer.EncodingConfig:
 
     def compressFloatingPointValues = false
 
     if (bufferSize < 8) throw new IllegalArgumentException(s"bufferSize must be >= 8, but was $bufferSize")
+    if (indent < 0) throw new IllegalArgumentException(s"indent must be non-negative, but was $indent")
 
   object EncodingConfig:
     val default = EncodingConfig()
