@@ -26,12 +26,24 @@ trait Output { outer =>
   def writeBytes(a: Byte, b: Byte, c: Byte): Self
   def writeBytes(a: Byte, b: Byte, c: Byte, d: Byte): Self
 
+  /**
+   * Writes the given 16-bit value to the output using NETWORK BYTE order (i.e. BIG ENDIAN),
+   * independently of the platform's endianess.
+   */
   def writeShort(value: Short): Self =
     writeBytes((value >> 8).toByte, value.toByte)
 
+  /**
+   * Writes the given 32-bit value to the output using NETWORK BYTE order (i.e. BIG ENDIAN),
+   * independently of the platform's endianess.
+   */
   def writeInt(value: Int): Self =
     writeBytes((value >> 24).toByte, (value >> 16).toByte, (value >> 8).toByte, value.toByte)
 
+  /**
+   * Writes the given 64-bit value to the output using NETWORK BYTE order (i.e. BIG ENDIAN),
+   * independently of the platform's endianess.
+   */
   def writeLong(value: Long): Self =
     writeInt((value >> 32).toInt).writeInt(value.toInt).asInstanceOf[Self]
 
