@@ -70,5 +70,5 @@ object Float16:
     else
       val rounded2 = lfbits >>> 23; // tmp exp for subnormal calc
       sign | ((fbits & 0x7FFFFF | 0x800000) + // add subnormal bit
-        (0x800000 >>> rounded2 - 102) >>>     // round depending on cut off
-        126 - rounded2)                       // div by 2^(1-(exp-127+15)) and >> 13 | exp=0
+        (0x800000 >>> rounded2 - 102) >>> // round depending on cut off
+        126 - rounded2) // div by 2^(1-(exp-127+15)) and >> 13 | exp=0

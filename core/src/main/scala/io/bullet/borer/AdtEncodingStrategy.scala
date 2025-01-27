@@ -202,7 +202,7 @@ object AdtEncodingStrategy:
               case DataItem.Break | DataItem.EndOfInput => failNoTypeId()
 
               case _ => // the map entry is not the type id,
-                stash.appendElementFrom(r)  // so read and stash the map entry value
+                stash.appendElementFrom(r) // so read and stash the map entry value
                 rec(remaining - 1, mapSize) // and recurse
           else failNoTypeId()
 
