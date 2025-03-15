@@ -11,14 +11,7 @@ package io.bullet.borer
 import io.bullet.borer.encodings.BaseEncoding
 import io.bullet.borer.internal.Util
 
-import java.lang.{
-  Boolean as JBoolean,
-  Byte as JByte,
-  Double as JDouble,
-  Float as JFloat,
-  Long as JLong,
-  Short as JShort
-}
+import java.lang.{Boolean as JBoolean, Byte as JByte, Double as JDouble, Float as JFloat, Long as JLong, Short as JShort}
 import java.math.{BigDecimal as JBigDecimal, BigInteger as JBigInteger}
 import scala.annotation.{nowarn, tailrec, threadUnsafe}
 import scala.collection.{mutable, Factory}
@@ -51,7 +44,12 @@ object Decoder extends LowPrioDecoders:
   /**
    * Creates a [[Decoder]] from the given function.
    */
-  inline def apply[T](implicit decoder: Decoder[T]): Decoder[T] = decoder
+  inline def apply[T](decoder: Decoder[T]): Decoder[T] = decoder
+
+  /**
+   * Gets a given [[Decoder]] for [[T]].
+   */
+  inline def of[T: Decoder]: Decoder[T] = summon
 
   /**
    * Creates a [[Decoder]] that decodes a product instance from a simple array of values.

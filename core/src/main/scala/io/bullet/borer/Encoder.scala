@@ -11,14 +11,7 @@ package io.bullet.borer
 import io.bullet.borer.encodings.BaseEncoding
 import io.bullet.borer.internal.{ElementDeque, Util}
 
-import java.lang.{
-  Boolean as JBoolean,
-  Byte as JByte,
-  Double as JDouble,
-  Float as JFloat,
-  Long as JLong,
-  Short as JShort
-}
+import java.lang.{Boolean as JBoolean, Byte as JByte, Double as JDouble, Float as JFloat, Long as JLong, Short as JShort}
 import java.math.{BigDecimal as JBigDecimal, BigInteger as JBigInteger}
 import scala.annotation.{tailrec, threadUnsafe}
 import scala.collection.LinearSeq
@@ -55,7 +48,12 @@ object Encoder extends LowPrioEncoders:
   /**
    * Creates an [[Encoder]] from the given function.
    */
-  inline def apply[T](implicit encoder: Encoder[T]): Encoder[T] = encoder
+  inline def apply[T](encoder: Encoder[T]): Encoder[T] = encoder
+
+  /**
+   * Gets a given [[Encoder]] for [[T]].
+   */
+  inline def of[T: Encoder]: Encoder[T] = summon
 
   /**
    * Creates an [[Encoder]] that encodes a product instance as a simple array of values.
