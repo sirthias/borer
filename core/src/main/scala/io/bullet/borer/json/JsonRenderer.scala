@@ -46,11 +46,12 @@ import scala.annotation.tailrec
  */
 final private[borer] class JsonRenderer(var out: Output, indent: Int) extends Renderer:
 
-  private[this] var level: Int           = _ // valid range: 0 - 63
-  private[this] var levelType: Long      = _ // keeps the type of each level as a bit map: 0 -> Array, 1 -> Map
-  private[this] var levelCount: Long     = _ // for each level: last bit of element count
-  private[this] var sepRequired: Boolean = _ // whether a separator required before the next element
-  private[this] var currentIndent: Int   = _ // the number of space chars to indent with at the current level
+  private[this] var level: Int             = _ // valid range: 0 - 63
+  private[this] var levelType: Long        = _ // keeps the type of each level as a bit map: 0 -> Array, 1 -> Map
+  private[this] var levelCount: Long       = _ // for each level: last bit of element count
+  private[this] var sepRequired: Boolean   = _ // whether a separator is required before the next element
+  private[this] var currentIndent: Int     = _ // the number of space chars to indent with at the current level
+  private[this] var indentPending: Boolean = _ // true if the next array or map element must be prefixed with an indent
 
   def onNull(): Unit =
     if (isNotMapKey)
@@ -213,7 +214,7 @@ final private[borer] class JsonRenderer(var out: Output, indent: Int) extends Re
         sepRequired = false
       else o.failUnsupported("more than 64 JSON Array/Object nesting levels")
       currentIndent += indent
-      if (currentIndent > 0) o.writeAndIndent('[') else o.writeAsByte('[')
+      if (currentIndent > 0) o.writeAndMarkIndentPending('[') else o.writeAsByte('[')
     else out.failCannotBeMapKey("arrays")
 
   def onMapHeader(length: Long): Unit =
@@ -229,7 +230,7 @@ final private[borer] class JsonRenderer(var out: Output, indent: Int) extends Re
         sepRequired = false
       else o.failUnsupported("more than 64 JSON Array/Object nesting levels")
       currentIndent += indent
-      if (currentIndent > 0) o.writeAndIndent('{') else o.writeAsByte('{')
+      if (currentIndent > 0) o.writeAndMarkIndentPending('{') else o.writeAsByte('{')
     else out.failCannotBeMapKey("maps")
 
   def onBreak(): Unit =
@@ -240,7 +241,7 @@ final private[borer] class JsonRenderer(var out: Output, indent: Int) extends Re
       levelCount >>>= 1
       currentIndent -= indent
     else out.failValidation("Received BREAK without corresponding ArrayStart or MapStart")
-    val o = if (indent > 0) out.writeAsByte('\n').writeIndent() else out
+    val o = if (indent > 0 && !indentPending) out.writeAsByte('\n').writeIndent() else out
     out = o.writeAsByte(c).count() // level-entering items are only counted when the level is exited, not when entered
 
   def onTag(value: Tag): Unit         = out.failUnsupported("CBOR tags")
@@ -266,13 +267,21 @@ final private[borer] class JsonRenderer(var out: Output, indent: Int) extends Re
             (','.toInt + ((':'.toInt - ','.toInt) & ~((levelType.toInt & levelCount.toInt & 1) - 1))).toByte
           )
         } else writeSepIndented()
-      } else out
+      } else if (indent > 0 && indentPending) writePendingIndent()
+      else out
 
     private def writeSepIndented(): Output =
-      if ((levelType & levelCount & 1) == 0) out.writeAndIndent(',') else out.writeAsBytes(':', ' ')
+      if ((levelType & levelCount & 1) == 0) {
+        out.writeAsBytes(',', '\n').writeIndent()
+      } else out.writeAsBytes(':', ' ')
 
-    private def writeAndIndent(c: Char): Output =
-      out.writeAsBytes(c, '\n').writeIndent()
+    private def writeAndMarkIndentPending(c: Char): Output =
+      indentPending = true
+      out.writeAsByte(c)
+
+    private def writePendingIndent(): Output =
+      indentPending = false
+      out.writeAsByte('\n').writeIndent()
 
     private def writeIndent(): Output =
       var o: Output = out
