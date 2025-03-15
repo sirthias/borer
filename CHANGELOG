@@ -1,3 +1,11 @@
+Version 1.16.0 (2025-03-15)
+---------------------------
+
+- Fixed pretty JSON rendering of empty arrays and maps
+- Introduce `Encoder.of` and `Decoder.of` (#750)
+- Upgraded to Scala 3.3.5, Scala.js 1.18.2 and Scala Native 0.5.7
+
+
 Version 1.15.0 (2024-12-06)
 ---------------------------
 
