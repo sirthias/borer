@@ -194,7 +194,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.15.0
+<i class="md-icon" title="Version">label_outline</i> 1.16.0
 </label>
 </li>
 </ul>
@@ -249,7 +249,7 @@ trait Provider[T]:
 <p>The <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Input.scala">Input</a> trait isn&rsquo;t particularly hard to implement, especially since it merely has to support single-pass access to the underlying bytes with minimal buffering and without random access.</p>
 <h2><a href="#output" name="output" class="anchor"><span class="anchor-link"></span></a>Output</h2>
 <p>On the encoding side <em>borer</em> can either produce any type <code>T</code> for which an <code>Output.ToTypeProvider[T]</code> is available, or &ldquo;push&rdquo; the output into a value of type <code>T</code> if an <code>Output.ToValueProvider[T]</code> is available:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Output.scala#L47-L60" target="_blank" title="Go to snippet source">source</a><code class="language-scala">/**
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Output.scala#L59-L72" target="_blank" title="Go to snippet source">source</a><code class="language-scala">/**
  * Responsible for providing an Output that produces instances of [[T]].
  */
 trait ToTypeProvider[T]:
@@ -308,7 +308,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.15.0
+1.16.0
 </span>
 </div>
 </article>
