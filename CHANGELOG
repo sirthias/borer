@@ -1,3 +1,10 @@
+Version 1.16.1 (2025-04-29)
+---------------------------
+
+- Fixed pretty JSON rendering of empty arrays and maps
+- Upgraded to Scala.js 1.19.0
+
+
 Version 1.16.0 (2025-03-15)
 ---------------------------
 

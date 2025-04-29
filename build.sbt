@@ -358,7 +358,7 @@ lazy val site = project
       java.awt.Desktop.getDesktop.browse(new java.net.URI(uri))
       state
     },
-    Compile / paradox / version := "1.16.0",
+    Compile / paradox / version := "1.16.1",
     paradoxProperties ++= Map(
       "image.base_url" -> ".../assets/images",
       "github.base_url" -> {
