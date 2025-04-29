@@ -19,37 +19,43 @@ borer
 
 Complete
 : _borer_ supports all [CBOR] and [JSON] features, incl. "over long" integers, 16-bit half-precision floats,
-  `BigInteger` and `BigDecimal`, custom tags and "simple values".
-  
+`BigInteger` and `BigDecimal`, custom tags and "simple values".
+
 Lightweight
 : _borer_ has zero external dependencies and its code is relatively compact.
 
 Fast
 : _borer_ features DOM-less pull-parsers with one-element look-ahead and is designed for a good tradeoff between
-  performance and usability. It supports stream parsing (in constant memory, even for very large files) and consistently
-  @ref:[outperforms](borer-core/JSON-performance.md) most other serialization libraries targeting [CBOR] or
-  [JSON] that are available to [Scala] developers.
- 
+performance and usability. It supports stream parsing (in constant memory, even for very large files) and consistently
+@ref:[outperforms](borer-core/JSON-performance.md) most other serialization libraries targeting [CBOR] or
+[JSON] that are available to [Scala] developers.
+
 Flexible
 : _borer_ tries hard to make integration into your applications environment as seamless as possible.
-  The type-class based design makes a lot of aspects deeply and easily customizable.<br>
-  Also, since _borer_ offers a unified API for both, [CBOR] and [JSON], it's very easy to provide "bilingual" REST APIs
-  that can consume and produce both formats interchangibly. 
+The type-class based design makes a lot of aspects deeply and easily customizable.<br>
+Also, since _borer_ offers a unified API for both, [CBOR] and [JSON], it's very easy to provide "bilingual" REST APIs
+that can consume and produce both formats interchangibly.
 
 Debuggable
 : _borer_ offers convenient in-depth logging of the encoding/decoding process that is very helpful for debugging
-  serialization issues, especially when working with a binary format like [CBOR].
+serialization issues, especially when working with a binary format like [CBOR].
 
-Scala JS
-: All _borer_ modules (except for `borer-compat-akka` and `borer-compat-pekko`) support [scala.js].
+Scala JS and Scala Native
+: All _borer_ modules (except for `borer-compat-akka` and `borer-compat-pekko`) support [scala.js] as well
+as [Scala Native].
 
 
-  [Scala]: https://www.scala-lang.org/
-  [scala.js]: https://www.scala-js.org/
-  [CBOR]: http://cbor.io/
-  [JSON]: http://json.org/
-  
-  
+[Scala]: https://www.scala-lang.org/
+
+[scala.js]: https://www.scala-js.org/
+
+[Scala Native]: https://scala-native.org/
+
+[CBOR]: http://cbor.io/
+
+[JSON]: http://json.org/
+
+
 @@@index
 
 * [-](design-principles.md)
