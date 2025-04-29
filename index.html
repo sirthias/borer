@@ -202,17 +202,17 @@ sirthias/borer/
 <h1><a href="#borer" name="borer" class="anchor"><span class="anchor-link"></span></a>borer</h1>
 <dl>
   <dt>Complete</dt>
-  <dd><em>borer</em> supports all <a href="http://cbor.io/">CBOR</a> and <a href="http://json.org/">JSON</a> features, incl. &ldquo;over long&rdquo; integers, 16-bit half-precision floats,  <code>BigInteger</code> and <code>BigDecimal</code>, custom tags and &ldquo;simple values&rdquo;.</dd>
+  <dd><em>borer</em> supports all <a href="http://cbor.io/">CBOR</a> and <a href="http://json.org/">JSON</a> features, incl. &ldquo;over long&rdquo; integers, 16-bit half-precision floats, <code>BigInteger</code> and <code>BigDecimal</code>, custom tags and &ldquo;simple values&rdquo;.</dd>
   <dt>Lightweight</dt>
   <dd><em>borer</em> has zero external dependencies and its code is relatively compact.</dd>
   <dt>Fast</dt>
-  <dd><em>borer</em> features DOM-less pull-parsers with one-element look-ahead and is designed for a good tradeoff between  performance and usability. It supports stream parsing (in constant memory, even for very large files) and consistently  <a href="borer-core/JSON-performance.html">outperforms</a> most other serialization libraries targeting <a href="http://cbor.io/">CBOR</a> or  <a href="http://json.org/">JSON</a> that are available to <a href="https://www.scala-lang.org/">Scala</a> developers.</dd>
+  <dd><em>borer</em> features DOM-less pull-parsers with one-element look-ahead and is designed for a good tradeoff between performance and usability. It supports stream parsing (in constant memory, even for very large files) and consistently <a href="borer-core/JSON-performance.html">outperforms</a> most other serialization libraries targeting <a href="http://cbor.io/">CBOR</a> or <a href="http://json.org/">JSON</a> that are available to <a href="https://www.scala-lang.org/">Scala</a> developers.</dd>
   <dt>Flexible</dt>
-  <dd><em>borer</em> tries hard to make integration into your applications environment as seamless as possible.  The type-class based design makes a lot of aspects deeply and easily customizable.<br>  Also, since <em>borer</em> offers a unified API for both, <a href="http://cbor.io/">CBOR</a> and <a href="http://json.org/">JSON</a>, it&rsquo;s very easy to provide &ldquo;bilingual&rdquo; REST APIs  that can consume and produce both formats interchangibly.</dd>
+  <dd><em>borer</em> tries hard to make integration into your applications environment as seamless as possible. The type-class based design makes a lot of aspects deeply and easily customizable.<br> Also, since <em>borer</em> offers a unified API for both, <a href="http://cbor.io/">CBOR</a> and <a href="http://json.org/">JSON</a>, it&rsquo;s very easy to provide &ldquo;bilingual&rdquo; REST APIs that can consume and produce both formats interchangibly.</dd>
   <dt>Debuggable</dt>
-  <dd><em>borer</em> offers convenient in-depth logging of the encoding/decoding process that is very helpful for debugging  serialization issues, especially when working with a binary format like <a href="http://cbor.io/">CBOR</a>.</dd>
-  <dt>Scala JS</dt>
-  <dd>All <em>borer</em> modules (except for <code>borer-compat-akka</code> and <code>borer-compat-pekko</code>) support <a href="https://www.scala-js.org/">scala.js</a>.</dd>
+  <dd><em>borer</em> offers convenient in-depth logging of the encoding/decoding process that is very helpful for debugging serialization issues, especially when working with a binary format like <a href="http://cbor.io/">CBOR</a>.</dd>
+  <dt>Scala JS and Scala Native</dt>
+  <dd>All <em>borer</em> modules (except for <code>borer-compat-akka</code> and <code>borer-compat-pekko</code>) support <a href="https://www.scala-js.org/">scala.js</a> as well as <a href="https://scala-native.org/">Scala Native</a>.</dd>
 </dl>
 </div>
 <div>
