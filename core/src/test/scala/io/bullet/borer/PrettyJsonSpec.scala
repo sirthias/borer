@@ -38,10 +38,14 @@ class PrettyJsonSpec extends ByteArrayJsonSpec:
        |  ],
        |  "crs": {
        |    "type": "name",
-       |    "empty-array": [],
-       |    "empty-map": {},
        |    "properties": {
        |      "name": "urn:ogc:def:crs:EPSG::4326"
+       |    }
+       |  },
+       |  "foo": {
+       |    "bar": {
+       |      "empty-map": {},
+       |      "empty-arr": []
        |    }
        |  }
        |}""".stripMargin

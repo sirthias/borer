@@ -241,7 +241,7 @@ final private[borer] class JsonRenderer(var out: Output, indent: Int) extends Re
       levelCount >>>= 1
       currentIndent -= indent
     else out.failValidation("Received BREAK without corresponding ArrayStart or MapStart")
-    val o = if (indent > 0 && !indentPending) out.writeAsByte('\n').writeIndent() else out
+    val o = if (indent > 0 && !indentPending) out.writeAsByte('\n').writeIndent() else { indentPending = false; out }
     out = o.writeAsByte(c).count() // level-entering items are only counted when the level is exited, not when entered
 
   def onTag(value: Tag): Unit         = out.failUnsupported("CBOR tags")
