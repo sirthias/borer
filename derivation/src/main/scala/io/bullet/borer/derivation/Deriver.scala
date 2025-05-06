@@ -242,15 +242,44 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
     val flattened             = flattenedSubs[Encoder](rootNode, deepRecurse = false, includeEnumSingletonCases = true)
     val typeIdsAndNodesSorted = extractTypeIdsAndSort(rootNode, flattened)
 
+    def writeEnumSingletonTypeId(typeId: Long | String): Expr[Writer] =
+      typeId match
+        case x: Long   => '{ $w.writeLong(${ Expr(x) }) }
+        case x: String => '{ $w.writeString(${ Expr(x) }) }
+
+    def writeAdtValue[A: Type](
+        typeId: Long | String,
+        valueAsA: Expr[A],
+        encA: Expr[Encoder[A]]): Expr[Writer] =
+      typeId match
+        case x: Long   => '{ $self.writeAdtValue[A]($w, ${ Expr(x) }, $valueAsA)(using $encA) }
+        case x: String => '{ $self.writeAdtValue[A]($w, ${ Expr(x) }, $valueAsA)(using $encA) }
+
     def rec(ix: Int): Expr[Writer] =
       if (ix < typeIdsAndNodesSorted.length) {
         val (typeId, sub) = typeIdsAndNodesSorted(ix)
         if (sub.isEnumSingletonCase) {
           val enumRef = sub.enumRef.asExprOf[AnyRef]
-          val writeTypeId = typeId match
-            case x: Long   => '{ $w.writeLong(${ Expr(x) }) }
-            case x: String => '{ $w.writeString(${ Expr(x) }) }
-          '{ if ($value.asInstanceOf[AnyRef] eq $enumRef) $writeTypeId else ${ rec(ix + 1) } }
+          lazy val writeTypeId = writeEnumSingletonTypeId(typeId)
+          lazy val writeAsProduct = sub.tpe.asType match
+            case '[a] =>
+              val valueAsA = '{ $value.asInstanceOf[a] }
+              val encA = '{
+                new Encoder[a] {
+                  def write(w: Writer, value: a): Writer = {
+                    w.writeMapStart()
+                    w.writeBreak()
+                  }
+                }
+              }
+              writeAdtValue[a](typeId, valueAsA, encA)
+
+          '{
+            if ($value.asInstanceOf[AnyRef] eq $enumRef)
+              if ($self.enumCasesAsProduct) $writeAsProduct else $writeTypeId
+            else
+              ${ rec(ix + 1) }
+          }
         } else {
           val testType = sub.tpe match
             case AppliedType(x, _) => x
@@ -259,10 +288,7 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
             case '[a] =>
               val valueAsA = '{ $value.asInstanceOf[a] }
               val encA     = Expr.summon[Encoder[a]].getOrElse(fail(s"Cannot find given Encoder[${Type.show[a]}]"))
-              val writeKeyed = typeId match
-                case x: Long => '{ $self.writeAdtValue[a]($w, ${ Expr(x) }, $valueAsA)(using $encA) }
-                case x: String =>
-                  '{ $self.writeAdtValue[a]($w, ${ Expr(x) }, $valueAsA)(using $encA) }
+              val writeKeyed = writeAdtValue[a](typeId, valueAsA, encA)
               testType.asType match
                 case '[b] => '{ if ($value.isInstanceOf[b]) $writeKeyed else ${ rec(ix + 1) } }
           }
