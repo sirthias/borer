@@ -85,7 +85,7 @@ object ZBase32 extends LookupBaseEncoding("z-base32", 5, "ybndrfg8ejkmcpqxot1uwi
     val baa    = ByteArrayAccess.instance
 
     def decode(ix: Int): Long =
-      val c = chars(ix)
+      val c      = chars(ix)
       def fail() =
         throw new IllegalArgumentException(s""""${Util
             .show(chars)}" is not a valid $name encoding. '$c' at index $ix is not part of the $name alphabet.""")

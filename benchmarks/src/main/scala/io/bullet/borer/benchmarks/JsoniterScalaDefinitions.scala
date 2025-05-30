@@ -105,7 +105,7 @@ class JsoniterScalaModelBenchmark extends DomBenchmark {
       case "eu-lobby-country.json"   => JsonCodecMaker.make[EuLobbyCountry.RootInterface](CodecMakerConfig)
       case "eu-lobby-financial.json" => JsonCodecMaker.make[EuLobbyFinancial.RootInterface](CodecMakerConfig)
       case "eu-lobby-repr.json"      => JsonCodecMaker.make[EuLobbyRepr.RootInterface](CodecMakerConfig)
-      case "github-events.json" =>
+      case "github-events.json"      =>
         JsonCodecMaker
           .make[List[GithubEvents.RootInterface[GithubEvents.Head[GithubEvents.Repo1], GithubEvents.Forkee]]](
             CodecMakerConfig)

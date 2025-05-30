@@ -65,7 +65,7 @@ trait FromByteBufferInput:
     def readBytes(length: Long, pp: Input.PaddingProvider[Array[Byte]]): Array[Byte] =
       val remaining = buffer.remaining.toLong
       val len       = math.min(remaining, length).toInt
-      val bytes =
+      val bytes     =
         if (len > 0)
           val bytes = new Array[Byte](len)
           buffer.get(bytes, 0, len)

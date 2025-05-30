@@ -216,7 +216,7 @@ private[borer] object CborValidation:
     def onEndOfInput(): Unit =
       if (level >= 0)
         def remaining = levelRemaining(level)
-        val msg =
+        val msg       =
           (isMasked(MAP), isMasked(UNBOUNDED), isEvenNumberedElement) match
             case (false, false, _)    => s"$remaining more data items of definite-length array"
             case (false, true, _)     => "next array data item or BREAK"
@@ -238,8 +238,8 @@ private[borer] object CborValidation:
     @tailrec private def count(): Unit =
       val l = level
       if (l >= 0)
-        val remaining  = levelRemaining(l) - 1
-        def ok(): Unit = levelRemaining(l) = remaining
+        val remaining                                 = levelRemaining(l) - 1
+        def ok(): Unit                                = levelRemaining(l) = remaining
         def overflow(tpe: String, max: Long): Nothing =
           val msg = s"Unbounded $tpe length ${-remaining} is greater than the configured maximum of $max"
           throw new Borer.Error.Overflow(null, msg)

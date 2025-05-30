@@ -151,7 +151,7 @@ final class Writer(
 
   def writeMap[A: Encoder, B: Encoder](x: Map[A, B]): this.type =
     if (x.nonEmpty)
-      val iterator = x.iterator
+      val iterator             = x.iterator
       def writeEntries(): Unit =
         while (iterator.hasNext)
           val (k, v) = iterator.next()
