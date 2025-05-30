@@ -99,7 +99,7 @@ object circe {
       import DataItem.{Shifts => DIS}
 
       private[this] val arrayDecoder = Decoder.fromFactory(this, implicitly[Factory[Json, Vector[Json]]])
-      private[this] val mapDecoder =
+      private[this] val mapDecoder   =
         Decoder { r =>
           val buf = new scala.collection.mutable.ArrayBuilder.ofRef[(String, Json)]
           if (r.hasMapHeader)

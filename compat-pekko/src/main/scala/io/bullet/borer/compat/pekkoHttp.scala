@@ -174,7 +174,7 @@ trait PekkoHttpCompat {
   final def borerStreamUnmarshaller[T: Decoder](
       ess: EntityStreamingSupport): FromEntityUnmarshaller[Source[T, NotUsed]] =
     Unmarshaller.withMaterializer { implicit ec => implicit mat =>
-      val unmarshalSync = (byteString: ByteString) => Json.decode(byteString.toArray[Byte]).to[T].value
+      val unmarshalSync     = (byteString: ByteString) => Json.decode(byteString.toArray[Byte]).to[T].value
       val unmarshallingFlow =
         if (ess.parallelism > 1) {
           val unmarshalAsync = (byteString: ByteString) => Future(unmarshalSync(byteString))
@@ -210,7 +210,7 @@ trait PekkoHttpCompat {
       classTag: ClassTag[T]): ToEntityMarshaller[Source[T, NotUsed]] = {
 
     type Marshallings = List[Marshalling[MessageEntity]]
-    val contentType = ess.contentType
+    val contentType                                                    = ess.contentType
     val selectMarshalling: Marshallings => Option[() => MessageEntity] =
       contentType match {
         case _: ContentType.Binary | _: ContentType.WithFixedCharset | _: ContentType.WithMissingCharset =>

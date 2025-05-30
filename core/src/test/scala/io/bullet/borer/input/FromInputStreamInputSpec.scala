@@ -26,7 +26,7 @@ class FromInputStreamInputSpec extends BorerSuite:
     val bytes = newBytesIterator
 
     val inputStream = new InputStream {
-      def read() = ???
+      def read()                        = ???
       override def read(b: Array[Byte]) =
         if (bytes.hasNext)
           val chunk = random.nextInt(4) match
