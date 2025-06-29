@@ -295,8 +295,8 @@ object Logging:
 
     def levelCount =
       if (_level >= 0)
-        val count = _levelCount(_level)
-        val size  = _levelSize(_level)
+        val count    = _levelCount(_level)
+        val size     = _levelSize(_level)
         val rawCount =
           if (count >= 0)
             if (size >= 0) count          // bounded array

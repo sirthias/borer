@@ -80,7 +80,7 @@ class Utf8Spec extends BorerSuite:
       "\uDC56п\uD835\uDE90 ȴỏġ\uD835\uDECA\uD801\uDC3D!!!"
 
   def stressString(a: Int, b: Int, len: Int) =
-    val buf = new ListBuffer[Char]
+    val buf      = new ListBuffer[Char]
     val bigChars =
       stressTextB
         .foldLeft(List.empty[List[Char]]) {

@@ -61,7 +61,7 @@ object Utf8:
     @tailrec def decode8bit(b1: Int, si: Int, di: Int): Long =
       val byteCount = Integer.numberOfLeadingZeros(~b1) - 25
       var ndi       = di
-      val quad =
+      val quad      =
         bytes.length - si match
           case 0 => 0
           case 1 => bytes(si) << 24

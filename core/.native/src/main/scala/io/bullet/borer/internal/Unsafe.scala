@@ -48,7 +48,7 @@ object Unsafe:
       if (source.length > 0)
         val copySource =
           if (this.byteOrder != byteOrder)
-            val array = new Array[Short](source.length)
+            val array                               = new Array[Short](source.length)
             @tailrec def rec(ix: Int): Array[Short] =
               if (ix < array.length)
                 array(ix) = java.lang.Short.reverseBytes(source(ix))
@@ -65,7 +65,7 @@ object Unsafe:
       if (source.length > 0)
         val copySource =
           if (this.byteOrder != byteOrder)
-            val array = new Array[Int](source.length)
+            val array                             = new Array[Int](source.length)
             @tailrec def rec(ix: Int): Array[Int] =
               if (ix < array.length)
                 array(ix) = java.lang.Integer.reverseBytes(source(ix))
@@ -82,7 +82,7 @@ object Unsafe:
       if (source.length > 0)
         val copySource =
           if (this.byteOrder != byteOrder)
-            val array = new Array[Long](source.length)
+            val array                              = new Array[Long](source.length)
             @tailrec def rec(ix: Int): Array[Long] =
               if (ix < array.length)
                 array(ix) = java.lang.Long.reverseBytes(source(ix))
