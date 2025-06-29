@@ -107,8 +107,8 @@ object Dom:
       val longSize = byteCount
       val len      = longSize.toInt
       if (len.toLong != longSize) sys.error("byte stream with total size > Int.MaxValue cannot be compacted")
-      val result = new Array[Byte](len)
-      val iter   = bytesIterator
+      val result                             = new Array[Byte](len)
+      val iter                               = bytesIterator
       @tailrec def rec(ix: Int): Array[Byte] =
         if (ix < len)
           val chunk = iter.next()
@@ -194,8 +194,8 @@ object Dom:
       rec(0)
 
     final def toMap: HashMap[Element, Element] =
-      val k = keys
-      val v = values
+      val k                                                                     = keys
+      val v                                                                     = values
       @tailrec def rec(m: HashMap[Element, Element]): HashMap[Element, Element] =
         if (k.hasNext) rec(m.updated(k.next(), v.next())) else m
       rec(HashMap.empty)
@@ -205,8 +205,8 @@ object Dom:
      * result, if all keys are indeed `StringElem`s, or the first offending key element that is not a `StringElem`.
      */
     final def toStringKeyedMap: Either[Element, HashMap[String, Element]] =
-      val k = keys
-      val v = values
+      val k                                                                                    = keys
+      val v                                                                                    = values
       @tailrec def rec(m: HashMap[String, Element]): Either[Element, HashMap[String, Element]] =
         if (k.hasNext)
           k.next() match
@@ -331,11 +331,11 @@ object Dom:
         case DIS.Double       => w.writeDouble(x.asInstanceOf[DoubleElem].value)
         case DIS.NumberString => w.writeNumberString(x.asInstanceOf[NumberStringElem].value)
 
-        case DIS.String => w.writeString(x.asInstanceOf[StringElem].value)
+        case DIS.String    => w.writeString(x.asInstanceOf[StringElem].value)
         case DIS.TextStart =>
           x.asInstanceOf[TextStreamElem].elems.foldLeft(w.writeTextStart())(writeElement).writeBreak()
 
-        case DIS.Bytes => w.writeBytes(x.asInstanceOf[ByteArrayElem].bytes)
+        case DIS.Bytes      => w.writeBytes(x.asInstanceOf[ByteArrayElem].bytes)
         case DIS.BytesStart =>
           x.asInstanceOf[BytesStreamElem].elems.foldLeft(w.writeBytesStart())(writeElement).writeBreak()
 
@@ -348,15 +348,15 @@ object Dom:
           x.asInstanceOf[ArrayElem.Unsized].elems.foldLeft(w.writeArrayStart())(writeElement).writeBreak()
 
         case DIS.MapHeader =>
-          val m     = x.asInstanceOf[MapElem.Sized]
-          val array = m.elems
+          val m                                        = x.asInstanceOf[MapElem.Sized]
+          val array                                    = m.elems
           @tailrec def rec(w: Writer, ix: Int): w.type =
             if (ix < array.length) rec(w.write(array(ix)).write(array(ix + 1)), ix + 2) else w
           rec(w.writeMapHeader(m.size), 0)
 
         case DIS.MapStart =>
-          val m     = x.asInstanceOf[MapElem.Unsized]
-          val array = m.elems
+          val m                                        = x.asInstanceOf[MapElem.Unsized]
+          val array                                    = m.elems
           @tailrec def rec(w: Writer, ix: Int): w.type =
             if (ix < array.length) rec(w.write(array(ix)).write(array(ix + 1)), ix + 2) else w
           rec(w.writeMapStart(), 0).writeBreak()

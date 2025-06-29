@@ -141,7 +141,7 @@ object scodec {
     def readBytes(length: Long, pp: Input.PaddingProvider[ByteVector]) = {
       val remaining = byteVector.length - _cursor
       val len       = math.min(remaining, length)
-      val bytes =
+      val bytes     =
         if (len > 0) {
           val c = _cursor
           _cursor = c + len

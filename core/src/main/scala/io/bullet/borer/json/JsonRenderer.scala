@@ -124,11 +124,11 @@ final private[borer] class JsonRenderer(var out: Output, indent: Int) extends Re
   def onString(value: String): Unit =
     @tailrec def rec(out: Output, ix: Int): Output =
       if (ix < value.length)
-        var index = ix
+        var index  = ix
         val newOut =
           value.charAt(ix) match
-            case '"'  => out.writeEscaped('"')
-            case '\\' => out.writeEscaped('\\')
+            case '"'            => out.writeEscaped('"')
+            case '\\'           => out.writeEscaped('\\')
             case c if c >= 0x20 => // we re-encode the character (or surrogate pair) from UTF-16 to UTF-8 right here
               if (c > 0x7F)
                 var codePoint = c.toInt
@@ -161,11 +161,11 @@ final private[borer] class JsonRenderer(var out: Output, indent: Int) extends Re
   def onChars(buffer: Array[Char], length: Int): Unit =
     @tailrec def rec(out: Output, ix: Int): Output =
       if (ix < length)
-        var index = ix
+        var index  = ix
         val newOut =
           buffer(ix) match
-            case '"'  => out.writeEscaped('"')
-            case '\\' => out.writeEscaped('\\')
+            case '"'            => out.writeEscaped('"')
+            case '\\'           => out.writeEscaped('\\')
             case c if c >= 0x20 => // we re-encode the character (or surrogate pair) from UTF-16 to UTF-8 right here
               if (c > 0x7F)
                 var codePoint = c.toInt
@@ -313,8 +313,8 @@ final private[borer] class JsonRenderer(var out: Output, indent: Int) extends Re
 
           // for small numbers we can use the "fast-path"
           def phase2(i: Int): Output =
-            val q = div10(i)
-            val r = i - q * 10
+            val q      = div10(i)
+            val r      = i - q * 10
             val newOut =
               if (q != 0) phase2(q)
               else if (value < 0) out.writeAsByte('-')

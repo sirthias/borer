@@ -36,7 +36,7 @@ object cats {
   implicit def iorDecoder[A: Decoder, B: Decoder]: Decoder[Ior[A, B]] =
     Decoder { r =>
       var breakExpected = false
-      val open = if (r.tryReadArrayStart()) { breakExpected = true; -1L }
+      val open          = if (r.tryReadArrayStart()) { breakExpected = true; -1L }
       else r.readArrayHeader()
       val result =
         r.readInt() match {
@@ -107,7 +107,7 @@ object cats {
   implicit def validatedDecoder[E: Decoder, A: Decoder]: Decoder[Validated[E, A]] =
     Decoder { r =>
       val breakExpected = r.tryReadArrayStart() || { r.readMapHeader(1); false }
-      val result =
+      val result        =
         r.readInt() match {
           case 0 => Validated.Invalid(r.read[E]())
           case 1 => Validated.Valid(r.read[A]())

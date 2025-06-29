@@ -232,7 +232,7 @@ abstract class AbstractJsonSuiteSpec extends AbstractBorerSpec:
     }.getMessage ==> "Illegal UTF-8 character encoding (input position 1)"
 
     val strings = ('a' to 'z').mkString.inits.toList.init
-    val all = for {
+    val all     = for {
       escapes <- "abdgkpv".inits.toList.init
       str     <- strings
     } yield escapes.foldLeft(str)((s, c) => s.replace(c, '\n'))

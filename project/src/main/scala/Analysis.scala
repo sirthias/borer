@@ -36,7 +36,7 @@ object Analysis {
         val libPerf = perf(library)
         val factors = borerPerf.map { case (param, borerScore) => param -> (borerScore / libPerf(param)) }
         val avg     = factors.map(_._2).sum / factors.size
-        val mean = {
+        val mean    = {
           val sorted = factors.sortBy(_._2)
           val mid    = factors.size / 2
           if ((factors.size & 1) == 1) sorted(mid)._2

@@ -120,7 +120,7 @@ class CborFlatAdtEncodingSpec extends AbstractBorerSpec {
     verifyDecoding(
       encode(
         Dom.MapElem.Sized(
-          "age" -> Dom.IntElem(2),
+          "age"     -> Dom.IntElem(2),
           "ignored" -> Dom.ArrayElem.Sized(
             Dom.IntElem(1),
             Dom.ArrayElem.Sized(Dom.StringElem("a"), Dom.StringElem("b")),
@@ -134,8 +134,8 @@ class CborFlatAdtEncodingSpec extends AbstractBorerSpec {
     verifyDecoding(
       encode(
         Dom.MapElem.Sized(
-          "name" -> Dom.StringElem("Lolle"),
-          "age"  -> Dom.IntElem(2),
+          "name"    -> Dom.StringElem("Lolle"),
+          "age"     -> Dom.IntElem(2),
           "ignored" -> Dom.ArrayElem.Sized(
             Dom.IntElem(1),
             Dom.ArrayElem.Sized(Dom.StringElem("a"), Dom.StringElem("b")),

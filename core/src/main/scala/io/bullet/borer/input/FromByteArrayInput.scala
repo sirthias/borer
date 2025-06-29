@@ -70,7 +70,7 @@ trait FromByteArrayInput:
     def readBytes(length: Long, pp: Input.PaddingProvider[Array[Byte]]): Array[Byte] =
       val remaining = (byteArray.length - _cursor).toLong
       val len       = math.min(remaining, length).toInt
-      val bytes =
+      val bytes     =
         if (len > 0)
           val result = new Array[Byte](len)
           val c      = _cursor

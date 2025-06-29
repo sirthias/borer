@@ -111,7 +111,7 @@ final class Base32(name: String, alphabet: String) extends LookupBaseEncoding(na
       inline def c(offset: Int) = chars(sl - offset) & 0xFFL
 
       def decode(ix: Int): Long =
-        val c = chars(ix)
+        val c      = chars(ix)
         def fail() =
           throw new IllegalArgumentException(s""""${Util
               .show(chars)}" is not a valid $name encoding. '$c' at index $ix is not part of the $name alphabet.""")

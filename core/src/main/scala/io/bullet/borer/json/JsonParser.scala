@@ -279,7 +279,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       var len               = strLen
       var stopChar          = 0
       var maxMantissaEndLen = len + config.maxNumberMantissaDigits - 1
-      var negMantissa =
+      var negMantissa       =
         if (firstDigit == 0)
           stopChar = input.readBytePadded(this) & 0xFF
           if ((stopChar ^ 0x30) < 10)
@@ -304,7 +304,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
         if (negMantissa <= 0) // otherwise the mantissa (value with the decimal point removed) doesn't fit into 63 bit
           var expNeg    = false
           var expDigits = 0
-          val posExp =
+          val posExp    =
             if ((stopChar | 0x20) == 'e')
               val c = input.readBytePadded(this) & 0xFF
               expNeg = c == '-'
@@ -320,7 +320,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
               if (e < 0 || config.maxNumberAbsExponent < e) failNumberExponentTooLarge(-expDigits)
               e
             else 0
-          val exp = if (expNeg) negFractionDigits - posExp else negFractionDigits + posExp
+          val exp    = if (expNeg) negFractionDigits - posExp else negFractionDigits + posExp
           val result =
             if (exp != 0)
               if (exp > 0)
@@ -357,7 +357,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
 
     def parseEscapeSeq(charCursor: Int): Int =
       var cc = charCursor
-      val c =
+      val c  =
         (input.readBytePadded(this): @switch) match
           case '"'  => '"'
           case '/'  => '/'
@@ -366,7 +366,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
           case 'f'  => '\f'
           case 'n'  => '\n'
           case 't'  => '\t'
-          case 'r' =>
+          case 'r'  =>
             if (input.readDoubleByteBigEndianPadded(this) == 0x5C6E) // are we immediately followed by a \n ?
               cc = appendChar(cc, '\r')
               '\n'
@@ -397,7 +397,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
       val b2        = quad >> 24
       var cc        = charCursor
       def fail()    = failIllegalUtf8(-5)
-      val cp = (byteCount | 0x80) ^ (b2 & 0xC0) match
+      val cp        = (byteCount | 0x80) ^ (b2 & 0xC0) match
         case 1 =>
           if ((b1 & 0x1E) == 0) fail()
           (b1 << 6) ^ b2 ^ 0xF80

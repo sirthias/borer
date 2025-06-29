@@ -260,7 +260,7 @@ object Decoder extends LowPrioDecoders:
         } else new JBigInteger(numberString)
       r.dataItem() match {
         case DI.Int | DI.Long => JBigInteger.valueOf(r.readLong())
-        case DI.OverLong =>
+        case DI.OverLong      =>
           def value = new JBigInteger(1, Util.toBigEndianBytes(r.readOverLong()))
           if (r.overLongNegative) value.not else value
         case DI.NumberString if r.target == Json                   => fromString(r.readNumberString())
@@ -282,7 +282,7 @@ object Decoder extends LowPrioDecoders:
       acceptStrings: Boolean = false): Decoder[JBigDecimal] =
     val bigIntMantissaDecoder = forJBigInteger(maxCborByteArraySize = maxCborBigIntMantissaByteArraySize)
     Decoder { r =>
-      def fromBigInteger() = new JBigDecimal(_forJBigInteger.read(r))
+      def fromBigInteger()                 = new JBigDecimal(_forJBigInteger.read(r))
       def fromString(numberString: String) =
         if (numberString.length > maxJsonNumberStringLength) {
           r.overflow(
@@ -294,7 +294,7 @@ object Decoder extends LowPrioDecoders:
         case DI.NumberString if r.target == Json                              => fromString(r.readNumberString())
         case _ if r.hasString && r.target == Json && acceptStrings            => fromString(r.readString())
         case _ if r.hasTag(Tag.PositiveBigNum) | r.hasTag(Tag.NegativeBigNum) => fromBigInteger()
-        case _ if r.tryReadTag(Tag.DecimalFraction) =>
+        case _ if r.tryReadTag(Tag.DecimalFraction)                           =>
           if (r.hasArrayHeader) {
             val len = r.readArrayHeader()
             if (len == 2) {
@@ -403,7 +403,7 @@ object Decoder extends LowPrioDecoders:
     given default[A: Decoder, B: Decoder]: Decoder[Either[A, B]] =
       Decoder { r =>
         val breakExpected = r.tryReadArrayStart() || { r.readMapHeader(1); false }
-        val result =
+        val result        =
           r.readInt() match
             case 0 => Left(r.read[A]())
             case 1 => Right(r.read[B]())

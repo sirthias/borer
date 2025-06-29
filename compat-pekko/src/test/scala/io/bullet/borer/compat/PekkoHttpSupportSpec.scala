@@ -70,7 +70,7 @@ class PekkoHttpSupportSpec extends BorerSuite {
   }
 
   test("prefer JSON on equal q-value (by default)") {
-    val foo = Foo("bar")
+    val foo          = Foo("bar")
     val acceptHeader = _root_.org.apache.pekko.http.scaladsl.model.headers.Accept(
       MediaRange.One(`application/json`, 1.0f),
       MediaRanges.`*/*`
@@ -114,7 +114,7 @@ class PekkoHttpSupportSpec extends BorerSuite {
   }
 
   test("stream marshalling (JSON)") {
-    val nums = List(Num(1), Num(2), Num(3))
+    val nums         = List(Num(1), Num(2), Num(3))
     val acceptHeader =
       _root_.org.apache.pekko.http.scaladsl.model.headers.Accept(MediaRange.One(`application/json`, 1.0f))
     Marshal(nums)
