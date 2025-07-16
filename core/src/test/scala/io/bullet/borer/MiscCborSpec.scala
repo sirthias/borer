@@ -8,7 +8,7 @@
 
 package io.bullet.borer
 
-import io.bullet.borer.internal.Util._
+import io.bullet.borer.internal.Util.*
 
 class MiscCborSpec extends ByteArrayCborSpec:
 
@@ -141,4 +141,12 @@ class MiscCborSpec extends ByteArrayCborSpec:
 
   test("Issue 227") { // https://github.com/sirthias/borer/issues/227
     Cbor.decode(hex"80").to[Array[String]].value.getClass ==> classOf[Array[String]]
+  }
+
+  test("Raw writing") {
+    val value  = Foo(42, "foo", Some(-1.2))
+    val output = Output.ToByteArray(bufferSize = 1024, allowBufferCaching = true)
+    val writer = Cbor.writer(output, Cbor.EncodingConfig(), Receiver.nopTransformer)
+    writer.write(value)
+    output.result() ==> hex"83182a63666f6f81fbbff3333333333333"
   }
