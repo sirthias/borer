@@ -36,7 +36,7 @@ trait FromInputStreamInput { this: FromByteArrayInput with FromIteratorInput =>
           def tryReadNext() =
             val buf = if (bufSelect) bufA else bufB
             nextInput = inputStream.read(buf) match
-              case -1 => null
+              case -1           => null
               case `bufferSize` =>
                 bufSelect = !bufSelect
                 fromByteArray(buf)

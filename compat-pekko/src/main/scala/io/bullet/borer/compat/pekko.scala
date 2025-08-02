@@ -167,7 +167,7 @@ object pekko {
     def readBytes(length: Long, pp: Input.PaddingProvider[ByteString]): ByteString = {
       val remaining = (byteString.length - _cursor).toLong
       val len       = math.min(remaining, length).toInt
-      val bytes =
+      val bytes     =
         if (len > 0) {
           val c = _cursor
           _cursor = c + len

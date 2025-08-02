@@ -21,7 +21,7 @@ def failMissing(r: Reader, typeName: String, m0: Long, m1: Long, fieldNames: Lis
 
 def failMissing(r: Reader, typeName: String, ones: Iterator[Int], fieldNames: List[String]): Nothing = {
   val missingKeys = ones.map(fieldNames(_)).toList
-  val misses = missingKeys.lengthCompare(1) match {
+  val misses      = missingKeys.lengthCompare(1) match {
     case 0 => s"""key "${missingKeys.head}""""
     case _ => s"""keys "${missingKeys.init.mkString(", ")}" and "${missingKeys.last}""""
   }
