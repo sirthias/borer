@@ -10,7 +10,7 @@ addSbtPlugin("org.scala-native"   % "sbt-scala-native"              % "0.5.8")
 addSbtPlugin("org.portable-scala" % "sbt-scala-native-crossproject" % "1.3.2")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh"                       % "0.4.7")
 addSbtPlugin("io.bullet"          % "sbt-paradox-material-theme"    % "0.7.0")
-addSbtPlugin(("com.github.sbt" % "sbt-ghpages"      % "0.7.0").exclude("org.scala-lang.modules", "scala-xml_2.12"))
+addSbtPlugin(("com.github.sbt" % "sbt-ghpages"      % "0.9.0").exclude("org.scala-lang.modules", "scala-xml_2.12"))
 addSbtPlugin("com.github.sbt"  % "sbt-site-paradox" % "1.7.0")
 
 libraryDependencies ++= Seq(
