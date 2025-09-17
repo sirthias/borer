@@ -220,7 +220,7 @@ object Encoder extends LowPrioEncoders:
         if (defaultValue eq None)
           new Encoder.PossiblyWithoutOutput[Option[T]] {
             def producesOutputFor(value: Option[T]) = value ne None
-            def write(w: Writer, value: Option[T]) =
+            def write(w: Writer, value: Option[T])  =
               value match
                 case Some(x) => w.write(x)
                 case None    => w

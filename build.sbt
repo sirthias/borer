@@ -12,7 +12,7 @@ inThisBuild(
     licenses     := Seq("MPLv2" -> new URI("https://www.mozilla.org/en-US/MPL/2.0/").toURL),
     scmInfo := Some(ScmInfo(url("https://github.com/sirthias/borer/"), "scm:git:git@github.com:sirthias/borer.git")),
     versionScheme := Some("early-semver"),
-    developers :=
+    developers    :=
       List(
         "sirthias" -> "Mathias Doenitz",
       ).map { case (username, fullName) =>
@@ -151,7 +151,7 @@ lazy val borer = (project in file("."))
 lazy val `core-jvm`    = core.jvm.enablePlugins(SpecializeJsonParserPlugin)
 lazy val `core-js`     = core.js
 lazy val `core-native` = core.native.enablePlugins(SpecializeJsonParserPlugin)
-lazy val core = crossProject(JSPlatform, NativePlatform, JVMPlatform)
+lazy val core          = crossProject(JSPlatform, NativePlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .enablePlugins(AutomateHeaderPlugin)
@@ -360,7 +360,7 @@ lazy val site = project
     },
     Compile / paradox / version := "1.16.1",
     paradoxProperties ++= Map(
-      "image.base_url" -> ".../assets/images",
+      "image.base_url"  -> ".../assets/images",
       "github.base_url" -> {
         val v = version.value
         s"https://github.com/sirthias/borer/tree/${if (v.endsWith("SNAPSHOT")) "master" else "v" + v}"

@@ -146,7 +146,7 @@ final class InputReader[Config <: Reader.Config](
       clearDataItem()
       result
     else unexpectedDataItem(expected = "Long")
-  def hasLong: Boolean = hasAnyOf(DI.Int | DI.Long)
+  def hasLong: Boolean              = hasAnyOf(DI.Int | DI.Long)
   def hasLong(value: Long): Boolean =
     hasInt && (receptacle.intValue.toLong == value) || hasLong && (receptacle.longValue == value)
   def tryReadLong(value: Long): Boolean = clearIfTrue(hasLong(value))
@@ -546,7 +546,7 @@ final class InputReader[Config <: Reader.Config](
       if (level < 100)
         dataItem() match
           case DI.ArrayHeader => skipN(readArrayHeader())
-          case DI.MapHeader =>
+          case DI.MapHeader   =>
             val elemsToSkip = readMapHeader() << 1
             if (elemsToSkip >= 0) skipN(elemsToSkip)
             else overflow("Maps with more than 2^62 elements cannot be skipped")

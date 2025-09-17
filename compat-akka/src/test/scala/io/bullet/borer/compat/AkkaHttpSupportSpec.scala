@@ -70,7 +70,7 @@ class AkkaHttpSupportSpec extends BorerSuite {
   }
 
   test("prefer JSON on equal q-value (by default)") {
-    val foo = Foo("bar")
+    val foo          = Foo("bar")
     val acceptHeader = _root_.akka.http.scaladsl.model.headers.Accept(
       MediaRange.One(`application/json`, 1.0f),
       MediaRanges.`*/*`
