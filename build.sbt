@@ -12,7 +12,7 @@ inThisBuild(
     licenses     := Seq("MPLv2" -> new URI("https://www.mozilla.org/en-US/MPL/2.0/").toURL),
     scmInfo := Some(ScmInfo(url("https://github.com/sirthias/borer/"), "scm:git:git@github.com:sirthias/borer.git")),
     versionScheme := Some("early-semver"),
-    developers :=
+    developers    :=
       List(
         "sirthias" -> "Mathias Doenitz",
       ).map { case (username, fullName) =>
@@ -121,9 +121,9 @@ val `pekko-actor`   = Def.setting("org.apache.pekko"  %%  "pekko-actor-typed" % 
 val `pekko-stream`  = Def.setting("org.apache.pekko"  %%  "pekko-stream"      % "1.1.4")
 val `pekko-http`    = Def.setting("org.apache.pekko"  %%  "pekko-http"        % "1.2.0")
 val `cats-core`     = Def.setting("org.typelevel"     %%% "cats-core"         % "2.13.0")
-val `circe-core`    = Def.setting("io.circe"          %%% "circe-core"        % "0.14.14")
-val `circe-parser`  = Def.setting("io.circe"          %%% "circe-parser"      % "0.14.14")
-val `circe-generic` = Def.setting("io.circe"          %%% "circe-generic"     % "0.14.14")
+val `circe-core`    = Def.setting("io.circe"          %%% "circe-core"        % "0.14.15")
+val `circe-parser`  = Def.setting("io.circe"          %%% "circe-parser"      % "0.14.15")
+val `circe-generic` = Def.setting("io.circe"          %%% "circe-generic"     % "0.14.15")
 val `scodec-bits`   = Def.setting("org.scodec"        %%% "scodec-bits"       % "1.2.4")
 val munit           = Def.setting("org.scalameta"     %%% "munit"             % "1.1.1" % Test)
 val macrolizer      = Def.setting("io.bullet"         %%% "macrolizer"        % "0.6.2" % "compile-internal, test-internal")
@@ -151,7 +151,7 @@ lazy val borer = (project in file("."))
 lazy val `core-jvm`    = core.jvm.enablePlugins(SpecializeJsonParserPlugin)
 lazy val `core-js`     = core.js
 lazy val `core-native` = core.native.enablePlugins(SpecializeJsonParserPlugin)
-lazy val core = crossProject(JSPlatform, NativePlatform, JVMPlatform)
+lazy val core          = crossProject(JSPlatform, NativePlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .enablePlugins(AutomateHeaderPlugin)
@@ -360,7 +360,7 @@ lazy val site = project
     },
     Compile / paradox / version := "1.16.1",
     paradoxProperties ++= Map(
-      "image.base_url" -> ".../assets/images",
+      "image.base_url"  -> ".../assets/images",
       "github.base_url" -> {
         val v = version.value
         s"https://github.com/sirthias/borer/tree/${if (v.endsWith("SNAPSHOT")) "master" else "v" + v}"
