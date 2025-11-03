@@ -30,7 +30,7 @@ private[borer] object BasicProductCodec:
 
   private inline def encRec[T <: Product, Fields <: Tuple](w: Writer, x: T, inline n: Int): Writer =
     inline erasedValue[Fields] match
-      case EmptyTuple => w
+      case EmptyTuple   => w
       case _: (t *: ts) =>
         encRec[T, ts](w.write(x.productElement(n).asInstanceOf[t])(using summonInline[Encoder[t]]), x, n + 1)
 

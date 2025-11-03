@@ -114,7 +114,7 @@ private[borer] object Util:
    * zero if equal, and a negative number if less.
    */
   def charsStringCompare(chars: Array[Char], charsLen: Int, string: String): Int =
-    val limit = math.min(charsLen, string.length)
+    val limit                      = math.min(charsLen, string.length)
     @tailrec def rec(ix: Int): Int =
       if (ix < limit)
         val diff = chars(ix).toInt - string.charAt(ix).toInt
@@ -127,7 +127,7 @@ private[borer] object Util:
    * zero if equal, and a negative number if less.
    */
   def charsCharsCompare(a: Array[Char], aLen: Int, b: Array[Char]): Int =
-    val limit = math.min(aLen, b.length)
+    val limit                      = math.min(aLen, b.length)
     @tailrec def rec(ix: Int): Int =
       if (ix < limit)
         val diff = a(ix).toInt - b(ix).toInt

@@ -38,7 +38,7 @@ class FileSpec extends BorerSuite:
 
   test("large file") {
     val testFileBytes = Source.fromResource("large.json").mkString.getBytes(StandardCharsets.UTF_8)
-    val config = Json.DecodingConfig.default
+    val config        = Json.DecodingConfig.default
       .copy(maxNumberMantissaDigits = 99, maxNumberAbsExponent = 300, initialCharbufferSize = 8)
     val dom = Json.decode(testFileBytes).withConfig(config).to[Dom.Element].value
 

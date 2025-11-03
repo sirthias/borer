@@ -72,7 +72,7 @@ class CustomCodecsSpec extends BorerSuite {
 
     given Decoder[Person] = Decoder { reader =>
       val unbounded = reader.readArrayOpen(2)
-      val person = new Person(
+      val person    = new Person(
         reader.readString(),
         reader.readInt()
       )

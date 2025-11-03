@@ -68,7 +68,7 @@ object Base16 extends BaseEncoding("base16", 4):
     val sl8    = sl - 8
 
     def d(ix: Int): Int =
-      val c = chars(ix)
+      val c               = chars(ix)
       def fail(): Nothing =
         throw new IllegalArgumentException(s""""${Util.show(chars)}" is not a valid $name encoding.
                                               | '$c' at index $ix is not part of the $name alphabet.""".stripMargin)
