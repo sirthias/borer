@@ -83,6 +83,7 @@ lazy val commonSettings = Seq(
   Test / publishArtifact := false,
   pomIncludeRepository   := (_ ⇒ false),
   publishTo              := sonatypePublishToBundle.value,
+  sonatypeCredentialHost := xerial.sbt.Sonatype.sonatypeCentralHost,
 )
 
 lazy val scalajsSettings = Seq(
@@ -358,7 +359,7 @@ lazy val site = project
       java.awt.Desktop.getDesktop.browse(new java.net.URI(uri))
       state
     },
-    Compile / paradox / version := "1.16.1",
+    Compile / paradox / version := "1.16.2",
     paradoxProperties ++= Map(
       "image.base_url"  -> ".../assets/images",
       "github.base_url" -> {
