@@ -24,7 +24,7 @@ class CatsCompatSpec extends BorerSuite {
       Ior.Both(42, "bar")
     )
 
-    // the Ior encoding of `borer-compat-circe` is optimized for efficiency
+    // the Ior encoding of `borer-compat-cats` is optimized for efficiency
     {
       import io.bullet.borer.compat.cats.*
 
