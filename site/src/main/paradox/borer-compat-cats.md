@@ -37,7 +37,7 @@ types, for which there is no clear default encoding:
 - `Ior[A, B]`
 - `Validated[A, B]`
 
-The encodings implemented by `borer-compat-circe` aim for best time and space efficiency, not "readability".
+The encodings implemented by `borer-compat-cats` aim for best time and space efficiency, not "readability".
 
 One easy way to optimize for self-describability rather than efficiency would be to rely on `borer-derivation` instead.
 Here is an example contrasting the difference:
