@@ -118,7 +118,7 @@ object SpecializeJsonParserPlugin extends AutoPlugin {
         val dropLen = sourceDir.toString.zip(targetDir.toString).takeWhile(t => t._1 == t._2).size
         streams.log.info(
           s"Rewriting ../${sourceFile.toString.drop(dropLen)} to ../${targetFile.toString.drop(dropLen)}")
-        val fileContent = IO.read(sourceFile)
+        val fileContent     = IO.read(sourceFile)
         val rewritingResult = rules.foldLeft(Right(fileContent): Either[String, String]) {
           case (error @ Left(_), _)  => error
           case (Right(string), rule) => rule(string)
