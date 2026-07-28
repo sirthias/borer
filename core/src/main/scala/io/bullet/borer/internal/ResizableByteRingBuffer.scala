@@ -151,7 +151,7 @@ final private[borer] class ResizableByteRingBuffer(initialCapacity: Int, val max
 
   private def write4(value: Int, ix: Int): Boolean =
     val masked = ix & mask
-    if (masked <= array.length - 4) ByteArrayAccess.instance.setQuadByteBigEndian(array, masked, value)
+    if (masked <= array.length - 4) DirectByteArrayAccess.setQuadByteBigEndian(array, masked, value)
     else
       array(masked) = (value >> 24).toByte
       array((ix + 1) & mask) = (value >> 16).toByte
@@ -162,7 +162,7 @@ final private[borer] class ResizableByteRingBuffer(initialCapacity: Int, val max
   private def write5(byte: Byte, int: Int, ix: Int): Boolean =
     array(ix & mask) = byte
     val masked = (ix + 1) & mask
-    if (masked <= array.length - 4) ByteArrayAccess.instance.setQuadByteBigEndian(array, masked, int)
+    if (masked <= array.length - 4) DirectByteArrayAccess.setQuadByteBigEndian(array, masked, int)
     else
       array(masked) = (int >> 24).toByte
       array((ix + 2) & mask) = (int >> 16).toByte
@@ -172,7 +172,7 @@ final private[borer] class ResizableByteRingBuffer(initialCapacity: Int, val max
 
   private def write8(value: Long, ix: Int): Boolean =
     val masked = ix & mask
-    if (masked <= array.length - 8) ByteArrayAccess.instance.setOctaByteBigEndian(array, masked, value)
+    if (masked <= array.length - 8) DirectByteArrayAccess.setOctaByteBigEndian(array, masked, value)
     else
       array(masked) = (value >> 56).toByte
       array((ix + 1) & mask) = (value >> 48).toByte
@@ -187,7 +187,7 @@ final private[borer] class ResizableByteRingBuffer(initialCapacity: Int, val max
   private def write9(byte: Byte, long: Long, ix: Int): Boolean =
     array(ix & mask) = byte
     val masked = (ix + 1) & mask
-    if (masked <= array.length - 8) ByteArrayAccess.instance.setOctaByteBigEndian(array, masked, long)
+    if (masked <= array.length - 8) DirectByteArrayAccess.setOctaByteBigEndian(array, masked, long)
     else
       array(masked) = (long >> 56).toByte
       array((ix + 2) & mask) = (long >> 48).toByte
@@ -220,7 +220,7 @@ final private[borer] class ResizableByteRingBuffer(initialCapacity: Int, val max
     readIx = r + 4
     val ix = r & mask
     if (ix <= array.length - 4)
-      ByteArrayAccess.instance.quadByteBigEndian(array, ix)
+      DirectByteArrayAccess.quadByteBigEndian(array, ix)
     else
       (
         array(ix) << 24
@@ -234,7 +234,7 @@ final private[borer] class ResizableByteRingBuffer(initialCapacity: Int, val max
     readIx = r + 8
     val ix = r & mask
     if (ix <= array.length - 8)
-      ByteArrayAccess.instance.octaByteBigEndian(array, ix)
+      DirectByteArrayAccess.octaByteBigEndian(array, ix)
     else
       (
         array(ix).toLong << 56
@@ -252,7 +252,7 @@ final private[borer] class ResizableByteRingBuffer(initialCapacity: Int, val max
       val w  = writeIx - 8
       val ix = w & mask
       if (ix <= array.length - 8)
-        ByteArrayAccess.instance.octaByteBigEndian(array, ix)
+        DirectByteArrayAccess.octaByteBigEndian(array, ix)
       else
         (
           array(ix).toLong << 56

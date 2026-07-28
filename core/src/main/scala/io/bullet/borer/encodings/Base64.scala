@@ -8,7 +8,7 @@
 
 package io.bullet.borer.encodings
 
-import io.bullet.borer.internal.ByteArrayAccess
+import io.bullet.borer.internal.{ByteArrayAccess, DirectByteArrayAccess}
 
 import scala.annotation.tailrec
 
@@ -25,7 +25,6 @@ final class Base64(name: String, alphabet: String) extends LookupBaseEncoding(na
     if (sl > 1610612735) failOverflow()
 
     val result = new Array[Char](((sl + 2) / 3) << 2)
-    val baa    = ByteArrayAccess.instance
     val sl3    = sl - 3
 
     def encodeRest(si: Int, di: Int): Array[Char] =
@@ -38,7 +37,7 @@ final class Base64(name: String, alphabet: String) extends LookupBaseEncoding(na
           result(di + 3) = 0x3D
 
         case 2 =>
-          val int = baa.doubleByteBigEndian(bytes, si).toInt << 16
+          val int = DirectByteArrayAccess.doubleByteBigEndian(bytes, si).toInt << 16
           result(di + 0) = alphabetChars(int << 0 >>> 26)
           result(di + 1) = alphabetChars(int << 6 >>> 26)
           result(di + 2) = alphabetChars(int << 12 >>> 26)
@@ -47,7 +46,7 @@ final class Base64(name: String, alphabet: String) extends LookupBaseEncoding(na
 
     @tailrec def encode3(si: Int, di: Int): Array[Char] =
       if (si <= sl3)
-        val quad = baa.doubleByteBigEndian(bytes, si).toInt << 16 | (bytes(si + 2) & 0xFF) << 8
+        val quad = DirectByteArrayAccess.doubleByteBigEndian(bytes, si).toInt << 16 | (bytes(si + 2) & 0xFF) << 8
         result(di + 0) = alphabetChars(quad << 0 >>> 26)
         result(di + 1) = alphabetChars(quad << 6 >>> 26)
         result(di + 2) = alphabetChars(quad << 12 >>> 26)
@@ -71,7 +70,6 @@ final class Base64(name: String, alphabet: String) extends LookupBaseEncoding(na
 
       if ((sl & 3) != 0) failIllegalLength()
 
-      val baa = ByteArrayAccess.instance
       val sl4 = sl - 4
 
       inline def c(offset: Int) = chars(sl - offset) & 0xFFL
@@ -90,7 +88,7 @@ final class Base64(name: String, alphabet: String) extends LookupBaseEncoding(na
         inline def d(offset: Int) = decode(si + offset)
 
         val quad = d(0) << 18 | d(1) << 12 | d(2) << 6 | d(3)
-        baa.setDoubleByteBigEndian(result, di, (quad >> 8).toChar)
+        DirectByteArrayAccess.setDoubleByteBigEndian(result, di, (quad >> 8).toChar)
         result(di + 2) = quad.toByte
 
       val baseLen =
@@ -107,7 +105,8 @@ final class Base64(name: String, alphabet: String) extends LookupBaseEncoding(na
 
           oddBytes match
             case 1 => result(di) = (d(0) << 2 | d(1) >> 4).toByte
-            case 2 => baa.setDoubleByteBigEndian(result, di, (d(0) << 10 | d(1) << 4 | d(2) >> 2).toChar)
+            case 2 =>
+              DirectByteArrayAccess.setDoubleByteBigEndian(result, di, (d(0) << 10 | d(1) << 4 | d(2) >> 2).toChar)
             case _ => failIllegalPadding()
           result
 

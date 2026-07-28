@@ -8,7 +8,7 @@
 
 package io.bullet.borer
 
-import io.bullet.borer.internal.ByteArrayAccess
+import io.bullet.borer.internal.{ByteArrayAccess, DirectByteArrayAccess}
 
 import scala.annotation.tailrec
 
@@ -53,7 +53,6 @@ object Utf8:
 
   def decode(bytes: Array[Byte]): Array[Char] =
     val result = new Array[Char](bytes.length) // upper bound: we'll never need more than bytes.length chars
-    val baa    = ByteArrayAccess.instance
     val sl8    = bytes.length - 8
 
     def fail(si: Int) = sys.error(s"Illegal UTF-8 character encoding at byte index $si")
@@ -65,9 +64,9 @@ object Utf8:
         bytes.length - si match
           case 0 => 0
           case 1 => bytes(si) << 24
-          case 2 => baa.doubleByteBigEndian(bytes, si) << 16
-          case 3 => baa.doubleByteBigEndian(bytes, si) << 16 | (bytes(si + 2) & 0xFF) << 8
-          case _ => baa.quadByteBigEndian(bytes, si)
+          case 2 => DirectByteArrayAccess.doubleByteBigEndian(bytes, si) << 16
+          case 3 => DirectByteArrayAccess.doubleByteBigEndian(bytes, si) << 16 | (bytes(si + 2) & 0xFF) << 8
+          case _ => DirectByteArrayAccess.quadByteBigEndian(bytes, si)
       val b2 = quad >> 24
       val cp = (byteCount | 0x80) ^ (b2 & 0xC0) match
         case 1 =>
@@ -113,7 +112,7 @@ object Utf8:
     @tailrec def decode8(si: Int, di: Int): Array[Char] =
       if (si <= sl8)
         // fetch 8 bytes (chars) at the same time with the first becoming the (left-most) MSB of the `octa` long
-        val octa      = baa.octaByteBigEndian(bytes, si)
+        val octa      = DirectByteArrayAccess.octaByteBigEndian(bytes, si)
         val nlz       = java.lang.Long.numberOfLeadingZeros(octa & 0x8080808080808080L)
         val charCount = nlz >> 3 // the number of 7-bit chars before a (potential) 8-bit char [0..8]
 

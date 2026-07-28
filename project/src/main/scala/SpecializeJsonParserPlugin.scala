@@ -1,5 +1,5 @@
-import sbt.Keys._
-import sbt._
+import sbt.*
+import sbt.Keys.*
 
 import scala.annotation.tailrec
 
@@ -8,10 +8,9 @@ object SpecializeJsonParserPlugin extends AutoPlugin {
   override def requires = plugins.JvmPlugin
 
   object autoImport {
-    val specializeJsonParser = taskKey[Seq[File]](
-      "Generates sources for specializing JSON parsing from byte arrays when sun.misc.Unsafe is available")
+    val specializeJsonParser = taskKey[Seq[File]]("Generates sources for specializing JSON parsing from byte arrays")
   }
-  import autoImport._
+  import autoImport.*
 
   override def projectSettings: Seq[Setting[_]] = inConfig(Compile) {
     Seq(
@@ -25,22 +24,10 @@ object SpecializeJsonParserPlugin extends AutoPlugin {
 
   val rewrites = Seq(
     FileRewrite(
-      _ / "scala" / "io" / "bullet" / "borer" / "input" / "FromByteArrayInput.scala",
-      _ / "scala" / "io" / "bullet" / "borer" / "input" / "DirectFromByteArrayInput.scala",
-      RewriteRule.DeleteFirst("import io.bullet.borer.internal.ByteArrayAccess"),
-      RewriteRule.ReplaceFirst("import io.bullet.borer.{ByteAccess, Input}", "import io.bullet.borer.Input"),
-      RewriteRule.DeleteSection("trait FromByteArrayInput", "final private class FromByteArray"),
-      RewriteRule.DeleteLast("}"),
-      RewriteRule.ReplaceFirst(
-        "private class FromByteArray(byteArray: Array[Byte]",
-        "private[borer] class DirectFromByteArrayInput(byteArray: Array[Byte], baa: io.bullet.borer.internal.Unsafe.LittleEndianByteArrayAccess"),
-      RewriteRule.ReplaceAll("ByteArrayAccess.instance", "baa")
-    ),
-    FileRewrite(
       _ / "scala" / "io" / "bullet" / "borer" / "json" / "JsonParser.scala",
       _ / "scala" / "io" / "bullet" / "borer" / "json" / "DirectJsonParser.scala",
       RewriteRule.ReplaceFirst("JsonParser[Bytes]", "DirectJsonParser"),
-      RewriteRule.ReplaceFirst("Input[Bytes]", "io.bullet.borer.input.DirectFromByteArrayInput"),
+      RewriteRule.ReplaceFirst("Input[Bytes]", "io.bullet.borer.Input.FromByteArray"),
       RewriteRule.ReplaceFirst("extends Parser[Bytes]", "extends Parser[Array[Byte]]"),
       RewriteRule.DeleteFirst("(\n    using byteAccess: ByteAccess[Bytes])"),
       RewriteRule.ReplaceFirst("padBytes(rest: Bytes", "padBytes(rest: Array[Byte]"),
@@ -118,7 +105,7 @@ object SpecializeJsonParserPlugin extends AutoPlugin {
         val dropLen = sourceDir.toString.zip(targetDir.toString).takeWhile(t => t._1 == t._2).size
         streams.log.info(
           s"Rewriting ../${sourceFile.toString.drop(dropLen)} to ../${targetFile.toString.drop(dropLen)}")
-        val fileContent = IO.read(sourceFile)
+        val fileContent     = IO.read(sourceFile)
         val rewritingResult = rules.foldLeft(Right(fileContent): Either[String, String]) {
           case (error @ Left(_), _)  => error
           case (Right(string), rule) => rule(string)

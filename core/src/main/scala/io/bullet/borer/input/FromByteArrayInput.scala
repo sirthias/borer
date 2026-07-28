@@ -9,7 +9,7 @@
 package io.bullet.borer.input
 
 import io.bullet.borer.{ByteAccess, Input}
-import io.bullet.borer.internal.ByteArrayAccess
+import io.bullet.borer.internal.{ByteArrayAccess, DirectByteArrayAccess}
 
 trait FromByteArrayInput:
 
@@ -20,7 +20,7 @@ trait FromByteArrayInput:
 
   def fromByteArray(value: Array[Byte]): Input[Array[Byte]] = new FromByteArray(value)
 
-  final private class FromByteArray(byteArray: Array[Byte]) extends Input[Array[Byte]]:
+  final class FromByteArray(byteArray: Array[Byte]) extends Input[Array[Byte]]:
     private[this] var _cursor: Int = _
 
     def cursor: Long = _cursor.toLong
@@ -40,7 +40,7 @@ trait FromByteArrayInput:
     def readDoubleByteBigEndian(): Char =
       val c = _cursor
       _cursor = c + 2
-      ByteArrayAccess.instance.doubleByteBigEndian(byteArray, c)
+      DirectByteArrayAccess.doubleByteBigEndian(byteArray, c)
 
     def readDoubleByteBigEndianPadded(pp: Input.PaddingProvider[Array[Byte]]): Char =
       val remaining = byteArray.length - _cursor
@@ -50,7 +50,7 @@ trait FromByteArrayInput:
     def readQuadByteBigEndian(): Int =
       val c = _cursor
       _cursor = c + 4
-      ByteArrayAccess.instance.quadByteBigEndian(byteArray, c)
+      DirectByteArrayAccess.quadByteBigEndian(byteArray, c)
 
     def readQuadByteBigEndianPadded(pp: Input.PaddingProvider[Array[Byte]]): Int =
       val remaining = byteArray.length - _cursor
@@ -60,7 +60,7 @@ trait FromByteArrayInput:
     def readOctaByteBigEndian(): Long =
       val c = _cursor
       _cursor = c + 8
-      ByteArrayAccess.instance.octaByteBigEndian(byteArray, c)
+      DirectByteArrayAccess.octaByteBigEndian(byteArray, c)
 
     def readOctaByteBigEndianPadded(pp: Input.PaddingProvider[Array[Byte]]): Long =
       val remaining = byteArray.length - _cursor

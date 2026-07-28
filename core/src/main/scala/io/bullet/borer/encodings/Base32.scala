@@ -8,7 +8,7 @@
 
 package io.bullet.borer.encodings
 
-import io.bullet.borer.internal.ByteArrayAccess
+import io.bullet.borer.internal.{ByteArrayAccess, DirectByteArrayAccess}
 
 import scala.annotation.tailrec
 
@@ -25,7 +25,6 @@ final class Base32(name: String, alphabet: String) extends LookupBaseEncoding(na
     if (sl > 1342177279) failOverflow()
 
     val result = new Array[Char](((sl + 4) / 5) << 3)
-    val baa    = ByteArrayAccess.instance
     val sl5    = sl - 5
 
     def encodeRest(si: Int, di: Int): Array[Char] =
@@ -42,7 +41,7 @@ final class Base32(name: String, alphabet: String) extends LookupBaseEncoding(na
           result(di + 7) = 0x3D
 
         case 2 =>
-          val int = baa.doubleByteBigEndian(bytes, si).toInt << 16
+          val int = DirectByteArrayAccess.doubleByteBigEndian(bytes, si).toInt << 16
           result(di + 0) = alphabetChars(int << 0 >>> 27)
           result(di + 1) = alphabetChars(int << 5 >>> 27)
           result(di + 2) = alphabetChars(int << 10 >>> 27)
@@ -53,7 +52,7 @@ final class Base32(name: String, alphabet: String) extends LookupBaseEncoding(na
           result(di + 7) = 0x3D
 
         case 3 =>
-          val int = baa.doubleByteBigEndian(bytes, si).toInt << 16 | (bytes(si + 2) & 0xFF) << 8
+          val int = DirectByteArrayAccess.doubleByteBigEndian(bytes, si).toInt << 16 | (bytes(si + 2) & 0xFF) << 8
           result(di + 0) = alphabetChars(int << 0 >>> 27)
           result(di + 1) = alphabetChars(int << 5 >>> 27)
           result(di + 2) = alphabetChars(int << 10 >>> 27)
@@ -64,7 +63,7 @@ final class Base32(name: String, alphabet: String) extends LookupBaseEncoding(na
           result(di + 7) = 0x3D
 
         case 4 =>
-          val octa = baa.quadByteBigEndian(bytes, si).toLong << 32
+          val octa = DirectByteArrayAccess.quadByteBigEndian(bytes, si).toLong << 32
           result(di + 0) = alphabetChars((octa << 0 >>> 59).toInt)
           result(di + 1) = alphabetChars((octa << 5 >>> 59).toInt)
           result(di + 2) = alphabetChars((octa << 10 >>> 59).toInt)
@@ -77,7 +76,7 @@ final class Base32(name: String, alphabet: String) extends LookupBaseEncoding(na
 
     @tailrec def encode5(si: Int, di: Int): Array[Char] =
       if (si <= sl5)
-        val octa = baa.quadByteBigEndian(bytes, si).toLong << 32 | (bytes(si + 4) & 0xFFL) << 24
+        val octa = DirectByteArrayAccess.quadByteBigEndian(bytes, si).toLong << 32 | (bytes(si + 4) & 0xFFL) << 24
         result(di + 0) = alphabetChars((octa << 0 >>> 59).toInt)
         result(di + 1) = alphabetChars((octa << 5 >>> 59).toInt)
         result(di + 2) = alphabetChars((octa << 10 >>> 59).toInt)
@@ -105,7 +104,6 @@ final class Base32(name: String, alphabet: String) extends LookupBaseEncoding(na
 
       if ((sl & 7) != 0) failIllegalLength()
 
-      val baa = ByteArrayAccess.instance
       val sl8 = sl - 8
 
       inline def c(offset: Int) = chars(sl - offset) & 0xFFL
@@ -124,7 +122,7 @@ final class Base32(name: String, alphabet: String) extends LookupBaseEncoding(na
         inline def d(offset: Int) = decode(si + offset)
 
         val octa = d(0) << 35 | d(1) << 30 | d(2) << 25 | d(3) << 20 | d(4) << 15 | d(5) << 10 | d(6) << 5 | d(7)
-        baa.setQuadByteBigEndian(result, di, (octa >> 8).toInt)
+        DirectByteArrayAccess.setQuadByteBigEndian(result, di, (octa >> 8).toInt)
         result(di + 4) = octa.toByte
 
       val baseLen =
@@ -156,14 +154,14 @@ final class Base32(name: String, alphabet: String) extends LookupBaseEncoding(na
               result(di) = (d(0) << 3 | d(1) >> 2).toByte
             case 2 =>
               val bytes = d(0) << 11 | d(1) << 6 | d(2) << 1 | d(3) >> 4
-              baa.setDoubleByteBigEndian(result, di, bytes.toChar)
+              DirectByteArrayAccess.setDoubleByteBigEndian(result, di, bytes.toChar)
             case 3 =>
               val bytes = d(0) << 19 | d(1) << 14 | d(2) << 9 | d(3) << 4 | d(4) >> 1
-              baa.setDoubleByteBigEndian(result, di, (bytes >> 8).toChar)
+              DirectByteArrayAccess.setDoubleByteBigEndian(result, di, (bytes >> 8).toChar)
               result(di + 2) = bytes.toByte
             case 4 =>
               val bytes = d(0) << 27 | d(1) << 22 | d(2) << 17 | d(3) << 12 | d(4) << 7 | d(5) << 2 | d(6) >> 3
-              baa.setQuadByteBigEndian(result, di, bytes.toInt)
+              DirectByteArrayAccess.setQuadByteBigEndian(result, di, bytes.toInt)
             case _ =>
               failIllegalPadding()
           result

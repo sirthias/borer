@@ -8,10 +8,10 @@
 
 package io.bullet.borer.input
 
+import io.bullet.borer.{ByteAccess, Input}
+
 import java.io.{File, FileInputStream}
 import java.nio.file.Files
-
-import io.bullet.borer.{ByteAccess, Input}
 
 trait FromFileInput { this: FromByteArrayInput with FromInputStreamInput with FromIteratorInput =>
 

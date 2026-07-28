@@ -9,16 +9,11 @@
 package io.bullet.borer.json
 
 import io.bullet.borer.Json
-import io.bullet.borer.internal.Unsafe
-import io.bullet.borer.internal.Unsafe.LittleEndianByteArrayAccess
 
 private[borer] object DirectParser:
 
   def apply(inputValue: Any, config: Json.DecodingConfig): DirectJsonParser =
     inputValue match
       case input: Array[Byte] if config.allowDirectParsing =>
-        Unsafe.byteArrayAccess match
-          case baa: LittleEndianByteArrayAccess =>
-            new DirectJsonParser(new io.bullet.borer.input.DirectFromByteArrayInput(input, baa), config)
-          case _ => null
+        new DirectJsonParser(new io.bullet.borer.Input.FromByteArray(input), config)
       case _ => null

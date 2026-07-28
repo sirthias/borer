@@ -8,7 +8,7 @@
 
 package io.bullet.borer.encodings
 
-import io.bullet.borer.internal.ByteArrayAccess
+import io.bullet.borer.internal.{ByteArrayAccess, DirectByteArrayAccess}
 
 import scala.annotation.tailrec
 
@@ -27,7 +27,6 @@ object Base16 extends BaseEncoding("base16", 4):
     if (sl > Int.MaxValue / 2) failOverflow()
 
     val result = new Array[Char](sl << 1)
-    val baa    = ByteArrayAccess.instance
     val sl4    = sl - 4
 
     inline def hexDigit(i: Int) = (48 + i + (digitBase & ((9 - i) >> 31))).toChar
@@ -42,7 +41,7 @@ object Base16 extends BaseEncoding("base16", 4):
 
     @tailrec def encodeFast(si: Int, di: Int): Array[Char] =
       if (si < sl4)
-        val quad = baa.quadByteBigEndian(bytes, si)
+        val quad = DirectByteArrayAccess.quadByteBigEndian(bytes, si)
         result(di + 0) = hexDigit(quad << 0 >>> 28)
         result(di + 1) = hexDigit(quad << 4 >>> 28)
         result(di + 2) = hexDigit(quad << 8 >>> 28)

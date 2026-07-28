@@ -8,7 +8,7 @@
 
 package io.bullet.borer.encodings
 
-import io.bullet.borer.internal.ByteArrayAccess
+import io.bullet.borer.internal.{ByteArrayAccess, DirectByteArrayAccess}
 
 import scala.annotation.tailrec
 
@@ -30,15 +30,14 @@ object ZBase32 extends LookupBaseEncoding("z-base32", 5, "ybndrfg8ejkmcpqxot1uwi
     if (sl.toLong << 3 < bitCount) failBitCountMismatch()
 
     val result = new Array[Char](((bitCount + 4) / 5).toInt)
-    val baa    = ByteArrayAccess.instance
 
     def encodeRest(bitsRemaining: Long, si: Int, di: Int): Array[Char] =
       val fullBytes =
         sl - si match
           case 1 => bytes(si).toLong << 56
-          case 2 => baa.doubleByteBigEndian(bytes, si).toLong << 48
-          case 3 => baa.doubleByteBigEndian(bytes, si).toLong << 48 | (bytes(si + 2) & 0xFFL) << 40
-          case 4 => baa.quadByteBigEndian(bytes, si).toLong << 32
+          case 2 => DirectByteArrayAccess.doubleByteBigEndian(bytes, si).toLong << 48
+          case 3 => DirectByteArrayAccess.doubleByteBigEndian(bytes, si).toLong << 48 | (bytes(si + 2) & 0xFFL) << 40
+          case 4 => DirectByteArrayAccess.quadByteBigEndian(bytes, si).toLong << 32
       val bits = fullBytes & ~(-1L >>> bitsRemaining)
       result(di) = alphabetChars((bits >>> 59).toInt)
       if (bitsRemaining > 5) result(di + 1) = alphabetChars((bits << 5 >>> 59).toInt)
@@ -52,7 +51,7 @@ object ZBase32 extends LookupBaseEncoding("z-base32", 5, "ybndrfg8ejkmcpqxot1uwi
 
     @tailrec def encode5(bitsRemaining: Long, si: Int, di: Int): Array[Char] =
       if (bitsRemaining >= 40)
-        val octa = baa.quadByteBigEndian(bytes, si).toLong << 32 | (bytes(si + 4) & 0xFFL) << 24
+        val octa = DirectByteArrayAccess.quadByteBigEndian(bytes, si).toLong << 32 | (bytes(si + 4) & 0xFFL) << 24
         result(di + 0) = alphabetChars((octa << 0 >>> 59).toInt)
         result(di + 1) = alphabetChars((octa << 5 >>> 59).toInt)
         result(di + 2) = alphabetChars((octa << 10 >>> 59).toInt)
@@ -82,7 +81,6 @@ object ZBase32 extends LookupBaseEncoding("z-base32", 5, "ybndrfg8ejkmcpqxot1uwi
 
     val dlen   = ((bitCount + 7) >> 3).toInt
     val result = new Array[Byte](dlen)
-    val baa    = ByteArrayAccess.instance
 
     def decode(ix: Int): Long =
       val c      = chars(ix)
@@ -106,13 +104,13 @@ object ZBase32 extends LookupBaseEncoding("z-base32", 5, "ybndrfg8ejkmcpqxot1uwi
       val bits = fullBytes & ~(-1L >>> bitsRemaining)
       dlen - di match
         case 1 => result(di) = (bits >>> 56).toByte
-        case 2 => baa.setDoubleByteBigEndian(result, di, (bits >>> 48).toChar)
+        case 2 => DirectByteArrayAccess.setDoubleByteBigEndian(result, di, (bits >>> 48).toChar)
 
         case 3 =>
-          baa.setDoubleByteBigEndian(result, di, (bits >>> 48).toChar)
+          DirectByteArrayAccess.setDoubleByteBigEndian(result, di, (bits >>> 48).toChar)
           result(di + 2) = (bits >>> 40).toByte
 
-        case 4 => baa.setQuadByteBigEndian(result, di, (bits >>> 32).toInt)
+        case 4 => DirectByteArrayAccess.setQuadByteBigEndian(result, di, (bits >>> 32).toInt)
       result
 
     @tailrec def decode8(bitsRemaining: Long, si: Int, di: Int): Array[Byte] =
@@ -120,7 +118,7 @@ object ZBase32 extends LookupBaseEncoding("z-base32", 5, "ybndrfg8ejkmcpqxot1uwi
         inline def d(offset: Int) = decode(si + offset)
 
         val long = d(0) << 35 | d(1) << 30 | d(2) << 25 | d(3) << 20 | d(4) << 15 | d(5) << 10 | d(6) << 5 | d(7)
-        baa.setQuadByteBigEndian(result, di, (long >>> 8).toInt)
+        DirectByteArrayAccess.setQuadByteBigEndian(result, di, (long >>> 8).toInt)
         result(di + 4) = long.toByte
         decode8(bitsRemaining - 40, si + 8, di + 5)
       else if (bitsRemaining > 0) decodeRest(bitsRemaining, si, di)

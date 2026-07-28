@@ -348,7 +348,7 @@ lazy val site = project
         .withColor("indigo", "orange")
         .withLogo("assets/images/borer-logo-white.svg")
         .withCustomStylesheet("assets/stylesheets/borer.css")
-        .withCopyright("Copyright (C) 2019-2023 Mathias Doenitz")
+        .withCopyright("Copyright (C) 2019-2026 Mathias Doenitz")
         .withRepository(scmInfo.value.get.browseUrl.toURI)
         .withSocial(uri("https://github.com/sirthias"), uri("https://twitter.com/sirthias"))
         .withSearch()
@@ -388,6 +388,7 @@ def welcomeMessage = Def.setting {
       |Useful sbt tasks:
       |${item("project core")} - Descend into the JVM core module
       |${item("project `coreJS`")} - Descend into the JS core module
+      |${item("project `coreNative`")} - Descend into the native core module
       |${item("test")} - Run all tests
       |${item("project benchmarks;benchmarkResults;project /")} - Show results of latest benchmark runs
       """.stripMargin

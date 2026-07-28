@@ -8,40 +8,41 @@
 
 package io.bullet.borer
 
+import io.bullet.borer.internal.{ByteArrayAccess, DirectByteArrayAccess}
+
 import java.nio.ByteOrder
-import io.bullet.borer.internal.ByteArrayAccess
 
 final class ByteStringArrayCodecs private (byteOrder: ByteOrder):
 
   given shortArrayAsByteArrayEncoder(using enc: Encoder[Array[Byte]]): Encoder[Array[Short]] =
-    Encoder((w, x) => enc.write(w, ByteArrayAccess.instance.shortArrayToByteArray(x, byteOrder)))
+    Encoder((w, x) => enc.write(w, DirectByteArrayAccess.shortArrayToByteArray(x, byteOrder)))
 
   given intArrayAsByteArrayEncoder(using enc: Encoder[Array[Byte]]): Encoder[Array[Int]] =
-    Encoder((w, x) => enc.write(w, ByteArrayAccess.instance.intArrayToByteArray(x, byteOrder)))
+    Encoder((w, x) => enc.write(w, DirectByteArrayAccess.intArrayToByteArray(x, byteOrder)))
 
   given longArrayAsByteArrayEncoder(using enc: Encoder[Array[Byte]]): Encoder[Array[Long]] =
-    Encoder((w, x) => enc.write(w, ByteArrayAccess.instance.longArrayToByteArray(x, byteOrder)))
+    Encoder((w, x) => enc.write(w, DirectByteArrayAccess.longArrayToByteArray(x, byteOrder)))
 
   given floatArrayAsByteArrayEncoder(using enc: Encoder[Array[Byte]]): Encoder[Array[Float]] =
-    Encoder((w, x) => enc.write(w, ByteArrayAccess.instance.floatArrayToByteArray(x, byteOrder)))
+    Encoder((w, x) => enc.write(w, DirectByteArrayAccess.floatArrayToByteArray(x, byteOrder)))
 
   given doubleArrayAsByteArrayEncoder(using enc: Encoder[Array[Byte]]): Encoder[Array[Double]] =
-    Encoder((w, x) => enc.write(w, ByteArrayAccess.instance.doubleArrayToByteArray(x, byteOrder)))
+    Encoder((w, x) => enc.write(w, DirectByteArrayAccess.doubleArrayToByteArray(x, byteOrder)))
 
   given shortArrayAsByteArrayDecoder(using dec: Decoder[Array[Byte]]): Decoder[Array[Short]] =
-    Decoder(r => ByteArrayAccess.instance.byteArrayToShortArray(dec.read(r), byteOrder))
+    Decoder(r => DirectByteArrayAccess.byteArrayToShortArray(dec.read(r), byteOrder))
 
   given intArrayAsByteArrayDecoder(using dec: Decoder[Array[Byte]]): Decoder[Array[Int]] =
-    Decoder(r => ByteArrayAccess.instance.byteArrayToIntArray(dec.read(r), byteOrder))
+    Decoder(r => DirectByteArrayAccess.byteArrayToIntArray(dec.read(r), byteOrder))
 
   given longArrayAsByteArrayDecoder(using dec: Decoder[Array[Byte]]): Decoder[Array[Long]] =
-    Decoder(r => ByteArrayAccess.instance.byteArrayToLongArray(dec.read(r), byteOrder))
+    Decoder(r => DirectByteArrayAccess.byteArrayToLongArray(dec.read(r), byteOrder))
 
   given floatArrayAsByteArrayDecoder(using dec: Decoder[Array[Byte]]): Decoder[Array[Float]] =
-    Decoder(r => ByteArrayAccess.instance.byteArrayToFloatArray(dec.read(r), byteOrder))
+    Decoder(r => DirectByteArrayAccess.byteArrayToFloatArray(dec.read(r), byteOrder))
 
   given doubleArrayAsByteArrayDecoder(using dec: Decoder[Array[Byte]]): Decoder[Array[Double]] =
-    Decoder(r => ByteArrayAccess.instance.byteArrayToDoubleArray(dec.read(r), byteOrder))
+    Decoder(r => DirectByteArrayAccess.byteArrayToDoubleArray(dec.read(r), byteOrder))
 
 object ByteStringArrayCodecs:
 
