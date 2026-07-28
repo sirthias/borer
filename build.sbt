@@ -74,7 +74,7 @@ lazy val commonSettings = Seq(
   resolvers += "Apache Pekko Staging".at("https://repository.apache.org/content/groups/staging"),
 
   // file headers
-  headerLicense := Some(HeaderLicense.MPLv2("2019-2024", "Mathias Doenitz")),
+  headerLicense := Some(HeaderLicense.MPLv2("2019-2026", "Mathias Doenitz")),
   testFrameworks += new TestFramework("utest.runner.Framework"),
   console / initialCommands := """import io.bullet.borer._""",
 
@@ -323,6 +323,7 @@ lazy val site = project
     `compat-scodec-jvm`
   )
   .enablePlugins(
+    AutomateHeaderPlugin,
     ParadoxMaterialThemePlugin,
     ParadoxSitePlugin,
     GhpagesPlugin
