@@ -211,7 +211,7 @@ case object Json extends Target:
       output: Output,
       config: EncodingConfig = EncodingConfig.default,
       receiverWrapper: Receiver.Transformer[EncodingConfig] = Receiver.nopTransformer): Writer =
-    new Writer(output, receiverWrapper(JsonRenderer(output, config), config), null, config)
+    new Writer(output, receiverWrapper(JsonRenderer(output, config), config), Json, config)
 
   /**
    * Constructs a new [[Reader]] that reads JSON from the given [[Input]].
