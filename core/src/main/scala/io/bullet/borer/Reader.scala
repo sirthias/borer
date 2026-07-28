@@ -8,10 +8,10 @@
 
 package io.bullet.borer
 
-import java.nio.charset.StandardCharsets
-import io.bullet.borer.internal.{ElementDeque, Parser, Receptacle, Util}
+import io.bullet.borer.internal.*
 import io.bullet.borer.json.JsonParser
 
+import java.nio.charset.StandardCharsets
 import scala.annotation.tailrec
 import scala.collection.{mutable, Factory}
 
@@ -25,7 +25,7 @@ final class InputReader[Config <: Reader.Config](
     config: Config,
     val target: Target):
 
-  import io.bullet.borer.{DataItem => DI}
+  import io.bullet.borer.DataItem as DI
 
   private[this] val configReadIntegersAlsoAsFloatingPoint = config.readIntegersAlsoAsFloatingPoint
   private[this] val configReadDoubleAlsoAsFloat           = config.readDoubleAlsoAsFloat
@@ -161,7 +161,7 @@ final class InputReader[Config <: Reader.Config](
   def longCompare(value: Long): Int =
     if (hasLong)
       val long = if (hasInt) receptacle.intValue.toLong else receptacle.longValue
-      math.signum(long - value).toInt
+      java.lang.Long.compare(long, value)
     else Int.MaxValue
 
   def tryReadLongCompare(value: Long): Int =
