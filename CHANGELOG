@@ -1,3 +1,12 @@
+Version 1.17.0 (2026-07-28)
+---------------------------
+
+- Upgraded to Scala 3.3.8, Scala.js 1.22.0 and Scala Native 0.5.12
+- Migrated from `sun.misc.Unsafe` to VarHandle-based direct byte array access
+- Fixed Reader.longCompare returning the wrong sign on substraction overflow (#829)
+- Fixed `Json.writer` producing defunct Writer objects w/o explicit `target` argument
+
+
 Version 1.16.2 (2025-11-03)
 ---------------------------
 
