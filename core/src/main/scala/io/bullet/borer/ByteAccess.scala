@@ -160,7 +160,7 @@ object ByteAccess:
         bytes.mark()
         byteBuffer.put(bytes)
         bytes.reset()
-      else byteBuffer.put(bytes.slice.limit(dstRemaining))
+      else byteBuffer.put(bytes.slice.limit(dstRemaining).asInstanceOf[ByteBuffer])
       bytes
 
     def concat(a: ByteBuffer, b: ByteBuffer): ByteBuffer =
