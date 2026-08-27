@@ -127,15 +127,15 @@ lazy val releaseSettings = {
 val `akka-actor`    = Def.setting("com.typesafe.akka" %%  "akka-actor-typed"  % "2.8.8")
 val `akka-stream`   = Def.setting("com.typesafe.akka" %%  "akka-stream"       % "2.8.8")
 val `akka-http`     = Def.setting("com.typesafe.akka" %%  "akka-http"         % "10.5.3")
-val `pekko-actor`   = Def.setting("org.apache.pekko"  %%  "pekko-actor-typed" % "1.6.0")
-val `pekko-stream`  = Def.setting("org.apache.pekko"  %%  "pekko-stream"      % "1.6.0")
+val `pekko-actor`   = Def.setting("org.apache.pekko"  %%  "pekko-actor-typed" % "1.7.0")
+val `pekko-stream`  = Def.setting("org.apache.pekko"  %%  "pekko-stream"      % "1.7.0")
 val `pekko-http`    = Def.setting("org.apache.pekko"  %%  "pekko-http"        % "1.4.0")
 val `cats-core`     = Def.setting("org.typelevel"     %%% "cats-core"         % "2.13.0")
 val `circe-core`    = Def.setting("io.circe"          %%% "circe-core"        % "0.14.16")
 val `circe-parser`  = Def.setting("io.circe"          %%% "circe-parser"      % "0.14.16")
 val `circe-generic` = Def.setting("io.circe"          %%% "circe-generic"     % "0.14.16")
 val `scodec-bits`   = Def.setting("org.scodec"        %%% "scodec-bits"       % "1.2.5")
-val munit           = Def.setting("org.scalameta"     %%% "munit"             % "1.3.4" % Test)
+val munit           = Def.setting("org.scalameta"     %%% "munit"             % "1.3.5" % Test)
 val macrolizer      = Def.setting("io.bullet"         %%% "macrolizer"        % "0.6.2" % "compile-internal, test-internal")
 // format: ON
 
