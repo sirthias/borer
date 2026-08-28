@@ -194,7 +194,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.16.2
+<i class="md-icon" title="Version">label_outline</i> 1.18.0
 </label>
 </li>
 </ul>
@@ -249,7 +249,7 @@ given [T: Codec]: Codec[Option[T]] = ...
 <p>The best way to concisely generate codecs for case classes is <em>borer</em>&rsquo;s <a href="../borer-derivation/index.html">Derivation</a> module.</p>
 <p>If for some reason you cannot or don&rsquo;t want to use macro-based codec derivation and array-based codecs are sufficient for you use case then there is a macro-less solution available with the <code>borer-core</code> alone:</p>
 <p>If <code>T</code> is a case class with at most 22 members then an <code>Encoder[T]</code> and/or <code>Decoder[T]</code> can be concisely provided by via the <code>unapply</code> / <code>apply</code> methods of the <code>T</code> companion object: </p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/CustomCodecsSpec.scala#L18-L29" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Codec, Decoder, Encoder}
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/v1.18.0/site/src/test/scala/io/bullet/borer/site/CustomCodecsSpec.scala#L18-L29" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Codec, Decoder, Encoder}
 
 case class Color(name: String, value: Int)
 
@@ -266,7 +266,7 @@ given Codec[Color] = Codec(
 <p>If you would like your case classes to be encoded in a more JSON-esque way, as maps with each member being keyed by its member name, the <a href="../borer-derivation/map-based.html">MapBasedCodecs</a> from the <a href="../borer-derivation/index.html"><code>borer-derivation</code></a> module are your only option, short of <a href="custom-types.html#construction">Manual Construction</a>. </p>
 <h2><a href="#transforming-existing-encoders-decoders" name="transforming-existing-encoders-decoders" class="anchor"><span class="anchor-link"></span></a>Transforming Existing Encoders / Decoders</h2>
 <p>If your type can somehow be constructed from or deconstructed to another type that an Encoder or Decoder is already available for, you can rely on the <code>contramap</code> and <code>map</code> methods available on Encoders / Decoders:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/CustomCodecsSpec.scala#L42-L48" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Decoder, Encoder}
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/v1.18.0/site/src/test/scala/io/bullet/borer/site/CustomCodecsSpec.scala#L42-L48" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Decoder, Encoder}
 
 class Person(val name: String)
 
@@ -275,7 +275,7 @@ given Encoder[Person] = Encoder.forString.contramap[Person](_.name)
 given Decoder[Person] = Decoder.forString.map(new Person(_))</code></pre>
 <h2><a href="#construction" name="construction" class="anchor"><span class="anchor-link"></span></a>&ldquo;Manual&rdquo; Construction</h2>
 <p>For full flexibility of how your type <code>T</code> is to be encoded in <a href="http://cbor.io/">CBOR</a>/<a href="http://json.org/">JSON</a> you can of course also write the respective <code>Encoder[T]</code> / <code>Decoder[T]</code> manually. This is done by explicitly defining how your type is to be written to a <code>Writer</code> and read from a <code>Reader</code>:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/CustomCodecsSpec.scala#L61-L80" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Decoder, Encoder}
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/v1.18.0/site/src/test/scala/io/bullet/borer/site/CustomCodecsSpec.scala#L61-L80" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Decoder, Encoder}
 
 class Person(val name: String, val age: Int)
 
@@ -289,7 +289,7 @@ given Encoder[Person] = Encoder { (writer, person) =&gt;
 
 given Decoder[Person] = Decoder { reader =&gt;
   val unbounded = reader.readArrayOpen(2)
-  val person = new Person(
+  val person    = new Person(
     reader.readString(),
     reader.readInt()
   )
@@ -303,14 +303,14 @@ given Decoder[Person] = Decoder { reader =&gt;
 <p>While <em>borer</em> (by default) verifies that the <a href="http://cbor.io/">CBOR</a>/<a href="http://json.org/">JSON</a> created by your application is indeed valid and will thus catch any mistakes you made in this regard eventually, debugging structural problems can be a bit tedious since the error will often only be recognizable at the very end of the encoding or decoding process. Check out the section on <a href="debugging.html">Debugging</a> for more info how <em>borer</em> can support you in debugging (de)serialization issues.</p>
 <h3><a href="#reader-and-writer" name="reader-and-writer" class="anchor"><span class="anchor-link"></span></a>Reader and Writer</h3>
 <p>All pre-defined Encoders and Decoders, as well as the ones you might write yourself, describe how to encode or decode and object by operating on a <code>Writer</code> or <code>Reader</code>, respectively.</p>
-<p>The <code>Writer</code> (sources <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Writer.scala">here</a>) contains a largish number of methods (like <code>writeInt</code>, <code>writeString</code> or <code>writeArrayHeader</code>) that more or less directly write the respective data item to the output.<br> The <code>Reader</code> (sources <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Reader.scala">here</a>) contains the respective counterparts (like <code>readInt</code>, <code>readString</code> or <code>readArrayHeader</code>).</p>
+<p>The <code>Writer</code> (sources <a href="https://github.com/sirthias/borer/tree/v1.18.0/core/src/main/scala/io/bullet/borer/Writer.scala">here</a>) contains a largish number of methods (like <code>writeInt</code>, <code>writeString</code> or <code>writeArrayHeader</code>) that more or less directly write the respective data item to the output.<br> The <code>Reader</code> (sources <a href="https://github.com/sirthias/borer/tree/v1.18.0/core/src/main/scala/io/bullet/borer/Reader.scala">here</a>) contains the respective counterparts (like <code>readInt</code>, <code>readString</code> or <code>readArrayHeader</code>).</p>
 <p>The <code>Writer</code> and <code>Reader</code> operate directly on the respective <code>Output</code> and <code>Input</code> data &ldquo;streams&rdquo; and simply cause the respective low-level &ldquo;primitive&rdquo; to be written or read. This means, that the logic working with them has to have at least a basic understanding of the rules governing how these primitives can be or must be combined in order to produce valid output.</p>
 <p>For example, an &ldquo;indefinite-length array&rdquo; (in <a href="http://cbor.io/">CBOR</a> terminology) is written by first calling <code>writer.writeArrayStart()</code>, then writing all the elements (recursively descending into any nested structures) and finally &ldquo;closing&rdquo; the array with <code>writer.writeBreak()</code>.</p>
 <p>On the reading side this is mirrored by first having to call <code>reader.readArrayStart()</code>, then reading all the elements (recursively decoding nested structures) and finally consuming the &ldquo;closing&rdquo; with <code>reader.readBreak()</code>.</p>
 <p>While <em>borer</em> implements validation logic (enabled by default), which verifies the structural integrity of all produced and consumed data, there are no static (type-level, i.e. compile-time) checks that catch you, when you forget to write or read the BREAK primitive at the end!</p>
 <p>When consuming <a href="http://cbor.io/">CBOR</a> data during decoding the <code>Reader</code> gives you one-element look-ahead. This means that you can &ldquo;see&rdquo; the kind of the next data item (primitive) that is available <em>before</em> reading it, which is often very helpful.</p>
 <p>For example, here is an potential <code>Decoder[Either[String, Int]]</code>:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/CustomCodecsSpec.scala#L94-L101" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Decoder
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/v1.18.0/site/src/test/scala/io/bullet/borer/site/CustomCodecsSpec.scala#L94-L101" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Decoder
 
 given Decoder[Either[String, Int]] =
   Decoder { reader =&gt;
@@ -320,13 +320,13 @@ given Decoder[Either[String, Int]] =
   }</code></pre>
 </div>
 <div>
-<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-core/custom-types.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/sirthias/borer/tree/v1.18.0/site/src/main/paradox/borer-core/custom-types.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.16.2
+1.18.0
 </span>
 </div>
 </article>
@@ -368,7 +368,7 @@ Nullable and Default
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019-2023 Mathias Doenitz
+Copyright (C) 2019-2026 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

@@ -185,7 +185,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.16.2
+<i class="md-icon" title="Version">label_outline</i> 1.18.0
 </label>
 </li>
 </ul>
@@ -197,7 +197,7 @@ sirthias/borer/
 <div class="md-content__searchable">
 <h1><a href="#type-ids" name="type-ids" class="anchor"><span class="anchor-link"></span></a>Type IDs</h1>
 <p>When encoding <em>Abstract Data Types</em> (ADTs), i.e. top types of <code>sealed</code> type hierarchies like <code>Animal</code> in this example:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L79-L83" target="_blank" title="Go to snippet source">source</a><code class="language-scala">sealed trait Animal
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/v1.18.0/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L79-L83" target="_blank" title="Go to snippet source">source</a><code class="language-scala">sealed trait Animal
 case class Dog(age: Int, name: String)                      extends Animal
 case class Cat(weight: Double, color: String, home: String) extends Animal
 case class Fish(color: String)                              extends Animal
@@ -205,16 +205,16 @@ case object Yeti                                            extends Animal</code
 <p>the encoder needs to somehow transfer the information to the decoder, which of the defined sub-types to decode into.<br> In the context of the example ADT above, when <code>Json.decode(encoding).to[Animal]</code> is called the decoder needs to know, whether the encoding holds a <code>Dog</code>, a <code>Cat</code> or any of the other (well-defined) sub-types of <code>Animal</code>.</p>
 <p>This is done through a &ldquo;Type ID&rdquo;, which is a <code>String</code> or number that uniquely identifies each ADT sup-type.</p>
 <p>By default <em>borer</em> will use a sub-type&rsquo;s short class name as a (textual) type ID, i.e. <code>&quot;Dog&quot;</code> would be the type id of <code>Dog</code> instances and <code>&quot;Cat&quot;</code> would be the same for the <code>Cat</code> type.</p>
-<p>If you want to customize this you can use the <code>@key</code> annotation to do so. Check out the <code>@key</code> sources <a href="https://github.com/sirthias/borer/tree/master/derivation/src/main/scala/io/bullet/borer/derivation/key.scala">here</a> for more info on this. </p>
+<p>If you want to customize this you can use the <code>@key</code> annotation to do so. Check out the <code>@key</code> sources <a href="https://github.com/sirthias/borer/tree/v1.18.0/derivation/src/main/scala/io/bullet/borer/derivation/key.scala">here</a> for more info on this. </p>
 </div>
 <div>
-<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-derivation/type-ids.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/sirthias/borer/tree/v1.18.0/site/src/main/paradox/borer-derivation/type-ids.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.16.2
+1.18.0
 </span>
 </div>
 </article>
@@ -256,7 +256,7 @@ Derivation FAQ
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019-2023 Mathias Doenitz
+Copyright (C) 2019-2026 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

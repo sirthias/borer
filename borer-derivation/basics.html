@@ -194,7 +194,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.16.2
+<i class="md-icon" title="Version">label_outline</i> 1.18.0
 </label>
 </li>
 </ul>
@@ -249,13 +249,13 @@ sirthias/borer/
   <li><code>deriveAllCodecs[T]</code>, which derives a <code>Codec[T]</code>, i.e. an <code>Encoder[T]</code> as well as a <code>Decoder[T]</code></li>
 </ul>
 <p>To understand what these macros do consider this simple example:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L79-L83" target="_blank" title="Go to snippet source">source</a><code class="language-scala">sealed trait Animal
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/v1.18.0/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L79-L83" target="_blank" title="Go to snippet source">source</a><code class="language-scala">sealed trait Animal
 case class Dog(age: Int, name: String)                      extends Animal
 case class Cat(weight: Double, color: String, home: String) extends Animal
 case class Fish(color: String)                              extends Animal
 case object Yeti                                            extends Animal</code></pre>
 <p>With semi-automatic derivation you&rsquo;d have to explicitly call a derivation macro <em>for each</em> sub-type individually:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L88-L97" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Codec
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/v1.18.0/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L88-L97" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Codec
 import io.bullet.borer.derivation.MapBasedCodecs.*
 
 given Codec[Animal] = {
@@ -267,13 +267,13 @@ given Codec[Animal] = {
 }</code></pre>
 <p>This gives you full control but can be a bit tedious for larger ADT hierarchies.</p>
 <p>Fully-automatic derivation on the other hand lets you reduce the boilerplate to a minimum by generating the calls to the derivation macro for each ADT sub-type automatically, so you only need to write a single line: </p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L112-L115" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Codec
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/v1.18.0/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L112-L115" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Codec
 import io.bullet.borer.derivation.MapBasedCodecs.*
 
 given Codec[Animal] = deriveAllCodecs[Animal]</code></pre>
 <h2><a href="#derivation-via-derives" name="derivation-via-derives" class="anchor"><span class="anchor-link"></span></a>Derivation via <code>derives</code></h2>
 <p><em>borer</em> also supports Scala 3&rsquo;s new <code>derives</code> clause, which allows for a very succinct definition of <code>Encoder</code>, <code>Decoder</code> and <code>Codec</code> instances:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L128-L135" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Codec, Json}
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/v1.18.0/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L128-L135" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Codec, Json}
 import io.bullet.borer.derivation.MapBasedCodecs.*
 
 case class Color(r: Int, g: Int, b: Int) derives Codec
@@ -283,7 +283,7 @@ val color = Color(255, 0, 0)
 Json.encode(color).toUtf8String ==&gt; &quot;&quot;&quot;{&quot;r&quot;:255,&quot;g&quot;:0,&quot;b&quot;:0}&quot;&quot;&quot;</code></pre>
 <p>The <code>derives Codec</code> clause automatically generates a respective <code>given</code> instance in the type companion object with a <code>deriveCodec</code> call to either <code>MapBasedCodecs</code>, <code>CompactMapBasedCodecs</code> or <code>ArrayBasedCodecs</code>, depending on what you have imported. (With <code>derives Encoder</code>, <code>derives Decoder</code> or <code>derives Encoder, Decoder</code> the same holds true analogously.)</p>
 <p>The snippet above is therefore equivalent to this one:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L141-L151" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Codec, Json}
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/v1.18.0/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L141-L151" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Codec, Json}
 import io.bullet.borer.derivation.MapBasedCodecs.*
 
 case class Color(r: Int, g: Int, b: Int)
@@ -303,7 +303,7 @@ Json.encode(color).toUtf8String ==&gt; &quot;&quot;&quot;{&quot;r&quot;:255,&quo
   <li><code>derives Codec.All</code></li>
 </ul>
 <p>Here is an example:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L157-L167" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Codec, Json}
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/v1.18.0/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L157-L167" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Codec, Json}
 import io.bullet.borer.derivation.MapBasedCodecs.*
 
 enum Body derives Codec.All:
@@ -315,7 +315,7 @@ val body: Body = Body.Asteroid(1.23)
 // Json.encode(body).toByteArray or
 Json.encode(body).toUtf8String ==&gt; &quot;&quot;&quot;{&quot;Asteroid&quot;:{&quot;mass&quot;:1.23}}&quot;&quot;&quot;</code></pre>
 <p>And this is what the <code>derives Codec.All</code> clause generates:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L173-L181" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Codec
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/v1.18.0/site/src/test/scala/io/bullet/borer/site/DerivationSpec.scala#L173-L181" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Codec
 import io.bullet.borer.derivation.MapBasedCodecs.*
 
 enum Body:
@@ -326,13 +326,13 @@ object Body:
   given Codec[Body] = deriveAllCodecs</code></pre>
 </div>
 <div>
-<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-derivation/basics.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/sirthias/borer/tree/v1.18.0/site/src/main/paradox/borer-derivation/basics.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.16.2
+1.18.0
 </span>
 </div>
 </article>
@@ -374,7 +374,7 @@ Array-Based Codecs
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019-2023 Mathias Doenitz
+Copyright (C) 2019-2026 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

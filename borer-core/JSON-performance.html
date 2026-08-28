@@ -185,7 +185,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.16.2
+<i class="md-icon" title="Version">label_outline</i> 1.18.0
 </label>
 </li>
 </ul>
@@ -197,12 +197,12 @@ sirthias/borer/
 <div class="md-content__searchable">
 <h1><a href="#json-performance" name="json-performance" class="anchor"><span class="anchor-link"></span></a>JSON Performance</h1>
 <p><em>borer</em> comes with a fast JSON parser optimized for modern superscalar 64-bit CPUs, which performs quite well when compared to other popular JSON libraries in the scala eco-system when it comes to transforming raw JSON-bytes into a case-class based data model.</p>
-<p>A <a href="https://github.com/sirthias/borer/tree/master/benchmarks/src/main/resources">benchmark against 18 real-world JSON data examples</a> from a diverse set of sources shows that <em>borer</em>&rsquo;s JSON parsing infrastructure outperforms <a href="https://circe.github.io/circe/">Circe</a> (for example) by more than a factor of two, on average:</p><div id="benchmark-results">
+<p>A <a href="https://github.com/sirthias/borer/tree/v1.18.0/benchmarks/src/main/resources">benchmark against 18 real-world JSON data examples</a> from a diverse set of sources shows that <em>borer</em>&rsquo;s JSON parsing infrastructure outperforms <a href="https://circe.github.io/circe/">Circe</a> (for example) by more than a factor of two, on average:</p><div id="benchmark-results">
 <p><img src="../assets/images/benchmark-results.svg" alt="Benchmark Results" /></p></div>
 <p>This is the benchmark setup:</p>
 <dl>
   <dt>Task</dt>
-  <dd>Decode 18 files from raw <a href="http://json.org/">JSON</a> bytes into a respective  <a href="https://github.com/sirthias/borer/tree/master/benchmarks/src/main/scala/io/bullet/borer/benchmarks/Model.scala">case-class based data model</a>  generated with <a href="https://transform.now.sh/json-to-scala-case-class/">https://transform.now.sh/json-to-scala-case-class/</a></dd>
+  <dd>Decode 18 files from raw <a href="http://json.org/">JSON</a> bytes into a respective  <a href="https://github.com/sirthias/borer/tree/v1.18.0/benchmarks/src/main/scala/io/bullet/borer/benchmarks/Model.scala">case-class based data model</a>  generated with <a href="https://transform.now.sh/json-to-scala-case-class/">https://transform.now.sh/json-to-scala-case-class/</a></dd>
   <dt>JMH Parameters</dt>
   <dd><code>-wi 10 -i 10 -t 4 -f 4</code></dd>
   <dt>JVM</dt>
@@ -221,16 +221,16 @@ sirthias/borer/
 </code></pre><div class="callout note "><div class="callout-title">Note</div>
 <p>This &ldquo;full&rdquo; benchmark will run for more than 4 days!</p></div>
 <p>Since interpreting the results can be a bit tedious <em>borer</em> comes with some simple analysis logic that can be invoked with the <code>benchmarkResults</code> SBT command. It will show you a synthesis of all benchmark results currently living in the <code>benchmarks/results</code> folder.</p><div class="callout warning "><div class="callout-title">Warning</div>
-<p>The <code>benchmarks/results</code> folder already contains the results of the last &ldquo;official&rdquo; benchmarking runs. (<a href="https://github.com/sirthias/borer/tree/master/benchmarks/results">here</a>)<br> When you run your own benchmarks you should first remove these &ldquo;official&rdquo; <code>.json</code> files since benchmark results are not comparable when run on non-identical machines!</p></div>
+<p>The <code>benchmarks/results</code> folder already contains the results of the last &ldquo;official&rdquo; benchmarking runs. (<a href="https://github.com/sirthias/borer/tree/v1.18.0/benchmarks/results">here</a>)<br> When you run your own benchmarks you should first remove these &ldquo;official&rdquo; <code>.json</code> files since benchmark results are not comparable when run on non-identical machines!</p></div>
 </div>
 <div>
-<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-core/JSON-performance.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/sirthias/borer/tree/v1.18.0/site/src/main/paradox/borer-core/JSON-performance.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.16.2
+1.18.0
 </span>
 </div>
 </article>
@@ -272,7 +272,7 @@ Document Object Model (DOM)
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019-2023 Mathias Doenitz
+Copyright (C) 2019-2026 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

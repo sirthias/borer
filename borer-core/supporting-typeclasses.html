@@ -194,7 +194,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.16.2
+<i class="md-icon" title="Version">label_outline</i> 1.18.0
 </label>
 </li>
 </ul>
@@ -225,8 +225,8 @@ sirthias/borer/
 <h1><a href="#input-output-byteaccess" name="input-output-byteaccess" class="anchor"><span class="anchor-link"></span></a><code>Input</code>, <code>Output</code>, <code>ByteAccess</code></h1>
 <p>In order to allow for seamless integration in all kinds of application environments <em>borer</em> abstracts over decoding input, encoding output as well as general &ldquo;chunks of bytes&rdquo; with three additional type classes <code>Input[T]</code>, <code>Output[T]</code> and <code>ByteAccess[T]</code>.</p>
 <h2><a href="#input" name="input" class="anchor"><span class="anchor-link"></span></a>Input</h2>
-<p>For decoding <em>borer</em> happily consumes any type for which an <code>Input.Provider[T]</code> is implicitly available, which is responsible for constructing an <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Input.scala">Input</a> from or around <code>T</code>:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Input.scala#L117-L124" target="_blank" title="Go to snippet source">source</a><code class="language-scala">/**
+<p>For decoding <em>borer</em> happily consumes any type for which an <code>Input.Provider[T]</code> is implicitly available, which is responsible for constructing an <a href="https://github.com/sirthias/borer/tree/v1.18.0/core/src/main/scala/io/bullet/borer/Input.scala">Input</a> from or around <code>T</code>:</p>
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/v1.18.0/core/src/main/scala/io/bullet/borer/Input.scala#L117-L124" target="_blank" title="Go to snippet source">source</a><code class="language-scala">/**
  * Responsible for converting an instance of [[T]]
  * to a respective [[Input]] instance.
  */
@@ -246,10 +246,10 @@ trait Provider[T]:
   <li><code>Iterator[T]</code>, provided that there is an <code>Input.Provider[T]</code> available implicitly</li>
 </ul>
 <p>The latter is a great way to consume large input in a streaming fashion, without having to load everything into memory at once. The <code>FromFileInput</code>, for example, relies on it to parse large files as an iteration of chunks.</p>
-<p>The <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Input.scala">Input</a> trait isn&rsquo;t particularly hard to implement, especially since it merely has to support single-pass access to the underlying bytes with minimal buffering and without random access.</p>
+<p>The <a href="https://github.com/sirthias/borer/tree/v1.18.0/core/src/main/scala/io/bullet/borer/Input.scala">Input</a> trait isn&rsquo;t particularly hard to implement, especially since it merely has to support single-pass access to the underlying bytes with minimal buffering and without random access.</p>
 <h2><a href="#output" name="output" class="anchor"><span class="anchor-link"></span></a>Output</h2>
 <p>On the encoding side <em>borer</em> can either produce any type <code>T</code> for which an <code>Output.ToTypeProvider[T]</code> is available, or &ldquo;push&rdquo; the output into a value of type <code>T</code> if an <code>Output.ToValueProvider[T]</code> is available:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Output.scala#L59-L72" target="_blank" title="Go to snippet source">source</a><code class="language-scala">/**
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/v1.18.0/core/src/main/scala/io/bullet/borer/Output.scala#L59-L72" target="_blank" title="Go to snippet source">source</a><code class="language-scala">/**
  * Responsible for providing an Output that produces instances of [[T]].
  */
 trait ToTypeProvider[T]:
@@ -263,7 +263,7 @@ trait ToValueProvider[T]:
   type Out &lt;: Output { type Result = T }
   def apply(value: T, bufferSize: Int, allowBufferCaching: Boolean): Out
 </code></pre>
-<p>Currently <em>borer</em> comes with predefined <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Output.scala">Output</a> implementations for these types:</p>
+<p>Currently <em>borer</em> comes with predefined <a href="https://github.com/sirthias/borer/tree/v1.18.0/core/src/main/scala/io/bullet/borer/Output.scala">Output</a> implementations for these types:</p>
 <ul>
   <li><code>Array[Byte]</code></li>
   <li><code>java.nio.ByteBuffer</code></li>
@@ -273,9 +273,9 @@ trait ToValueProvider[T]:
   <li><code>pekko.util.ByteString</code> (with the <code>borer-compat-pekko</code> module)</li>
   <li><code>scodec.bits.ByteVector</code> (with the <code>borer-compat-scodec</code> module)</li>
 </ul>
-<p>The <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Output.scala">Output</a> trait isn&rsquo;t hard to implement as it simply writes out all bytes in a single pass.</p>
+<p>The <a href="https://github.com/sirthias/borer/tree/v1.18.0/core/src/main/scala/io/bullet/borer/Output.scala">Output</a> trait isn&rsquo;t hard to implement as it simply writes out all bytes in a single pass.</p>
 <p>Here are a few examples to illustrate the top-level output API:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/OutputExamplesSpec.scala#L21-L35" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Cbor
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/v1.18.0/site/src/test/scala/io/bullet/borer/site/OutputExamplesSpec.scala#L21-L35" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Cbor
 
 val value = List(&quot;foo&quot;, &quot;bar&quot;, &quot;baz&quot;) // example value
 
@@ -292,7 +292,7 @@ val file = new java.io.File(filename)
 Cbor.encode(value).to(file).result ==&gt; file</code></pre>
 <h2><a href="#byteaccess" name="byteaccess" class="anchor"><span class="anchor-link"></span></a>ByteAccess</h2>
 <p>Unfortunately Scala (and the whole JVM eco-system) has no single, versatile abstraction for a &ldquo;chunk of bytes&rdquo; that fits the needs of all applications. In order to remain open to the preferences of the application <em>borer</em> also abstracts over &ldquo;chunks of bytes&rdquo; by allowing the use of any type <code>T</code>, for which a <code>ByteAccess[T]</code> is available.</p>
-<p>Currently <em>borer</em> comes with predefined <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/ByteAccess.scala">ByteAccess</a> implementations for these types:</p>
+<p>Currently <em>borer</em> comes with predefined <a href="https://github.com/sirthias/borer/tree/v1.18.0/core/src/main/scala/io/bullet/borer/ByteAccess.scala">ByteAccess</a> implementations for these types:</p>
 <ul>
   <li><code>Array[Byte]</code></li>
   <li><code>java.nio.ByteBuffer</code></li>
@@ -302,13 +302,13 @@ Cbor.encode(value).to(file).result ==&gt; file</code></pre>
 </ul>
 </div>
 <div>
-<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-core/supporting-typeclasses.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/sirthias/borer/tree/v1.18.0/site/src/main/paradox/borer-core/supporting-typeclasses.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.16.2
+1.18.0
 </span>
 </div>
 </article>
@@ -350,7 +350,7 @@ JSON Specifics
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019-2023 Mathias Doenitz
+Copyright (C) 2019-2026 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

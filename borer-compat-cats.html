@@ -193,7 +193,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.16.2
+<i class="md-icon" title="Version">label_outline</i> 1.18.0
 </label>
 </li>
 </ul>
@@ -243,9 +243,9 @@ sirthias/borer/
   <li><code>Ior[A, B]</code></li>
   <li><code>Validated[A, B]</code></li>
 </ul>
-<p>The encodings implemented by <code>borer-compat-circe</code> aim for best time and space efficiency, not &ldquo;readability&rdquo;.</p>
+<p>The encodings implemented by <code>borer-compat-cats</code> aim for best time and space efficiency, not &ldquo;readability&rdquo;.</p>
 <p>One easy way to optimize for self-describability rather than efficiency would be to rely on <code>borer-derivation</code> instead. Here is an example contrasting the difference:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/CatsCompatSpec.scala#L18-L43" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import cats.data.Ior
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/v1.18.0/site/src/test/scala/io/bullet/borer/site/CatsCompatSpec.scala#L18-L43" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import cats.data.Ior
 import io.bullet.borer.{Decoder, Encoder, Codec, Json}
 
 val value = List(
@@ -254,7 +254,7 @@ val value = List(
   Ior.Both(42, &quot;bar&quot;)
 )
 
-// the Ior encoding of `borer-compat-circe` is optimized for efficiency
+// the Ior encoding of `borer-compat-cats` is optimized for efficiency
 {
   import io.bullet.borer.compat.cats.*
 
@@ -271,16 +271,16 @@ val value = List(
   Json.encode(value).toUtf8String ==&gt;
   &quot;&quot;&quot;[{&quot;Left&quot;:{&quot;a&quot;:1}},{&quot;Right&quot;:{&quot;b&quot;:&quot;foo&quot;}},{&quot;Both&quot;:{&quot;a&quot;:42,&quot;b&quot;:&quot;bar&quot;}}]&quot;&quot;&quot;
 }</code></pre>
-<p>See the <a href="https://github.com/sirthias/borer/tree/master/compat-cats/src/main/scala/io/bullet/borer/compat/cats.scala">module sources</a> for full details.</p>
+<p>See the <a href="https://github.com/sirthias/borer/tree/v1.18.0/compat-cats/src/main/scala/io/bullet/borer/compat/cats.scala">module sources</a> for full details.</p>
 </div>
 <div>
-<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-compat-cats.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/sirthias/borer/tree/v1.18.0/site/src/main/paradox/borer-compat-cats.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.16.2
+1.18.0
 </span>
 </div>
 </article>
@@ -322,7 +322,7 @@ borer-compat-circe
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019-2023 Mathias Doenitz
+Copyright (C) 2019-2026 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

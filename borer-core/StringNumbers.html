@@ -185,7 +185,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.16.2
+<i class="md-icon" title="Version">label_outline</i> 1.18.0
 </label>
 </li>
 </ul>
@@ -199,7 +199,7 @@ sirthias/borer/
 <p>Some external APIs, especially <a href="http://json.org/">JSON</a>-based ones, encode certain or all numbers, booleans and even <code>null</code> as string values, even if the respective value <em>could</em> be represented as a native <a href="http://json.org/">JSON</a> or <a href="http://cbor.io/">CBOR</a> number, boolean or <code>null</code>.</p>
 <p>In order to make integration with these kind of services easy <em>borer</em> comes with predefined encoders and decoders for numbers, booleans and <code>null</code> that you can &ldquo;enable&rdquo; with simple imports and which then take precedence over the default encoders and decoders.</p>
 <p>This is how they are enabled:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/StringNumbersSpec.scala#L17-L25" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Decoder, Encoder}
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/v1.18.0/site/src/test/scala/io/bullet/borer/site/StringNumbersSpec.scala#L17-L25" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Decoder, Encoder}
 
 import Encoder.StringNumbers.given  // enables number-as-strings encoding
 import Encoder.StringBooleans.given // enables booleans-as-strings encoding
@@ -210,7 +210,7 @@ import Decoder.StringBooleans.given // enables booleans-as-strings decoding
 import Decoder.StringNulls.given    // enables null-as-strings decoding</code></pre>
 <p>As always these imports are &ldquo;active&rdquo; throughout the complete scope in which they are visible.</p>
 <p>Here is an example demonstrating how to encode numbers and booleans as strings:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/StringNumbersSpec.scala#L38-L50" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Json, Encoder, Codec}
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/v1.18.0/site/src/test/scala/io/bullet/borer/site/StringNumbersSpec.scala#L38-L50" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Json, Encoder, Codec}
 import io.bullet.borer.derivation.MapBasedCodecs.*
 
 import Encoder.StringNumbers.given  // enables number-as-strings encoding
@@ -226,13 +226,13 @@ Json.encode(dog).toUtf8String ==&gt;
 <p>Decoding works correspondingly.</p>
 </div>
 <div>
-<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-core/StringNumbers.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/sirthias/borer/tree/v1.18.0/site/src/main/paradox/borer-core/StringNumbers.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.16.2
+1.18.0
 </span>
 </div>
 </article>
@@ -274,7 +274,7 @@ ByteStringArrayCodecs
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019-2023 Mathias Doenitz
+Copyright (C) 2019-2026 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

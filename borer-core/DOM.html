@@ -192,7 +192,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.16.2
+<i class="md-icon" title="Version">label_outline</i> 1.18.0
 </label>
 </li>
 </ul>
@@ -220,11 +220,11 @@ sirthias/borer/
 <div class="md-content__searchable">
 <h1><a href="#document-object-model-dom-" name="document-object-model-dom-" class="anchor"><span class="anchor-link"></span></a>Document Object Model (DOM)</h1>
 <p>While <em>borer</em>&rsquo;s core design is DOM-less, writing directly to and reading directly from the respective stream of <a href="http://cbor.io/">CBOR</a>/<a href="http://json.org/">JSON</a> data items, it is sometimes convenient to nevertheless have access to an object structure that mirrors the structure of a <a href="http://cbor.io/">CBOR</a>/<a href="http://json.org/">JSON</a> document as closely as possible.<br> (Many <a href="http://json.org/">JSON</a>-libraries solely rely on such an intermediate &ldquo;AST&rdquo; structure for their encoding and decoding operations.)</p>
-<p>For such cases <em>borer</em> provides you with a simple &ldquo;DOM&rdquo; ADT (see the respective source file <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Dom.scala">here</a>), which you can use like this:</p>
+<p>For such cases <em>borer</em> provides you with a simple &ldquo;DOM&rdquo; ADT (see the respective source file <a href="https://github.com/sirthias/borer/tree/v1.18.0/core/src/main/scala/io/bullet/borer/Dom.scala">here</a>), which you can use like this:</p>
 <dl>
   <dt>CBOR</dt>
   <dd>
-  <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DomSpec.scala#L19-L33" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Cbor
+  <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/v1.18.0/site/src/test/scala/io/bullet/borer/site/DomSpec.scala#L19-L33" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Cbor
 import io.bullet.borer.Dom.*
 
 val dom = MapElem.Sized(
@@ -241,7 +241,7 @@ val decoded = Cbor.decode(encoded).to[Element].value
 decoded ==&gt; dom</code></pre></dd>
   <dt>JSON</dt>
   <dd>
-  <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DomSpec.scala#L40-L54" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Dom.*
+  <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/v1.18.0/site/src/test/scala/io/bullet/borer/site/DomSpec.scala#L40-L54" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.Dom.*
 import io.bullet.borer.Json
 
 val dom = MapElem.Unsized(
@@ -259,7 +259,7 @@ decoded ==&gt; dom</code></pre></dd>
 </dl>
 <p>Any <a href="http://cbor.io/">CBOR</a> or <a href="http://json.org/">JSON</a> document can be deserialized into a <code>io.bullet.borer.Dom.Element</code>, which can then be queried or transformed in any way, and potentially written back to <a href="http://cbor.io/">CBOR</a> or <a href="http://json.org/">JSON</a>. Make sure to also look at <em>borer</em>&rsquo;s built-in support for efficient <a href="transcoding.html">transcoding</a> if that is something you are interested in.<br></p>
 <p>As such, the <em>borer</em> DOM can also be used to transform <a href="http://json.org/">JSON</a> to <a href="http://cbor.io/">CBOR</a>, e.g. like this:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/site/src/test/scala/io/bullet/borer/site/DomSpec.scala#L60-L73" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Cbor, Json}
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/v1.18.0/site/src/test/scala/io/bullet/borer/site/DomSpec.scala#L60-L73" target="_blank" title="Go to snippet source">source</a><code class="language-scala">import io.bullet.borer.{Cbor, Json}
 import io.bullet.borer.Dom.*
 
 import scala.util.Try
@@ -277,17 +277,17 @@ hex&quot;BF63666F6F9F182A65726F636B73FF63626172FB403ACCCCCCCCCCCDFF&quot;</code>
 <p>Having a DOM representation of a particular data structure (e.g. nested case class instances representing application state) opens up a variety of opportunities for runtime inspection and/or transformation of that data structure, which are often not that easy to achieve otherwise.</p>
 <p>One solution to such tasks can be &ldquo;optics&rdquo; (like Lenses) for which dedicated libraries like <a href="https://www.optics.dev/Monocle/">Monocle</a> exist. They are an excellent tool if the point of interest/change is deep and relatively small compared to the total size of the overage data structure.</p>
 <p>However, if many changes need to be done or the data structure must be walked in its completion (for example in order to gather some statistics) transcoding into a DOM and working on that alternate representation could be easier.</p>
-<p><em>borer</em> provides one relatively simple tool for transforming an existing DOM structure:<br> the <a href="https://github.com/sirthias/borer/tree/master/core/src/main/scala/io/bullet/borer/Dom.scala#L444">DOM.Transformer</a> trait. </p>
+<p><em>borer</em> provides one relatively simple tool for transforming an existing DOM structure:<br> the <a href="https://github.com/sirthias/borer/tree/v1.18.0/core/src/main/scala/io/bullet/borer/Dom.scala#L444">DOM.Transformer</a> trait. </p>
 <p>See the chapter on <a href="transcoding.html">transcoding</a> for an example of how to use it.</p>
 </div>
 <div>
-<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/borer-core/DOM.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/sirthias/borer/tree/v1.18.0/site/src/main/paradox/borer-core/DOM.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.16.2
+1.18.0
 </span>
 </div>
 </article>
@@ -329,7 +329,7 @@ Transcoding
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019-2023 Mathias Doenitz
+Copyright (C) 2019-2026 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

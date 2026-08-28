@@ -185,7 +185,7 @@ sirthias/borer/
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 1.16.2
+<i class="md-icon" title="Version">label_outline</i> 1.18.0
 </label>
 </li>
 </ul>
@@ -196,9 +196,24 @@ sirthias/borer/
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
 <h1><a href="#changelog" name="changelog" class="anchor"><span class="anchor-link"></span></a>Changelog</h1>
-<p>This is the current <em>borer</em> <a href="https://github.com/sirthias/borer/tree/master/CHANGELOG">CHANGELOG</a>:</p>
+<p>This is the current <em>borer</em> <a href="https://github.com/sirthias/borer/tree/v1.18.0/CHANGELOG">CHANGELOG</a>:</p>
 <br>
-<pre><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/master/CHANGELOG" target="_blank" title="Go to snippet source">source</a><code>Version 1.16.2 (2025-11-03)
+<pre><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/sirthias/borer/tree/v1.18.0/CHANGELOG" target="_blank" title="Go to snippet source">source</a><code>Version 1.18.0 (2026-08-27)
+---------------------------
+
+- Raise min JDK version from 8 to 11 and compile w/ `-Yfuture-lazy-vals` to avoid `sun.misc.Unsafe` (#855)
+
+
+Version 1.17.0 (2026-07-28)
+---------------------------
+
+- Upgraded to Scala 3.3.8, Scala.js 1.22.0 and Scala Native 0.5.12
+- Migrated from `sun.misc.Unsafe` to VarHandle-based direct byte array access
+- Fixed Reader.longCompare returning the wrong sign on substraction overflow (#829)
+- Fixed `Json.writer` producing defunct Writer objects w/o explicit `target` argument
+
+
+Version 1.16.2 (2025-11-03)
 ---------------------------
 
 - Upgraded to Scala 3.3.7, Scala.js 1.20.1 and Scala Native 0.5.9
@@ -549,13 +564,13 @@ Version 0.5.0 (2019-03-04)
 first public release</code></pre>
 </div>
 <div>
-<a href="https://github.com/sirthias/borer/tree/master/site/src/main/paradox/project/changelog.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/sirthias/borer/tree/v1.18.0/site/src/main/paradox/project/changelog.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-1.16.2
+1.18.0
 </span>
 </div>
 </article>
@@ -597,7 +612,7 @@ References
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019-2023 Mathias Doenitz
+Copyright (C) 2019-2026 Mathias Doenitz
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>
