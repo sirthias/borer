@@ -5,13 +5,13 @@ addSbtPlugin("org.xerial.sbt"     % "sbt-sonatype"                  % "3.12.2")
 addSbtPlugin("com.github.sbt"     % "sbt-header"                    % "5.11.0")
 addSbtPlugin("com.github.sbt"     % "sbt-boilerplate"               % "0.8.1")
 addSbtPlugin("org.scala-js"       % "sbt-scalajs"                   % "1.22.0")
-addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject"      % "1.3.2")
+addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject"      % "1.4.0")
 addSbtPlugin("org.scala-native"   % "sbt-scala-native"              % "0.5.12")
 addSbtPlugin("org.portable-scala" % "sbt-scala-native-crossproject" % "1.4.0")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh"                       % "0.4.8")
 addSbtPlugin("io.bullet"          % "sbt-paradox-material-theme"    % "0.7.0")
-addSbtPlugin(("com.github.sbt"    % "sbt-ghpages"                   % "0.10.0").exclude("org.scala-lang.modules", "scala-xml_2.12"))
-addSbtPlugin("com.github.sbt"     % "sbt-site-paradox"              % "1.8.0")
+addSbtPlugin(("com.github.sbt" % "sbt-ghpages"      % "0.10.0").exclude("org.scala-lang.modules", "scala-xml_2.12"))
+addSbtPlugin("com.github.sbt"  % "sbt-site-paradox" % "1.8.0")
 
 libraryDependencies ++= Seq(
   "io.bullet" %% "borer-core"       % "1.7.2",
