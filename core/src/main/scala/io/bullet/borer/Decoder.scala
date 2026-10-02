@@ -11,20 +11,13 @@ package io.bullet.borer
 import io.bullet.borer.encodings.BaseEncoding
 import io.bullet.borer.internal.Util
 
-import java.lang.{
-  Boolean as JBoolean,
-  Byte as JByte,
-  Double as JDouble,
-  Float as JFloat,
-  Long as JLong,
-  Short as JShort
-}
+import java.lang.{Boolean as JBoolean, Byte as JByte, Double as JDouble, Float as JFloat, Long as JLong, Short as JShort}
 import java.math.{BigDecimal as JBigDecimal, BigInteger as JBigInteger}
 import scala.annotation.{nowarn, tailrec, threadUnsafe}
 import scala.collection.{mutable, Factory}
 import scala.collection.immutable.{HashMap, ListMap, TreeMap}
 import scala.deriving.Mirror
-import scala.reflect.ClassTag
+import scala.reflect.{ClassTag, Typeable}
 
 /**
  * Type class responsible for reading an instance of type [[T]] from a [[Reader]].
@@ -138,7 +131,7 @@ object Decoder extends LowPrioDecoders:
   /**
    * Type class for turning arbitrary errors into decoding failures.
    */
-  trait DecodingError[-E]:
+  trait DecodingError[E]:
     def raise(error: E, reader: Reader): Nothing
 
   object DecodingError:
@@ -146,11 +139,18 @@ object Decoder extends LowPrioDecoders:
     def raise[E](error: E, reader: Reader)(using ev: DecodingError[E]): Nothing =
       ev.raise(error, reader)
 
-    given DecodingError[Throwable] with
-      def raise(error: Throwable, reader: Reader): Nothing = throw error
+    given [T <: Throwable]: DecodingError[T] with
+      def raise(error: T, reader: Reader): Nothing = throw error
 
     given DecodingError[String] with
       def raise(error: String, reader: Reader): Nothing = reader.validationFailure(error)
+
+    given [A <: Throwable, B: DecodingError: Typeable]: DecodingError[A | B] with
+      def raise(error: A | B, reader: Reader): Nothing =
+        error match {
+          case x: Throwable => given_DecodingError_T.raise(x, reader)
+          case x: B         => summon[DecodingError[B]].raise(x, reader)
+        }
 
   given [T](using codec: Codec[T]): Decoder[T]  = codec.decoder
   given [T](using ev: Codec.All[T]): Decoder[T] = ev.delegate.decoder
