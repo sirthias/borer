@@ -45,7 +45,7 @@ object TranscodingSetup:
 
     def valueTry: Try[T]
 
-    def valueEither: Either[Borer.Error[Unit], T]
+    def valueEither: Either[Borer.Error[Any], T]
 
   final private[borer] class DecodingApiImpl[A: Encoder, EC <: Borer.TransEncodingConfig, DC <: Reader.Config](
       valueToEncode: A,
@@ -70,20 +70,20 @@ object TranscodingSetup:
     def value: AnyRef =
       try transcode()
       catch
-        case e: Borer.Error[_] => throw e.withUnit
-        case NonFatal(e)       => throw new Borer.Error.General((), e)
+        case e: Borer.Error[Any] => throw e
+        case NonFatal(e)         => throw new Borer.Error.General((), e)
 
     def valueTry: Try[AnyRef] =
       try Success(transcode())
       catch
-        case e: Borer.Error[_] => Failure(e.withUnit)
-        case NonFatal(e)       => Failure(new Borer.Error.General((), e))
+        case e: Borer.Error[Any] => Failure(e)
+        case NonFatal(e)         => Failure(new Borer.Error.General((), e))
 
-    def valueEither: Either[Borer.Error[Unit], AnyRef] =
+    def valueEither: Either[Borer.Error[Any], AnyRef] =
       try Right(transcode())
       catch
-        case e: Borer.Error[_] => Left(e.withUnit)
-        case NonFatal(e)       => Left(new Borer.Error.General((), e))
+        case e: Borer.Error[Any] => Left(e)
+        case NonFatal(e)         => Left(new Borer.Error.General((), e))
 
     private def transcode(): AnyRef =
       val deque =

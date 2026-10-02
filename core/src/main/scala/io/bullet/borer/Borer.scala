@@ -356,11 +356,6 @@ object Borer:
       if (thiz._io eq null) thiz._io = out
       thiz
 
-    private[borer] def withUnit: Error[Unit] =
-      val thiz = this.asInstanceOf[Error[Unit]]
-      thiz._io = ()
-      thiz
-
   object Error:
 
     final class UnexpectedEndOfInput[IO](io: IO, expected: String)
