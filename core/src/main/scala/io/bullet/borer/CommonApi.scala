@@ -8,7 +8,7 @@
 
 package io.bullet.borer
 
-import java.lang.{StringBuilder => JStringBuilder}
+import java.lang.StringBuilder as JStringBuilder
 
 trait CommonApi[Config]:
 
@@ -62,14 +62,25 @@ trait CommonApi[Config]:
    */
   def withTransformerAdded(transformer: Receiver.Transformer[Config]): this.type
 
+  /**
+   * Attaches a custom context object to the encoding/decoding run, which can be accessed by
+   * custom encoding/decoding logic via the `config` member of the [Writer] and [Reader] objects.
+   */
+  def withContext(context: AnyRef): this.type
+
 private[borer] object CommonApi:
 
   abstract class Impl[Config](defaultConfig: Config, defaultTransformer: Receiver.Transformer[Config]):
     protected var config: Config                                    = defaultConfig
     protected var receiverTransformer: Receiver.Transformer[Config] = defaultTransformer
+    protected var context: AnyRef                                   = _
 
     final def withConfig(config: Config): this.type =
       this.config = config
+      this
+
+    final def withContext(context: AnyRef): this.type =
+      this.context = context
       this
 
     final def withPrintLogging(

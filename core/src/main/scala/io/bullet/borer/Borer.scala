@@ -78,7 +78,8 @@ case object Cbor extends Target:
       compressFloatingPointValues: Boolean = true,
       maxArrayLength: Long = Int.MaxValue,
       maxMapLength: Long = Int.MaxValue,
-      maxNestingLevels: Int = 1000)
+      maxNestingLevels: Int = 1000,
+      rawContext: AnyRef = null)
       extends Borer.EncodingConfig with CborValidation.Config:
 
     Util.requireNonNegative(maxArrayLength, "maxArrayLength")
@@ -106,7 +107,8 @@ case object Cbor extends Target:
       maxByteStringLength: Int = 10 * 1024 * 1024,
       maxArrayLength: Long = Int.MaxValue,
       maxMapLength: Long = Int.MaxValue,
-      maxNestingLevels: Int = 1000)
+      maxNestingLevels: Int = 1000,
+      rawContext: AnyRef = null)
       extends Borer.DecodingConfig with CborValidation.Config with CborParser.Config:
 
     Util.requireNonNegative(maxTextStringLength, "maxTextStringLength")
@@ -135,8 +137,9 @@ case object Cbor extends Target:
       compressFloatingPointValues: Boolean = true,
       maxArrayLength: Long = Int.MaxValue,
       maxMapLength: Long = Int.MaxValue,
-      maxNestingLevels: Int = 1000)
-      extends Borer.TransEncodingConfig with CborValidation.Config:
+      maxNestingLevels: Int = 1000,
+      rawContext: AnyRef = null
+  ) extends Borer.TransEncodingConfig with CborValidation.Config:
 
     Util.requireNonNegative(maxArrayLength, "maxArrayLength")
     Util.requireNonNegative(maxMapLength, "maxMapLength")
@@ -160,7 +163,8 @@ case object Cbor extends Target:
       readDoubleAlsoAsFloat: Boolean = false,
       maxArrayLength: Long = Int.MaxValue,
       maxMapLength: Long = Int.MaxValue,
-      maxNestingLevels: Int = 1000)
+      maxNestingLevels: Int = 1000,
+      rawContext: AnyRef = null)
       extends Reader.Config with CborValidation.Config:
 
     Util.requireNonNegative(maxArrayLength, "maxArrayLength")
@@ -228,7 +232,8 @@ case object Json extends Target:
   final case class EncodingConfig(
       bufferSize: Int = 1024,
       allowBufferCaching: Boolean = true,
-      indent: Int = 0
+      indent: Int = 0,
+      rawContext: AnyRef = null
   ) extends Borer.EncodingConfig:
 
     def compressFloatingPointValues = false
@@ -263,7 +268,8 @@ case object Json extends Target:
       maxNumberMantissaDigits: Int = 34,
       initialCharbufferSize: Int = 2048,
       allowBufferCaching: Boolean = true,
-      allowDirectParsing: Boolean = true)
+      allowDirectParsing: Boolean = true,
+      rawContext: AnyRef = null)
       extends Borer.DecodingConfig with JsonParser.Config:
 
     Util.requireRange(maxNumberAbsExponent, 1, 999, "maxNumberAbsExponent")
@@ -288,7 +294,8 @@ case object Json extends Target:
   final case class TransEncodingConfig(
       maxBufferSize: Int = 16384,
       allowBufferCaching: Boolean = true,
-      compressFloatingPointValues: Boolean = true)
+      compressFloatingPointValues: Boolean = true,
+      rawContext: AnyRef = null)
       extends Borer.TransEncodingConfig:
 
     if (!Util.isPowerOf2(maxBufferSize) || maxBufferSize < 16)
@@ -303,7 +310,8 @@ case object Json extends Target:
    */
   final case class TransDecodingConfig(
       readIntegersAlsoAsFloatingPoint: Boolean = true,
-      readDoubleAlsoAsFloat: Boolean = false)
+      readDoubleAlsoAsFloat: Boolean = false,
+      rawContext: AnyRef = null)
       extends Reader.Config
 
   object TransDecodingConfig:

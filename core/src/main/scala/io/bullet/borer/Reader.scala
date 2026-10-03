@@ -604,6 +604,6 @@ final class InputReader[Config <: Reader.Config](
 
 object Reader:
 
-  trait Config:
+  trait Config extends CommonConfig:
     def readIntegersAlsoAsFloatingPoint: Boolean
     def readDoubleAlsoAsFloat: Boolean

@@ -183,7 +183,7 @@ final class Writer(
 
 object Writer:
 
-  trait Config:
+  trait Config extends CommonConfig:
     def compressFloatingPointValues: Boolean
 
   /**
