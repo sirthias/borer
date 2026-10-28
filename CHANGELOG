@@ -1,3 +1,14 @@
+Version 1.19.0 (2026-10-28)
+---------------------------
+
+- CBOR: Fix bignums should not have leading zero byte (#864)
+- CBOR: Fix decimal fraction exponent serialization (#865)
+- CBOR: Make `Decoder[BigDecimal]` respect the configured mantissa limit (#867)
+- Changed Decoding Api `valueEither` from `Either[Borer.Error[Unit], T]` to `Either[Borer.Error[Any], T]
+- Flexibilized DecodingError type class
+- Added support for custom `context` objects available to Encoders/Decoders
+
+
 Version 1.18.0 (2026-08-27)
 ---------------------------
 
