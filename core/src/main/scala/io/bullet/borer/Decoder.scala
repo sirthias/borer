@@ -282,7 +282,7 @@ object Decoder extends LowPrioDecoders:
       acceptStrings: Boolean = false): Decoder[JBigDecimal] =
     val bigIntMantissaDecoder = forJBigInteger(maxCborByteArraySize = maxCborBigIntMantissaByteArraySize)
     Decoder { r =>
-      def fromBigInteger()                 = new JBigDecimal(_forJBigInteger.read(r))
+      def fromBigInteger()                 = new JBigDecimal(bigIntMantissaDecoder.read(r))
       def fromString(numberString: String) =
         if (numberString.length > maxJsonNumberStringLength) {
           r.overflow(
