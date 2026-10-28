@@ -123,6 +123,23 @@ class MiscCborSpec extends ByteArrayCborSpec:
     intercept[Borer.Error.Overflow[_ <: AnyRef]](decode[BigDecimal]("c4823a7fffffff01")) // exponent Int.MinValue
   }
 
+  test("BigDecimal mantissa limit") {
+    // the configured limit applies to a plain bignum just like to the mantissa of a decimal fraction
+    val maxEight = Decoder.forJBigDecimal(maxCborBigIntMantissaByteArraySize = 8)
+    decode[java.math.BigDecimal]("c248ffffffffffffffff")(using maxEight) ==>
+    new java.math.BigDecimal("18446744073709551615")
+    intercept[Borer.Error.Overflow[_ <: AnyRef]](decode("c24901ffffffffffffffff")(using maxEight))
+    intercept[Borer.Error.Overflow[_ <: AnyRef]](decode("c34901ffffffffffffffff")(using maxEight))
+    intercept[Borer.Error.Overflow[_ <: AnyRef]](decode("c48221c24901ffffffffffffffff")(using maxEight))
+
+    // also when it is above the default of 64 bytes
+    val bignum65Bytes = "c25841" + "01" + "ff" * 64
+    val max65         = Decoder.forJBigDecimal(maxCborBigIntMantissaByteArraySize = 65)
+    decode[java.math.BigDecimal](bignum65Bytes)(using max65) ==>
+    new java.math.BigDecimal(((BigInt(1) << 513) - 1).bigInteger)
+    intercept[Borer.Error.Overflow[_ <: AnyRef]](decode[java.math.BigDecimal](bignum65Bytes))
+  }
+
   test("Array-Header Mismatch Error") {
     val encoded = Cbor.encode(Writer.Script(_.writeArrayHeader(0))).toByteArray
     val error   = Cbor.decode(encoded).to[Foo].valueEither.swap.getOrElse(null)
