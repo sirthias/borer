@@ -80,10 +80,10 @@ class MiscCborSpec extends ByteArrayCborSpec:
 
   test("BigDecimals") {
     roundTrip("00", BigDecimal(0))
-    roundTrip("c482010f", BigDecimal(1.5))
-    roundTrip("c482012e", BigDecimal(-1.5))
+    roundTrip("c482200f", BigDecimal(1.5))
+    roundTrip("c482202e", BigDecimal(-1.5))
     roundTrip("1903e8", BigDecimal(1000))
-    roundTrip("c48201392714", BigDecimal(-1000.5))
+    roundTrip("c48220392714", BigDecimal(-1000.5))
     roundTrip("1a7fffffff", BigDecimal(Int.MaxValue))
     roundTrip("3a7fffffff", BigDecimal(Int.MinValue))
     roundTrip("1a80000000", BigDecimal(1L + Int.MaxValue))
@@ -101,12 +101,26 @@ class MiscCborSpec extends ByteArrayCborSpec:
       "c2581d748734b402b41df49150f2d71eaa36fa06d63b69f95a89da23e14fa668",
       BigDecimal("3141592653589793238462643383279502884197169399375105820974944592307816"))
 
-    roundTrip("c48202191092", BigDecimal(42.42))
-    roundTrip("c482061b00007048860f9180", BigDecimal(123456789.123456))
+    roundTrip("c48221191092", BigDecimal(42.42))
+    roundTrip("c482251b00007048860f9180", BigDecimal(123456789.123456))
 
     roundTrip(
-      "c4821845c2581d748734b402b41df49150f2d71eaa36fa06d63b69f95a89da23e14fa668",
+      "c4823844c2581d748734b402b41df49150f2d71eaa36fa06d63b69f95a89da23e14fa668",
       BigDecimal("3.141592653589793238462643383279502884197169399375105820974944592307816"))
+
+    // RFC 8949 §3.4.4: the value of a decimal fraction is `mantissa * 10^exponent`
+    roundTrip("c48221196ab3", BigDecimal("273.15")) // the example from the RFC
+    roundTrip("c482020f", BigDecimal("1.5E+3"))
+    roundTrip("c48221c24901ffffffffffffffff", BigDecimal((BigInt(1) << 65) - 1, 2))
+    roundTrip("c4823903e601", BigDecimal(BigInt(1), 999))
+    verifyEncoding(BigDecimal(BigInt(1), Int.MaxValue), "c4823a7ffffffe01")
+    verifyEncoding(BigDecimal(BigInt(1), Int.MinValue), "c4821a8000000001")
+  }
+
+  test("BigDecimal exponent limit") {
+    intercept[Borer.Error.Overflow[_ <: AnyRef]](decode[BigDecimal]("c4823903e701"))     // exponent -1000
+    intercept[Borer.Error.Overflow[_ <: AnyRef]](decode[BigDecimal]("c4821903e801"))     // exponent 1000
+    intercept[Borer.Error.Overflow[_ <: AnyRef]](decode[BigDecimal]("c4823a7fffffff01")) // exponent Int.MinValue
   }
 
   test("Array-Header Mismatch Error") {
