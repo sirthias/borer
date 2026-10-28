@@ -169,7 +169,9 @@ object Encoder extends LowPrioEncoders:
           w.writeTag(if (x.signum < 0) {
             Util.inPlaceNegate(bytes); Tag.NegativeBigNum
           } else Tag.PositiveBigNum)
-          w.writeBytes(bytes)
+          // `toByteArray` is two's complement, so it carries a leading sign byte (zero after the negation above)
+          // whenever the magnitude fills its top byte. RFC 8949 preferred serialization (§3.4.3) leaves it out.
+          w.writeBytes(if (bytes(0) == 0) java.util.Arrays.copyOfRange(bytes, 1, bytes.length) else bytes)
         case _ => w.writeNumberString(x.toString(10))
     }
 

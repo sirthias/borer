@@ -66,6 +66,16 @@ class MiscCborSpec extends ByteArrayCborSpec:
     roundTrip(
       "c3581d748734b402b41df49150f2d71eaa36fa06d63b69f95a89da23e14fa667",
       BigInt("-3141592653589793238462643383279502884197169399375105820974944592307816"))
+
+    // preferred serialization (RFC 8949 §3.4.3): no leading zero byte, even if the top bit of the magnitude is set
+    roundTrip("c249ffffffffffffffffff", (BigInt(1) << 72) - 1)
+    roundTrip("c349ffffffffffffffffff", -(BigInt(1) << 72))
+    roundTrip("c249800000000000000000", BigInt(1) << 71)
+    roundTrip("c349800000000000000000", -(BigInt(1) << 71) - 1)
+    roundTrip("c24901ffffffffffffffff", (BigInt(1) << 65) - 1)
+    roundTrip("c34901ffffffffffffffff", -(BigInt(1) << 65))
+    roundTrip("c250ffffffffffffffffffffffffffffffff", (BigInt(1) << 128) - 1)
+    roundTrip("c350ffffffffffffffffffffffffffffffff", -(BigInt(1) << 128))
   }
 
   test("BigDecimals") {
@@ -82,6 +92,10 @@ class MiscCborSpec extends ByteArrayCborSpec:
     roundTrip("3b7fffffffffffffff", BigDecimal(Long.MinValue))
     roundTrip("1b8000000000000000", BigDecimal("9223372036854775808"))  // long.maxvalue + 1
     roundTrip("3b8000000000000000", BigDecimal("-9223372036854775809")) // long.minvalue - 1
+
+    // preferred serialization (RFC 8949 §3.4.3) of the mantissa: no leading zero byte
+    roundTrip("c249ffffffffffffffffff", BigDecimal((BigInt(1) << 72) - 1))
+    roundTrip("c349ffffffffffffffffff", BigDecimal(-(BigInt(1) << 72)))
 
     roundTrip(
       "c2581d748734b402b41df49150f2d71eaa36fa06d63b69f95a89da23e14fa668",
