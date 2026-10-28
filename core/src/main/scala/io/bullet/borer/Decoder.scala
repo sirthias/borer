@@ -300,9 +300,11 @@ object Decoder extends LowPrioDecoders:
             if (len == 2) {
               if (r.hasInt) {
                 val exp = r.readInt()
-                if (math.abs(exp) <= maxCborAbsExponent) {
+                // `abs` on the Long, since `math.abs(Int.MinValue)` is negative and would pass the check.
+                // This also rules out `exp == Int.MinValue`, so negating it below cannot overflow.
+                if (math.abs(exp.toLong) <= maxCborAbsExponent) {
                   val mantissa = bigIntMantissaDecoder.read(r)
-                  new JBigDecimal(mantissa, exp)
+                  new JBigDecimal(mantissa, -exp) // RFC 8949 §3.4.4: the value is `mantissa * 10^exp`
                 } else
                   r.overflow(
                     s"Absolute value of JBigDecimal exponent $exp is > the configured max of " + maxCborAbsExponent)

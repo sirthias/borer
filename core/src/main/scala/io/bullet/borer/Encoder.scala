@@ -178,7 +178,9 @@ object Encoder extends LowPrioEncoders:
   given forJBigDecimal: Encoder[JBigDecimal] =
     Encoder { (w, x) =>
       if (w.writingCbor)
-        if (x.scale != 0) w.writeTag(Tag.DecimalFraction).writeArrayHeader(2).writeInt(x.scale)
+        // RFC 8949 §3.4.4: the value is `mantissa * 10^exponent`, so the exponent is the negated scale
+        // (as a Long, since `-Int.MinValue` doesn't fit into an Int)
+        if (x.scale != 0) w.writeTag(Tag.DecimalFraction).writeArrayHeader(2).writeLong(-x.scale.toLong)
         w.write(x.unscaledValue)
       else if (x.scale != 0) w.writeNumberString(x.toString)
       else w.write(x.unscaledValue)
