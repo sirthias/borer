@@ -71,6 +71,8 @@ case object Cbor extends Target:
    * @param maxArrayLength the maximum array length to accept
    * @param maxMapLength the maximum map length to accept
    * @param maxNestingLevels the maximum number of nesting levels to accept
+   * @param rawContext custom context object, accessible via `config.rawContext` / `config.contextAs[A]` on
+   *                   [[Writer]] and [[Reader]] instances. Usually set via `withContext` rather than directly.
    */
   final case class EncodingConfig(
       bufferSize: Int = 1024,
@@ -99,6 +101,8 @@ case object Cbor extends Target:
    * @param maxArrayLength the maximum array length to accept
    * @param maxMapLength the maximum map length to accept
    * @param maxNestingLevels the maximum number of nesting levels to accept
+   * @param rawContext custom context object, accessible via `config.rawContext` / `config.contextAs[A]` on
+   *                   [[Writer]] and [[Reader]] instances. Usually set via `withContext` rather than directly.
    */
   final case class DecodingConfig(
       readIntegersAlsoAsFloatingPoint: Boolean = true,
@@ -130,6 +134,8 @@ case object Cbor extends Target:
    * @param maxArrayLength the maximum array length to accept
    * @param maxMapLength the maximum map length to accept
    * @param maxNestingLevels the maximum number of nesting levels to accept
+   * @param rawContext custom context object, accessible via `config.rawContext` / `config.contextAs[A]` on
+   *                   [[Writer]] and [[Reader]] instances. Usually set via `withContext` rather than directly.
    */
   final case class TransEncodingConfig(
       maxBufferSize: Int = 16384,
@@ -157,6 +163,8 @@ case object Cbor extends Target:
    * @param maxArrayLength the maximum array length to accept
    * @param maxMapLength the maximum map length to accept
    * @param maxNestingLevels the maximum number of nesting levels to accept
+   * @param rawContext custom context object, accessible via `config.rawContext` / `config.contextAs[A]` on
+   *                   [[Writer]] and [[Reader]] instances. Usually set via `withContext` rather than directly.
    */
   final case class TransDecodingConfig(
       readIntegersAlsoAsFloatingPoint: Boolean = true,
@@ -229,6 +237,12 @@ case object Json extends Target:
     val parser       = if (directParser ne null) null else new JsonParser(p(value), config)(using p.byteAccess)
     new InputReader(parser, directParser, receiverWrapper, config, Json)
 
+  /**
+   * @param bufferSize the buffer size used for configuring the respective [[Output]]
+   * @param indent the number of spaces to indent nested structures with, 0 for compact rendering
+   * @param rawContext custom context object, accessible via `config.rawContext` / `config.contextAs[A]` on
+   *                   [[Writer]] and [[Reader]] instances. Usually set via `withContext` rather than directly.
+   */
   final case class EncodingConfig(
       bufferSize: Int = 1024,
       allowBufferCaching: Boolean = true,
@@ -259,6 +273,8 @@ case object Json extends Target:
    * @param maxNumberMantissaDigits the maximum number of digits to accept before the exponent in JSON numbers
    * @param initialCharbufferSize the initial size of the parser's Char buffer. Will grow to the max string length in
    *                              the document rounded up to the next power of two
+   * @param rawContext custom context object, accessible via `config.rawContext` / `config.contextAs[A]` on
+   *                   [[Writer]] and [[Reader]] instances. Usually set via `withContext` rather than directly.
    */
   final case class DecodingConfig(
       readIntegersAlsoAsFloatingPoint: Boolean = true,
@@ -290,6 +306,8 @@ case object Json extends Target:
    * @param maxBufferSize                  the max number of transcoding elements (not bytes!) that can be buffered
    * @param compressFloatingPointValues set to false in order to always write floats as 32-bit values and doubles
    *                                    as 64-bit values, even if they could safely be represented with fewer bits
+   * @param rawContext custom context object, accessible via `config.rawContext` / `config.contextAs[A]` on
+   *                   [[Writer]] and [[Reader]] instances. Usually set via `withContext` rather than directly.
    */
   final case class TransEncodingConfig(
       maxBufferSize: Int = 16384,
@@ -307,6 +325,8 @@ case object Json extends Target:
   /**
    * @param readIntegersAlsoAsFloatingPoint set to false to disable automatic conversion of integer to floating point values
    * @param readDoubleAlsoAsFloat set to false to disable automatic conversion of [[Double]] to [[Float]] values
+   * @param rawContext custom context object, accessible via `config.rawContext` / `config.contextAs[A]` on
+   *                   [[Writer]] and [[Reader]] instances. Usually set via `withContext` rather than directly.
    */
   final case class TransDecodingConfig(
       readIntegersAlsoAsFloatingPoint: Boolean = true,

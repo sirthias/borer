@@ -22,7 +22,7 @@ final class InputReader[Config <: Reader.Config](
     parser: Parser[?],
     directParser: io.bullet.borer.json.DirectJsonParser,
     receiverWrapper: Receiver.Transformer[Config],
-    config: Config,
+    val config: Config,
     val target: Target):
 
   import io.bullet.borer.DataItem as DI

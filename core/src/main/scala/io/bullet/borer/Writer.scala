@@ -20,7 +20,7 @@ final class Writer(
     val output: Output, // CAUTION: `null` in case of transcoding!
     private[borer] var receiver: Receiver,
     val target: Target,
-    config: Writer.Config):
+    val config: Writer.Config):
 
   inline def writingJson: Boolean = target eq Json
   inline def writingCbor: Boolean = target eq Cbor

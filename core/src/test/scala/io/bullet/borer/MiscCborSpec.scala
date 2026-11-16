@@ -195,3 +195,38 @@ class MiscCborSpec extends ByteArrayCborSpec:
     writer.write(value)
     output.result() ==> hex"83182a63666f6f81fbbff3333333333333"
   }
+
+  final class Offset(val value: Int)
+
+  test("Custom context object on the writing side") {
+    given Encoder[Qux1] = Encoder { (w, x) =>
+      val offset = w.config.contextAs[Offset].fold(0)(_.value)
+      w.writeInt(x.i + offset)
+    }
+
+    Cbor.encode(Qux1(42)).toByteArray ==> hex"182a" // no context
+    Cbor.encode(Qux1(42)).withContext(new Offset(100)).toByteArray ==> hex"188e" // 142
+    Cbor
+      .encode(Qux1(42))
+      .withConfig(Cbor.EncodingConfig(compressFloatingPointValues = false))
+      .withContext(new Offset(100))
+      .toByteArray ==> hex"188e" // context is added on top of an explicitly set config
+    Cbor.encode(Qux1(42)).withContext("not an Offset").toByteArray ==> hex"182a" // context of other type
+  }
+
+  test("Custom context object on the reading side") {
+    given Decoder[Qux1] = Decoder { r =>
+      val offset = r.config.contextAs[Offset].fold(0)(_.value)
+      Qux1(r.readInt() - offset)
+    }
+
+    Cbor.decode(hex"188e").to[Qux1].value ==> Qux1(142) // no context
+    Cbor.decode(hex"188e").withContext(new Offset(100)).to[Qux1].value ==> Qux1(42)
+    Cbor
+      .decode(hex"188e")
+      .withConfig(Cbor.DecodingConfig(maxNestingLevels = 10))
+      .withContext(new Offset(100))
+      .to[Qux1]
+      .value ==> Qux1(42) // context is added on top of an explicitly set config
+    Cbor.decode(hex"188e").withContext("not an Offset").to[Qux1].value ==> Qux1(142) // context of other type
+  }

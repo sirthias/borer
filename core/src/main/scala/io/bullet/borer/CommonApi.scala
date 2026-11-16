@@ -64,7 +64,11 @@ trait CommonApi[Config]:
 
   /**
    * Attaches a custom context object to the encoding/decoding run, which can be accessed by
-   * custom encoding/decoding logic via the `config` member of the [Writer] and [Reader] objects.
+   * custom encoding/decoding logic via the `config` member of the [[Writer]] and [[Reader]] objects
+   * (e.g. with `config.contextAs[MyContext]`).
+   *
+   * Internally this simply sets the `rawContext` member of the currently configured [[Config]].
+   * Therefore, a subsequent call to `withConfig` overrides the context set here!
    */
   def withContext(context: AnyRef): this.type
 
@@ -73,15 +77,23 @@ private[borer] object CommonApi:
   abstract class Impl[Config](defaultConfig: Config, defaultTransformer: Receiver.Transformer[Config]):
     protected var config: Config                                    = defaultConfig
     protected var receiverTransformer: Receiver.Transformer[Config] = defaultTransformer
-    protected var context: AnyRef                                   = scala.compiletime.uninitialized
 
     final def withConfig(config: Config): this.type =
       this.config = config
       this
 
     final def withContext(context: AnyRef): this.type =
-      this.context = context
-      this
+      val newConfig = config match
+        case x: Cbor.EncodingConfig      => x.copy(rawContext = context)
+        case x: Cbor.DecodingConfig      => x.copy(rawContext = context)
+        case x: Cbor.TransEncodingConfig => x.copy(rawContext = context)
+        case x: Cbor.TransDecodingConfig => x.copy(rawContext = context)
+        case x: Json.EncodingConfig      => x.copy(rawContext = context)
+        case x: Json.DecodingConfig      => x.copy(rawContext = context)
+        case x: Json.TransEncodingConfig => x.copy(rawContext = context)
+        case x: Json.TransDecodingConfig => x.copy(rawContext = context)
+        case x                           => throw new IllegalStateException(s"Unsupported config type: ${x.getClass}")
+      withConfig(newConfig.asInstanceOf[Config])
 
     final def withPrintLogging(
         maxShownByteArrayPrefixLen: Int,
