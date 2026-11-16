@@ -53,23 +53,23 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
 
   import JsonParser.*
 
-  private[this] val allowDoubleParsing = !config.readDecimalNumbersOnlyAsNumberStrings
+  private val allowDoubleParsing = !config.readDecimalNumbersOnlyAsNumberStrings
 
-  private[this] var chars: Array[Char] =
+  private var chars: Array[Char] =
     if (config.allowBufferCaching) CharArrayCache.acquire(config.initialCharbufferSize)
     else new Array[Char](config.initialCharbufferSize)
 
-  private[this] var state: Int        = EXPECT_VALUE
-  private[this] var cursorExtra: Int  = _
-  private[this] var auxLong: Long     = _
-  private[this] var _valueIndex: Long = _
-  private[this] var level: Int        = _ // valid range: 0..64
+  private var state: Int        = EXPECT_VALUE
+  private var cursorExtra: Int  = scala.compiletime.uninitialized
+  private var auxLong: Long     = scala.compiletime.uninitialized
+  private var _valueIndex: Long = scala.compiletime.uninitialized
+  private var level: Int        = scala.compiletime.uninitialized // valid range: 0..64
 
   // keeps the type of each level as a bit map: 0 -> Array, 1 -> Map
   // the current level is always the LSB (bit 0)
-  private[this] var levelType: Long = _
+  private var levelType: Long = scala.compiletime.uninitialized
 
-  private[this] var nextChar: Int = nextCharAfterWhitespace()
+  private var nextChar: Int = nextCharAfterWhitespace()
 
   def valueIndex: Long = _valueIndex - 1
 
@@ -722,7 +722,7 @@ private[borer] object JsonParser:
     def initialCharbufferSize: Int
     def allowBufferCaching: Boolean
 
-  final private[this] val _creator: Parser.Creator[Any, JsonParser.Config] =
+  final private val _creator: Parser.Creator[Any, JsonParser.Config] =
     (input, byteAccess, config) => new JsonParser(input, config)(using byteAccess)
 
   def creator[Bytes, Conf <: JsonParser.Config]: Parser.Creator[Bytes, Conf] =

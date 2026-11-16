@@ -32,7 +32,7 @@ jobs:
       - name: Cache scala dependencies
         uses: coursier/cache-action@v6
       - name: Lint code
-        run: sbt ++3.3.5 check
+        run: sbt ++3.9.0 check
 
   test:
     runs-on: ubuntu-24.04
@@ -40,8 +40,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: [ '11', '17', '21' ]
-        scala: [ '3.3.5' ]
+        java: [ '17', '21', '25' ]
+        scala: [ '3.9.0' ]
         platform: [ 'JVM', 'JS' , 'Native' ]
     steps:
       - name: Checkout current branch

@@ -38,7 +38,7 @@ class Base16Spec extends BorerSuite:
   }
 
   def roundtrip(string: String, expectedEncoding: String): Unit =
-    roundtrip(string getBytes "UTF8", expectedEncoding)
+    roundtrip(string.getBytes("UTF8"), expectedEncoding)
 
   def roundtrip(bytes: Array[Byte], expectedEncoding: String): Unit =
     new String(Base16.encode(bytes)) ==> expectedEncoding

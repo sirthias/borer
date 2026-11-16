@@ -118,9 +118,9 @@ class MiscCborSpec extends ByteArrayCborSpec:
   }
 
   test("BigDecimal exponent limit") {
-    intercept[Borer.Error.Overflow[_ <: AnyRef]](decode[BigDecimal]("c4823903e701"))     // exponent -1000
-    intercept[Borer.Error.Overflow[_ <: AnyRef]](decode[BigDecimal]("c4821903e801"))     // exponent 1000
-    intercept[Borer.Error.Overflow[_ <: AnyRef]](decode[BigDecimal]("c4823a7fffffff01")) // exponent Int.MinValue
+    intercept[Borer.Error.Overflow[? <: AnyRef]](decode[BigDecimal]("c4823903e701"))     // exponent -1000
+    intercept[Borer.Error.Overflow[? <: AnyRef]](decode[BigDecimal]("c4821903e801"))     // exponent 1000
+    intercept[Borer.Error.Overflow[? <: AnyRef]](decode[BigDecimal]("c4823a7fffffff01")) // exponent Int.MinValue
   }
 
   test("BigDecimal mantissa limit") {
@@ -128,22 +128,22 @@ class MiscCborSpec extends ByteArrayCborSpec:
     val maxEight = Decoder.forJBigDecimal(maxCborBigIntMantissaByteArraySize = 8)
     decode[java.math.BigDecimal]("c248ffffffffffffffff")(using maxEight) ==>
     new java.math.BigDecimal("18446744073709551615")
-    intercept[Borer.Error.Overflow[_ <: AnyRef]](decode("c24901ffffffffffffffff")(using maxEight))
-    intercept[Borer.Error.Overflow[_ <: AnyRef]](decode("c34901ffffffffffffffff")(using maxEight))
-    intercept[Borer.Error.Overflow[_ <: AnyRef]](decode("c48221c24901ffffffffffffffff")(using maxEight))
+    intercept[Borer.Error.Overflow[? <: AnyRef]](decode("c24901ffffffffffffffff")(using maxEight))
+    intercept[Borer.Error.Overflow[? <: AnyRef]](decode("c34901ffffffffffffffff")(using maxEight))
+    intercept[Borer.Error.Overflow[? <: AnyRef]](decode("c48221c24901ffffffffffffffff")(using maxEight))
 
     // also when it is above the default of 64 bytes
     val bignum65Bytes = "c25841" + "01" + "ff" * 64
     val max65         = Decoder.forJBigDecimal(maxCborBigIntMantissaByteArraySize = 65)
     decode[java.math.BigDecimal](bignum65Bytes)(using max65) ==>
     new java.math.BigDecimal(((BigInt(1) << 513) - 1).bigInteger)
-    intercept[Borer.Error.Overflow[_ <: AnyRef]](decode[java.math.BigDecimal](bignum65Bytes))
+    intercept[Borer.Error.Overflow[? <: AnyRef]](decode[java.math.BigDecimal](bignum65Bytes))
   }
 
   test("Array-Header Mismatch Error") {
     val encoded = Cbor.encode(Writer.Script(_.writeArrayHeader(0))).toByteArray
     val error   = Cbor.decode(encoded).to[Foo].valueEither.swap.getOrElse(null)
-    error.asInstanceOf[Borer.Error.InvalidInputData[_]].getMessage ==>
+    error.asInstanceOf[Borer.Error.InvalidInputData[?]].getMessage ==>
     "Expected Array-Header(3) but got Array-Header(0) (input position 0)"
   }
 
@@ -158,11 +158,11 @@ class MiscCborSpec extends ByteArrayCborSpec:
   }
 
   test("Illegal Map Termination Error") {
-    intercept[Borer.Error.UnexpectedEndOfInput[_]](
+    intercept[Borer.Error.UnexpectedEndOfInput[?]](
       encode(Writer.Script(_.writeMapHeader(2).writeInt(1).writeInt(2).writeInt(3)))
     )
 
-    intercept[Borer.Error.InvalidInputData[_]](
+    intercept[Borer.Error.InvalidInputData[?]](
       encode(Writer.Script(_.writeMapStart().writeInt(1).writeBreak()))
     ).getMessage ==> "Expected map entry value data item but got BREAK (Output.ToByteArray index 2)"
   }

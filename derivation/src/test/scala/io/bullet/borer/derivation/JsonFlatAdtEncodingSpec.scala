@@ -17,7 +17,7 @@ class JsonFlatAdtEncodingSpec extends AbstractBorerSpec {
   def encode[T: Encoder](value: T): String = Json.encode(value).toUtf8String
 
   def decode[T: Decoder](encoded: String): T =
-    Json.decode(encoded getBytes StandardCharsets.UTF_8).to[T].value
+    Json.decode(encoded.getBytes(StandardCharsets.UTF_8)).to[T].value
 
   sealed trait Animal
   case class Dog(age: Int, name: String)                                     extends Animal
@@ -108,15 +108,15 @@ class JsonFlatAdtEncodingSpec extends AbstractBorerSpec {
     val fish = Fish("red")
     roundTrip(""""red"""", fish)
 
-    intercept[Borer.Error.Unsupported[_]] {
+    intercept[Borer.Error.Unsupported[?]] {
       verifyEncoding(fish: Animal, "{}")
     }.getMessage ==> "AdtEncodingStrategy.flat requires all sub-types of `Animal` be serialized as a Map but here it was a String (Output.ToByteArray index 0)"
 
-    intercept[Borer.Error.InvalidInputData[_]] {
+    intercept[Borer.Error.InvalidInputData[?]] {
       verifyDecoding(""""red"""", fish: Animal)
     }.getMessage ==> "Expected Map for decoding an instance of type `Animal` but got Chars (input position 0)"
 
-    intercept[Borer.Error.InvalidInputData[_]] {
+    intercept[Borer.Error.InvalidInputData[?]] {
       verifyDecoding("{}", fish: Animal)
     }.getMessage ==> "Expected Type-ID member `_type` for decoding an instance of type `Animal` but got none (input position 1)"
   }

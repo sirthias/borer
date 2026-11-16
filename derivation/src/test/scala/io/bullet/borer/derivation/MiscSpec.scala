@@ -15,7 +15,7 @@ import io.bullet.borer._
 class MiscSpec extends AbstractBorerSpec {
 
   def encode[T: Encoder](value: T): String   = Json.encode(value).toUtf8String
-  def decode[T: Decoder](encoded: String): T = Json.decode(encoded getBytes StandardCharsets.UTF_8).to[T].value
+  def decode[T: Decoder](encoded: String): T = Json.decode(encoded.getBytes(StandardCharsets.UTF_8)).to[T].value
 
   final case class CaseClass3(abc: Int, d: String, efghi: Boolean)
 
@@ -81,7 +81,7 @@ class MiscSpec extends AbstractBorerSpec {
 
     given Codec[Foo] = MapBasedCodecs.deriveCodec
     val errorMsg     = """Cannot decode `Foo` instance due to missing map key "z" (input position 7)"""
-    assertMatch(Json.decode("""{"x":42}""" getBytes StandardCharsets.UTF_8).to[Foo].valueEither) {
+    assertMatch(Json.decode("""{"x":42}""".getBytes(StandardCharsets.UTF_8)).to[Foo].valueEither) {
       case Left(e: Borer.Error.InvalidInputData[_]) if e.getMessage == errorMsg => // ok
     }
   }

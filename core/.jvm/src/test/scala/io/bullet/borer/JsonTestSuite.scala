@@ -38,7 +38,7 @@ class JsonTestSuite extends BorerSuite:
   test("Accept") {
     for {
       (name, bytes) <- testFiles
-      if name startsWith "y"
+      if name `startsWith` "y"
     }
       Json.decode(bytes).withConfig(config).to[Dom.Element].valueEither match
         case Right(_) => // ok
@@ -48,7 +48,7 @@ class JsonTestSuite extends BorerSuite:
   test("Reject") {
     for {
       (name, bytes) <- testFiles
-      if name startsWith "n"
+      if name `startsWith` "n"
     }
       Json.decode(bytes).withConfig(config).to[Dom.Element].valueEither match
         case Left(_)  => // ok
@@ -58,7 +58,7 @@ class JsonTestSuite extends BorerSuite:
   test("Not Crash") {
     for {
       (name, bytes) <- testFiles
-      if name startsWith "i"
+      if name `startsWith` "i"
     }
       Json.decode(bytes).withConfig(config).to[Dom.Element].valueEither match
         case Right(_)                        => // everything else is fine

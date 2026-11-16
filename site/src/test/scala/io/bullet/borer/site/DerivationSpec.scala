@@ -248,7 +248,7 @@ class DerivationSpec extends BorerSuite {
     case class Dog(age: Int, name: String = "<unknown>") derives Codec
 
     Json
-      .decode("""{ "age": 4 }""" getBytes "UTF8")
+      .decode("""{ "age": 4 }""".getBytes("UTF8"))
       .to[Dog]
       .value ==> Dog(age = 4)
     // #default-value

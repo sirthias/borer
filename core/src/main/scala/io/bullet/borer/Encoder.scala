@@ -128,15 +128,15 @@ object Encoder extends LowPrioEncoders:
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   given forNull: Encoder[Null]       = Encoder((w, _) => w.writeNull())
-  given forBoolean: Encoder[Boolean] = Encoder(_ writeBoolean _)
-  given forChar: Encoder[Char]       = Encoder(_ writeChar _)
-  given forByte: Encoder[Byte]       = Encoder(_ writeByte _)
-  given forShort: Encoder[Short]     = Encoder(_ writeShort _)
-  given forInt: Encoder[Int]         = Encoder(_ writeInt _)
-  given forLong: Encoder[Long]       = Encoder(_ writeLong _)
-  given forFloat: Encoder[Float]     = Encoder(_ writeFloat _)
-  given forDouble: Encoder[Double]   = Encoder(_ writeDouble _)
-  given forString: Encoder[String]   = Encoder(_ writeString _)
+  given forBoolean: Encoder[Boolean] = Encoder(_.writeBoolean(_))
+  given forChar: Encoder[Char]       = Encoder(_.writeChar(_))
+  given forByte: Encoder[Byte]       = Encoder(_.writeByte(_))
+  given forShort: Encoder[Short]     = Encoder(_.writeShort(_))
+  given forInt: Encoder[Int]         = Encoder(_.writeInt(_))
+  given forLong: Encoder[Long]       = Encoder(_.writeLong(_))
+  given forFloat: Encoder[Float]     = Encoder(_.writeFloat(_))
+  given forDouble: Encoder[Double]   = Encoder(_.writeDouble(_))
+  given forString: Encoder[String]   = Encoder(_.writeString(_))
 
   given forBoxedBoolean: Encoder[JBoolean] = forBoolean.asInstanceOf[Encoder[JBoolean]]
   given forBoxedChar: Encoder[Character]   = forChar.asInstanceOf[Encoder[Character]]
@@ -436,9 +436,9 @@ sealed abstract class LowPrioEncoders:
     new Encoder.DefaultValueAware[M[T]] { self =>
       def write(w: Writer, value: M[T]) =
         value match
-          case x: IndexedSeq[T] => w.writeIndexedSeq(x)
-          case x: LinearSeq[T]  => w.writeLinearSeq(x)
-          case x                => w.writeIterableOnce(x)
+          case x: IndexedSeq[T @unchecked] => w.writeIndexedSeq(x)
+          case x: LinearSeq[T @unchecked]  => w.writeLinearSeq(x)
+          case x                           => w.writeIterableOnce(x)
 
       def withDefaultValue(defaultValue: M[T]): Encoder[M[T]] =
         if (isEmpty(defaultValue))
@@ -453,7 +453,7 @@ sealed abstract class LowPrioEncoders:
         ks == 0 || (ks < 0) && value.iterator.isEmpty
     }
 
-  given forIterator[T: Encoder]: Encoder[Iterator[T]] = Encoder(_ writeIterator _)
+  given forIterator[T: Encoder]: Encoder[Iterator[T]] = Encoder(_.writeIterator(_))
 
 /**
  * An [[AdtEncoder]] is an [[Encoder]] which encodes its values with an envelope holding the value's type id.

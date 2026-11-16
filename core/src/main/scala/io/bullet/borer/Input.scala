@@ -132,5 +132,5 @@ object Input
     def byteAccess: ByteAccess[B]            = ba
     def apply(value: Input[B]): Input[Bytes] = value
 
-  case class Position(input: Input[_], index: Long):
+  case class Position(input: Input[?], index: Long):
     override def toString = s"input position $index"

@@ -106,11 +106,11 @@ class Utf8Spec extends BorerSuite:
 
   def encode(string: String): Unit =
     val result   = Utf8.encode(string.toCharArray)
-    val expected = string getBytes "UTF8"
+    val expected = string.getBytes("UTF8")
     result ==> expected
 
   def decode(string: String): Unit =
-    val bytes    = string getBytes "UTF8"
+    val bytes    = string.getBytes("UTF8")
     val result   = Utf8.decode(bytes)
     val expected = string.toCharArray
     result ==> expected

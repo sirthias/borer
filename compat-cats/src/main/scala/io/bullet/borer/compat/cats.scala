@@ -18,7 +18,7 @@ import scala.collection.immutable.{SortedMap, SortedSet}
 object cats {
 
   implicit def chainEncoder[T: Encoder]: Encoder[Chain[T]] =
-    Encoder(_ writeIterator _.iterator)
+    Encoder((w, x) => w.writeIterator(x.iterator))
 
   implicit def chainDecoder[T: Decoder]: Decoder[Chain[T]] =
     Decoder(r => r.readArrayStart().readUntilBreak(Chain.empty[T])(_ append r.read[T]()))
@@ -50,7 +50,7 @@ object cats {
     }
 
   implicit def necEncoder[T: Encoder]: Encoder[NonEmptyChain[T]] =
-    Encoder(_ writeIterator _.iterator)
+    Encoder((w, x) => w.writeIterator(x.iterator))
 
   implicit def necDecoder[T: Decoder]: Decoder[NonEmptyChain[T]] =
     chainDecoder[T].mapWithReader { (r, chain) =>

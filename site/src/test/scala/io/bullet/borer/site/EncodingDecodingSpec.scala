@@ -61,7 +61,7 @@ class EncodingDecodingSpec extends BorerSuite {
   }
 
   test("Decoding JSON") {
-    val bytes = """["foo","bar","baz"]""" getBytes "UTF8"
+    val bytes = """["foo","bar","baz"]""".getBytes("UTF8")
 
     // #decoding-json
     import io.bullet.borer.Json
@@ -93,7 +93,7 @@ class EncodingDecodingSpec extends BorerSuite {
 
   test("Try JSON") {
     val value = List("foo", "bar", "baz")
-    val bytes = """["foo","bar","baz"]""" getBytes "UTF8"
+    val bytes = """["foo","bar","baz"]""".getBytes("UTF8")
 
     // #try-json
     import io.bullet.borer.Json
@@ -129,7 +129,7 @@ class EncodingDecodingSpec extends BorerSuite {
 
   test("JSON") {
     val value = List("foo", "bar", "baz")
-    val bytes = """["foo","bar","baz"]""" getBytes "UTF8"
+    val bytes = """["foo","bar","baz"]""".getBytes("UTF8")
 
     // #either-json
     import io.bullet.borer.*

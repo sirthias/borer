@@ -56,8 +56,8 @@ object TranscodingSetup:
       defaultDecWrapper: Receiver.Transformer[DC])
       extends CommonApi.Impl(defaultDecConfig, defaultDecWrapper) with DecodingApi[DC] with Sealed[AnyRef]:
 
-    private[this] var prefixOnly: Boolean      = _
-    private[this] var decoder: Decoder[AnyRef] = _
+    private var prefixOnly: Boolean      = scala.compiletime.uninitialized
+    private var decoder: Decoder[AnyRef] = scala.compiletime.uninitialized
 
     def withPrefixOnly: this.type =
       this.prefixOnly = true

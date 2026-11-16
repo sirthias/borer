@@ -112,33 +112,34 @@ class ConcatEncoderSpec extends ByteArrayCborSpec:
 
   test("array + map") {
     implicit val encoder: Encoder[(Array[Int], Map[String, Int])] = concatTupleEncoder[Array[Int], Map[String, Int]]
-    intercept[Borer.Error.Unsupported[_]](
+    intercept[Borer.Error.Unsupported[?]](
       encode(Array(1, 2, 3) -> Map("a" -> 1, "b" -> 2, "c" -> 3))
     ).getMessage ==> "Cannot merge a 'to-Array' Encoder with a 'to-Map' Encoder (Output.ToByteArray index 0)"
   }
 
   test("map + array") {
     implicit val encoder: Encoder[(Map[String, Int], Array[Int])] = concatTupleEncoder[Map[String, Int], Array[Int]]
-    intercept[Borer.Error.Unsupported[_]](
+    intercept[Borer.Error.Unsupported[?]](
       encode(Map("a" -> 1, "b" -> 2, "c" -> 3) -> Array(1, 2, 3))
     ).getMessage ==> "Cannot merge a 'to-Map' Encoder with a 'to-Array' Encoder (Output.ToByteArray index 0)"
   }
 
   test("array + string") {
     implicit val encoder: Encoder[(Array[Int], String)] = concatTupleEncoder[Array[Int], String]
-    intercept[Borer.Error.Unsupported[_]](
+    intercept[Borer.Error.Unsupported[?]](
       encode(Array(1, 2, 3) -> "nope")
     ).getMessage ==> "Second Encoder produced the String `nope` but Encoder merging only supports 'to-Array' and 'to-Map' Encoders (Output.ToByteArray index 0)"
   }
 
   test("string + array") {
     implicit val encoder: Encoder[(String, Array[Int])] = concatTupleEncoder[String, Array[Int]]
-    intercept[Borer.Error.Unsupported[_]](
+    intercept[Borer.Error.Unsupported[?]](
       encode("nope" -> Array(1, 2, 3))
     ).getMessage ==> "First Encoder produced the String `nope` but Encoder merging only supports 'to-Array' and 'to-Map' Encoders (Output.ToByteArray index 0)"
   }
 
-  def concatTupleEncoder[A: Encoder, B: Encoder]: Encoder[(A, B)] = select1stEncoder[A, B] concat select2ndEncoder[A, B]
+  def concatTupleEncoder[A: Encoder, B: Encoder]: Encoder[(A, B)] =
+    select1stEncoder[A, B].concat(select2ndEncoder[A, B])
 
   def select1stEncoder[A: Encoder, B]: Encoder[(A, B)] = Encoder((w, t) => w ~ t._1)
   def select2ndEncoder[A, B: Encoder]: Encoder[(A, B)] = Encoder((w, t) => w ~ t._2)

@@ -73,7 +73,7 @@ private[borer] object CommonApi:
   abstract class Impl[Config](defaultConfig: Config, defaultTransformer: Receiver.Transformer[Config]):
     protected var config: Config                                    = defaultConfig
     protected var receiverTransformer: Receiver.Transformer[Config] = defaultTransformer
-    protected var context: AnyRef                                   = _
+    protected var context: AnyRef                                   = scala.compiletime.uninitialized
 
     final def withConfig(config: Config): this.type =
       this.config = config

@@ -39,7 +39,7 @@ class Base64Spec extends BorerSuite:
   }
 
   def roundtrip(string: String, expectedEncoding: String): Unit =
-    roundtrip(string getBytes "UTF8", expectedEncoding)
+    roundtrip(string.getBytes("UTF8"), expectedEncoding)
 
   def roundtrip(bytes: Array[Byte], expectedEncoding: String): Unit =
     new String(BaseEncoding.base64.encode(bytes)) ==> expectedEncoding

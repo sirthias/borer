@@ -37,7 +37,7 @@ private[borer] object Parser:
   type Creator[Bytes, Config] = (Input[Bytes], ByteAccess[Bytes], Config) => Parser[Bytes]
 
   type Wrapper[Config] = (Receiver, Config) => Receiver
-  private[this] val _nopWrapper: Wrapper[Any] = (receiver, _) => receiver
+  private val _nopWrapper: Wrapper[Any] = (receiver, _) => receiver
 
   def nopWrapper[Config]: Wrapper[Config] = _nopWrapper.asInstanceOf[Wrapper[Config]]
 

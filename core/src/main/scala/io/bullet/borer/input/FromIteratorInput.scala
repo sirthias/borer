@@ -26,18 +26,18 @@ trait FromIteratorInput:
   def fromIterator[Bytes: ByteAccess](value: Iterator[Input[Bytes]]): Input[Bytes] =
     new FromIterator(value)
 
-  final private class FromIterator[Bytes](private[this] var inputIterator: Iterator[Input[Bytes]])(
+  final private class FromIterator[Bytes](private var inputIterator: Iterator[Input[Bytes]])(
       using byteAccess: ByteAccess[Bytes])
       extends Input.PaddingProvider[Bytes] with Input[Bytes]:
 
-    private[this] var history                = List.empty[Input[Bytes]]
-    private[this] var previous: Input[Bytes] = _
-    private[this] var current: Input[Bytes]  = if (inputIterator.hasNext) inputIterator.next() else null
-    private[this] var currentStart: Long     = _
-    private[this] var outerPaddingProvider: Input.PaddingProvider[Bytes] = _
-    private[this] var padBytesRecursion                                  = false
-    private[this] var padBytesRecursionRest: Bytes                       = _
-    private[this] var padBytesRecursionMissing: Long                     = _
+    private var history                = List.empty[Input[Bytes]]
+    private var previous: Input[Bytes] = scala.compiletime.uninitialized
+    private var current: Input[Bytes]  = if (inputIterator.hasNext) inputIterator.next() else null
+    private var currentStart: Long     = scala.compiletime.uninitialized
+    private var outerPaddingProvider: Input.PaddingProvider[Bytes] = scala.compiletime.uninitialized
+    private var padBytesRecursion                                  = false
+    private var padBytesRecursionRest: Bytes                       = scala.compiletime.uninitialized
+    private var padBytesRecursionMissing: Long                     = scala.compiletime.uninitialized
 
     def cursor: Long = currentStart + cursorOf(current)
 

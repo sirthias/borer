@@ -52,7 +52,7 @@ abstract class Receiver:
 object Receiver:
 
   type Transformer[Config] = (Receiver, Config) => Receiver
-  private[this] val _nopTransformer: Transformer[Any] = (receiver, _) => receiver
+  private val _nopTransformer: Transformer[Any] = (receiver, _) => receiver
 
   def nopTransformer[Config]: Transformer[Config] = _nopTransformer.asInstanceOf[Transformer[Config]]
 

@@ -22,15 +22,15 @@ final private[borer] class ResizableByteRingBuffer(initialCapacity: Int, val max
       initialCapacity) || initialCapacity <= 0 || maxCapacity < initialCapacity)
     throw new IllegalArgumentException
 
-  private[this] var array = new Array[Byte](initialCapacity)
-  private[this] var mask  = array.length - 1 // bit mask for converting a cursor into an array index
+  private var array = new Array[Byte](initialCapacity)
+  private var mask  = array.length - 1 // bit mask for converting a cursor into an array index
 
   /*
    * two counters counting the number of elements ever written and read; wrap-around is
    * handled by always looking at differences or masked values
    */
-  private[this] var writeIx: Int = _
-  private[this] var readIx: Int  = _
+  private var writeIx: Int = scala.compiletime.uninitialized
+  private var readIx: Int  = scala.compiletime.uninitialized
 
   inline def clear(): Unit =
     writeIx = 0

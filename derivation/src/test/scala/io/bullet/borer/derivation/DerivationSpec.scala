@@ -295,7 +295,7 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
 
       val errorMsg = s"""Cannot decode `.*` instance due to missing map key "$missingKey".*"""
       assertMatch(tryDecode[T](encoded)) {
-        case Failure(e) if e.getMessage matches errorMsg => // ok
+        case Failure(e) if e.getMessage.matches(errorMsg) => // ok
       }
     }
 
@@ -305,7 +305,7 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
       decode[Element](encoded) ==> badDom
 
       assertMatch(tryDecode[T](encoded)) {
-        case Failure(e) if e.getMessage startsWith s"Duplicate map key `$key` encountered" => // ok
+        case Failure(e) if e.getMessage.startsWith(s"Duplicate map key `$key` encountered") => // ok
       }
     }
 
@@ -494,8 +494,8 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
 
   def transform(elem: MapElem)(f: List[(Element, Element)] => List[(Element, Element)]): MapElem =
     elem match {
-      case MapElem.Sized(_, keys, values)   => MapElem.Sized(f((keys zip values).toList): _*)
-      case MapElem.Unsized(_, keys, values) => MapElem.Unsized(f((keys zip values).toList): _*)
+      case MapElem.Sized(_, keys, values)   => MapElem.Sized(f((keys zip values).toList)*)
+      case MapElem.Unsized(_, keys, values) => MapElem.Unsized(f((keys zip values).toList)*)
       case _                                => throw new IllegalStateException
     }
 }

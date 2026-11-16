@@ -19,7 +19,7 @@ import scala.collection.{mutable, Factory}
  * Stateful, mutable abstraction for reading a stream of CBOR or JSON data from the given `input`.
  */
 final class InputReader[Config <: Reader.Config](
-    parser: Parser[_],
+    parser: Parser[?],
     directParser: io.bullet.borer.json.DirectJsonParser,
     receiverWrapper: Receiver.Transformer[Config],
     config: Config,
@@ -27,15 +27,15 @@ final class InputReader[Config <: Reader.Config](
 
   import io.bullet.borer.DataItem as DI
 
-  private[this] val configReadIntegersAlsoAsFloatingPoint = config.readIntegersAlsoAsFloatingPoint
-  private[this] val configReadDoubleAlsoAsFloat           = config.readDoubleAlsoAsFloat
-  private[this] val receptacle: Receptacle                = new Receptacle
-  private[this] val receiver: Receiver                    = receiverWrapper(receptacle, config)
-  private[this] var _dataItem: Int                        = _
+  private val configReadIntegersAlsoAsFloatingPoint = config.readIntegersAlsoAsFloatingPoint
+  private val configReadDoubleAlsoAsFloat           = config.readDoubleAlsoAsFloat
+  private val receptacle: Receptacle                = new Receptacle
+  private val receiver: Receiver                    = receiverWrapper(receptacle, config)
+  private var _dataItem: Int                        = scala.compiletime.uninitialized
 
   // a stash of elements that are injected _before_ the next element from the parser,
   // if null or empty the next element comes from the parser
-  private[borer] var stash: ElementDeque = _
+  private[borer] var stash: ElementDeque = scala.compiletime.uninitialized
 
   private[borer] def release(): Unit =
     if (directParser eq null)
@@ -67,7 +67,7 @@ final class InputReader[Config <: Reader.Config](
   inline def readingJson: Boolean = target eq Json
   inline def readingCbor: Boolean = target eq Cbor
 
-  def input: Input[_]                 = if (directParser ne null) directParser.input else parser.input
+  def input: Input[?]                 = if (directParser ne null) directParser.input else parser.input
   def cursor: Long                    = if (directParser ne null) directParser.valueIndex else parser.valueIndex
   inline def position: Input.Position = input.position(cursor)
 

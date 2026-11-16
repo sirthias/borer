@@ -117,7 +117,7 @@ object Decoder extends LowPrioDecoders:
      */
     def withDefaultValue(defaultValue: A): Decoder[A] =
       underlying.unwrap match
-        case x: Decoder.DefaultValueAware[A] => x withDefaultValue defaultValue
+        case x: Decoder.DefaultValueAware[A] => x.withDefaultValue(defaultValue)
         case x                               => x
 
     def unwrap: Decoder[A] =

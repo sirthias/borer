@@ -35,11 +35,11 @@ object DecodingSetup:
 
     def valueEither: Either[Borer.Error[Input.Position], T]
 
-    def valueAndInput: (T, Input[_])
+    def valueAndInput: (T, Input[?])
 
-    def valueAndInputTry: Try[(T, Input[_])]
+    def valueAndInputTry: Try[(T, Input[?])]
 
-    def valueAndInputEither: Either[Borer.Error[Input.Position], (T, Input[_])]
+    def valueAndInputEither: Either[Borer.Error[Input.Position], (T, Input[?])]
 
   final private[borer] class Impl[V, Bytes, Config <: Borer.DecodingConfig](
       inputValue: V,
@@ -49,8 +49,8 @@ object DecodingSetup:
       target: Target)(using p: Input.Provider[V])
       extends CommonApi.Impl[Config](defaultConfig, defaultWrapper) with Api[Config] with Sealed[AnyRef]:
 
-    private[this] var prefixOnly: Boolean      = _
-    private[this] var decoder: Decoder[AnyRef] = _
+    private var prefixOnly: Boolean      = scala.compiletime.uninitialized
+    private var decoder: Decoder[AnyRef] = scala.compiletime.uninitialized
 
     def withPrefixOnly: this.type =
       this.prefixOnly = true
@@ -81,21 +81,21 @@ object DecodingSetup:
         case e: Borer.Error[_] => Left(e.withPosOf(reader))
         case NonFatal(e)       => Left(new Borer.Error.General(reader.position, e))
 
-    def valueAndInput: (AnyRef, Input[_]) =
+    def valueAndInput: (AnyRef, Input[?]) =
       val reader = newReader()
       try decodeFrom(reader) -> reader.input
       catch
         case e: Borer.Error[_] => throw e.withPosOf(reader)
         case NonFatal(e)       => throw new Borer.Error.General(reader.position, e)
 
-    def valueAndInputTry: Try[(AnyRef, Input[_])] =
+    def valueAndInputTry: Try[(AnyRef, Input[?])] =
       val reader = newReader()
       try Success(decodeFrom(reader) -> reader.input)
       catch
         case e: Borer.Error[_] => Failure(e.withPosOf(reader))
         case NonFatal(e)       => Failure(new Borer.Error.General(reader.position, e))
 
-    def valueAndInputEither: Either[Borer.Error[Input.Position], (AnyRef, Input[_])] =
+    def valueAndInputEither: Either[Borer.Error[Input.Position], (AnyRef, Input[?])] =
       val reader = newReader()
       try Right(decodeFrom(reader) -> reader.input)
       catch

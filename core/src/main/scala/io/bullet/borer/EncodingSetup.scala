@@ -95,7 +95,7 @@ object EncodingSetup:
       rendererCreator: (Output, Config) => Renderer)
       extends CommonApi.Impl[Config](defaultConfig, defaultWrapper) with JsonApi[T, Config] with Sealed[Output, Any]:
 
-    private[this] var _output: Output = _
+    private var _output: Output = scala.compiletime.uninitialized
 
     def withPrettyRendering(indent: Int): Impl.this.type =
       withConfig(config.asInstanceOf[Json.EncodingConfig].copy(indent = indent).asInstanceOf[Config])

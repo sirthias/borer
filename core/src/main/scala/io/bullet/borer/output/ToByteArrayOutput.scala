@@ -25,11 +25,11 @@ trait ToByteArrayOutput:
    */
   final class ToByteArray(bufferSize: Int, allowBufferCaching: Boolean) extends Output:
 
-    private[this] var currentChunkBuffer: Array[Byte] = _
-    private[this] var currentChunkBufferCursor: Int   = _
-    private[this] var rootChunk: ArrayChunk           = _
-    private[this] var currentChunk: ArrayChunk        = _
-    private[this] var filledChunksSize: Long          = _
+    private var currentChunkBuffer: Array[Byte] = scala.compiletime.uninitialized
+    private var currentChunkBufferCursor: Int   = scala.compiletime.uninitialized
+    private var rootChunk: ArrayChunk           = scala.compiletime.uninitialized
+    private var currentChunk: ArrayChunk        = scala.compiletime.uninitialized
+    private var filledChunksSize: Long          = scala.compiletime.uninitialized
 
     type Self   = ToByteArray
     type Result = Array[Byte]

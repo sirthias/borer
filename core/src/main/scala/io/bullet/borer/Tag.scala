@@ -173,7 +173,7 @@ object Tag:
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  given Encoder[Tag] = Encoder(_ writeTag _)
+  given Encoder[Tag] = Encoder(_.writeTag(_))
   given Decoder[Tag] = Decoder(_.readTag())
 
 final case class TaggedValue[T](tag: Tag, value: T)

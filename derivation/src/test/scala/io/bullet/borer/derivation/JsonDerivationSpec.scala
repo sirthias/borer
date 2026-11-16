@@ -18,9 +18,9 @@ class JsonDerivationSpec extends DerivationSpec(Json) {
   def encode[T: Encoder](value: T): String =
     Json.encode(value).withConfig(Json.EncodingConfig(bufferSize = 13)).toUtf8String
 
-  def decode[T: Decoder](encoded: String): T = Json.decode(encoded getBytes StandardCharsets.UTF_8).to[T].value
+  def decode[T: Decoder](encoded: String): T = Json.decode(encoded.getBytes(StandardCharsets.UTF_8)).to[T].value
 
-  def tryDecode[T: Decoder](encoded: String) = Json.decode(encoded getBytes StandardCharsets.UTF_8).to[T].valueTry
+  def tryDecode[T: Decoder](encoded: String) = Json.decode(encoded.getBytes(StandardCharsets.UTF_8)).to[T].valueTry
 
   def arrayBasedFooDom =
     ArrayElem.Unsized(

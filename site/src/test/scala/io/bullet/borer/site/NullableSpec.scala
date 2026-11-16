@@ -20,7 +20,7 @@ class NullableSpec extends BorerSuite {
     case class Dog(age: Int, name: Nullable[String]) derives Codec
 
     Json
-      .decode("""{ "age": 4, "name": null }""" getBytes "UTF8")
+      .decode("""{ "age": 4, "name": null }""".getBytes("UTF8"))
       .to[Dog]
       .value ==>
     Dog(age = 4, name = "") // the `Default[String]` provides an empty String

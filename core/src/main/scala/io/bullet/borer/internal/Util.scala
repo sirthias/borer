@@ -52,8 +52,8 @@ private[borer] object Util:
 
   def isPowerOf2(i: Int): Boolean = Integer.lowestOneBit(i) == i
 
-  private[this] val _identityFunc = (x: Any) => x
-  def identityFunc[T]: T => T     = _identityFunc.asInstanceOf[T => T]
+  private val _identityFunc   = (x: Any) => x
+  def identityFunc[T]: T => T = _identityFunc.asInstanceOf[T => T]
 
   inline def isChar(x: Int): Boolean              = (x >> 16) == 0
   inline def isByte(x: Int): Boolean              = (x >> 7) == (x >> 31)
@@ -138,8 +138,8 @@ private[borer] object Util:
   extension [T](underlying: Iterator[T])
     def prepend(element: T): Iterator[T] =
       new Iterator[T] {
-        private[this] var pending = true
-        def hasNext: Boolean      = pending || underlying.hasNext
+        private var pending  = true
+        def hasNext: Boolean = pending || underlying.hasNext
 
         def next(): T =
           if (pending)
@@ -150,7 +150,7 @@ private[borer] object Util:
 
   extension (sc: StringContext)
     def hex(args: Any*): Array[Byte] =
-      val hexString = sc.s(args: _*)
+      val hexString = sc.s(args*)
       try
         if ((hexString.length & 1) != 0) sys.error("string length is not even")
         hexString.grouped(2).map(Integer.parseInt(_, 16).toByte).toArray

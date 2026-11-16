@@ -26,7 +26,7 @@ object Default:
 
   def orValue[T: Default](value: T): T = if (value == null) Default.of[T] else value
 
-  private[this] val optionDefault     = Default(None)
+  private val optionDefault           = Default(None)
   given option[T]: Default[Option[T]] = optionDefault
 
 opaque type Nullable[T] <: T = T

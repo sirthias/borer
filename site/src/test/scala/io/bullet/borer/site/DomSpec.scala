@@ -64,7 +64,7 @@ class DomSpec extends BorerSuite {
 
     def jsonToCbor(json: String): Try[Array[Byte]] =
       Json
-        .decode(json getBytes "UTF8")
+        .decode(json.getBytes("UTF8"))
         .to[Element]
         .valueTry
         .flatMap(dom => Cbor.encode(dom).toByteArrayTry)

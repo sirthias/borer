@@ -100,7 +100,7 @@ object Logging:
    * A [[Logger]] which formats each incoming element to it's own log line.
    */
   abstract class LineFormatLogger extends Logger:
-    protected var gutterWidth: Int = _
+    protected var gutterWidth: Int = scala.compiletime.uninitialized
 
     def info: LevelInfo
 

@@ -35,8 +35,8 @@ private[borer] object CborValidation:
      */
     def maxNestingLevels: Int
 
-  private[this] val _wrapper: borer.Receiver.Transformer[Config] = new Receiver(_, _)
-  def wrapper[C <: Config]: borer.Receiver.Transformer[C]        = _wrapper.asInstanceOf[borer.Receiver.Transformer[C]]
+  private val _wrapper: borer.Receiver.Transformer[Config] = new Receiver(_, _)
+  def wrapper[C <: Config]: borer.Receiver.Transformer[C]  = _wrapper.asInstanceOf[borer.Receiver.Transformer[C]]
 
   /**
    * A [[Receiver]] wrapping another [[Receiver]].
@@ -229,7 +229,7 @@ private[borer] object CborValidation:
 
     private def checkAllowed(dataItem: Int): Unit =
       if (!isMasked(dataItem))
-        throw new Error.InvalidInputData(null, DataItem stringify mask, DataItem stringify dataItem)
+        throw new Error.InvalidInputData(null, DataItem.stringify(mask), DataItem.stringify(dataItem))
 
     private inline def isMasked(test: Int): Boolean = (mask & test) != 0
 

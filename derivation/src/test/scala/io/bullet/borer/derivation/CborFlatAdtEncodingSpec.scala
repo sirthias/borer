@@ -149,15 +149,15 @@ class CborFlatAdtEncodingSpec extends AbstractBorerSpec {
     val fish = Fish("red")
     roundTrip("63726564", fish)
 
-    intercept[Borer.Error.Unsupported[_]] {
+    intercept[Borer.Error.Unsupported[?]] {
       verifyEncoding(fish: Animal, "{}")
     }.getMessage ==> "AdtEncodingStrategy.flat requires all sub-types of `Animal` be serialized as a Map but here it was a String (Output.ToByteArray index 0)"
 
-    intercept[Borer.Error.InvalidInputData[_]] {
+    intercept[Borer.Error.InvalidInputData[?]] {
       verifyDecoding("63726564", fish: Animal)
     }.getMessage ==> "Expected Map for decoding an instance of type `Animal` but got Text (input position 0)"
 
-    intercept[Borer.Error.InvalidInputData[_]] {
+    intercept[Borer.Error.InvalidInputData[?]] {
       verifyDecoding("A0", fish: Animal)
     }.getMessage ==> "Expected Type-ID member `_type` for decoding an instance of type `Animal` but got none (input position 0)"
   }

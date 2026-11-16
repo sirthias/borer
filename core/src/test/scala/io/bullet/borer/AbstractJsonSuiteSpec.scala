@@ -51,7 +51,7 @@ abstract class AbstractJsonSuiteSpec extends AbstractBorerSpec:
   }
 
   test("Floating Point Numbers") {
-    intercept[Borer.Error.Unsupported[_ <: AnyRef]](encode(Float16(0.0f)))
+    intercept[Borer.Error.Unsupported[? <: AnyRef]](encode(Float16(0.0f)))
 
     roundTrip("0.0", 0.0f)
     roundTrip("0.0", 0.0)
@@ -84,14 +84,14 @@ abstract class AbstractJsonSuiteSpec extends AbstractBorerSpec:
 
     roundTrip("-4.1", -4.1)
 
-    intercept[Borer.Error.Unsupported[_ <: AnyRef]](encode(Double.NegativeInfinity))
-    intercept[Borer.Error.Unsupported[_ <: AnyRef]](encode(Double.PositiveInfinity))
-    intercept[Borer.Error.Unsupported[_ <: AnyRef]](encode(Double.NaN))
+    intercept[Borer.Error.Unsupported[? <: AnyRef]](encode(Double.NegativeInfinity))
+    intercept[Borer.Error.Unsupported[? <: AnyRef]](encode(Double.PositiveInfinity))
+    intercept[Borer.Error.Unsupported[? <: AnyRef]](encode(Double.NaN))
 
-    intercept[Borer.Error.Overflow[_ <: AnyRef]](decode[Long]("1234567890123456789012345678901234567890"))
-    intercept[Borer.Error.Overflow[_ <: AnyRef]](decode[Long]("12345.67890123456789012345678901234567890"))
-    intercept[Borer.Error.Overflow[_ <: AnyRef]](decode[Long]("1E400"))
-    intercept[Borer.Error.Overflow[_ <: AnyRef]](decode[Long]("1E400"))
+    intercept[Borer.Error.Overflow[? <: AnyRef]](decode[Long]("1234567890123456789012345678901234567890"))
+    intercept[Borer.Error.Overflow[? <: AnyRef]](decode[Long]("12345.67890123456789012345678901234567890"))
+    intercept[Borer.Error.Overflow[? <: AnyRef]](decode[Long]("1E400"))
+    intercept[Borer.Error.Overflow[? <: AnyRef]](decode[Long]("1E400"))
   }
 
   test("General Number Parsing") {
@@ -193,16 +193,16 @@ abstract class AbstractJsonSuiteSpec extends AbstractBorerSpec:
     roundTrip("false", false)
     roundTrip("true", true)
     roundTrip("null", null)
-    intercept[Borer.Error.Unsupported[_ <: AnyRef]](encode(Undefined))
-    intercept[Borer.Error.Unsupported[_ <: AnyRef]](encode(SimpleValue(16)))
+    intercept[Borer.Error.Unsupported[? <: AnyRef]](encode(Undefined))
+    intercept[Borer.Error.Unsupported[? <: AnyRef]](encode(SimpleValue(16)))
   }
 
   test("Tags, Byte Strings and Text Byte Strings") {
-    intercept[Borer.Error.Unsupported[_ <: AnyRef]](encode[Tag](Tag.MagicHeader))
-    intercept[Borer.Error.Unsupported[_ <: AnyRef]](encode(Writer.Script(_.writeBytes(Array.emptyByteArray))))
-    intercept[Borer.Error.Unsupported[_ <: AnyRef]](encode(Writer.Script(_.writeBytesStart())))
-    intercept[Borer.Error.Unsupported[_ <: AnyRef]](encode(Writer.Script(_.writeText(Array.emptyByteArray))))
-    intercept[Borer.Error.Unsupported[_ <: AnyRef]](encode(Writer.Script(_.writeTextStart())))
+    intercept[Borer.Error.Unsupported[? <: AnyRef]](encode[Tag](Tag.MagicHeader))
+    intercept[Borer.Error.Unsupported[? <: AnyRef]](encode(Writer.Script(_.writeBytes(Array.emptyByteArray))))
+    intercept[Borer.Error.Unsupported[? <: AnyRef]](encode(Writer.Script(_.writeBytesStart())))
+    intercept[Borer.Error.Unsupported[? <: AnyRef]](encode(Writer.Script(_.writeText(Array.emptyByteArray))))
+    intercept[Borer.Error.Unsupported[? <: AnyRef]](encode(Writer.Script(_.writeTextStart())))
   }
 
   test("Strings") {
@@ -227,7 +227,7 @@ abstract class AbstractJsonSuiteSpec extends AbstractBorerSpec:
       /**/ "\"เอสds飞机hu เอฟ到a ซ'ีเ$นม่า เอ็#ม损บีเ00因0ค เซ็นเbตอร์\"",
       /*  */ "เอสds飞机hu เอฟ到a ซ'ีเ$นม่า เอ็#ม损บีเ00因0ค เซ็นเbตอร์")
 
-    intercept[Borer.Error.InvalidInputData[_ <: AnyRef]] {
+    intercept[Borer.Error.InvalidInputData[? <: AnyRef]] {
       Json.decode(hex"22dd1dd83422").to[String].value ==> "xxx"
     }.getMessage ==> "Illegal UTF-8 character encoding (input position 1)"
 
@@ -240,7 +240,7 @@ abstract class AbstractJsonSuiteSpec extends AbstractBorerSpec:
   }
 
   test("Arrays") {
-    intercept[Borer.Error.Unsupported[_ <: AnyRef]](encode(Writer.Script(_.writeArrayHeader(0))))
+    intercept[Borer.Error.Unsupported[? <: AnyRef]](encode(Writer.Script(_.writeArrayHeader(0))))
     roundTrip("[]", List.empty[String])
     roundTrip("[1,2,3]", Array(1, 2, 3))
 
@@ -256,7 +256,7 @@ abstract class AbstractJsonSuiteSpec extends AbstractBorerSpec:
     import Codec.ForEither.default
 
     roundTrip("{}", Map.empty[Int, String])
-    intercept[Borer.Error.ValidationFailure[_ <: AnyRef]](encode(ListMap(1 -> 2)))
+    intercept[Borer.Error.ValidationFailure[? <: AnyRef]](encode(ListMap(1 -> 2)))
     roundTrip("""{"":2,"foo":4}""", ListMap("" -> 2, "foo" -> 4))
     roundTrip("""{"a":[0,1],"b":[1,[2,3]]}""", ListMap("a" -> Left(1), "b" -> Right(Vector(2, 3))))
     roundTrip("""[[1,"a"],[0,{"b":"c"}]]""", Vector(Right("a"), Left(ListMap("b" -> "c"))))
@@ -324,6 +324,6 @@ abstract class AbstractJsonSuiteSpec extends AbstractBorerSpec:
   }
 
   test("Error Position") {
-    intercept[Borer.Error.InvalidInputData[_ <: AnyRef]](decode[List[Int]]("[12,,42]")).getMessage ==>
+    intercept[Borer.Error.InvalidInputData[? <: AnyRef]](decode[List[Int]]("[12,,42]")).getMessage ==>
     "Expected JSON value but got ',' (input position 4)"
   }

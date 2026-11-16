@@ -326,11 +326,11 @@ case object Json extends Target:
  */
 sealed abstract class Target:
 
-  def encode[T: Encoder](value: T): EncodingSetup.Api[_]
+  def encode[T: Encoder](value: T): EncodingSetup.Api[?]
 
-  def decode[T](input: T)(using w: Input.Provider[T]): DecodingSetup.Api[_]
+  def decode[T](input: T)(using w: Input.Provider[T]): DecodingSetup.Api[?]
 
-  def transEncode[T: Encoder](value: T): TranscodingSetup.EncodingApi[_, _]
+  def transEncode[T: Encoder](value: T): TranscodingSetup.EncodingApi[?, ?]
 
 /**
  * Main entry point into the CBOR API.

@@ -86,7 +86,7 @@ object pekko {
   /**
    * Encoding and Decoding for [[ByteString]].
    */
-  implicit val ByteStringCodec: Codec[ByteString] = Codec[ByteString](_ writeBytes _, _.readBytes())
+  implicit val ByteStringCodec: Codec[ByteString] = Codec[ByteString](_.writeBytes(_), _.readBytes())
 
   /**
    * [[Input]] around [[ByteString]].
@@ -99,7 +99,7 @@ object pekko {
   }
 
   final class FromByteString(byteString: ByteString) extends Input[ByteString] {
-    private[this] var _cursor: Int = _
+    private var _cursor: Int = scala.compiletime.uninitialized
 
     def cursor: Long = _cursor.toLong
 
@@ -187,7 +187,7 @@ object pekko {
    * Mutable [[Output]] implementation for serializing to [[ByteString]].
    */
   final class ByteStringOutput extends Output {
-    private[this] val builder = ByteString.newBuilder
+    private val builder = ByteString.newBuilder
 
     type Self   = ByteStringOutput
     type Result = ByteString

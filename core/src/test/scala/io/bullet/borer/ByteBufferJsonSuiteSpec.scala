@@ -19,7 +19,7 @@ class ByteBufferJsonSuiteSpec extends AbstractJsonSuiteSpec:
 
   def decode[T: Decoder](encoded: String): T =
     Json
-      .decode(ByteBuffer.wrap(encoded getBytes StandardCharsets.UTF_8))
+      .decode(ByteBuffer.wrap(encoded.getBytes(StandardCharsets.UTF_8)))
       .withConfig(Json.DecodingConfig.default.copy(maxNumberAbsExponent = 300))
       .to[T]
       .value

@@ -13,7 +13,7 @@ import io.bullet.borer.{ByteAccess, Input}
 import java.io.InputStream
 import java.util
 
-trait FromInputStreamInput { this: FromByteArrayInput with FromIteratorInput =>
+trait FromInputStreamInput { this: FromByteArrayInput & FromIteratorInput =>
 
   private object FromInputStreamProvider extends Input.Provider[InputStream]:
     type Bytes = Array[Byte]
@@ -27,10 +27,10 @@ trait FromInputStreamInput { this: FromByteArrayInput with FromIteratorInput =>
     if (bufferSize < 256) throw new IllegalArgumentException(s"bufferSize must be >= 256 but was $bufferSize")
     val iterator: Iterator[Input[Array[Byte]]] =
       new Iterator[Input[Array[Byte]]] {
-        private[this] val bufA                          = new Array[Byte](bufferSize)
-        private[this] val bufB                          = new Array[Byte](bufferSize)
-        private[this] var bufSelect: Boolean            = _
-        private[this] var nextInput: Input[Array[Byte]] = _
+        private val bufA                          = new Array[Byte](bufferSize)
+        private val bufB                          = new Array[Byte](bufferSize)
+        private var bufSelect: Boolean            = scala.compiletime.uninitialized
+        private var nextInput: Input[Array[Byte]] = scala.compiletime.uninitialized
 
         def hasNext =
           def tryReadNext() =

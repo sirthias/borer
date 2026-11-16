@@ -15,8 +15,8 @@ import scala.annotation.tailrec
 final private[borer] class ElementDeque(val maxBufferSize: Int, val next: ElementDeque = null):
   import io.bullet.borer.DataItem.{Shifts => DIS}
 
-  private[this] val byteBuffer = new ResizableByteRingBuffer(16, math.max(16, maxBufferSize))
-  private[this] val objBuffer  = new ResizableRingBuffer[AnyRef](16, math.max(16, maxBufferSize))
+  private val byteBuffer = new ResizableByteRingBuffer(16, math.max(16, maxBufferSize))
+  private val objBuffer  = new ResizableRingBuffer[AnyRef](16, math.max(16, maxBufferSize))
 
   val prependReceiver: Receiver =
     new Receiver {
@@ -121,13 +121,13 @@ final private[borer] class ElementDeque(val maxBufferSize: Int, val next: Elemen
       case DIS.NumberString => receiver.onNumberString(objBuffer.unsafeRead().asInstanceOf[String])
 
       case DIS.Bytes =>
-        receiver.onBytes[AnyRef](objBuffer.unsafeRead())(objBuffer.unsafeRead().asInstanceOf[ByteAccess[AnyRef]])
+        receiver.onBytes[AnyRef](objBuffer.unsafeRead())(using objBuffer.unsafeRead().asInstanceOf[ByteAccess[AnyRef]])
 
       case DIS.BytesStart => receiver.onBytesStart()
       case DIS.String     => receiver.onString(objBuffer.unsafeRead().asInstanceOf[String])
 
       case DIS.Text =>
-        receiver.onText[AnyRef](objBuffer.unsafeRead())(objBuffer.unsafeRead().asInstanceOf[ByteAccess[AnyRef]])
+        receiver.onText[AnyRef](objBuffer.unsafeRead())(using objBuffer.unsafeRead().asInstanceOf[ByteAccess[AnyRef]])
 
       case DIS.TextStart   => receiver.onTextStart()
       case DIS.ArrayHeader => receiver.onArrayHeader(byteBuffer.unsafeReadOctaByte())

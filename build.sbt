@@ -2,7 +2,7 @@ import sbt.*
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import sbtrelease.ReleaseStateTransformations.{commitNextVersion, pushChanges}
 
-def scala3 = "3.3.9"
+def scala3 = "3.9.0"
 
 inThisBuild(
   List(
@@ -53,10 +53,9 @@ lazy val commonSettings = Seq(
     "-unchecked",
     "-indent",
     "-pagewidth:120",
-    "-java-output-version:11",
-    "-Xfatal-warnings",
-    "-Xcheck-macros",
-    "-Yfuture-lazy-vals"
+    "-java-output-version:17",
+    "-Werror",
+    "-Xcheck-macros"
     // "-Ydebug-error",
     // "-Wunused:all" // disabled until https://github.com/lampepfl/dotty/issues/17315 is resolved
   ) ++ {
@@ -90,14 +89,6 @@ lazy val scalajsSettings = Seq(
   scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule).withSourceMap(false)),
   scalaJSStage in Global := FastOptStage,
   scalacOptions ~= { _.filterNot(_ == "-Ywarn-dead-code") }
-)
-
-lazy val scalaNativeSettings = Seq(
-  scalacOptions := scalacOptions.value.flatMap {
-    case "-Yfuture-lazy-vals"                      => None
-    case x if x.startsWith("-java-output-version") => Some("-java-output-version:8")
-    case x                                         => Some(x)
-  }
 )
 
 lazy val releaseSettings = {
@@ -181,7 +172,6 @@ lazy val core          = crossProject(JSPlatform, NativePlatform, JVMPlatform)
     Compile / managedSourceDirectories += (Compile / specializeJsonParser / sourceManaged).value
   )
   .jsSettings(scalajsSettings: _*)
-  .nativeSettings(scalaNativeSettings: _*)
 
 lazy val `compat-akka` = project
   .enablePlugins(AutomateHeaderPlugin)
@@ -301,7 +291,6 @@ lazy val derivation = crossProject(JSPlatform, NativePlatform, JVMPlatform)
     libraryDependencies ++= Seq( /* macrolizer.value, */ munit.value), // TODO port macrolizer to scala native
   )
   .jsSettings(scalajsSettings: _*)
-  .nativeSettings(scalaNativeSettings: _*)
 
 lazy val benchmarks = project
   .enablePlugins(AutomateHeaderPlugin, JmhPlugin, BenchmarkResultsPlugin)

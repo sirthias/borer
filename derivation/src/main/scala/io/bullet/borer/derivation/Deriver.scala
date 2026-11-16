@@ -160,7 +160,7 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
     /////////////////// internal ////////////////////
 
     // write-once, before actually making it to the user
-    private var parent: Option[AdtTypeNode] = _
+    private var parent: Option[AdtTypeNode] = scala.compiletime.uninitialized
 
     private[Deriver] def initAllParentBacklinks(p: Option[AdtTypeNode]): this.type = {
       if (parent ne null) throw new IllegalStateException

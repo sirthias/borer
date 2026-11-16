@@ -46,12 +46,16 @@ import scala.annotation.tailrec
  */
 final private[borer] class JsonRenderer(var out: Output, indent: Int) extends Renderer:
 
-  private[this] var level: Int             = _ // valid range: 0 - 63
-  private[this] var levelType: Long        = _ // keeps the type of each level as a bit map: 0 -> Array, 1 -> Map
-  private[this] var levelCount: Long       = _ // for each level: last bit of element count
-  private[this] var sepRequired: Boolean   = _ // whether a separator is required before the next element
-  private[this] var currentIndent: Int     = _ // the number of space chars to indent with at the current level
-  private[this] var indentPending: Boolean = _ // true if the next array or map element must be prefixed with an indent
+  private var level: Int             = scala.compiletime.uninitialized // valid range: 0 - 63
+  private var levelType: Long        =
+    scala.compiletime.uninitialized // keeps the type of each level as a bit map: 0 -> Array, 1 -> Map
+  private var levelCount: Long       = scala.compiletime.uninitialized // for each level: last bit of element count
+  private var sepRequired: Boolean   =
+    scala.compiletime.uninitialized // whether a separator is required before the next element
+  private var currentIndent: Int     =
+    scala.compiletime.uninitialized // the number of space chars to indent with at the current level
+  private var indentPending: Boolean =
+    scala.compiletime.uninitialized // true if the next array or map element must be prefixed with an indent
 
   def onNull(): Unit =
     if (isNotMapKey)

@@ -21,7 +21,7 @@ import scala.annotation.switch
 final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes])(using CborParser.Config)
     extends Parser[Bytes]:
 
-  private[this] var _valueIndex: Long = _
+  private var _valueIndex: Long = scala.compiletime.uninitialized
 
   def valueIndex: Long = _valueIndex
 
@@ -203,7 +203,7 @@ object CborParser:
     def maxByteStringLength: Int
     def maxTextStringLength: Int
 
-  private[this] val _creator: Parser.Creator[Any, CborParser.Config] =
+  private val _creator: Parser.Creator[Any, CborParser.Config] =
     (input, byteAccess, config) => new CborParser(input)(using byteAccess, config)
 
   def creator[Bytes, Conf <: CborParser.Config]: Parser.Creator[Bytes, Conf] =

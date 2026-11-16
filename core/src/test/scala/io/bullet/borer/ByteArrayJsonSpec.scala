@@ -16,7 +16,7 @@ trait ByteArrayJsonSpec extends AbstractBorerSpec:
 
   def decode[T: Decoder](encoded: String): T =
     Json
-      .decode(encoded getBytes StandardCharsets.UTF_8)
+      .decode(encoded.getBytes(StandardCharsets.UTF_8))
       .withConfig(Json.DecodingConfig.default.copy(maxNumberAbsExponent = 300, initialCharbufferSize = 8))
       .to[T]
       .value

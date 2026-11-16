@@ -60,7 +60,7 @@ object scodec {
   /**
    * Encoding and Decoding for [[ByteVector]].
    */
-  implicit val ByteVectorCodec: Codec[ByteVector] = Codec[ByteVector](_ writeBytes _, _.readBytes())
+  implicit val ByteVectorCodec: Codec[ByteVector] = Codec[ByteVector](_.writeBytes(_), _.readBytes())
 
   /**
    * [[Input]] around [[ByteVector]].
@@ -73,7 +73,7 @@ object scodec {
   }
 
   final class FromByteVector(byteVector: ByteVector) extends Input[ByteVector] {
-    private[this] var _cursor: Long = _
+    private var _cursor: Long = scala.compiletime.uninitialized
 
     def cursor: Long = _cursor
 
@@ -164,7 +164,7 @@ object scodec {
     // The scodec ByteVector doesn't appear to come with an efficient builder for it,
     // so rather than wrapping each incoming Byte in an extra ByteVector instance we simply
     // write into a ByteArray and only construct a ByteVector instance at the very end
-    private[this] val delegate = new Output.ToByteArray(bufferSize, allowBufferCaching)
+    private val delegate = new Output.ToByteArray(bufferSize, allowBufferCaching)
 
     type Self   = ByteVectorOutput
     type Result = ByteVector

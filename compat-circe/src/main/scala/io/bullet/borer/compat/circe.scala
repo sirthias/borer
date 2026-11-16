@@ -70,7 +70,7 @@ object circe {
 
           def onString(value: String) = w.writeString(value)
 
-          def onArray(value: Vector[Json]) = w.writeIndexedSeq(value)(circeJsonAstEncoder)
+          def onArray(value: Vector[Json]) = w.writeIndexedSeq(value)(using circeJsonAstEncoder)
 
           def onObject(value: JsonObject) =
             if (value.nonEmpty) {
@@ -98,8 +98,8 @@ object circe {
     new Decoder[Json] {
       import DataItem.{Shifts => DIS}
 
-      private[this] val arrayDecoder = Decoder.fromFactory(this, implicitly[Factory[Json, Vector[Json]]])
-      private[this] val mapDecoder   =
+      private val arrayDecoder = Decoder.fromFactory(using this, implicitly[Factory[Json, Vector[Json]]])
+      private val mapDecoder   =
         Decoder { r =>
           val buf = new scala.collection.mutable.ArrayBuilder.ofRef[(String, Json)]
           if (r.hasMapHeader)

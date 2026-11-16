@@ -16,14 +16,14 @@ import io.bullet.borer._
  */
 final private[borer] class Receptacle extends Receiver with java.lang.Cloneable:
 
-  private[this] var _bool: Boolean  = _
-  private[this] var _int: Int       = _
-  private[this] var _long: Long     = _
-  private[this] var _float: Float   = _
-  private[this] var _double: Double = _
-  private[this] var _obj: Any       = _
+  private var _bool: Boolean  = scala.compiletime.uninitialized
+  private var _int: Int       = scala.compiletime.uninitialized
+  private var _long: Long     = scala.compiletime.uninitialized
+  private var _float: Float   = scala.compiletime.uninitialized
+  private var _double: Double = scala.compiletime.uninitialized
+  private var _obj: Any       = scala.compiletime.uninitialized
 
-  private[this] var _byteAccess: ByteAccess[Any] = _
+  private var _byteAccess: ByteAccess[Any] = scala.compiletime.uninitialized
 
   inline def boolValue: Boolean        = _bool
   inline def intValue: Int             = _int
@@ -35,7 +35,7 @@ final private[borer] class Receptacle extends Receiver with java.lang.Cloneable:
   inline def tagValue: Tag             = _obj.asInstanceOf[Tag]
 
   inline def getBytes[Bytes](using byteAccess: ByteAccess[Bytes]): Bytes =
-    byteAccess.convert(_obj)(_byteAccess)
+    byteAccess.convert(_obj)(using _byteAccess)
 
   def onNull(): Unit = ()
 
@@ -109,9 +109,9 @@ final private[borer] class Receptacle extends Receiver with java.lang.Cloneable:
       case DataItem.Shifts.NumberString => receiver.onNumberString(_obj.asInstanceOf[String])
       case DataItem.Shifts.String       => receiver.onString(_obj.asInstanceOf[String])
       case DataItem.Shifts.Chars        => receiver.onChars(_obj.asInstanceOf[Array[Char]], _int)
-      case DataItem.Shifts.Text         => receiver.onText[Any](_obj)(_byteAccess)
+      case DataItem.Shifts.Text         => receiver.onText[Any](_obj)(using _byteAccess)
       case DataItem.Shifts.TextStart    => receiver.onTextStart()
-      case DataItem.Shifts.Bytes        => receiver.onBytes[Any](_obj)(_byteAccess)
+      case DataItem.Shifts.Bytes        => receiver.onBytes[Any](_obj)(using _byteAccess)
       case DataItem.Shifts.BytesStart   => receiver.onBytesStart()
       case DataItem.Shifts.ArrayHeader  => receiver.onArrayHeader(_long)
       case DataItem.Shifts.ArrayStart   => receiver.onArrayStart()

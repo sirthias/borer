@@ -21,7 +21,7 @@ trait FromByteArrayInput:
   def fromByteArray(value: Array[Byte]): Input[Array[Byte]] = new FromByteArray(value)
 
   final class FromByteArray(byteArray: Array[Byte]) extends Input[Array[Byte]]:
-    private[this] var _cursor: Int = _
+    private var _cursor: Int = scala.compiletime.uninitialized
 
     def cursor: Long = _cursor.toLong
 

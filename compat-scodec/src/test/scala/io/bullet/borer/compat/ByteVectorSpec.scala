@@ -27,7 +27,7 @@ class ByteVectorSpec extends AbstractBorerSpec {
       "83820b40820c476f682079656168820d43ff0001",
       Vector(
         Foo(11, ByteVector.empty),
-        Foo(12, ByteVector("oh yeah" getBytes "UTF8")),
+        Foo(12, ByteVector("oh yeah".getBytes("UTF8"))),
         Foo(13, ByteVector(-1, 0, 1))
       )
     )

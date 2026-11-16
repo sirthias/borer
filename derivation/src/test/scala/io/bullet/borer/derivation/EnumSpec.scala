@@ -70,7 +70,7 @@ object SuperBody5:
 class EnumSpec extends AbstractBorerSpec {
 
   def encode[T: Encoder](value: T): String   = Json.encode(value).toUtf8String
-  def decode[T: Decoder](encoded: String): T = Json.decode(encoded getBytes StandardCharsets.UTF_8).to[T].value
+  def decode[T: Decoder](encoded: String): T = Json.decode(encoded.getBytes(StandardCharsets.UTF_8)).to[T].value
 
   test("Body1") {
     roundTrip(""""Earth"""", Body1.Earth: Body1)

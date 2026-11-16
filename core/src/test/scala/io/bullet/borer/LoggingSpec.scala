@@ -125,7 +125,7 @@ class LoggingSpec extends BorerSuite:
   test("maps") {
     roundTripLogEquals {
       val tuples = "abc".map(c => c.toString -> StringElem(c.toString))
-      MapElem.Sized("foo" -> IntElem(42), "emp\nty" -> MapElem.Sized.empty, "bar" -> MapElem.Unsized(tuples: _*))
+      MapElem.Sized("foo" -> IntElem(42), "emp\nty" -> MapElem.Sized.empty, "bar" -> MapElem.Unsized(tuples*))
     } {
       """    1| {
         |  1/3|     "foo"
@@ -150,8 +150,8 @@ class LoggingSpec extends BorerSuite:
   test("long arrays and maps") {
     roundTripLogEquals {
       ArrayElem.Sized(
-        ArrayElem.Sized((0 to 20).map(IntElem.apply): _*),
-        MapElem.Sized((0 to 20).map(IntElem.apply).zip(('A' to 'Z').map(x => StringElem(x.toString))): _*)
+        ArrayElem.Sized((0 to 20).map(IntElem.apply)*),
+        MapElem.Sized((0 to 20).map(IntElem.apply).zip(('A' to 'Z').map(x => StringElem(x.toString)))*)
       )
     } {
       """    1| [

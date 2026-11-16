@@ -27,10 +27,10 @@ trait ToByteBufferOutput:
    */
   final class ToByteBuffer(bufferSize: Int, allowBufferCaching: Boolean) extends Output:
 
-    private[this] var currentChunkBuffer: ByteBuffer = _
-    private[this] var rootChunk: Chunk               = _
-    private[this] var currentChunk: Chunk            = _
-    private[this] var fullChunksSize: Long           = _
+    private var currentChunkBuffer: ByteBuffer = scala.compiletime.uninitialized
+    private var rootChunk: Chunk               = scala.compiletime.uninitialized
+    private var currentChunk: Chunk            = scala.compiletime.uninitialized
+    private var fullChunksSize: Long           = scala.compiletime.uninitialized
 
     type Self   = ToByteBuffer
     type Result = ByteBuffer

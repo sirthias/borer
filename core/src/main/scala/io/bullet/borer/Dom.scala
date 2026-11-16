@@ -300,8 +300,8 @@ object Dom:
       elements.result()
 
     final private class KVIterator(elements: Array[Element], startIndex: Int) extends Iterator[Element]:
-      private[this] var ix = startIndex
-      def hasNext          = ix < elements.length
+      private var ix = startIndex
+      def hasNext    = ix < elements.length
 
       def next() =
         if (hasNext)

@@ -33,7 +33,7 @@ class CustomCodecsSpec extends BorerSuite {
     val color = Color("red", 0xFF0000)
     val json  = Json.encode(color).toUtf8String
     json ==> """["red",16711680]"""
-    Json.decode(json getBytes "UTF8").to[Color].value ==> color
+    Json.decode(json.getBytes("UTF8")).to[Color].value ==> color
   }
 
   test("Map/Contramap") {
@@ -52,7 +52,7 @@ class CustomCodecsSpec extends BorerSuite {
     val person = new Person("Fred")
     val json   = Json.encode(person).toUtf8String
     json ==> """"Fred""""
-    Json.decode(json getBytes "UTF8").to[Person].value.name ==> person.name
+    Json.decode(json.getBytes("UTF8")).to[Person].value.name ==> person.name
   }
 
   test("Manual") {
@@ -84,7 +84,7 @@ class CustomCodecsSpec extends BorerSuite {
     val person = new Person("Fred", 49)
     val json   = Json.encode(person).toUtf8String
     json ==> """["Fred",49]"""
-    val p = Json.decode(json getBytes "UTF8").to[Person].value
+    val p = Json.decode(json.getBytes("UTF8")).to[Person].value
     p.name ==> person.name
     p.age ==> person.age
   }
@@ -102,10 +102,10 @@ class CustomCodecsSpec extends BorerSuite {
     // #lookahead
 
     import io.bullet.borer.Json
-    Json.decode("\"yeah\"" getBytes "UTF8").to[Either[String, Int]].value ==> Left("yeah")
-    Json.decode("42" getBytes "UTF8").to[Either[String, Int]].value ==> Right(42)
+    Json.decode("\"yeah\"".getBytes("UTF8")).to[Either[String, Int]].value ==> Left("yeah")
+    Json.decode("42".getBytes("UTF8")).to[Either[String, Int]].value ==> Right(42)
     Json
-      .decode("[]" getBytes "UTF8")
+      .decode("[]".getBytes("UTF8"))
       .to[Either[String, Int]]
       .valueTry
       .toString

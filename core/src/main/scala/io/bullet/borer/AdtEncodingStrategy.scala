@@ -115,9 +115,10 @@ object AdtEncodingStrategy:
       def writeAdtEnvelopeOpen(w: Writer, typeName: String): w.type =
         val originalReceiver = w.receiver
         w.receiver = new borer.Receiver.WithDefault {
-          private var longTypeId: Long     = _
-          private var stringTypeId: String = _
-          private var state: Int           = _ // 0 = initial, 1 = int type ID, 2 = long type ID, 3 = string type ID
+          private var longTypeId: Long     = scala.compiletime.uninitialized
+          private var stringTypeId: String = scala.compiletime.uninitialized
+          private var state: Int           =
+            scala.compiletime.uninitialized // 0 = initial, 1 = int type ID, 2 = long type ID, 3 = string type ID
 
           override def onInt(value: Int): Unit =
             if (state == 0)

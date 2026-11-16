@@ -38,7 +38,7 @@ trait PekkoHttpCompat {
   implicit def borerFromEntityUnmarshaller[T: Decoder]: FromEntityUnmarshaller[T] = borerUnmarshaller()
 
   implicit final def borerFromMessageUnmarshaller[T: Decoder]: FromMessageUnmarshaller[T] =
-    Unmarshaller.messageUnmarshallerFromEntityUnmarshaller(borerFromEntityUnmarshaller)
+    Unmarshaller.messageUnmarshallerFromEntityUnmarshaller(using borerFromEntityUnmarshaller)
 
   /**
    * Provides a [[FromEntityUnmarshaller]] for [[T]] given an implicit borer Decoder for [[T]].
@@ -109,7 +109,7 @@ trait PekkoHttpCompat {
   implicit def borerToEntityMarshaller[T: Encoder]: ToEntityMarshaller[T] = borerMarshaller()
 
   implicit final def borerToResponseMarshaller[T: Encoder]: ToResponseMarshaller[T] =
-    Marshaller.liftMarshaller(borerToEntityMarshaller)
+    Marshaller.liftMarshaller(using borerToEntityMarshaller)
 
   /**
    * Provides a [[ToEntityMarshaller]] for [[T]] given an implicit borer Encoder for [[T]].
@@ -163,7 +163,7 @@ trait PekkoHttpCompat {
     borerStreamUnmarshaller(EntityStreamingSupport.json())
 
   implicit final def borerJsonStreamFromMessageUnmarshaller[T: Decoder]: FromMessageUnmarshaller[Source[T, NotUsed]] =
-    Unmarshaller.messageUnmarshallerFromEntityUnmarshaller(borerJsonStreamFromEntityUnmarshaller)
+    Unmarshaller.messageUnmarshallerFromEntityUnmarshaller(using borerJsonStreamFromEntityUnmarshaller)
 
   /**
    * Provides a [[FromEntityUnmarshaller]] which produces streams of [[T]] given an implicit borer Decoder
@@ -199,7 +199,7 @@ trait PekkoHttpCompat {
 
   implicit final def borerJsonStreamToResponseMarshaller[T: ToEntityMarshaller: ClassTag]
       : ToResponseMarshaller[Source[T, NotUsed]] =
-    Marshaller.liftMarshaller(borerJsonStreamToEntityMarshaller)
+    Marshaller.liftMarshaller(using borerJsonStreamToEntityMarshaller)
 
   /**
    * Provides a [[ToEntityMarshaller]] for streams of [[T]] given an implicit borer Encoder for [[T]].
@@ -229,7 +229,7 @@ trait PekkoHttpCompat {
           () => {
             val byteStream =
               source
-                .mapAsync(1)(value => marshaller(value)(ec))
+                .mapAsync(1)(value => marshaller(value)(using ec))
                 .map { marshallings =>
                   selectMarshalling(marshallings)
                     .orElse(marshallings collectFirst { case Marshalling.Opaque(x) => x })
