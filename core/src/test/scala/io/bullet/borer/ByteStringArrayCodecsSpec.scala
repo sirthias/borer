@@ -10,72 +10,72 @@ package io.bullet.borer
 
 class ByteStringArrayCodecsSpec extends ByteArrayJsonSpec:
 
-  test("Big Endian") {
+  test("Big Endian - Short Arrays") {
     import ByteStringArrayCodecs.BigEndian.given
-
-    test("Short Arrays") {
-      roundTrip(
-        """"gADVVgAAKqp//w=="""",
-        Array[Short](Short.MinValue, Short.MinValue / 3, 0, Short.MaxValue / 3, Short.MaxValue))
-    }
-
-    test("Int Arrays") {
-      roundTrip(
-        """"gAAAANVVVVYAAAAAKqqqqn////8="""",
-        Array[Int](Int.MinValue, Int.MinValue / 3, 0, Int.MaxValue / 3, Int.MaxValue))
-    }
-
-    test("Long Arrays") {
-      roundTrip(
-        """"gAAAAAAAAADVVVVVVVVVVgAAAAAAAAAAKqqqqqqqqqp//////////w=="""",
-        Array[Long](Long.MinValue, Long.MinValue / 3, 0, Long.MaxValue / 3, Long.MaxValue))
-    }
-
-    test("Float Arrays") {
-      roundTrip(
-        """"/3////6qqqoAAAAAfqqqqn9///8="""",
-        Array[Float](Float.MinValue, Float.MinValue / 3, 0, Float.MaxValue / 3, Float.MaxValue))
-    }
-
-    test("Double Arrays") {
-      roundTrip(
-        """"/+//////////1VVVVVVVVQAAAAAAAAAAf9VVVVVVVVV/7////////w=="""",
-        Array[Double](Double.MinValue, Double.MinValue / 3, 0, Double.MaxValue / 3, Double.MaxValue))
-    }
-
+    roundTrip(
+      """"gADVVgAAKqp//w=="""",
+      Array[Short](Short.MinValue, Short.MinValue / 3, 0, Short.MaxValue / 3, Short.MaxValue))
   }
 
-  test("Little Endian") {
+  test("Big Endian - Int Arrays") {
+    import ByteStringArrayCodecs.BigEndian.given
+    roundTrip(
+      """"gAAAANVVVVYAAAAAKqqqqn////8="""",
+      Array[Int](Int.MinValue, Int.MinValue / 3, 0, Int.MaxValue / 3, Int.MaxValue))
+  }
+
+  test("Big Endian - Long Arrays") {
+    import ByteStringArrayCodecs.BigEndian.given
+    roundTrip(
+      """"gAAAAAAAAADVVVVVVVVVVgAAAAAAAAAAKqqqqqqqqqp//////////w=="""",
+      Array[Long](Long.MinValue, Long.MinValue / 3, 0, Long.MaxValue / 3, Long.MaxValue))
+  }
+
+  test("Big Endian - Float Arrays") {
+    import ByteStringArrayCodecs.BigEndian.given
+    roundTrip(
+      """"/3////6qqqoAAAAAfqqqqn9///8="""",
+      Array[Float](Float.MinValue, Float.MinValue / 3, 0, Float.MaxValue / 3, Float.MaxValue))
+  }
+
+  test("Big Endian - Double Arrays") {
+    import ByteStringArrayCodecs.BigEndian.given
+    roundTrip(
+      """"/+//////////1VVVVVVVVQAAAAAAAAAAf9VVVVVVVVV/7////////w=="""",
+      Array[Double](Double.MinValue, Double.MinValue / 3, 0, Double.MaxValue / 3, Double.MaxValue))
+  }
+
+  test("Little Endian - Short Arrays") {
     import ByteStringArrayCodecs.LittleEndian.given
+    roundTrip(
+      """"AIBW1QAAqir/fw=="""",
+      Array[Short](Short.MinValue, Short.MinValue / 3, 0, Short.MaxValue / 3, Short.MaxValue))
+  }
 
-    test("Short Arrays") {
-      roundTrip(
-        """"AIBW1QAAqir/fw=="""",
-        Array[Short](Short.MinValue, Short.MinValue / 3, 0, Short.MaxValue / 3, Short.MaxValue))
-    }
+  test("Little Endian - Int Arrays") {
+    import ByteStringArrayCodecs.LittleEndian.given
+    roundTrip(
+      """"AAAAgFZVVdUAAAAAqqqqKv///38="""",
+      Array[Int](Int.MinValue, Int.MinValue / 3, 0, Int.MaxValue / 3, Int.MaxValue))
+  }
 
-    test("Int Arrays") {
-      roundTrip(
-        """"AAAAgFZVVdUAAAAAqqqqKv///38="""",
-        Array[Int](Int.MinValue, Int.MinValue / 3, 0, Int.MaxValue / 3, Int.MaxValue))
-    }
+  test("Little Endian - Long Arrays") {
+    import ByteStringArrayCodecs.LittleEndian.given
+    roundTrip(
+      """"AAAAAAAAAIBWVVVVVVVV1QAAAAAAAAAAqqqqqqqqqir/////////fw=="""",
+      Array[Long](Long.MinValue, Long.MinValue / 3, 0, Long.MaxValue / 3, Long.MaxValue))
+  }
 
-    test("Long Arrays") {
-      roundTrip(
-        """"AAAAAAAAAIBWVVVVVVVV1QAAAAAAAAAAqqqqqqqqqir/////////fw=="""",
-        Array[Long](Long.MinValue, Long.MinValue / 3, 0, Long.MaxValue / 3, Long.MaxValue))
-    }
+  test("Little Endian - Float Arrays") {
+    import ByteStringArrayCodecs.LittleEndian.given
+    roundTrip(
+      """"//9//6qqqv4AAAAAqqqqfv//f38="""",
+      Array[Float](Float.MinValue, Float.MinValue / 3, 0, Float.MaxValue / 3, Float.MaxValue))
+  }
 
-    test("Float Arrays") {
-      roundTrip(
-        """"//9//6qqqv4AAAAAqqqqfv//f38="""",
-        Array[Float](Float.MinValue, Float.MinValue / 3, 0, Float.MaxValue / 3, Float.MaxValue))
-    }
-
-    test("Double Arrays") {
-      roundTrip(
-        """"////////7/9VVVVVVVXV/wAAAAAAAAAAVVVVVVVV1X/////////vfw=="""",
-        Array[Double](Double.MinValue, Double.MinValue / 3, 0, Double.MaxValue / 3, Double.MaxValue))
-    }
-
+  test("Little Endian - Double Arrays") {
+    import ByteStringArrayCodecs.LittleEndian.given
+    roundTrip(
+      """"////////7/9VVVVVVVXV/wAAAAAAAAAAVVVVVVVV1X/////////vfw=="""",
+      Array[Double](Double.MinValue, Double.MinValue / 3, 0, Double.MaxValue / 3, Double.MaxValue))
   }
