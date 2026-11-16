@@ -204,7 +204,7 @@ class MiscCborSpec extends ByteArrayCborSpec:
       w.writeInt(x.i + offset)
     }
 
-    Cbor.encode(Qux1(42)).toByteArray ==> hex"182a" // no context
+    Cbor.encode(Qux1(42)).toByteArray ==> hex"182a"                              // no context
     Cbor.encode(Qux1(42)).withContext(new Offset(100)).toByteArray ==> hex"188e" // 142
     Cbor
       .encode(Qux1(42))
