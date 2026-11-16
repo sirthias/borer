@@ -56,8 +56,9 @@ which carries the type ID in a special map entry, e.g. like this:
 }
 ```  
 
-This alternative ADT encoding can be switched to by making the result of a call to `AdtEncodingStrategy.flat()`
-implicitly available:
+This alternative ADT encoding can be switched to by bringing a `io.bullet.borer.derivation.DerivationConfig` with
+`flatAdtEncoding = true` into implicit scope (`flatAdtTypeMemberName` and `flatAdtMaxBufferSize` allow for further
+customization):
 
 @@snip [-]($test$/DerivationSpec.scala) { #flat-adt-encoding }
 
@@ -82,6 +83,17 @@ of significant drawbacks:
 - It's slightly less efficient storage-wise (depending on the length of the `typeMemberName`).
 
 For these reasons _borer's_ default ADT encoding relying on single-element maps is generally the preferred choice.
+
+
+### Encoding of Singleton Enum Cases
+
+By default singleton `enum` cases (i.e. cases without parameters) are encoded simply as their type ID, e.g. `"Earth"`.
+If you'd rather have them encoded like `case object`s, i.e. like any other ADT member, you can bring a
+`DerivationConfig` with `encodeEnumCasesAsObjects = true` into scope:
+
+@@snip [-]($test$/DerivationSpec.scala) { #enum-cases-as-objects }
+
+Decoding always accepts both forms, independently of this setting.
 
 
 ### Default Values

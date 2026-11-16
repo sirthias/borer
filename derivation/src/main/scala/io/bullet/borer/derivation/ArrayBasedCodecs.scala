@@ -9,6 +9,7 @@
 package io.bullet.borer.derivation
 
 import io.bullet.borer.*
+import scala.compiletime.*
 import scala.quoted.*
 
 /**
@@ -156,7 +157,7 @@ object ArrayBasedCodecs extends DerivationApi {
 
           def deriveForSealedTrait(rootNode: AdtTypeNode): Expr[Encoder[T]] =
             '{
-              new ArrayBasedAdtEncoder[T]:
+              new ArrayBasedAdtEncoder[T](summonInline[DerivationConfig]):
                 def write(w: Writer, value: T): Writer = {
                   val self = this // work around for compiler crash (AssertionError) during macro expansion
                   ${ deriveAdtEncoderBody(rootNode, 'self, 'w, 'value) }
@@ -236,7 +237,7 @@ object ArrayBasedCodecs extends DerivationApi {
           end deriveForCaseClass
 
           def deriveForSealedTrait(rootNode: AdtTypeNode): Expr[Decoder[T]] =
-            val methodBody = sealedTraitMethodBody(rootNode)
+            val methodBody = sealedTraitMethodBody(rootNode, r => '{ $r.readArrayClose($r.readArrayOpen(0), ()) })
 
             def read0(self: Expr[DerivedAdtDecoder[T]], r: Expr[Reader])(using Quotes) =
               methodBody.derive(
@@ -271,7 +272,8 @@ object ArrayBasedCodecs extends DerivationApi {
                     self,
                     r,
                     _.filter((tid, n) => tid.isInstanceOf[String] && n.isEnumSingletonCase),
-                    tid => '{ $r.tryReadStringCompare(${ Expr(tid.asInstanceOf[String]) }) })
+                    tid => '{ $r.tryReadStringCompare(${ Expr(tid.asInstanceOf[String]) }) },
+                    bareEnumCases = true)
                   '{ if ($r.hasString) $readStringSingleton else $res0 }
                 } else res0
               if (rootNode.allSubs.exists(x => x.isEnumSingletonCase && x.key.isInstanceOf[Long])) {
@@ -279,7 +281,8 @@ object ArrayBasedCodecs extends DerivationApi {
                   self,
                   r,
                   _.filter((tid, n) => tid.isInstanceOf[Long] && n.isEnumSingletonCase),
-                  tid => '{ $r.tryReadLongCompare(${ Expr(tid.asInstanceOf[Long]) }) })
+                  tid => '{ $r.tryReadLongCompare(${ Expr(tid.asInstanceOf[Long]) }) },
+                  bareEnumCases = true)
                 '{ if ($r.hasLong) $readLongSingleton else $res1 }
               } else res1
 
@@ -320,7 +323,17 @@ object ArrayBasedCodecs extends DerivationApi {
       }
   }
 
-  abstract class ArrayBasedAdtEncoder[T] extends DerivedAdtEncoder[T] {
+  abstract class ArrayBasedAdtEncoder[T](config: DerivationConfig) extends DerivedAdtEncoder[T] {
+
+    private val encodeEnumCasesAsObjects = config.encodeEnumCasesAsObjects
+
+    final def writeEnumCase(w: Writer, typeId: Long): Writer =
+      if (encodeEnumCasesAsObjects) w.writeArrayOpen(2).writeLong(typeId).writeEmptyArray().writeArrayClose()
+      else w.writeLong(typeId)
+
+    final def writeEnumCase(w: Writer, typeId: String): Writer =
+      if (encodeEnumCasesAsObjects) w.writeArrayOpen(2).writeString(typeId).writeEmptyArray().writeArrayClose()
+      else w.writeString(typeId)
 
     final def writeAdtValue[A](w: Writer, typeId: Long, value: A)(using encoder: Encoder[A]): Writer =
       encoder match {

@@ -245,10 +245,10 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
         val (typeId, sub) = typeIdsAndNodesSorted(ix)
         if (sub.isEnumSingletonCase) {
           val enumRef = sub.enumRef.asExprOf[AnyRef]
-          val writeTypeId = typeId match
-            case x: Long   => '{ $w.writeLong(${ Expr(x) }) }
-            case x: String => '{ $w.writeString(${ Expr(x) }) }
-          '{ if ($value.asInstanceOf[AnyRef] eq $enumRef) $writeTypeId else ${ rec(ix + 1) } }
+          val writeEnumCase = typeId match
+            case x: Long   => '{ $self.writeEnumCase($w, ${ Expr(x) }) }
+            case x: String => '{ $self.writeEnumCase($w, ${ Expr(x) }) }
+          '{ if ($value.asInstanceOf[AnyRef] eq $enumRef) $writeEnumCase else ${ rec(ix + 1) } }
         } else {
           val testType = sub.tpe match
             case AppliedType(x, _) => x
@@ -272,7 +272,13 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
 
   type TypeIdsAndSubTypes = Array[(Long | String, AdtTypeNode)]
 
-  final def sealedTraitMethodBody(rootNode: AdtTypeNode): SealedTraitMethodBody =
+  /**
+   * @param readEnumCaseValue reads (and discards) the (empty) value following the type ID of a singleton enum case
+   *                          that was encoded like a case object, i.e. as a regular ADT member
+   */
+  final def sealedTraitMethodBody(
+      rootNode: AdtTypeNode,
+      readEnumCaseValue: Quotes ?=> Expr[Reader] => Expr[Unit]): SealedTraitMethodBody =
     new SealedTraitMethodBody {
       private val flattened = flattenedSubs[Decoder](rootNode, deepRecurse = true, includeEnumSingletonCases = true)
       private val abstracts = flattened.collect { case (sub, _) if sub.isAbstract => sub }
@@ -282,14 +288,17 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
           self: Expr[DerivedAdtDecoder[T]],
           r: Expr[Reader],
           array: TypeIdsAndSubTypes,
-          comp: Long | String => Expr[Int])(start: Int = 0, end: Int = array.length)(using Quotes): Expr[T] =
+          comp: Long | String => Expr[Int],
+          bareEnumCases: Boolean)(start: Int = 0, end: Int = array.length)(using Quotes): Expr[T] =
         if (start < end) {
           val mid           = (start + end) >> 1
           val (typeId, sub) = array(mid)
           val cmp           = comp(typeId)
           val readAdtVal =
-            if (sub.isEnumSingletonCase) sub.enumRef
-            else {
+            if (sub.isEnumSingletonCase) {
+              if (bareEnumCases) sub.enumRef
+              else '{ ${ readEnumCaseValue(r) }; ${ sub.enumRef } }
+            } else {
               val readTpe = sub.nodePath().find(abstracts.contains).map(_.tpe) getOrElse sub.tpe
               readTpe.asType match {
                 case '[a] =>
@@ -304,8 +313,8 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
           if (start < mid)
             '{
               val c = $cmp
-              if (c < 0) ${ rec(self, r, array, comp)(start, mid) }
-              else if (c > 0) ${ rec(self, r, array, comp)(mid + 1, end) }
+              if (c < 0) ${ rec(self, r, array, comp, bareEnumCases)(start, mid) }
+              else if (c > 0) ${ rec(self, r, array, comp, bareEnumCases)(mid + 1, end) }
               else $readAdtVal
             }
           else '{ if ($cmp == 0) $readAdtVal else $self.failExpectedTypeId($r) }
@@ -315,15 +324,23 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
           self: Expr[DerivedAdtDecoder[T]],
           r: Expr[Reader],
           filter: TypeIdsAndSubTypes => TypeIdsAndSubTypes,
-          comp: Long | String => Expr[Int])(using Quotes): Expr[T] = rec(self, r, filter(typeIdsAndSubTypes), comp)()
+          comp: Long | String => Expr[Int],
+          bareEnumCases: Boolean)(using Quotes): Expr[T] =
+        rec(self, r, filter(typeIdsAndSubTypes), comp, bareEnumCases)()
     }
 
   trait SealedTraitMethodBody {
+
+    /**
+     * @param bareEnumCases `true` if singleton enum cases are encoded as their bare type id (i.e. without any value)
+     *                      in the context of the generated code, `false` if they are encoded like case objects
+     */
     def derive(
         self: Expr[DerivedAdtDecoder[T]],
         r: Expr[Reader],
         filter: TypeIdsAndSubTypes => TypeIdsAndSubTypes,
-        comp: Long | String => Expr[Int])(using Quotes): Expr[T]
+        comp: Long | String => Expr[Int],
+        bareEnumCases: Boolean = false)(using Quotes): Expr[T]
   }
 
   // returns all (recursively reachable, i.e. descendant) sub-types of `rootNode` along with a flag showing

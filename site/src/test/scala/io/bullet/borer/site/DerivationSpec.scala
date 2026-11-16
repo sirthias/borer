@@ -184,12 +184,13 @@ class DerivationSpec extends BorerSuite {
 
     {
       // #flat-adt-encoding
-      import io.bullet.borer.{AdtEncodingStrategy, Json, Codec}
+      import io.bullet.borer.{Json, Codec}
+      import io.bullet.borer.derivation.DerivationConfig
       import io.bullet.borer.derivation.MapBasedCodecs.*
 
       // this enables the flat ADT encoding
-      given AdtEncodingStrategy =
-        AdtEncodingStrategy.flat(typeMemberName = "_type")
+      given DerivationConfig =
+        DerivationConfig(flatAdtEncoding = true, flatAdtTypeMemberName = "_type")
 
       given Codec[Animal] = deriveAllCodecs[Animal]
 
@@ -198,6 +199,24 @@ class DerivationSpec extends BorerSuite {
       // Json.encode(animal).toByteArray or
       Json.encode(animal).toUtf8String ==> """{"_type":"Dog","age":2,"name":"Rex"}"""
       // #flat-adt-encoding
+    }
+
+    {
+      // #enum-cases-as-objects
+      import io.bullet.borer.{Json, Codec}
+      import io.bullet.borer.derivation.DerivationConfig
+      import io.bullet.borer.derivation.MapBasedCodecs.*
+
+      enum Body:
+        case Sun, Earth, Moon
+
+      // encode singleton enum cases like case objects
+      given DerivationConfig = DerivationConfig(encodeEnumCasesAsObjects = true)
+
+      given Codec[Body] = deriveCodec
+
+      Json.encode(Body.Earth: Body).toUtf8String ==> """{"Earth":{}}"""
+      // #enum-cases-as-objects
     }
 
     {

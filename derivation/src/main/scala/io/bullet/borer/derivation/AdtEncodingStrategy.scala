@@ -6,23 +6,32 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package io.bullet.borer
+package io.bullet.borer.derivation
 
 import java.nio.charset.StandardCharsets
 
 import io.bullet.borer
+import io.bullet.borer.*
 import io.bullet.borer.internal.{ElementDeque, Util}
 
 import scala.annotation.tailrec
 
-sealed abstract class AdtEncodingStrategy:
+/**
+ * Internal abstraction over the different ways of encoding ADTs with the map-based codecs.
+ * Selected via the respective settings in [[DerivationConfig]].
+ */
+sealed abstract private[derivation] class AdtEncodingStrategy:
   def writeAdtEnvelopeOpen(w: Writer, typeName: String): w.type
   def writeAdtEnvelopeClose(w: Writer, typeName: String): w.type
 
   def readAdtEnvelopeOpen(r: Reader, typeName: String): Boolean
   def readAdtEnvelopeClose(r: Reader, openResult: Boolean, typeName: String): Unit
 
-object AdtEncodingStrategy:
+private[derivation] object AdtEncodingStrategy:
+
+  def apply(config: DerivationConfig): AdtEncodingStrategy =
+    if (config.flatAdtEncoding) flat(config.flatAdtTypeMemberName, config.flatAdtMaxBufferSize)
+    else Default
 
   /**
    * Default and recommended ADT encoding strategy.
@@ -51,7 +60,7 @@ object AdtEncodingStrategy:
    *   }
    * }}}
    */
-  given Default: AdtEncodingStrategy with
+  object Default extends AdtEncodingStrategy:
 
     def writeAdtEnvelopeOpen(w: Writer, typeName: String): w.type =
       if (w.writingJson) w.writeMapStart()
@@ -105,7 +114,7 @@ object AdtEncodingStrategy:
    *   }
    * }}}
    */
-  def flat(typeMemberName: String = "_type", maxBufferSize: Int = 1024 * 1024): AdtEncodingStrategy =
+  def flat(typeMemberName: String, maxBufferSize: Int): AdtEncodingStrategy =
     new AdtEncodingStrategy:
       if (!Util.isPowerOf2(maxBufferSize))
         throw new IllegalArgumentException(s"maxBufferSize must be a power of 2 but was $maxBufferSize")
@@ -158,7 +167,7 @@ object AdtEncodingStrategy:
           protected def default(t: String): Unit =
             throw new Borer.Error.Unsupported(
               w.output,
-              s"AdtEncodingStrategy.flat requires all sub-types of `$typeName` be serialized as a Map but here it was $t")
+              s"Flat ADT encoding requires all sub-types of `$typeName` be serialized as a Map but here it was $t")
         }
         w
 

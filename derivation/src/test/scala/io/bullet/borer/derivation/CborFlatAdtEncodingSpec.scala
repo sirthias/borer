@@ -25,7 +25,7 @@ class CborFlatAdtEncodingSpec extends AbstractBorerSpec {
   case object Yeti                                                           extends Animal
   case class Fish(color: String)                                             extends Animal
 
-  given AdtEncodingStrategy = AdtEncodingStrategy.flat()
+  given DerivationConfig = DerivationConfig(flatAdtEncoding = true)
 
   given Codec[Dog]       = deriveCodec[Dog]
   given Codec[Cat]       = deriveCodec[Cat]
@@ -151,7 +151,7 @@ class CborFlatAdtEncodingSpec extends AbstractBorerSpec {
 
     intercept[Borer.Error.Unsupported[?]] {
       verifyEncoding(fish: Animal, "{}")
-    }.getMessage ==> "AdtEncodingStrategy.flat requires all sub-types of `Animal` be serialized as a Map but here it was a String (Output.ToByteArray index 0)"
+    }.getMessage ==> "Flat ADT encoding requires all sub-types of `Animal` be serialized as a Map but here it was a String (Output.ToByteArray index 0)"
 
     intercept[Borer.Error.InvalidInputData[?]] {
       verifyDecoding("63726564", fish: Animal)

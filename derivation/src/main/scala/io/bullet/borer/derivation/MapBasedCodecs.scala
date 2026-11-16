@@ -238,7 +238,7 @@ object MapBasedCodecs extends DerivationApi {
 
           def deriveForSealedTrait(rootNode: AdtTypeNode): Expr[Encoder[T]] =
             '{
-              new MapBasedAdtEncoder[T](summonInline[AdtEncodingStrategy]):
+              new MapBasedAdtEncoder[T](summonInline[DerivationConfig]):
                 final protected def typeName = ${ Expr(rootNode.name) }
                 def write(w: Writer, value: T): Writer = {
                   val self = this // work around for compiler crash (AssertionError) during macro expansion
@@ -502,13 +502,15 @@ object MapBasedCodecs extends DerivationApi {
           end deriveForCaseClass
 
           def deriveForSealedTrait(rootNode: AdtTypeNode): Expr[Decoder[T]] =
-            val methodBody = sealedTraitMethodBody(rootNode)
+            val methodBody = sealedTraitMethodBody(
+              rootNode,
+              r => '{ if ($r.readMapOpen(0)) while (! $r.tryReadBreak()) $r.skipElement() })
 
             def read0(self: Expr[DerivedAdtDecoder[T]], r: Expr[Reader])(using Quotes) =
               methodBody.derive(
                 self,
                 r,
-                _.filter((_, n) => !n.isEnumSingletonCase),
+                identity,
                 {
                   case x: Long   => '{ $r.tryReadLongCompare(${ Expr(x) }) }
                   case x: String => '{ $r.tryReadStringCompare(${ Expr(x) }) }
@@ -519,14 +521,14 @@ object MapBasedCodecs extends DerivationApi {
               methodBody.derive(
                 self,
                 r,
-                _.filter((tid, n) => tid.isInstanceOf[Long] && !n.isEnumSingletonCase),
+                _.filter(_._1.isInstanceOf[Long]),
                 tid => '{ longCompare($typeId, ${ Expr(tid.asInstanceOf[Long]) }) })
 
             def read2(self: Expr[DerivedAdtDecoder[T]], r: Expr[Reader], typeId: Expr[String])(using Quotes) =
               methodBody.derive(
                 self,
                 r,
-                _.filter((tid, n) => tid.isInstanceOf[String] && !n.isEnumSingletonCase),
+                _.filter(_._1.isInstanceOf[String]),
                 tid => '{ $typeId.compareTo(${ Expr(tid.asInstanceOf[String]) }) })
 
             def readWithEnvelope(
@@ -547,7 +549,8 @@ object MapBasedCodecs extends DerivationApi {
                     self,
                     r,
                     _.filter((tid, n) => tid.isInstanceOf[String] && n.isEnumSingletonCase),
-                    tid => '{ $r.tryReadStringCompare(${ Expr(tid.asInstanceOf[String]) }) })
+                    tid => '{ $r.tryReadStringCompare(${ Expr(tid.asInstanceOf[String]) }) },
+                    bareEnumCases = true)
                   '{ if ($r.hasString) $readStringSingleton else $res0 }
                 } else res0
               if (rootNode.allSubs.exists(x => x.isEnumSingletonCase && x.key.isInstanceOf[Long])) {
@@ -555,13 +558,14 @@ object MapBasedCodecs extends DerivationApi {
                   self,
                   r,
                   _.filter((tid, n) => tid.isInstanceOf[Long] && n.isEnumSingletonCase),
-                  tid => '{ $r.tryReadLongCompare(${ Expr(tid.asInstanceOf[Long]) }) })
+                  tid => '{ $r.tryReadLongCompare(${ Expr(tid.asInstanceOf[Long]) }) },
+                  bareEnumCases = true)
                 '{ if ($r.hasLong) $readLongSingleton else $res1 }
               } else res1
 
             '{
               new MapBasedAdtDecoder[T]:
-                private val strategy = summonInline[AdtEncodingStrategy]
+                private val strategy = AdtEncodingStrategy(summonInline[DerivationConfig])
 
                 def read(r: Reader): T =
                   val self = this // work around for compiler crash (AssertionError) during macro expansion
@@ -595,9 +599,26 @@ object MapBasedCodecs extends DerivationApi {
       }
   }
 
-  abstract class MapBasedAdtEncoder[T](strategy: AdtEncodingStrategy) extends DerivedAdtEncoder[T] {
+  abstract class MapBasedAdtEncoder[T](config: DerivationConfig) extends DerivedAdtEncoder[T] {
+
+    private val strategy                 = AdtEncodingStrategy(config)
+    private val encodeEnumCasesAsObjects = config.encodeEnumCasesAsObjects
 
     protected def typeName: String
+
+    final def writeEnumCase(w: Writer, typeId: Long): Writer =
+      if (encodeEnumCasesAsObjects)
+        strategy.writeAdtEnvelopeOpen(w, typeName)
+        w.writeLong(typeId).writeEmptyMap()
+        strategy.writeAdtEnvelopeClose(w, typeName)
+      else w.writeLong(typeId)
+
+    final def writeEnumCase(w: Writer, typeId: String): Writer =
+      if (encodeEnumCasesAsObjects)
+        strategy.writeAdtEnvelopeOpen(w, typeName)
+        w.writeString(typeId).writeEmptyMap()
+        strategy.writeAdtEnvelopeClose(w, typeName)
+      else w.writeString(typeId)
 
     final def writeAdtValue[A](w: Writer, typeId: Long, value: A)(using encoder: Encoder[A]): Writer =
       encoder match {
