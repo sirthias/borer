@@ -11,10 +11,6 @@ package io.bullet.borer.site
 import io.bullet.borer.internal.Util.*
 import io.bullet.borer.BorerSuite
 
-import scala.annotation.nowarn
-
-// the doc snippet "alternative-base-encoding" defines a `given Decoder` that it doesn't use
-@nowarn("msg=unused local definition")
 class JsonSpecificsSpec extends BorerSuite {
 
   test("writeEmptyArray") {
@@ -73,6 +69,7 @@ class JsonSpecificsSpec extends BorerSuite {
       given Decoder[Array[Byte]] = Decoder.forByteArray(BaseEncoding.zbase32)
 
       Json.encode(binaryData).toUtf8String ==> """"54s575a""""
+      Json.decode(""""54s575a"""".getBytes).to[Array[Byte]].value ==> binaryData
     }
     // #alternative-base-encoding
   }

@@ -38,6 +38,10 @@ class ZBase32Spec extends BorerSuite with TestUtils:
     encode(24, hex"101110") ==> "nyety"
     encode(40, hex"FFFFFFFFFF") ==> "99999999"
     encode(48, hex"FFFFFFFFFFFF") ==> "999999999h"
+    encode(35, hex"FFFFFFFFFF") ==> "9999999"
+    encode(75, hex"FFFFFFFFFFFFFFFFFFFF") ==> "999999999999999"
+    encode(8, hex"FF00") ==> "9h" // more bytes than needed
+    encode(36, hex"FFFFFFFFFFFF") ==> "9999999o"
     encode(192, hex"c073624aaf3978514ef8443bb2a859c75fc3cc6af26d5aaa") ==> "ab3sr1ix8fhfnuzaeo75fkn3a7xh8udk6jsiiko"
   }
 
@@ -66,6 +70,8 @@ class ZBase32Spec extends BorerSuite with TestUtils:
     decode(24, "nyety") ==> "101110"
     decode(40, "99999999") ==> "ffffffffff"
     decode(48, "999999999h") ==> "ffffffffffff"
+    decode(35, "9999999") ==> "ffffffffe0"
+    decode(75, "999999999999999") ==> "ffffffffffffffffffe0"
     decode(192, "ab3sr1ix8fhfnuzaeo75fkn3a7xh8udk6jsiiko") ==> "c073624aaf3978514ef8443bb2a859c75fc3cc6af26d5aaa"
   }
 
@@ -86,6 +92,18 @@ class ZBase32Spec extends BorerSuite with TestUtils:
       776,
       "And, of course, the famous Hungarian flood-resistant hammerdrill: \"árvíztűrő ütvefúrógép\"",
       "efzgembyp7unya5xqi38g3jcrb4go3jyc3os455iqcoro7mqc7ozr4mbpaogc5dxp71n4hufqpwzg7dbp34ny4dbpisskhurqjwsa5b4rytc8em1q5b446uwasazftctrdb5a7dsciuc8qu1aq3sxo7jqyty")
+  }
+
+  test("byte-oriented roundtrip") {
+    // the bit-count-less `encode`/`decode` overloads must be exact inverses for all byte array lengths
+    val random = new scala.util.Random(42)
+    for (len <- 0 to 50) {
+      val bytes   = Array.fill(len)(random.nextInt().toByte)
+      val encoded = BaseEncoding.zbase32.encode(bytes)
+      encoded.length ==> (len * 8 + 4) / 5
+      toHexString(BaseEncoding.zbase32.decode(encoded)) ==> toHexString(bytes)
+    }
+    toHexString(BaseEncoding.zbase32.decode("54s575a".toCharArray)) ==> "deadbeef"
   }
 
   test("produce proper error messages") {

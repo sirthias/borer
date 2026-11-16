@@ -31,13 +31,16 @@ object ZBase32 extends LookupBaseEncoding("z-base32", 5, "ybndrfg8ejkmcpqxot1uwi
 
     val result = new Array[Char](((bitCount + 4) / 5).toInt)
 
+    // bitsRemaining is always in [1, 39], so we need to read between 1 and 5 bytes
+    // (the input might contain more bytes than we need, which we must ignore)
     def encodeRest(bitsRemaining: Long, si: Int, di: Int): Array[Char] =
       val fullBytes =
-        sl - si match
+        ((bitsRemaining + 7) >> 3).toInt match
           case 1 => bytes(si).toLong << 56
           case 2 => DirectByteArrayAccess.doubleByteBigEndian(bytes, si).toLong << 48
           case 3 => DirectByteArrayAccess.doubleByteBigEndian(bytes, si).toLong << 48 | (bytes(si + 2) & 0xFFL) << 40
           case 4 => DirectByteArrayAccess.quadByteBigEndian(bytes, si).toLong << 32
+          case 5 => DirectByteArrayAccess.quadByteBigEndian(bytes, si).toLong << 32 | (bytes(si + 4) & 0xFFL) << 24
       val bits = fullBytes & ~(-1L >>> bitsRemaining)
       result(di) = alphabetChars((bits >>> 59).toInt)
       if (bitsRemaining > 5) result(di + 1) = alphabetChars((bits << 5 >>> 59).toInt)
@@ -66,9 +69,14 @@ object ZBase32 extends LookupBaseEncoding("z-base32", 5, "ybndrfg8ejkmcpqxot1uwi
 
     encode5(bitCount, 0, 0)
 
+  /**
+   * Decodes the given chars into whole bytes, i.e. the exact inverse of `encode(bytes)`.
+   * Since `encode` pads the last char with zero bits we must round the bit count down to the
+   * nearest multiple of 8, which is unambiguous as `n` bytes always encode to less than `8(n+1)/5` chars.
+   */
   def decode(chars: Array[Char]): Array[Byte] =
     val sl = chars.length.toLong
-    decode((sl << 2) + sl, chars)
+    decode(((sl << 2) + sl) & ~7L, chars)
 
   def decode(bitCount: Long, chars: Array[Char]): Array[Byte] =
     val sl = chars.length
@@ -111,6 +119,10 @@ object ZBase32 extends LookupBaseEncoding("z-base32", 5, "ybndrfg8ejkmcpqxot1uwi
           result(di + 2) = (bits >>> 40).toByte
 
         case 4 => DirectByteArrayAccess.setQuadByteBigEndian(result, di, (bits >>> 32).toInt)
+
+        case 5 =>
+          DirectByteArrayAccess.setQuadByteBigEndian(result, di, (bits >>> 32).toInt)
+          result(di + 4) = (bits >>> 24).toByte
       result
 
     @tailrec def decode8(bitsRemaining: Long, si: Int, di: Int): Array[Byte] =
