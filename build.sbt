@@ -7,22 +7,28 @@ def scala3 = "3.9.0"
 inThisBuild(
   List(
     organization := "io.bullet",
-    homepage     := Some(new URI("https://github.com/sirthias/borer/").toURL),
+    homepage     := Some(uri("https://github.com/sirthias/borer/")),
     description  := "CBOR and JSON (de)serialization in Scala",
     startYear    := Some(2019),
-    licenses     := Seq("MPLv2" -> new URI("https://www.mozilla.org/en-US/MPL/2.0/").toURL),
-    scmInfo := Some(ScmInfo(url("https://github.com/sirthias/borer/"), "scm:git:git@github.com:sirthias/borer.git")),
+    licenses     := Seq(License("MPLv2", uri("https://www.mozilla.org/en-US/MPL/2.0/"))),
+    scmInfo := Some(ScmInfo(uri("https://github.com/sirthias/borer/"), "scm:git:git@github.com:sirthias/borer.git")),
     versionScheme := Some("early-semver"),
     developers    :=
       List(
         "sirthias" -> "Mathias Doenitz",
       ).map { case (username, fullName) =>
-        Developer(username, fullName, s"@$username", url(s"https://github.com/$username"))
+        Developer(username, fullName, s"@$username", uri(s"https://github.com/$username"))
       }
   )
 )
 
-addCommandAlias("fmt", "all scalafmt test:scalafmt")
+// silence `lintUnused` warnings about keys defined (but not used by us) by sbt-git
+Global / excludeLintKeys ++= Set(
+  com.github.sbt.git.SbtGit.GitKeys.gitDescribedVersion,
+  com.github.sbt.git.SbtGit.GitKeys.gitUncommittedChanges
+)
+
+addCommandAlias("fmt", "all scalafmt Test/scalafmt")
 addCommandAlias("check", "; scalafmtCheckAll")
 
 addCommandAlias(
@@ -79,21 +85,24 @@ lazy val commonSettings = Seq(
   // publishing
   publishMavenStyle      := true,
   Test / publishArtifact := false,
-  pomIncludeRepository   := (_ ⇒ false),
-  publishTo              := sonatypePublishToBundle.value,
-  sonatypeCredentialHost := xerial.sbt.Sonatype.sonatypeCentralHost,
+  pomIncludeRepository   := (_ => false),
+  publishTo              := {
+    if (isSnapshot.value) Some(Resolver.sonatypeCentralSnapshots)
+    else localStaging.value
+  },
 )
 
 lazy val scalajsSettings = Seq(
   scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule).withSourceMap(false)),
-  scalaJSStage in Global := FastOptStage,
+  Global / scalaJSStage := FastOptStage,
   scalacOptions ~= { _.filterNot(_ == "-Ywarn-dead-code") }
 )
 
 lazy val releaseSettings = {
   import ReleaseTransformations.*
   Seq(
-    releaseProcess := Seq[ReleaseStep](
+    releasePublishArtifactsAction := PgpKeys.publishSigned.value,
+    releaseProcess                := Seq[ReleaseStep](
       checkSnapshotDependencies,
       inquireVersions,
       runClean,
@@ -102,7 +111,7 @@ lazy val releaseSettings = {
       commitReleaseVersion,
       tagRelease,
       publishArtifacts,
-      releaseStepCommand("sonatypeBundleRelease"),
+      releaseStepCommand("sonaRelease"),
       setNextVersion,
       commitNextVersion,
       pushChanges
@@ -119,13 +128,13 @@ val `akka-http`     = Def.setting("com.typesafe.akka" %%  "akka-http"         % 
 val `pekko-actor`   = Def.setting("org.apache.pekko"  %%  "pekko-actor-typed" % "2.0.0")
 val `pekko-stream`  = Def.setting("org.apache.pekko"  %%  "pekko-stream"      % "2.0.0")
 val `pekko-http`    = Def.setting("org.apache.pekko"  %%  "pekko-http"        % "2.0.0")
-val `cats-core`     = Def.setting("org.typelevel"     %%% "cats-core"         % "2.13.0")
-val `circe-core`    = Def.setting("io.circe"          %%% "circe-core"        % "0.14.17")
-val `circe-parser`  = Def.setting("io.circe"          %%% "circe-parser"      % "0.14.17")
-val `circe-generic` = Def.setting("io.circe"          %%% "circe-generic"     % "0.14.17")
-val `scodec-bits`   = Def.setting("org.scodec"        %%% "scodec-bits"       % "1.2.5")
-val munit           = Def.setting("org.scalameta"     %%% "munit"             % "1.3.6" % Test)
-val macrolizer      = Def.setting("io.bullet"         %%% "macrolizer"        % "0.6.2" % "compile-internal, test-internal")
+val `cats-core`     = Def.setting("org.typelevel"     %%  "cats-core"         % "2.13.0")
+val `circe-core`    = Def.setting("io.circe"          %%  "circe-core"        % "0.14.17")
+val `circe-parser`  = Def.setting("io.circe"          %%  "circe-parser"      % "0.14.17")
+val `circe-generic` = Def.setting("io.circe"          %%  "circe-generic"     % "0.14.17")
+val `scodec-bits`   = Def.setting("org.scodec"        %%  "scodec-bits"       % "1.2.5")
+val munit           = Def.setting("org.scalameta"     %%  "munit"             % "1.3.6" % Test)
+val macrolizer      = Def.setting("io.bullet"         %%  "macrolizer"        % "0.6.2" % "compile-internal, test-internal")
 // format: ON
 
 /////////////////////// PROJECTS /////////////////////////
@@ -161,16 +170,14 @@ lazy val core          = crossProject(JSPlatform, NativePlatform, JVMPlatform)
     libraryDependencies ++= Seq(munit.value),
   )
   .jvmSettings(
-    Compile / specializeJsonParser / sourceDirectory := baseDirectory.value.getParentFile / "src" / "main",
-    Compile / specializeJsonParser / sourceManaged := baseDirectory.value / "target" / "scala" / "src_managed" / "main",
-    Compile / managedSourceDirectories += (Compile / specializeJsonParser / sourceManaged).value
+    // `JsonTestSuite` lists the test resources directory, which doesn't work from a jar (sbt 2 default)
+    Test / exportJars := false,
+    Compile / specializeJsonParser / sourceDirectory := baseDirectory.value.getParentFile / "src" / "main"
   )
   .nativeSettings(
-    Compile / specializeJsonParser / sourceDirectory := baseDirectory.value.getParentFile / "src" / "main",
-    Compile / specializeJsonParser / sourceManaged := baseDirectory.value / "target" / "scala" / "src_managed" / "main",
-    Compile / managedSourceDirectories += (Compile / specializeJsonParser / sourceManaged).value
+    Compile / specializeJsonParser / sourceDirectory := baseDirectory.value.getParentFile / "src" / "main"
   )
-  .jsSettings(scalajsSettings: _*)
+  .jsSettings(scalajsSettings*)
 
 lazy val `compat-akka` = project
   .enablePlugins(AutomateHeaderPlugin)
@@ -183,7 +190,7 @@ lazy val `compat-akka` = project
     libraryDependencies ++= Seq(
       `akka-actor`.value  % "provided",
       `akka-stream`.value % "provided",
-      `akka-http`.value   % "provided" cross CrossVersion.for3Use2_13,
+      (`akka-http`.value  % "provided").cross(CrossVersion.for3Use2_13),
       munit.value)
   )
 
@@ -198,7 +205,7 @@ lazy val `compat-pekko` = project
     libraryDependencies ++= Seq(
       `pekko-actor`.value  % "provided",
       `pekko-stream`.value % "provided",
-      `pekko-http`.value   % "provided" cross CrossVersion.for3Use2_13,
+      (`pekko-http`.value  % "provided").cross(CrossVersion.for3Use2_13),
       munit.value)
   )
 
@@ -221,7 +228,7 @@ lazy val `compat-cats` = crossProject(JSPlatform, NativePlatform, JVMPlatform)
     moduleName := "borer-compat-cats",
     libraryDependencies ++= Seq(`cats-core`.value, munit.value)
   )
-  .jsSettings(scalajsSettings: _*)
+  .jsSettings(scalajsSettings*)
 
 lazy val `compat-circe-jvm` = `compat-circe`.jvm
   .dependsOn(`core-jvm` % "compile->compile;test->test")
@@ -247,7 +254,7 @@ lazy val `compat-circe` = crossProject(JSPlatform, NativePlatform, JVMPlatform)
       munit.value
     )
   )
-  .jsSettings(scalajsSettings: _*)
+  .jsSettings(scalajsSettings*)
 
 lazy val `compat-scodec-jvm` = `compat-scodec`.jvm
   .dependsOn(`core-jvm` % "compile->compile;test->test")
@@ -271,7 +278,7 @@ lazy val `compat-scodec` = crossProject(JSPlatform, NativePlatform, JVMPlatform)
       munit.value
     )
   )
-  .jsSettings(scalajsSettings: _*)
+  .jsSettings(scalajsSettings*)
 
 lazy val `derivation-jvm` = derivation.jvm
   .dependsOn(`core-jvm` % "compile->compile;test->test")
@@ -289,7 +296,7 @@ lazy val derivation = crossProject(JSPlatform, NativePlatform, JVMPlatform)
     moduleName := "borer-derivation",
     libraryDependencies ++= Seq( /* macrolizer.value, */ munit.value), // TODO port macrolizer to scala native
   )
-  .jsSettings(scalajsSettings: _*)
+  .jsSettings(scalajsSettings*)
 
 lazy val benchmarks = project
   .enablePlugins(AutomateHeaderPlugin, JmhPlugin, BenchmarkResultsPlugin)
@@ -340,7 +347,6 @@ lazy val site = project
     ),
     com.github.sbt.git.SbtGit.GitKeys.gitRemoteRepo := scmInfo.value.get.connection.drop("scm:git:".length),
     ghpagesNoJekyll                                 := true,
-    ParadoxMaterialThemePlugin.paradoxMaterialThemeSettings(Compile),
     Compile / paradoxMaterialTheme := {
       ParadoxMaterialTheme()
         .withFavicon("assets/images/favicon.ico")
@@ -348,7 +354,7 @@ lazy val site = project
         .withLogo("assets/images/borer-logo-white.svg")
         .withCustomStylesheet("assets/stylesheets/borer.css")
         .withCopyright("Copyright (C) 2019-2026 Mathias Doenitz")
-        .withRepository(scmInfo.value.get.browseUrl.toURI)
+        .withRepository(scmInfo.value.get.browseUrl)
         .withSocial(uri("https://github.com/sirthias"), uri("https://twitter.com/sirthias"))
         .withSearch()
     },

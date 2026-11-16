@@ -1,10 +1,11 @@
 import io.bullet.borer.derivation.MapBasedCodecs
 
 object JmhJsonModel {
-  import MapBasedCodecs._
+  import MapBasedCodecs.*
+  import io.bullet.borer.Codec
 
   final case class Params(fileName: String)
-  implicit val paramsCodec = deriveCodec[Params]
+  implicit val paramsCodec: Codec[Params] = deriveCodec[Params]
 
   final case class ScorePercentiles(
       `0.0`: Double,
@@ -18,7 +19,7 @@ object JmhJsonModel {
       `99.9999`: Double,
       `100.0`: Double
   )
-  implicit val scorePercentilesCodec = deriveCodec[ScorePercentiles]
+  implicit val scorePercentilesCodec: Codec[ScorePercentiles] = deriveCodec[ScorePercentiles]
 
   final case class PrimaryMetric(
       score: Double,
@@ -28,7 +29,7 @@ object JmhJsonModel {
       scoreUnit: String,
       rawData: Seq[Seq[Double]]
   )
-  implicit val primaryMetricCodec = deriveCodec[PrimaryMetric]
+  implicit val primaryMetricCodec: Codec[PrimaryMetric] = deriveCodec[PrimaryMetric]
 
   case class RootInterface(
       jmhVersion: String,
@@ -51,5 +52,5 @@ object JmhJsonModel {
       params: Option[Params] = None
   )
 
-  implicit val rootInterfaceCodec = deriveCodec[RootInterface]
+  implicit val rootInterfaceCodec: Codec[RootInterface] = deriveCodec[RootInterface]
 }

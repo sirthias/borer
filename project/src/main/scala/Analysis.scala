@@ -1,8 +1,8 @@
-import sbt._
+import sbt.*
 import _root_.io.bullet.borer.Json
 
 object Analysis {
-  import JmhJsonModel._
+  import JmhJsonModel.*
 
   final case class Score(library: String, method: String, param: String, score: Double)
 
@@ -12,7 +12,7 @@ object Analysis {
       jsonFiles
         .sortBy(_.name)
         .flatMap(Json.decode(_).to[List[RootInterface]].value)
-        .filter(_.benchmark contains "ModelBenchmark")
+        .filter(_.benchmark.contains("ModelBenchmark"))
 
     val results =
       fileModels.map { model =>

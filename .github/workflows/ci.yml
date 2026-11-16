@@ -32,7 +32,7 @@ jobs:
       - name: Cache scala dependencies
         uses: coursier/cache-action@v6
       - name: Lint code
-        run: sbt ++3.9.0 check
+        run: sbt "++3.9.0; check"
 
   test:
     runs-on: ubuntu-24.04
@@ -64,7 +64,7 @@ jobs:
         with:
           node-version: '22'
       - name: Run tests
-        run: sbt ++${{ matrix.scala }}! test${{ matrix.platform }}
+        run: sbt "++${{ matrix.scala }}!; test${{ matrix.platform }}"
 
   ci:
     runs-on: ubuntu-24.04
