@@ -93,6 +93,11 @@ final private[borer] class Receptacle extends Receiver with java.lang.Cloneable:
 
   def onSimpleValue(value: Int): Unit = _int = value
 
+  // parsers never produce raw values, so this can only be reached when reading from a stash containing
+  // raw values produced by a `Writer`, which is not supported
+  def onRawValue[Bytes: ByteAccess](value: Bytes): Unit =
+    throw new Borer.Error.Unsupported(null, "Raw values cannot be read as individual data items")
+
   def onEndOfInput(): Unit = ()
 
   def pushInto(receiver: Receiver, dataItem: Int): Unit =

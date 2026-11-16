@@ -145,6 +145,36 @@ class CborFlatAdtEncodingSpec extends AbstractBorerSpec {
       Dog(2, "Lolle"): Animal)
   }
 
+  test("<delayed type id member> skipping tagged members") {
+    // tagged member value
+    verifyDecoding(
+      encode(
+        Dom.MapElem.Sized(
+          "tagged" -> Dom.TaggedElem(Tag.Other(1000), Dom.StringElem("x")),
+          "age"    -> Dom.IntElem(2),
+          "_type"  -> Dom.StringElem("Dog"),
+          "name"   -> Dom.StringElem("Lolle")
+        )
+      ),
+      Dog(2, "Lolle"): Animal)
+
+    // tagged elements nested in member values
+    verifyDecoding(
+      encode(
+        Dom.MapElem.Sized(
+          "age"     -> Dom.IntElem(2),
+          "ignored" -> Dom.ArrayElem.Sized(
+            Dom.TaggedElem(Tag.Other(1001), Dom.TaggedElem(Tag.Other(1002), Dom.IntElem(1))),
+            Dom.MapElem.Unsized("a" -> Dom.TaggedElem(Tag.Other(1003), Dom.ArrayElem.Unsized(Dom.IntElem(3)))),
+            Dom.TaggedElem(Tag.PositiveBigNum, Dom.ByteArrayElem(Array[Byte](1, 2, 3)))
+          ),
+          "_type" -> Dom.StringElem("Dog"),
+          "name"  -> Dom.StringElem("Lolle")
+        )
+      ),
+      Dog(2, "Lolle"): Animal)
+  }
+
   test("non-map sub-type errors") {
     val fish = Fish("red")
     roundTrip("63726564", fish)

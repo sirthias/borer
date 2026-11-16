@@ -162,5 +162,31 @@ For example, here is an potential `Decoder[Either[String, Int]]`:
 
 @@snip [-]($test$/CustomCodecsSpec.scala) { #lookahead }
 
+
+### Raw Bytes
+
+Sometimes you need access to the exact bytes a value was decoded from, e.g. because they are hashed or signed and
+therefore must be preserved exactly, even if they are not the canonical encoding _borer_ would produce itself.
+
+For this the `Reader` offers `readWithRawBytes[T]()`, which decodes a value and also returns the raw (still encoded)
+bytes it was read from, as well as `readElementAsRawBytes()`, which simply skips the next element and returns its bytes.
+(The lower-level `rawBytesOfLastValue(preElementCursor)` is also available.)<br>
+On the writing side `writer.writeValueAsRawBytes(bytes)` writes the given bytes to the output as is.
+They must contain exactly one complete element in the respective format ([CBOR] or [JSON]), which is counted as such
+during validation, but not checked for structural integrity itself.
+
+Here is an example of how this can be used to round-trip values with their exact original encoding:
+
+@@snip [-]($test$/CustomCodecsSpec.scala) { #raw-bytes }
+
+@@@ note
+
+Reading raw bytes requires random access to the underlying input bytes, which is available for inputs from byte
+arrays, `ByteBuffer`s as well as (with the respective compat modules) akka/pekko `ByteString`s and scodec `ByteVector`s.
+Streaming inputs (like `InputStream`s, files or iterators) are not supported and cause a `Borer.Error.Unsupported`.
+For [JSON] the raw bytes do not include any surrounding whitespace.
+
+@@@
+
   [CBOR]: http://cbor.io/
   [JSON]: http://json.org/

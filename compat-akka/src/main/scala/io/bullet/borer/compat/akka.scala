@@ -176,6 +176,11 @@ object akka {
       if (length <= remaining) bytes
       else pp.padBytes(bytes, length - remaining)
     }
+
+    override def copyOfRange(start: Long, end: Long): Array[Byte] =
+      if (0 <= start && start <= end && end <= byteString.length.toLong)
+        byteString.slice(start.toInt, end.toInt).toArray
+      else throw new IndexOutOfBoundsException(s"Illegal range [$start, $end) for input of size ${byteString.length}")
   }
 
   implicit object ByteStringOutputProvider extends Output.ToTypeProvider[ByteString] {

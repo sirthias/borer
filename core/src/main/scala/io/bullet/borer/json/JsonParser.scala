@@ -563,7 +563,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
         DataItem.EndOfInput
       else failSyntaxError("end of input")
 
-    _valueIndex = input.cursor
+    _valueIndex = input.cursor + cursorExtra // account for padding (at the end of the input)
     (state: @switch) match
       case EXPECT_ARRAY_VALUE  => parseValue(EXPECT_ARRAY_VALUE, EXPECT_ARRAY_BREAK)
       case EXPECT_MAP_KEY      => parseMapKey()

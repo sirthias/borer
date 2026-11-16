@@ -47,6 +47,12 @@ abstract class Receiver:
 
   def onSimpleValue(value: Int): Unit
 
+  /**
+   * Receives a single, complete and already encoded (CBOR or JSON) element as raw bytes,
+   * which are to be written to the output as is, i.e. without any further processing or validation.
+   */
+  def onRawValue[Bytes: ByteAccess](value: Bytes): Unit
+
   def onEndOfInput(): Unit
 
 object Receiver:
@@ -86,6 +92,9 @@ object Receiver:
     def onBreak(): Unit                   = default("`Break`")
     def onTag(value: Tag): Unit           = default(s"`$value`")
     def onSimpleValue(value: Int): Unit   = default(s"`SimpleValue($value)")
-    def onEndOfInput(): Unit              = default("`End Of Input`")
+
+    def onRawValue[Bytes: ByteAccess](value: Bytes): Unit =
+      default(s"a raw value of length ${summon[ByteAccess[Bytes]].sizeOf(value)}")
+    def onEndOfInput(): Unit = default("`End Of Input`")
 
     protected def default(tpe: String): Unit

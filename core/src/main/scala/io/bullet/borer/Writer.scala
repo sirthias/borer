@@ -86,6 +86,25 @@ final class Writer(
 
   def writeEndOfInput(): this.type = { receiver.onEndOfInput(); this }
 
+  /**
+   * Writes the given bytes, which must be the complete, already encoded representation of exactly one element
+   * in the format of this [[Writer]] (i.e. CBOR or JSON), as is to the output.
+   * Structurally the given bytes count as a single element, e.g. as one array element or one map key or value,
+   * but their contents are NOT validated, so passing anything else than exactly one properly encoded element
+   * results in broken output!
+   *
+   * The main use case for this is the re-encoding of values with exactly the same bytes as they were originally
+   * decoded from (see `Reader.readWithRawBytes`), e.g. because the bytes are hashed or signed.
+   *
+   * NOTE: When transcoding the given bytes are decoded and forwarded as individual data items.
+   */
+  def writeValueAsRawBytes[Bytes](value: Bytes)(using ba: ByteAccess[Bytes]): this.type =
+    if (ba.isEmpty(value))
+      throw new Borer.Error.InvalidInputData(output, "Raw value bytes must not be empty")
+    if (output ne null) receiver.onRawValue(value)
+    else transcodeRawValue(ba.toByteArray(value))
+    this
+
   def write[T](value: T)(using encoder: Encoder[T]): this.type =
     encoder.write(this, value).asInstanceOf[this.type]
 
@@ -180,6 +199,47 @@ final class Writer(
 
   def writeMapClose(): this.type =
     if (target eq Json) writeBreak() else this
+
+  // when transcoding we have no actual output to write the raw bytes to,
+  // so we decode them and forward the resulting data items instead
+  private def transcodeRawValue(bytes: Array[Byte]): Unit =
+    import io.bullet.borer.DataItem as DI
+    val r: Reader = if (writingJson) Json.reader(bytes) else Cbor.reader(bytes)
+
+    def copyElement(level: Int): Unit =
+      @tailrec def copyN(remaining: Long): Unit =
+        if (remaining > 0)
+          copyElement(level + 1)
+          copyN(remaining - 1)
+
+      @tailrec def copyUntilBreak(): Unit =
+        if (r.hasBreak) r.receiveInto(receiver)
+        else
+          copyElement(level + 1)
+          copyUntilBreak()
+
+      if (level < 100)
+        r.dataItem() match
+          case DI.ArrayHeader =>
+            val len = r.readArrayHeader()
+            receiver.onArrayHeader(len)
+            copyN(len)
+          case DI.MapHeader =>
+            val len = r.readMapHeader()
+            receiver.onMapHeader(len)
+            copyN(len << 1)
+          case DI.ArrayStart | DI.MapStart | DI.BytesStart | DI.TextStart =>
+            r.receiveInto(receiver)
+            copyUntilBreak()
+          case DI.Tag =>
+            r.receiveInto(receiver)
+            copyElement(level) // a tag is only a prefix to the actual element
+          case DI.EndOfInput => r.unexpectedDataItem(expected = "raw value element")
+          case _             => r.receiveInto(receiver)
+      else r.overflow("Raw values more than 100 levels deep cannot be transcoded")
+
+    copyElement(0)
+    r.readEndOfInput()
 
 object Writer:
 

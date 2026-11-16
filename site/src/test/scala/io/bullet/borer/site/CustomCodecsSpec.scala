@@ -8,6 +8,7 @@
 
 package io.bullet.borer.site
 
+import io.bullet.borer.internal.Util.*
 import io.bullet.borer.BorerSuite
 
 class CustomCodecsSpec extends BorerSuite {
@@ -115,5 +116,35 @@ class CustomCodecsSpec extends BorerSuite {
       .valueTry
       .toString
       .contains("Expected `String` or `Int`") ==> true
+  }
+
+  test("Raw bytes") {
+    // #raw-bytes
+    import io.bullet.borer.{Cbor, Decoder, Encoder}
+
+    // a value together with the exact bytes it was decoded from
+    final case class KeepRaw[A](value: A, raw: Array[Byte])
+
+    object KeepRaw {
+      given [A: Decoder]: Decoder[KeepRaw[A]] =
+        Decoder { reader =>
+          val (value, raw) = reader.readWithRawBytes[A]()
+          KeepRaw(value, raw)
+        }
+
+      // re-encodes the value with exactly its original bytes
+      given [A]: Encoder[KeepRaw[A]] =
+        Encoder((writer, x) => writer.writeValueAsRawBytes(x.raw))
+    }
+
+    // the CBOR encoding of `Vector(1, 2)` with the Ints using non-minimal encodings
+    val bytes = hex"82" ++ hex"1801" ++ hex"190002"
+
+    val decoded = Cbor.decode(bytes).to[Vector[KeepRaw[Int]]].value
+    decoded.map(_.value) ==> Vector(1, 2)
+
+    // a regular re-encoding would produce `hex"820102"`, but `KeepRaw` preserves the original bytes
+    Cbor.encode(decoded).toByteArray ==> bytes
+    // #raw-bytes
   }
 }

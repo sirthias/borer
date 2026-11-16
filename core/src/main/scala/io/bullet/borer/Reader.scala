@@ -525,21 +525,31 @@ final class InputReader[Config <: Reader.Config](
   /**
    * Moves the cursor beyond the current data element,
    * thereby also skipping complex, potentially nested array or map structures.
+   * Tags are treated as a prefix of the element they are tagging, i.e. are skipped together with it.
    */
   def skipElement(): this.type =
+
+    @tailrec def skipTags(): Unit =
+      if (hasTag)
+        clearDataItem()
+        skipTags()
+
+    def skipNested(level: Int): Unit =
+      skipTags()
+      if (hasAnyOf(DI.Complex)) skipComplex(level) else clearDataItem()
 
     // for simplicity we go for stack-based recursion here
     // if this ever becomes a problem we can upgrade to more costly heap-based recursion instead
     def skipComplex(level: Int): this.type =
       @tailrec def skipN(remaining: Long): this.type =
         if (remaining > 0)
-          if (hasAnyOf(DI.Complex)) skipComplex(level + 1) else clearDataItem()
+          skipNested(level + 1)
           skipN(remaining - 1)
         else this
 
       @tailrec def skipUntilBreak(): this.type =
         if (!tryReadBreak())
-          if (hasAnyOf(DI.Complex)) skipComplex(level + 1) else clearDataItem()
+          skipNested(level + 1)
           skipUntilBreak()
         else this
 
@@ -555,12 +565,93 @@ final class InputReader[Config <: Reader.Config](
             skipUntilBreak()
       else overflow("Structures more than 100 levels deep cannot be skipped") // TODO: make configurable
 
-    if (hasAnyOf(DI.Complex)) skipComplex(0)
-    else
-      clearDataItem()
-      this
+    skipNested(0)
+    this
 
   inline def skipTwoElements(): this.type = skipElement().skipElement()
+
+  /**
+   * Reads the next element (including all potentially nested elements) and returns its complete,
+   * raw (i.e. still encoded) bytes, exactly as they appear in the input.
+   * For JSON surrounding whitespace is not included.
+   *
+   * The returned bytes can be written out again unchanged with [[Writer.writeValueAsRawBytes]].
+   *
+   * NOTE: Only supported for inputs with random access to their underlying bytes, e.g. byte arrays or `ByteBuffer`s.
+   */
+  def readElementAsRawBytes(): Array[Byte] =
+    val start = rawBytesStartCursor()
+    skipElement()
+    rawBytesOfLastValue(start)
+
+  /**
+   * Reads the next element with the given [[Decoder]] and returns the decoded value together with the complete,
+   * raw (i.e. still encoded) bytes that it was decoded from, exactly as they appear in the input.
+   * For JSON surrounding whitespace is not included.
+   *
+   * The returned bytes can be written out again unchanged with [[Writer.writeValueAsRawBytes]], e.g. in cases where
+   * the exact encoding of a value must be preserved (because it is hashed or signed, for example).
+   *
+   * NOTE: Only supported for inputs with random access to their underlying bytes, e.g. byte arrays or `ByteBuffer`s.
+   */
+  def readWithRawBytes[T]()(using decoder: Decoder[T]): (T, Array[Byte]) =
+    val start = rawBytesStartCursor()
+    val value = decoder.read(this)
+    value -> rawBytesOfLastValue(start)
+
+  /**
+   * Low-level method for retrieving the raw (i.e. still encoded) input bytes from the given `preElementCursor`
+   * up to the end of the last data item that was consumed (for JSON excluding trailing whitespace and separators).
+   *
+   * `preElementCursor` must be the [[cursor]] value of the first data item of the element whose bytes are to be
+   * retrieved. Since [[cursor]] only refers to the next data item after it has actually been pulled from the input
+   * you need to call `dataItem()` before reading the [[cursor]], i.e. like this:
+   *
+   * {{{
+   * r.dataItem()
+   * val start = r.cursor
+   * val value = r.read[T]()
+   * val bytes = r.rawBytesOfLastValue(start)
+   * }}}
+   *
+   * Prefer the higher-level [[readWithRawBytes]] or [[readElementAsRawBytes]] methods, which take care of this.
+   *
+   * NOTE: Only supported for inputs with random access to their underlying bytes, e.g. byte arrays or `ByteBuffer`s.
+   */
+  def rawBytesOfLastValue(preElementCursor: Long): Array[Byte] =
+    if (readingJson)
+      // the JSON parser has always already consumed (some of) the input after the last data item,
+      // so we need to pull the next data item in order to determine the end of the last one
+      dataItem()
+      requireDataItemFromInput()
+      val bytes = copyInputRange(preElementCursor, cursor)
+      var end   = trimJsonWhitespace(bytes, bytes.length)
+      if (end > 0 && (bytes(end - 1) == ',' || bytes(end - 1) == ':')) end = trimJsonWhitespace(bytes, end - 1)
+      if (end < bytes.length) java.util.Arrays.copyOf(bytes, end) else bytes
+    else
+      // the CBOR parser never consumes more than the current data item, so, if the next data item has not been
+      // pulled yet, the end of the last data item is the current position of the input
+      if (_dataItem != DI.None)
+        requireDataItemFromInput()
+        copyInputRange(preElementCursor, cursor)
+      else copyInputRange(preElementCursor, input.cursor)
+
+  private def rawBytesStartCursor(): Long =
+    dataItem()
+    requireDataItemFromInput()
+    cursor
+
+  private def requireDataItemFromInput(): Unit =
+    if (stash ne null) // after `dataItem()` a non-null stash means that the current data item came from the stash
+      throw new Borer.Error.Unsupported(position, "Raw bytes are not available for buffered data items")
+
+  private def copyInputRange(start: Long, end: Long): Array[Byte] =
+    if (parser.isInstanceOf[Parser.DequeParser])
+      throw new Borer.Error.Unsupported(position, "Raw bytes are not available when transcoding")
+    input.copyOfRange(start, end)
+
+  @tailrec private def trimJsonWhitespace(bytes: Array[Byte], end: Int): Int =
+    if (end > 0 && (bytes(end - 1) & 0xFF) <= 0x20) trimJsonWhitespace(bytes, end - 1) else end
 
   def readArrayOpen(arity: Long): Boolean =
     tryReadArrayStart() || { readArrayHeader(arity); false }

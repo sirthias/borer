@@ -213,6 +213,12 @@ private[borer] object CborValidation:
       count()
       target.onSimpleValue(value)
 
+    // raw values are opaque to us, so we can only count them as one complete element
+    // without being able to validate their contents
+    def onRawValue[Bytes: ByteAccess](value: Bytes): Unit =
+      count()
+      target.onRawValue(value)
+
     def onEndOfInput(): Unit =
       if (level >= 0)
         def remaining = levelRemaining(level)

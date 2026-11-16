@@ -99,6 +99,19 @@ trait Input[Bytes]:
    */
   def readBytes(length: Long, pp: Input.PaddingProvider[Bytes]): Bytes
 
+  /**
+   * Returns a copy of the input bytes in the index range [start, end), which may lie (partially or completely)
+   * before the current cursor, i.e. refer to bytes that have already been read.
+   * The cursor is not affected by this call.
+   *
+   * This is only supported by inputs which have random access to their complete underlying data, e.g. inputs
+   * reading from a byte array or `ByteBuffer`. The default implementation throws a [[Borer.Error.Unsupported]].
+   */
+  def copyOfRange(start: Long, end: Long): Array[Byte] =
+    throw new Borer.Error.Unsupported(
+      this.position(start),
+      s"Input `${getClass.getSimpleName}` does not support random access to already consumed bytes")
+
 object Input
     extends FromByteArrayInput with FromByteBufferInput with FromInputStreamInput with FromFileInput
     with FromIteratorInput:

@@ -93,6 +93,7 @@ object Logging:
     def onMapStart(): Unit
     def onTag(value: Tag): Unit
     def onSimpleValue(value: Int): Unit
+    def onRawValue[Bytes: ByteAccess](value: Bytes): Unit
     def onLevelExited(levelType: ElementType, break: Boolean): Unit
     def onEndOfInput(): Unit
 
@@ -117,28 +118,29 @@ object Logging:
 
     def renderLine(line: String): Unit
 
-    def onNull(): Unit                                   = render("null")
-    def onUndefined(): Unit                              = render("undefined")
-    def onBool(value: Boolean): Unit                     = render(value.toString)
-    def onInt(value: Int): Unit                          = render(value.toString)
-    def onLong(value: Long): Unit                        = render(s"${value}L")
-    def onOverLong(negative: Boolean, value: Long): Unit = render(formatOverLong(negative, value))
-    def onFloat16(value: Float): Unit                    = render(s"${Util.doubleToString(value.toDouble)}f16")
-    def onFloat(value: Float): Unit                      = render(s"${Util.doubleToString(value.toDouble)}f")
-    def onDouble(value: Double): Unit                    = render(s"${Util.doubleToString(value)}d")
-    def onDecimal(integer: Long, fraction: Int): Unit    = render(s"$integer.${fraction}d")
-    def onNumberString(value: String): Unit              = render(s"${value}s")
-    def onBytes[Bytes: ByteAccess](value: Bytes): Unit   = render(formatBytes("B[", value))
-    def onBytesStart(): Unit                             = render("B*[", levelOpen = true)
-    def onString(value: String): Unit                    = render(formatString(value))
-    def onChars(buffer: Array[Char], length: Int): Unit  = render(formatString(new String(buffer, 0, length)))
-    def onText[Bytes: ByteAccess](value: Bytes): Unit    = render(formatString(value))
-    def onTextStart(): Unit                              = render("T*[", levelOpen = true)
-    def onArrayStart(): Unit                             = render("*[", levelOpen = true)
-    def onMapStart(): Unit                               = render("*{", levelOpen = true)
-    def onTag(value: Tag): Unit                          = render(s"@$value")
-    def onSimpleValue(value: Int): Unit                  = render(s"Simple($value)")
-    def onEndOfInput(): Unit                             = if (renderEndOfInput) render("END")
+    def onNull(): Unit                                    = render("null")
+    def onUndefined(): Unit                               = render("undefined")
+    def onBool(value: Boolean): Unit                      = render(value.toString)
+    def onInt(value: Int): Unit                           = render(value.toString)
+    def onLong(value: Long): Unit                         = render(s"${value}L")
+    def onOverLong(negative: Boolean, value: Long): Unit  = render(formatOverLong(negative, value))
+    def onFloat16(value: Float): Unit                     = render(s"${Util.doubleToString(value.toDouble)}f16")
+    def onFloat(value: Float): Unit                       = render(s"${Util.doubleToString(value.toDouble)}f")
+    def onDouble(value: Double): Unit                     = render(s"${Util.doubleToString(value)}d")
+    def onDecimal(integer: Long, fraction: Int): Unit     = render(s"$integer.${fraction}d")
+    def onNumberString(value: String): Unit               = render(s"${value}s")
+    def onBytes[Bytes: ByteAccess](value: Bytes): Unit    = render(formatBytes("B[", value))
+    def onBytesStart(): Unit                              = render("B*[", levelOpen = true)
+    def onString(value: String): Unit                     = render(formatString(value))
+    def onChars(buffer: Array[Char], length: Int): Unit   = render(formatString(new String(buffer, 0, length)))
+    def onText[Bytes: ByteAccess](value: Bytes): Unit     = render(formatString(value))
+    def onTextStart(): Unit                               = render("T*[", levelOpen = true)
+    def onArrayStart(): Unit                              = render("*[", levelOpen = true)
+    def onMapStart(): Unit                                = render("*{", levelOpen = true)
+    def onTag(value: Tag): Unit                           = render(s"@$value")
+    def onSimpleValue(value: Int): Unit                   = render(s"Simple($value)")
+    def onRawValue[Bytes: ByteAccess](value: Bytes): Unit = render(formatBytes("RAW[", value))
+    def onEndOfInput(): Unit                              = if (renderEndOfInput) render("END")
 
     def onArrayHeader(length: Long): Unit = if (length > 0) render("[", levelOpen = true) else render("[]")
 
@@ -448,6 +450,11 @@ object Logging:
       logger.onSimpleValue(value)
       count()
       target.onSimpleValue(value)
+
+    def onRawValue[Bytes: ByteAccess](value: Bytes): Unit =
+      logger.onRawValue(value)
+      count()
+      target.onRawValue(value)
 
     def onEndOfInput(): Unit =
       logger.onEndOfInput()

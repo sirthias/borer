@@ -180,7 +180,7 @@ final private[borer] class CborParser[Bytes: ByteAccess](val input: Input[Bytes]
 
   def padByte(): Byte =
     if (_valueIndex < 0)
-      _valueIndex = 0
+      _valueIndex = input.cursor // the index of the END-OF-INPUT "data item"
       0
     else failUnexpectedEOI("8-bit integer")
 

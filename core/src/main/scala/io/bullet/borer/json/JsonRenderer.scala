@@ -250,7 +250,11 @@ final private[borer] class JsonRenderer(var out: Output, indent: Int) extends Re
 
   def onTag(value: Tag): Unit         = out.failUnsupported("CBOR tags")
   def onSimpleValue(value: Int): Unit = out.failUnsupported("CBOR Simple Values")
-  def onEndOfInput(): Unit            = ()
+
+  def onRawValue[Bytes: ByteAccess](value: Bytes): Unit =
+    out = out.writeSep().writeBytes(value).count()
+
+  def onEndOfInput(): Unit = ()
 
   private inline def isNotMapKey: Boolean = (levelType & ~levelCount & 1) == 0
 

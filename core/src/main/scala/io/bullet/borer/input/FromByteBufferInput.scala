@@ -73,3 +73,10 @@ trait FromByteBufferInput:
         else ByteAccess.ForByteArray.empty
       if (length <= remaining) bytes
       else pp.padBytes(bytes, length - remaining)
+
+    override def copyOfRange(start: Long, end: Long): Array[Byte] =
+      if (0 <= start && start <= end && end <= buffer.limit())
+        val result = new Array[Byte]((end - start).toInt)
+        buffer.duplicate().position(start.toInt).get(result)
+        result
+      else throw new IndexOutOfBoundsException(s"Illegal range [$start, $end) for input with limit ${buffer.limit()}")

@@ -14,6 +14,7 @@ import scala.annotation.tailrec
 
 final private[borer] class ElementDeque(val maxBufferSize: Int, val next: ElementDeque = null):
   import io.bullet.borer.DataItem.{Shifts => DIS}
+  import ElementDeque.RawValue
 
   private val byteBuffer = new ResizableByteRingBuffer(16, math.max(16, maxBufferSize))
   private val objBuffer  = new ResizableRingBuffer[AnyRef](16, math.max(16, maxBufferSize))
@@ -55,6 +56,9 @@ final private[borer] class ElementDeque(val maxBufferSize: Int, val next: Elemen
       def onTag(value: Tag): Unit           = ret(byteBuffer.prepend1(DIS.Tag) && objBuffer.prepend(value))
       def onSimpleValue(value: Int): Unit   = ret(byteBuffer.prepend5(DIS.SimpleValue, value))
       def onEndOfInput(): Unit              = ret(byteBuffer.prepend1(DIS.EndOfInput))
+
+      def onRawValue[Bytes](value: Bytes)(using ba: ByteAccess[Bytes]): Unit =
+        ret(byteBuffer.prepend1(RawValue) && objBuffer.prepend(ba) && objBuffer.prepend(value.asInstanceOf[AnyRef]))
     }
 
   val appendReceiver: Receiver =
@@ -94,6 +98,9 @@ final private[borer] class ElementDeque(val maxBufferSize: Int, val next: Elemen
       def onTag(value: Tag): Unit           = ret(byteBuffer.append1(DIS.Tag) && objBuffer.append(value))
       def onSimpleValue(value: Int): Unit   = ret(byteBuffer.append5(DIS.SimpleValue, value))
       def onEndOfInput(): Unit              = ret(byteBuffer.append1(DIS.EndOfInput))
+
+      def onRawValue[Bytes](value: Bytes)(using ba: ByteAccess[Bytes]): Unit =
+        ret(byteBuffer.append1(RawValue) && objBuffer.append(value.asInstanceOf[AnyRef]) && objBuffer.append(ba))
     }
 
   inline def isEmpty: Boolean  = byteBuffer.isEmpty
@@ -138,13 +145,32 @@ final private[borer] class ElementDeque(val maxBufferSize: Int, val next: Elemen
       case DIS.Tag         => receiver.onTag(objBuffer.unsafeRead().asInstanceOf[Tag])
       case DIS.SimpleValue => receiver.onSimpleValue(byteBuffer.unsafeReadQuadByte())
       case DIS.EndOfInput  => receiver.onEndOfInput()
+
+      case RawValue =>
+        receiver.onRawValue[AnyRef](objBuffer.unsafeRead())(
+          using objBuffer.unsafeRead().asInstanceOf[ByteAccess[AnyRef]])
     1 << shift.toInt
 
   def pullAll(receiver: Receiver): Unit = while (nonEmpty) pull(receiver)
 
   def dataItemValueFromEnd(offset: Int): AnyRef = objBuffer.peekFromEnd(offset)
 
+  /**
+   * Pulls one complete element from the given [[Reader]] and appends it to this deque.
+   * Tags are treated as a prefix of the element they are tagging, i.e. are pulled together with it.
+   * Returns the first data item of the element (which is a [[DataItem.Tag]] if the element is tagged).
+   */
   def appendElementFrom(r: Reader): Int =
+
+    // pulls one complete element (incl. leading tags) and returns its first data item
+    def pullElement(level: Int): Int =
+      @tailrec def pullTagged(dataItem: Int): Unit =
+        if (dataItem == DataItem.Tag) pullTagged(r.receiveInto(appendReceiver))
+        else if ((dataItem & DataItem.Complex) != 0) pullComplex(dataItem, level)
+
+      val first = r.receiveInto(appendReceiver)
+      pullTagged(first)
+      first
 
     // for simplicity we go for stack-based recursion here
     // if this ever becomes a problem we can upgrade to more costly heap-based recursion instead
@@ -152,14 +178,11 @@ final private[borer] class ElementDeque(val maxBufferSize: Int, val next: Elemen
 
       @tailrec def pullN(remaining: Long): Unit =
         if (remaining > 0)
-          val dataItem = r.receiveInto(appendReceiver)
-          if ((dataItem & DataItem.Complex) != 0) pullComplex(dataItem, level + 1)
+          pullElement(level + 1)
           pullN(remaining - 1)
 
       @tailrec def pullUntilBreak(): Unit =
-        val dataItem = r.receiveInto(appendReceiver)
-        if ((dataItem & DataItem.Complex) != 0) pullComplex(dataItem, level + 1)
-        if (dataItem != DataItem.Break) pullUntilBreak()
+        if (pullElement(level + 1) != DataItem.Break) pullUntilBreak()
 
       if (level < 100)
         dataItem match
@@ -173,9 +196,7 @@ final private[borer] class ElementDeque(val maxBufferSize: Int, val next: Elemen
           case _ => pullUntilBreak()
       else sys.error("Structures with more than 100 nesting levels are not supported") // TODO: make configurable
 
-    val first = r.receiveInto(appendReceiver)
-    if ((first & DataItem.Complex) != 0) pullComplex(first, 0)
-    first
+    pullElement(0)
 
   def dropLastStringDataItem(): Unit =
     byteBuffer.dropLast(1)
@@ -190,4 +211,8 @@ final private[borer] class ElementDeque(val maxBufferSize: Int, val next: Elemen
   private def ret(result: Boolean): Boolean = if (result) true else throw new ElementDeque.Overflow
 
 private[borer] object ElementDeque:
+
+  // internal marker for raw values, which are not a regular `DataItem`
+  final private val RawValue = 24 // == DataItem.Shifts.EndOfInput + 1
+
   class Overflow extends RuntimeException

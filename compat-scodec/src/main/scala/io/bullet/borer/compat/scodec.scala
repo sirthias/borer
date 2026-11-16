@@ -150,6 +150,10 @@ object scodec {
       if (length <= remaining) bytes
       else pp.padBytes(bytes, length - remaining)
     }
+
+    override def copyOfRange(start: Long, end: Long): Array[Byte] =
+      if (0 <= start && start <= end && end <= byteVector.length) byteVector.slice(start, end).toArray
+      else throw new IndexOutOfBoundsException(s"Illegal range [$start, $end) for input of size ${byteVector.length}")
   }
 
   implicit object ByteVectorOutputProvider extends Output.ToTypeProvider[ByteVector] {

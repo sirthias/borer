@@ -91,6 +91,9 @@ final private[borer] class CborRenderer(var out: Output) extends Renderer:
       throw new Borer.Error.InvalidInputData(out, msg)
     else writeInteger(value.toLong, 0xE0)
 
+  def onRawValue[Bytes: ByteAccess](value: Bytes): Unit =
+    out = out.writeBytes(value)
+
   def onEndOfInput(): Unit = () // no actual action here
 
   private def writeInteger(value: Long, majorType: Int): Output =
