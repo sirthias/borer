@@ -26,7 +26,7 @@ class JsonFlatAdtEncodingSpec extends AbstractBorerSpec {
   case object Yeti                                                           extends Animal
   case class Fish(color: String)                                             extends Animal
 
-  given DerivationConfig = DerivationConfig(flatAdtEncoding = true)
+  inline given DerivationConfig = DerivationConfig().withFlatAdtEncoding()
 
   given Codec[Dog]       = MapBasedCodecs.deriveCodec[Dog]
   given Codec[Cat]       = MapBasedCodecs.deriveCodec[Cat]

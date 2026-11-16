@@ -15,6 +15,7 @@ import io.bullet.borer.*
 import io.bullet.borer.internal.{ElementDeque, Util}
 
 import scala.annotation.tailrec
+import scala.quoted.*
 
 /**
  * Internal abstraction over the different ways of encoding ADTs with the map-based codecs.
@@ -29,9 +30,13 @@ sealed abstract private[derivation] class AdtEncodingStrategy:
 
 private[derivation] object AdtEncodingStrategy:
 
-  def apply(config: DerivationConfig): AdtEncodingStrategy =
-    if (config.flatAdtEncoding) flat(config.flatAdtTypeMemberName, config.flatAdtMaxBufferSize)
-    else Default
+  /**
+   * Constructs the expression creating the [[AdtEncodingStrategy]] for the given (static) configuration.
+   */
+  def expr(flatAdtEncoding: Option[DerivationConfig.FlatAdtEncoding])(using Quotes): Expr[AdtEncodingStrategy] =
+    flatAdtEncoding match
+      case Some(x) => '{ flat(${ Expr(x.typeMemberName) }, ${ Expr(x.maxBufferSize) }) }
+      case None    => '{ Default }
 
   /**
    * Default and recommended ADT encoding strategy.

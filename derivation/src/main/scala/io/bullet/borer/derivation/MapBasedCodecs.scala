@@ -9,7 +9,6 @@
 package io.bullet.borer.derivation
 
 import io.bullet.borer.*
-import scala.compiletime.*
 import scala.quoted.*
 
 /**
@@ -27,7 +26,7 @@ object MapBasedCodecs extends DerivationApi {
    * The key for each member is a `String` holding the member's name.
    * This can be customized with the [[key]] annotation.
    */
-  inline def deriveEncoder[T]: Encoder[T] = ${ Macros.encoder[T] }
+  inline def deriveEncoder[T](using inline config: DerivationConfig): Encoder[T] = ${ Macros.encoder[T]('config) }
 
   /**
    * Macro that creates an [[Encoder]] for [[T]] and all direct and indirect sub-types of [[T]],
@@ -53,7 +52,7 @@ object MapBasedCodecs extends DerivationApi {
    * This means that you can specify your own custom Encoders for concrete sub-types or whole branches
    * of the sub-type hierarchy and they will be properly picked up rather than create conflicts.
    */
-  inline def deriveAllEncoders[T]: Encoder[T] = ${ Macros.allEncoders[T] }
+  inline def deriveAllEncoders[T](using inline config: DerivationConfig): Encoder[T] = ${ Macros.allEncoders[T]('config) }
 
   /**
    * Macro that creates a [[Decoder]] for [[T]] provided that
@@ -65,7 +64,7 @@ object MapBasedCodecs extends DerivationApi {
    * The key for each member is a `String` holding the member's name.
    * This can be customized with the [[key]] annotation.
    */
-  inline def deriveDecoder[T]: Decoder[T] = ${ Macros.decoder[T] }
+  inline def deriveDecoder[T](using inline config: DerivationConfig): Decoder[T] = ${ Macros.decoder[T]('config) }
 
   /**
    * Macro that creates a [[Decoder]] for [[T]] and all direct and indirect sub-types of [[T]],
@@ -91,29 +90,31 @@ object MapBasedCodecs extends DerivationApi {
    * This means that you can specify your own custom Decoders for concrete sub-types or whole branches
    * of the sub-type hierarchy and they will be properly picked up rather than create conflicts.
    */
-  inline def deriveAllDecoders[T]: Decoder[T] = ${ Macros.allDecoders[T] }
+  inline def deriveAllDecoders[T](using inline config: DerivationConfig): Decoder[T] = ${ Macros.allDecoders[T]('config) }
 
   /**
    * Macro that creates an [[Encoder]] and [[Decoder]] pair for [[T]].
    * Convenience shortcut for `Codec(deriveEncoder[T], deriveDecoder[T])`.
    */
-  inline def deriveCodec[T]: Codec[T] = Codec(deriveEncoder[T], deriveDecoder[T])
+  inline def deriveCodec[T](using inline config: DerivationConfig): Codec[T] =
+    Codec(deriveEncoder[T](using config), deriveDecoder[T](using config))
 
   /**
    * Macro that creates an [[Encoder]] and [[Decoder]] pair for [[T]] and all direct and indirect sub-types of [[T]].
    * Convenience shortcut for `Codec(deriveAllEncoders[T], deriveAllDecoders[T])`.
    */
-  inline def deriveAllCodecs[T]: Codec[T] = Codec(deriveAllEncoders[T], deriveAllDecoders[T])
+  inline def deriveAllCodecs[T](using inline config: DerivationConfig): Codec[T] =
+    Codec(deriveAllEncoders[T](using config), deriveAllDecoders[T](using config))
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   private[derivation] object Macros {
 
-    def encoder[T: Type](using quotes: Quotes): Expr[Encoder[T]] =
+    def encoder[T: Type](configExpr: Expr[DerivationConfig])(using quotes: Quotes): Expr[Encoder[T]] =
       Derive[Encoder, T] {
         import quotes.reflect.*
 
-        new Deriver[Encoder, T, quotes.type] {
+        new Deriver[Encoder, T, quotes.type](configExpr) {
 
           def deriveForCaseObject(moduleTermSymbol: Symbol): Expr[Encoder[T]] =
             '{ Encoder[T]((w, _) => w.writeEmptyMap()) }
@@ -128,108 +129,104 @@ object MapBasedCodecs extends DerivationApi {
             val basicFieldFlags = fields.map(field => fieldEncoders(field.index).exists(isBasicDefaultEncoder))
             val nonBasicFields  = fields.map(field => Option.when(!basicFieldFlags(field.index))(field))
 
-            withVal('{ summonInline[DerivationConfig] }) { derivationConfig =>
+            withOptVals {
+              nonBasicFields.map {
+                _.flatMap { field =>
+                  field.theType match
+                    case '[t] if field.fieldType.isInstanceOf[OwnType] =>
+                      Some {
+                        Val.of[Encoder[t]] {
+                          val fieldEnc = fieldEncoders(field.index).map(_.asExprOf[Encoder[t]]).getOrElse {
+                            fail(s"Could not find given Encoder[${Type.show[t]}] " +
+                              s"for field `${field.name}` of case class `$theTname`")
+                          }
+                          field.defaultValue[t] match
+                            case Some(x) => '{ $fieldEnc.withDefaultValue($x).recursive }
+                            case None => '{ $fieldEnc.recursive }
+                        }
+                      }
+                    case _ => None
+                }
+              }
+            } { fieldEncDefs =>
               withOptVals {
                 nonBasicFields.map {
-                  _.flatMap { field =>
-                    field.theType match
-                      case '[t] if field.fieldType.isInstanceOf[OwnType] =>
-                        Some {
-                          Val.of[Encoder[t]] {
-                            val fieldEnc = fieldEncoders(field.index).map(_.asExprOf[Encoder[t]]).getOrElse {
-                              fail(s"Could not find given Encoder[${Type.show[t]}] " +
-                                s"for field `${field.name}` of case class `$theTname`")
-                            }
-                            field.defaultValue[t] match
-                              case Some(x) => '{ $fieldEnc.withDefaultValue($x).recursive }
-                              case None => '{ $fieldEnc.recursive }
-                          }
-                        }
-                      case _ => None
-                  }
+                  _.flatMap(field => field.theType match { case '[t] => field.defaultValue[t].map(Val.of[t](_)) })
                 }
-              } { fieldEncDefs =>
-                withOptVals {
-                  nonBasicFields.map {
-                    _.flatMap(field => field.theType match { case '[t] => field.defaultValue[t].map(Val.of[t](_)) })
-                  }
-                } { nonBasicDefaultValues =>
+              } { nonBasicDefaultValues =>
 
-                  def gen(
-                      w: Expr[Writer],
-                      value: Expr[T],
-                      count: Expr[Int],
-                      setCount: Quotes ?=> Expr[Int] => Expr[Unit])(using Quotes): Expr[Writer] =
-                    withVals {
-                      fields.map { field =>
-                        field.theType match
-                          case '[t] =>
-                            Val.of[Boolean] {
-                              val fieldValue = select[t](value, field.name)
-                              val decCount = setCount('{ $count - 1 })
+                def gen(
+                    w: Expr[Writer],
+                    value: Expr[T],
+                    count: Expr[Int],
+                    setCount: Quotes ?=> Expr[Int] => Expr[Unit])(using Quotes): Expr[Writer] =
+                  withVals {
+                    fields.map { field =>
+                      field.theType match
+                        case '[t] =>
+                          Val.of[Boolean] {
+                            val fieldValue = select[t](value, field.name)
+                            val decCount = setCount('{ $count - 1 })
 
-                              def defaultVal(expr: Option[Expr[t]])(using Quotes): Expr[Boolean] =
-                                expr match
-                                  case Some(x) =>
-                                    '{
-                                      $derivationConfig.encodeCaseClassMemberDefaultValues
-                                        || $fieldValue != $x
-                                        || {
-                                        $decCount; false
-                                      }
+                            def defaultVal(expr: Option[Expr[t]])(using Quotes): Expr[Boolean] =
+                              expr match
+                                case Some(x) if !config.encodeCaseClassMemberDefaultValues =>
+                                  '{
+                                    $fieldValue != $x || {
+                                      $decCount; false
                                     }
-                                  case None => Expr(true)
+                                  }
+                                case _ => Expr(true)
 
-                              if (basicFieldFlags(field.index)) {
-                                defaultVal(field.defaultValue[t])
-                              } else {
-                                '{
-                                  val enc = ${ fieldEncDefs(field.ownTypeIndex).get.as[Encoder[t]].get }.unwrap
-                                  if (enc.isInstanceOf[Encoder.PossiblyWithoutOutput[t]])
-                                    enc.asInstanceOf[Encoder.PossiblyWithoutOutput[t]].producesOutputFor($fieldValue) || {
-                                      $decCount;
-                                      false
-                                    }
-                                  else ${ defaultVal(nonBasicDefaultValues(field.index).map(_.get.asExprOf[t])) }
-                                }
+                            if (basicFieldFlags(field.index)) {
+                              defaultVal(field.defaultValue[t])
+                            } else {
+                              '{
+                                val enc = ${ fieldEncDefs(field.ownTypeIndex).get.as[Encoder[t]].get }.unwrap
+                                if (enc.isInstanceOf[Encoder.PossiblyWithoutOutput[t]])
+                                  enc.asInstanceOf[Encoder.PossiblyWithoutOutput[t]].producesOutputFor($fieldValue) || {
+                                    $decCount;
+                                    false
+                                  }
+                                else ${ defaultVal(nonBasicDefaultValues(field.index).map(_.get.asExprOf[t])) }
                               }
                             }
-                      }
-                    } { fieldOutputFlags =>
-
-                      def writeEntriesBody(w: Expr[Writer])(using Quotes): Expr[Unit] =
-                        fields.iterator
-                          .map { field =>
-                            field.theType match
-                              case '[t] =>
-                                val writeKey = field.key match
-                                  case x: Long   => '{ $w.writeLong(${ Expr(x) }) }
-                                  case x: String => '{ $w.writeString(${ Expr(x) }) }
-                                val fieldValue = select[t](value, field.name)
-                                val encoder    = fieldEncDefs(field.ownTypeIndex).map(_.get.asExprOf[Encoder[t]])
-                                val flag       = fieldOutputFlags(field.index).get.asExprOf[Boolean]
-                                '{ if ($flag) ${ writeField(writeKey, fieldValue, encoder) } }
                           }
-                          .reduceLeftOption((a, b) => '{ $a; $b })
-                          .getOrElse('{ () })
+                    }
+                  } { fieldOutputFlags =>
 
-                      '{
-                        def writeEntries(w: Writer): Writer = {
-                          ${ writeEntriesBody('w) }
-                          w
+                    def writeEntriesBody(w: Expr[Writer])(using Quotes): Expr[Unit] =
+                      fields.iterator
+                        .map { field =>
+                          field.theType match
+                            case '[t] =>
+                              val writeKey = field.key match
+                                case x: Long   => '{ $w.writeLong(${ Expr(x) }) }
+                                case x: String => '{ $w.writeString(${ Expr(x) }) }
+                              val fieldValue = select[t](value, field.name)
+                              val encoder    = fieldEncDefs(field.ownTypeIndex).map(_.get.asExprOf[Encoder[t]])
+                              val flag       = fieldOutputFlags(field.index).get.asExprOf[Boolean]
+                              '{ if ($flag) ${ writeField(writeKey, fieldValue, encoder) } }
                         }
+                        .reduceLeftOption((a, b) => '{ $a; $b })
+                        .getOrElse('{ () })
 
-                        if ($w.writingCbor) writeEntries($w.writeMapHeader($count))
-                        else writeEntries($w.writeMapStart()).writeBreak()
+                    '{
+                      def writeEntries(w: Writer): Writer = {
+                        ${ writeEntriesBody('w) }
+                        w
                       }
-                    }
-                  end gen
 
-                  '{
-                    Encoder[T] { (w, value) =>
-                      var count = ${ Expr(fields.size) }
-                      ${ gen('w, 'value, 'count, x => '{ count = $x }) }
+                      if ($w.writingCbor) writeEntries($w.writeMapHeader($count))
+                      else writeEntries($w.writeMapStart()).writeBreak()
                     }
+                  }
+                end gen
+
+                '{
+                  Encoder[T] { (w, value) =>
+                    var count = ${ Expr(fields.size) }
+                    ${ gen('w, 'value, 'count, x => '{ count = $x }) }
                   }
                 }
               }
@@ -238,7 +235,7 @@ object MapBasedCodecs extends DerivationApi {
 
           def deriveForSealedTrait(rootNode: AdtTypeNode): Expr[Encoder[T]] =
             '{
-              new MapBasedAdtEncoder[T](summonInline[DerivationConfig]):
+              new MapBasedAdtEncoder[T](${ adtEncodingStrategy }, ${ Expr(config.encodeEnumCasesAsObjects) }):
                 final protected def typeName = ${ Expr(rootNode.name) }
                 def write(w: Writer, value: T): Writer = {
                   val self = this // work around for compiler crash (AssertionError) during macro expansion
@@ -248,11 +245,11 @@ object MapBasedCodecs extends DerivationApi {
         }
       }
 
-    def decoder[T: Type](using quotes: Quotes): Expr[Decoder[T]] =
+    def decoder[T: Type](configExpr: Expr[DerivationConfig])(using quotes: Quotes): Expr[Decoder[T]] =
       Derive[Decoder, T] {
         import quotes.reflect.*
 
-        new Deriver[Decoder, T, quotes.type]:
+        new Deriver[Decoder, T, quotes.type](configExpr):
 
           def deriveForCaseObject(moduleTermSymbol: Symbol): Expr[Decoder[T]] =
             '{
@@ -275,7 +272,7 @@ object MapBasedCodecs extends DerivationApi {
             sortAndVerifyNoCollisions(keysAndFieldsSorted) { case (k, a, b) =>
               fail(
                 s"@key collision: parameters `${a.name}` and `${b.name}` " +
-                  s"of case class `$theTname` share the same type id `$k`")
+                  s"of case class `$theTname` share the same type id `$k`" + namingCollisionHint(config.memberNaming))
             }
             val fieldKeyNames = Expr.ofList(keysAndFields.iterator.map(t => Expr(t._1.toString)).toList)
 
@@ -565,7 +562,7 @@ object MapBasedCodecs extends DerivationApi {
 
             '{
               new MapBasedAdtDecoder[T]:
-                private val strategy = AdtEncodingStrategy(summonInline[DerivationConfig])
+                private val strategy = ${ adtEncodingStrategy }
 
                 def read(r: Reader): T =
                   val self = this // work around for compiler crash (AssertionError) during macro expansion
@@ -584,25 +581,23 @@ object MapBasedCodecs extends DerivationApi {
             }
       }
 
-    def allEncoders[T: Type](using Quotes): Expr[Encoder[T]] =
-      Derive.deriveAll[Encoder, T]("allEncoders", "deriveEncoder") {
+    def allEncoders[T: Type](configExpr: Expr[DerivationConfig])(using Quotes): Expr[Encoder[T]] =
+      Derive.deriveAll[Encoder, T]("allEncoders", "deriveEncoder", configExpr) {
         new Derive.MacroCall[Encoder] {
-          def apply[A: Type](using Quotes) = '{ deriveEncoder[A] }
+          def apply[A: Type](using Quotes) = '{ deriveEncoder[A](using $configExpr) }
         }
       }
 
-    def allDecoders[T: Type](using Quotes): Expr[Decoder[T]] =
-      Derive.deriveAll[Decoder, T]("allDecoders", "deriveDecoder") {
+    def allDecoders[T: Type](configExpr: Expr[DerivationConfig])(using Quotes): Expr[Decoder[T]] =
+      Derive.deriveAll[Decoder, T]("allDecoders", "deriveDecoder", configExpr) {
         new Derive.MacroCall[Decoder] {
-          def apply[A: Type](using Quotes) = '{ deriveDecoder[A] }
+          def apply[A: Type](using Quotes) = '{ deriveDecoder[A](using $configExpr) }
         }
       }
   }
 
-  abstract class MapBasedAdtEncoder[T](config: DerivationConfig) extends DerivedAdtEncoder[T] {
-
-    private val strategy                 = AdtEncodingStrategy(config)
-    private val encodeEnumCasesAsObjects = config.encodeEnumCasesAsObjects
+  abstract class MapBasedAdtEncoder[T](strategy: AdtEncodingStrategy, encodeEnumCasesAsObjects: Boolean)
+      extends DerivedAdtEncoder[T] {
 
     protected def typeName: String
 

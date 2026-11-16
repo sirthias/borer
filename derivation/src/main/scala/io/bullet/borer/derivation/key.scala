@@ -21,6 +21,7 @@ import scala.annotation.meta.field
  *
  * By default the derived encoders and decoders for ADTs serialize the short class name of an
  * ADT instance in order to let the decoder now, which subtype to deserialize.
+ * (This short class name can be transformed via the `adtTypeIdNaming` of the [[DerivationConfig]].)
  *
  * This notation allows for customizing the type id that is used to identify an ADT sub-type
  * in the encoding and offers two choices: A [[String]] or an integer number ([[Int]]/[[Long]]) value.
@@ -54,6 +55,8 @@ import scala.annotation.meta.field
  *
  * By default [[MapBasedCodecs]] use the case class member name as map key, which is usually a good default.
  * (Note: This will also work with backtick-ed member names as in ``case class(`type`: Int, `foo-bar`: String)``).
+ * The member names can be transformed via the `memberNaming` of the [[DerivationConfig]].
+ * An explicit `@key` annotation always takes precedence over any such naming transformation.
  *
  * However, sometimes it's convenient to be able to map the case class member to another name (and vice versa).
  * This annotation allows for just that.

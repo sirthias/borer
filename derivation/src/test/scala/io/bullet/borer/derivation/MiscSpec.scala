@@ -95,8 +95,8 @@ class MiscSpec extends AbstractBorerSpec {
       verifyEncoding(Foo(42), """{"x":42}""")
     }
     {
-      given DerivationConfig = DerivationConfig(encodeCaseClassMemberDefaultValues = true)
-      given Codec[Foo]       = MapBasedCodecs.deriveCodec
+      inline given DerivationConfig = DerivationConfig(encodeCaseClassMemberDefaultValues = true)
+      given Codec[Foo]              = MapBasedCodecs.deriveCodec
       verifyEncoding(Foo(42), """{"x":42,"y":"bar"}""")
     }
   }

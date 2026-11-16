@@ -12,17 +12,17 @@ import io.bullet.borer.*
 
 trait DerivationApi {
 
-  inline def deriveEncoder[T]: Encoder[T]
+  inline def deriveEncoder[T](using inline config: DerivationConfig): Encoder[T]
 
-  inline def deriveAllEncoders[T]: Encoder[T]
+  inline def deriveAllEncoders[T](using inline config: DerivationConfig): Encoder[T]
 
-  inline def deriveDecoder[T]: Decoder[T]
+  inline def deriveDecoder[T](using inline config: DerivationConfig): Decoder[T]
 
-  inline def deriveAllDecoders[T]: Decoder[T]
+  inline def deriveAllDecoders[T](using inline config: DerivationConfig): Decoder[T]
 
-  inline def deriveCodec[T]: Codec[T]
+  inline def deriveCodec[T](using inline config: DerivationConfig): Codec[T]
 
-  inline def deriveAllCodecs[T]: Codec[T]
+  inline def deriveAllCodecs[T](using inline config: DerivationConfig): Codec[T]
 
   /**
    * This enables [[Encoder]] derivation via the `derives` clauses, e.g.
@@ -32,7 +32,8 @@ trait DerivationApi {
    * case class Foo(x: Int) derives Encoder
    * }}}
    */
-  extension (c: Encoder.type) inline def derived[A]: Encoder[A] = deriveEncoder[A]
+  extension (c: Encoder.type)
+    inline def derived[A](using inline config: DerivationConfig): Encoder[A] = deriveEncoder[A](using config)
 
   /**
    * This enables [[Decoder]] derivation via the `derives` clauses, e.g.
@@ -42,7 +43,8 @@ trait DerivationApi {
    * case class Foo(x: Int) derives Decoder
    * }}}
    */
-  extension (c: Decoder.type) inline def derived[A]: Decoder[A] = deriveDecoder[A]
+  extension (c: Decoder.type)
+    inline def derived[A](using inline config: DerivationConfig): Decoder[A] = deriveDecoder[A](using config)
 
   /**
    * This enables [[Codec]] derivation via the `derives` clauses, e.g.
@@ -52,7 +54,8 @@ trait DerivationApi {
    * case class Foo(x: Int) derives Codec
    * }}}
    */
-  extension (c: Codec.type) inline def derived[A]: Codec[A] = deriveCodec[A]
+  extension (c: Codec.type)
+    inline def derived[A](using inline config: DerivationConfig): Codec[A] = deriveCodec[A](using config)
 
   /**
    * This enables [[Encoder]] derivation via the `derives` clause, e.g.
@@ -63,7 +66,9 @@ trait DerivationApi {
    *    ...
    * }}}
    */
-  extension (c: Encoder.All.type) inline def derived[A]: Encoder.All[A] = Encoder.All(deriveAllEncoders[A])
+  extension (c: Encoder.All.type)
+    inline def derived[A](using inline config: DerivationConfig): Encoder.All[A] =
+      Encoder.All(deriveAllEncoders[A](using config))
 
   /**
    * This enables [[Decoder]] derivation via the `derives` clause, e.g.
@@ -74,7 +79,9 @@ trait DerivationApi {
    *    ...
    * }}}
    */
-  extension (c: Decoder.All.type) inline def derived[A]: Decoder.All[A] = Decoder.All(deriveAllDecoders[A])
+  extension (c: Decoder.All.type)
+    inline def derived[A](using inline config: DerivationConfig): Decoder.All[A] =
+      Decoder.All(deriveAllDecoders[A](using config))
 
   /**
    * This enables [[Codec]] derivation via the `derives` clause, e.g.
@@ -85,6 +92,8 @@ trait DerivationApi {
    *   ...
    * }}}
    */
-  extension (c: Codec.All.type) inline def derived[A]: Codec.All[A] = Codec.All(deriveAllCodecs[A])
+  extension (c: Codec.All.type)
+    inline def derived[A](using inline config: DerivationConfig): Codec.All[A] =
+      Codec.All(deriveAllCodecs[A](using config))
 
 }

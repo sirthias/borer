@@ -57,7 +57,7 @@ which carries the type ID in a special map entry, e.g. like this:
 ```  
 
 This alternative ADT encoding can be switched to by bringing a `io.bullet.borer.derivation.DerivationConfig` with
-`flatAdtEncoding = true` into implicit scope (`flatAdtTypeMemberName` and `flatAdtMaxBufferSize` allow for further
+a defined `flatAdtEncoding` into implicit scope (its `typeMemberName` and `maxBufferSize` allow for further
 customization):
 
 @@snip [-]($test$/DerivationSpec.scala) { #flat-adt-encoding }
@@ -137,6 +137,33 @@ also used for custom ADT type-ids (see @ref:[Array-Based Codec](array-based.md) 
 Simply annotate a case class member do provide a custom name:
 
 @@snip [-]($test$/DerivationSpec.scala) { #custom-member-name }
+
+
+### Member Naming
+
+If the names of the case class members should generally be transformed in the encoding (e.g. from `camelCase` to
+`snake_case`) you can configure a `memberNaming` (and also an `adtTypeIdNaming` for the
+@ref:[Type IDs](type-ids.md)) via the `DerivationConfig`:
+
+@@snip [-]($test$/DerivationSpec.scala) { #naming }
+
+The available transformations are the cases of the `DerivationConfig.Naming` enum: `Unchanged` (the default),
+`camelCase`, `kebab-case`, `PascalCase`, `snake_case` and `SNAKE_CASE`.
+Names are split into words at `_`, `-` and case transitions, whereby acronyms are kept together as one word
+(e.g. `HTTPServer` becomes `http_server` with `snake_case`) and digits stick to the preceding characters.
+
+The naming only applies to members without an explicit `@key` annotation.
+It doesn't affect the `typeMemberName` of the flat ADT encoding, nor the keys of "real" `Map[K, V]` instances.
+If a name transformation causes two members to share the same key the derivation fails with a compile-time error.
+
+@@@ note
+
+The `DerivationConfig` is a purely static construct, which is evaluated by the derivation macros at compile time.
+Therefore, it must be provided as an **`inline given`** with a statically known value, i.e. built from literals
+(and the `DerivationConfig` builder methods). A regular `given` or values only known at runtime trigger a
+compile-time error.
+
+@@@
 
 
 ### CompactMapBasedCodecs

@@ -21,12 +21,12 @@ import scala.reflect.ClassTag
 object Derive {
   def apply[F[_], T: Type](deriver: Deriver[F, T, ?]): Expr[F[T]] = deriver.derive
 
-  def deriveAll[F[_]: Type, T: Type](macroName: String, altMacroName: String)(macroCall: MacroCall[F])(
-      using Quotes): Expr[F[T]] =
+  def deriveAll[F[_]: Type, T: Type](macroName: String, altMacroName: String, config: Expr[DerivationConfig])(
+      macroCall: MacroCall[F])(using Quotes): Expr[F[T]] =
     Derive[F, T] {
       import quotes.reflect.*
 
-      new Deriver[F, T, quotes.type]:
+      new Deriver[F, T, quotes.type](config):
 
         private val msg =
           s"The `$macroName` macro can only be used on sealed traits or sealed abstract " +
@@ -75,12 +75,32 @@ object Derive {
   }
 }
 
-abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](using val q: Q) {
+abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](configExpr: Expr[DerivationConfig])(
+    using val q: Q) {
   import q.reflect.*
 
   val theT: TypeRepr    = TypeRepr.of[T]
   val keyAnno: TypeRepr = TypeRepr.of[io.bullet.borer.derivation.key]
   val theTname: String  = theT.show(using Printer.TypeReprShortCode)
+
+  /**
+   * The statically evaluated [[DerivationConfig]] available at the macro call site.
+   * Lazy, so that derivations not depending on the config don't require a statically evaluable config.
+   */
+  @threadUnsafe final lazy val config: DerivationConfig = StaticDerivationConfig.evaluate(configExpr)(using q)
+
+  /**
+   * The [[AdtEncodingStrategy]] (as an expression) selected by the [[config]].
+   */
+  final def adtEncodingStrategy(using Quotes): Expr[AdtEncodingStrategy] =
+    AdtEncodingStrategy.expr(config.flatAdtEncoding)
+
+  /**
+   * Suffix for key collision error messages, pointing to a naming transformation that might have caused it.
+   */
+  final def namingCollisionHint(naming: DerivationConfig.Naming): String =
+    if (naming == DerivationConfig.Naming.Unchanged) ""
+    else s" (after applying the configured `$naming` naming)"
 
   sealed trait FieldType {
     def tpe: TypeRepr
@@ -92,6 +112,11 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
     def name: String
     def annotations: List[Term]
 
+    /**
+     * The name transformation applied to `name` if no explicit `@key` annotation is present.
+     */
+    def naming: DerivationConfig.Naming
+
     lazy val key: String | Long = {
       val keys: List[String | Long] = annotations.filter(_.tpe <:< keyAnno).flatMap {
         case Apply(_, List(Literal(StringConstant(x)))) => Some(x)
@@ -101,7 +126,7 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
           report.errorAndAbort("The '@key' annotation only supports String or Int/Long literal arguments.", x.pos)
       }
       keys.lengthCompare(1) match {
-        case -1 => name
+        case -1 => naming(name)
         case 0  => keys.head
         case 1  => report.errorAndAbort("Duplicate '@key' annotation", annotations.head.pos)
       }
@@ -116,7 +141,8 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
       annotations: List[Term])
       extends WithAnnotations {
 
-    def name: String = symbol.name
+    def name: String                    = symbol.name
+    def naming: DerivationConfig.Naming = config.memberNaming
 
     def defaultValue[A: Type]: Option[Expr[A]] = defaultValueMethod.map(_.asExprOf[A])
     def hasDefaultValue: Boolean               = defaultValueMethod.isDefined
@@ -138,6 +164,7 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
   case class AdtTypeNode(tpe: TypeRepr, subs: List[AdtTypeNode]) extends WithAnnotations {
     @threadUnsafe lazy val name: String = if (tpe.isSingleton) tpe.termSymbol.name else tpe.typeSymbol.name
     def annotations: List[Term]                       = tpe.typeSymbol.annotations
+    def naming: DerivationConfig.Naming               = config.adtTypeIdNaming
     def containedIn(list: List[AdtTypeNode]): Boolean = list.exists(_ eq this)
     def isEnumSingletonCase: Boolean = tpe.isSingleton && parent.exists(_.tpe.typeSymbol.flags.is(Flags.Enum))
     def isAbstract: Boolean =
@@ -391,7 +418,8 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
     val result = flattened.map(x => x._1.key -> x._1)
     sortAndVerifyNoCollisions(result) { case (k, a, b) =>
       report.errorAndAbort(
-        s"@key collision: sub types `${a.name}` and `${b.name}` of ADT `${node.name}` share the same type id `$k`",
+        s"@key collision: sub types `${a.name}` and `${b.name}` of ADT `${node.name}` share the same type id `$k`" +
+          namingCollisionHint(config.adtTypeIdNaming),
         node.tpe.typeSymbol.pos.getOrElse(Position.ofMacroExpansion))
     }
     result

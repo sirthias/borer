@@ -31,21 +31,21 @@ object EnumCasesAsObjectsSpec:
     case Planetoid(size: Int)
 
   object MapDefault:
-    given DerivationConfig = DerivationConfig(encodeEnumCasesAsObjects = true)
+    inline given DerivationConfig = DerivationConfig(encodeEnumCasesAsObjects = true)
     import MapBasedCodecs.*
     given Codec[Planet] = deriveCodec
     given Codec[Body]   = deriveAllCodecs
     given Codec[Thing]  = deriveAllCodecs
 
   object MapFlat:
-    given DerivationConfig = DerivationConfig(encodeEnumCasesAsObjects = true, flatAdtEncoding = true)
+    inline given DerivationConfig = DerivationConfig().withEnumCasesAsObjectEncoding.withFlatAdtEncoding()
     import MapBasedCodecs.*
     given Codec[Planet] = deriveCodec
     given Codec[Body]   = deriveAllCodecs
     given Codec[Thing]  = deriveAllCodecs
 
   object ArrayBased:
-    given DerivationConfig = DerivationConfig(encodeEnumCasesAsObjects = true)
+    inline given DerivationConfig = DerivationConfig(encodeEnumCasesAsObjects = true)
     import ArrayBasedCodecs.*
     given Codec[Planet] = deriveCodec
     given Codec[Body]   = deriveAllCodecs

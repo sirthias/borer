@@ -189,8 +189,7 @@ class DerivationSpec extends BorerSuite {
       import io.bullet.borer.derivation.MapBasedCodecs.*
 
       // this enables the flat ADT encoding
-      given DerivationConfig =
-        DerivationConfig(flatAdtEncoding = true, flatAdtTypeMemberName = "_type")
+      inline given DerivationConfig = DerivationConfig().withFlatAdtEncoding(typeMemberName = "_type")
 
       given Codec[Animal] = deriveAllCodecs[Animal]
 
@@ -211,12 +210,38 @@ class DerivationSpec extends BorerSuite {
         case Sun, Earth, Moon
 
       // encode singleton enum cases like case objects
-      given DerivationConfig = DerivationConfig(encodeEnumCasesAsObjects = true)
+      inline given DerivationConfig = DerivationConfig().withEnumCasesAsObjectEncoding
 
       given Codec[Body] = deriveCodec
 
       Json.encode(Body.Earth: Body).toUtf8String ==> """{"Earth":{}}"""
       // #enum-cases-as-objects
+    }
+
+    {
+      // #naming
+      import io.bullet.borer.{Json, Codec}
+      import io.bullet.borer.derivation.DerivationConfig
+      import io.bullet.borer.derivation.DerivationConfig.Naming
+      import io.bullet.borer.derivation.MapBasedCodecs.*
+
+      sealed trait Vehicle
+      case class RaceCar(topSpeed: Int, driverName: String) extends Vehicle
+      case object HorseCart                                 extends Vehicle
+
+      // snake_case member names, kebab-case type IDs
+      inline given DerivationConfig =
+        DerivationConfig()
+          .withMemberNaming(Naming.snake_case)
+          .withAdtTypeIdNaming(Naming.`kebab-case`)
+
+      given Codec[Vehicle] = deriveAllCodecs
+
+      Json.encode(RaceCar(320, "Ann"): Vehicle).toUtf8String ==>
+      """{"race-car":{"top_speed":320,"driver_name":"Ann"}}"""
+
+      Json.encode(HorseCart: Vehicle).toUtf8String ==> """{"horse-cart":{}}"""
+      // #naming
     }
 
     {

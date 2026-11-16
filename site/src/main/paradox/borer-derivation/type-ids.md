@@ -16,4 +16,8 @@ By default _borer_ will use a sub-type's short class name as a (textual) type ID
 
 If you want to customize this you can use the `@key` annotation to do so.
 Check out the `@key` sources @github[here](/derivation/src/main/scala/io/bullet/borer/derivation/key.scala) for more
-info on this. 
+info on this.
+
+If you'd like all (non-`@key`-annotated) type IDs to be transformed in a certain way (e.g. to `kebab-case`) you can
+configure an `adtTypeIdNaming` via an `inline given DerivationConfig`, as described in the
+@ref:[Member Naming](map-based.md#member-naming) section. 
