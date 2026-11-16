@@ -13,13 +13,13 @@ import scala.reflect.Typeable
 trait CommonConfig:
 
   /**
-   * The custom context object set via `withContext` on the Encoding API.
+   * The custom context object set via `withContext` on the Encoding/Decoding API.
    * `null` if not set.
    */
   def rawContext: AnyRef
 
   /**
-   * The custom context object set via `withContext` on the Encoding API.
+   * The custom context object set via `withContext` on the Encoding/Decoding API.
    * Cast to the given type `A`.
    */
   final def contextAs[A: Typeable]: Option[A] =

@@ -8,13 +8,12 @@
 
 package io.bullet.borer.json
 
-import java.nio.charset.StandardCharsets
-import java.util
-import java.lang.Long as JLong
-
 import io.bullet.borer.*
 import io.bullet.borer.internal.{CharArrayCache, Parser, Util}
 
+import java.lang.Long as JLong
+import java.nio.charset.StandardCharsets
+import java.util
 import scala.annotation.{switch, tailrec}
 
 /**
@@ -52,7 +51,7 @@ final private[borer] class JsonParser[Bytes](val input: Input[Bytes], val config
     using byteAccess: ByteAccess[Bytes])
     extends Parser[Bytes]:
 
-  import JsonParser._
+  import JsonParser.*
 
   private[this] val allowDoubleParsing = !config.readDecimalNumbersOnlyAsNumberStrings
 
@@ -751,7 +750,7 @@ private[borer] object JsonParser:
 
   final val TokenTable: Array[Byte] =
     val array = new Array[Byte](256)
-    java.util.Arrays.fill(array, -1.toByte)
+    java.util.Arrays.fill(array, (-1).toByte)
     array('"'.toInt) = DQUOTE
     array('{'.toInt) = MAP_START
     array('['.toInt) = ARRAY_START
@@ -773,7 +772,7 @@ private[borer] object JsonParser:
 
   final val HexDigits: Array[Byte] =
     val array = new Array[Byte](256)
-    java.util.Arrays.fill(array, -1.toByte)
+    java.util.Arrays.fill(array, (-1).toByte)
     array('0'.toInt) = 0x00
     array('1'.toInt) = 0x01
     array('2'.toInt) = 0x02
