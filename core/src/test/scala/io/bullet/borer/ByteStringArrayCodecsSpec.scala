@@ -11,7 +11,7 @@ package io.bullet.borer
 class ByteStringArrayCodecsSpec extends ByteArrayJsonSpec:
 
   test("Big Endian") {
-    import ByteStringArrayCodecs.BigEndian._
+    import ByteStringArrayCodecs.BigEndian.given
 
     test("Short Arrays") {
       roundTrip(
@@ -46,7 +46,7 @@ class ByteStringArrayCodecsSpec extends ByteArrayJsonSpec:
   }
 
   test("Little Endian") {
-    import ByteStringArrayCodecs.LittleEndian._
+    import ByteStringArrayCodecs.LittleEndian.given
 
     test("Short Arrays") {
       roundTrip(

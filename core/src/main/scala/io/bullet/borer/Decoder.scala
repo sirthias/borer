@@ -20,7 +20,7 @@ import java.lang.{
   Short as JShort
 }
 import java.math.{BigDecimal as JBigDecimal, BigInteger as JBigInteger}
-import scala.annotation.{nowarn, tailrec, threadUnsafe}
+import scala.annotation.{tailrec, threadUnsafe}
 import scala.collection.{mutable, Factory}
 import scala.collection.immutable.{HashMap, ListMap, TreeMap}
 import scala.deriving.Mirror
@@ -93,7 +93,6 @@ object Decoder extends LowPrioDecoders:
      * Maps the result of the underlying [[Decoder]] with the given function.
      * If the function returns `None` decoding will fail with a [[Borer.Error.ValidationFailure]].
      */
-    @nowarn("msg=anonymous class definition will be duplicated at each inline site")
     inline def mapOption[B: Mirror.Of](f: A => Option[B]): Decoder[B] =
       Decoder(r => f(underlying.read(r)).getOrElse(r.unexpectedDataItem(Util.typeName[B])))
 

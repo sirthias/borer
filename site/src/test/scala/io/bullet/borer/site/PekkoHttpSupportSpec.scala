@@ -41,5 +41,7 @@ class PekkoHttpSupportSpec extends BorerSuite {
         }
       }
     // #example
+
+    assert(route != null)
   }
 }

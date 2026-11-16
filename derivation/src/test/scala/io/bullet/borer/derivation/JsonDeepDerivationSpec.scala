@@ -12,6 +12,8 @@ import java.nio.charset.StandardCharsets
 
 import io.bullet.borer._
 
+import scala.annotation.unused
+
 object JsonDeepDerivationSpec {
 
   // moved out of the JsonDeepDerivationSpec due to https://github.com/lampepfl/dotty/issues/11174
@@ -106,7 +108,7 @@ class JsonDeepDerivationSpec extends AbstractBorerSpec {
     case class Literal(value: Int) extends Expr
     case class Neg(lit: Literal)   extends Expr
 
-    given Codec[Expr] = ArrayBasedCodecs.deriveAllCodecs[Expr]
+    @unused given Codec[Expr] = ArrayBasedCodecs.deriveAllCodecs[Expr]
   }
 
   test("<cross dependencies> B") {
@@ -114,7 +116,7 @@ class JsonDeepDerivationSpec extends AbstractBorerSpec {
     case class Neg(lit: Literal)   extends Expr
     case class Literal(value: Int) extends Expr
 
-    given Codec[Expr] = ArrayBasedCodecs.deriveAllCodecs[Expr]
+    @unused given Codec[Expr] = ArrayBasedCodecs.deriveAllCodecs[Expr]
   }
 
   test("diamond") {

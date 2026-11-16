@@ -8,7 +8,6 @@
 
 package io.bullet.borer
 
-import scala.annotation.threadUnsafe
 import scala.deriving.Mirror
 
 /**

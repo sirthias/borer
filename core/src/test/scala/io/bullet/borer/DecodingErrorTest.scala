@@ -9,7 +9,6 @@
 package io.bullet.borer
 
 import java.nio.charset.StandardCharsets.UTF_8
-import scala.collection.immutable.HashMap
 
 class DecodingErrorTest extends BorerSuite:
 
@@ -17,7 +16,7 @@ class DecodingErrorTest extends BorerSuite:
     Decoder.of[Dom.Element].mapEither {
       case x: Dom.IntElem     => Json.transEncode(x).transDecode.to[Int].valueEither
       case x: Dom.BooleanElem => Json.transEncode(x).transDecode.to[Boolean].valueEither
-      case x                  => Left("nope")
+      case _                  => Left("nope")
     }
 
   test("DecodingError Union Type decomposition") {

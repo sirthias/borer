@@ -10,6 +10,7 @@ package io.bullet.borer.derivation
 
 import io.bullet.borer.*
 
+import scala.annotation.unused
 import scala.util.{Failure, Try}
 import scala.util.control.NonFatal
 
@@ -218,9 +219,9 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
     test("<array-based> ADT Key Collision") {
       import AdtWithKeyCollision._
 
-      given Codec[Dog]   = deriveCodec[Dog]
-      given Codec[Cat]   = deriveCodec[Cat]
-      given Codec[Mouse] = deriveCodec[Mouse]
+      @unused given Codec[Dog]   = deriveCodec[Dog]
+      @unused given Codec[Cat]   = deriveCodec[Cat]
+      @unused given Codec[Mouse] = deriveCodec[Mouse]
 
       compileErrors("deriveEncoder[Animal]") ==>
       """|error: @key collision: sub types `Cat` and `Dog` of ADT `Animal` share the same type id `Dog`
@@ -274,21 +275,21 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
       decode[T](encode(dom)) ==> value
     }
 
-    def sizeMatchUnordered[T: Encoder: Decoder](value: T, dom: MapElem): Unit = {
+    def sizeMatchUnordered[T: Decoder](value: T, dom: MapElem): Unit = {
       val unorderedDom = transform(dom)(_.toMap.toList)
       val encoded      = encode(unorderedDom)
       decode[Element](encoded) ==> unorderedDom
       decode[T](encoded) ==> value
     }
 
-    def missingMembersWithDefaultValue[T: Encoder: Decoder](value: T, dom: MapElem): Unit = {
+    def missingMembersWithDefaultValue[T: Decoder](value: T, dom: MapElem): Unit = {
       val partialDom = transform(dom)(_.filter(_._1 != StringElem("int")))
       val encoded    = encode(partialDom)
       decode[Element](encoded) ==> partialDom
       decode[T](encoded) ==> value
     }
 
-    def missingMembersWithoutDefaultValue[T: Encoder: Decoder](dom: MapElem, missingKey: String): Unit = {
+    def missingMembersWithoutDefaultValue[T: Decoder](dom: MapElem, missingKey: String): Unit = {
       val partialDom = transform(dom)(_.filter(_._1 != StringElem(missingKey)))
       val encoded    = encode(partialDom)
       decode[Element](encoded) ==> partialDom
@@ -299,7 +300,7 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
       }
     }
 
-    def dupMemberBeforeFillCompletion[T: Encoder: Decoder](dom: MapElem, memberIx: Int, key: String): Unit = {
+    def dupMemberBeforeFillCompletion[T: Decoder](dom: MapElem, memberIx: Int, key: String): Unit = {
       val badDom  = transform(dom)(x => x.take(memberIx) ::: x.drop(memberIx - 1))
       val encoded = encode(badDom)
       decode[Element](encoded) ==> badDom
@@ -309,14 +310,14 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
       }
     }
 
-    def dupMemberAfterFillCompletion[T: Encoder: Decoder](value: T, dom: MapElem, memberIx: Int): Unit = {
+    def dupMemberAfterFillCompletion[T: Decoder](value: T, dom: MapElem, memberIx: Int): Unit = {
       val badDom  = transform(dom)(x => x :+ x(memberIx))
       val encoded = encode(badDom)
       decode[Element](encoded) ==> badDom
-      decode[T](encoded)
+      decode[T](encoded) ==> value
     }
 
-    def extraMemberBeforeFillCompletion[T: Encoder: Decoder](value: T, dom: MapElem, ix: Int): Unit = {
+    def extraMemberBeforeFillCompletion[T: Decoder](value: T, dom: MapElem, ix: Int): Unit = {
       val extraMember = StringElem("yeah") -> StringElem("xxx")
       val fatDom      = transform(dom)(x => (x.take(ix) :+ extraMember) ++ x.drop(ix))
       val encoded     = encode(fatDom)
@@ -324,7 +325,7 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
       decode[T](encoded) ==> value
     }
 
-    def extraMemberAfterFillCompletion[T: Encoder: Decoder](value: T, dom: MapElem): Unit = {
+    def extraMemberAfterFillCompletion[T: Decoder](value: T, dom: MapElem): Unit = {
       val extraMember = StringElem("extra") -> StringElem("xxx")
       val fatDom      = transform(dom)(_ :+ extraMember)
       val encoded     = encode(fatDom)
@@ -332,7 +333,7 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
       decode[T](encoded) ==> value
     }
 
-    def complexExtraMemberBeforeFC[T: Encoder: Decoder](value: T, dom: MapElem, ix: Int): Unit = {
+    def complexExtraMemberBeforeFC[T: Decoder](value: T, dom: MapElem, ix: Int): Unit = {
       val extraMember = StringElem("extra") -> dom
       val fatDom      = transform(dom)(x => (x.take(ix) :+ extraMember) ++ x.drop(ix))
       val encoded     = encode(fatDom)
@@ -340,7 +341,7 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
       decode[T](encoded) ==> value
     }
 
-    def complexExtraMemberAfterFC[T: Encoder: Decoder](value: T, dom: MapElem): Unit = {
+    def complexExtraMemberAfterFC[T: Decoder](value: T, dom: MapElem): Unit = {
       val extraMember = StringElem("extra") -> dom
       val fatDom      = transform(dom)(_ :+ extraMember)
       val encoded     = encode(fatDom)
@@ -445,9 +446,7 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
     }
 
     test("<map-based> ADT Key Collision") {
-      import AdtWithKeyCollision._
-
-      compileErrors("deriveEncoder[Animal]") ==>
+      compileErrors("deriveEncoder[AdtWithKeyCollision.Animal]") ==>
       """error: @key collision: sub types `Cat` and `Dog` of ADT `Animal` share the same type id `Dog`
         |  sealed trait Animal
         |              ^""".stripMargin
@@ -459,8 +458,8 @@ abstract class DerivationSpec(target: Target) extends AbstractBorerSpec {
       sealed trait C       extends A
       case class D(a: Int) extends B with C
 
-      given Codec[D] = deriveCodec
-      given Codec[A] = deriveCodec
+      given Codec[D]         = deriveCodec
+      @unused given Codec[A] = deriveCodec
     }
 
     test("<map-based> Case Objects") {

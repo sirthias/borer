@@ -9,7 +9,7 @@
 package io.bullet.borer
 
 import munit.FunSuite
-import scala.annotation.{implicitNotFound, targetName}
+import scala.annotation.targetName
 
 abstract class BorerSuite extends FunSuite:
 

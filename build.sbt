@@ -55,9 +55,8 @@ lazy val commonSettings = Seq(
     "-pagewidth:120",
     "-java-output-version:17",
     "-Werror",
-    "-Xcheck-macros"
-    // "-Ydebug-error",
-    // "-Wunused:all" // disabled until https://github.com/lampepfl/dotty/issues/17315 is resolved
+    "-Xcheck-macros",
+    "-Wunused:all"
   ) ++ {
     val local  = (LocalRootProject / baseDirectory).value.toURI
     val remote = s"https://raw.githubusercontent.com/sirthias/borer/${git.gitHeadCommit.value.get}/"

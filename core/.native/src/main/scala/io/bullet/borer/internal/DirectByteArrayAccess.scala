@@ -10,10 +10,9 @@ package io.bullet.borer.internal
 
 import java.lang.Long as JLong
 import java.nio.ByteOrder
-import scala.annotation.{nowarn, tailrec}
+import scala.annotation.tailrec
 import scala.scalanative.runtime.ffi.memcpy
 import scala.scalanative.unsafe.*
-import scala.scalanative.unsigned.USize
 
 object DirectByteArrayAccess extends ByteArrayAccess:
 

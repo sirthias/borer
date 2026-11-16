@@ -9,7 +9,6 @@
 package io.bullet.borer.derivation
 
 import io.bullet.borer.*
-import scala.deriving.*
 import scala.compiletime.*
 import scala.quoted.*
 

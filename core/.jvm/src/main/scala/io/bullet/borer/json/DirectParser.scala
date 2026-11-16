@@ -9,7 +9,6 @@
 package io.bullet.borer.json
 
 import io.bullet.borer.Json
-import io.bullet.borer.internal.DirectByteArrayAccess
 
 private[borer] object DirectParser:
 

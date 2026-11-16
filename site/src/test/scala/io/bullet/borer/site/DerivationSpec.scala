@@ -278,6 +278,9 @@ class DerivationSpec extends BorerSuite {
 
     implicit lazy val codec: Codec[TreeNode] = deriveAllCodecs
     // #recursive-adt-old
+
+    val tree: TreeNode = Node(Leaf, Node(Leaf, Leaf))
+    io.bullet.borer.Json.decode(io.bullet.borer.Json.encode(tree).toByteArray).to[TreeNode].value ==> tree
   }
 
   test("Recursive ADT new") {
@@ -291,5 +294,8 @@ class DerivationSpec extends BorerSuite {
 
     given Codec[TreeNode] = deriveAllCodecs
     // #recursive-adt-new
+
+    val tree: TreeNode = Node(Leaf, Node(Leaf, Leaf))
+    io.bullet.borer.Json.decode(io.bullet.borer.Json.encode(tree).toByteArray).to[TreeNode].value ==> tree
   }
 }

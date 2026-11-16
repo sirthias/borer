@@ -34,6 +34,11 @@ class CustomCodecsSpec extends BorerSuite {
     val json  = Json.encode(color).toUtf8String
     json ==> """["red",16711680]"""
     Json.decode(json.getBytes("UTF8")).to[Color].value ==> color
+
+    // the alternative `Codec` must produce the same encoding
+    val codec = summon[Codec[Color]]
+    Json.encode(color)(using codec.encoder).toUtf8String ==> json
+    Json.decode(json.getBytes("UTF8")).to[Color](using codec.decoder).value ==> color
   }
 
   test("Map/Contramap") {

@@ -12,6 +12,8 @@ import java.nio.charset.StandardCharsets
 
 import io.bullet.borer._
 
+import scala.annotation.unused
+
 class MiscSpec extends AbstractBorerSpec {
 
   def encode[T: Encoder](value: T): String   = Json.encode(value).toUtf8String
@@ -107,7 +109,7 @@ class MiscSpec extends AbstractBorerSpec {
     }
 
     case class Foo(value: Double, unit: Unit)
-    given Decoder[Foo] = MapBasedCodecs.deriveDecoder
+    @unused given Decoder[Foo] = MapBasedCodecs.deriveDecoder
     verifyDecoding("null", null)
   }
 

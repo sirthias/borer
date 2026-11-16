@@ -12,24 +12,24 @@ import io.bullet.borer.BorerSuite
 
 class LoggingSpec extends BorerSuite {
 
-  test("Logging") {
-    def `only compiled, not actually run`() = {
-      // #example
-      import io.bullet.borer.Cbor
-      import io.bullet.borer.Codec.ForEither.default
+  // only compiled, not actually run
+  def logging(): Map[String, Either[Int, Vector[String]]] = {
+    // #example
+    import io.bullet.borer.Cbor
+    import io.bullet.borer.Codec.ForEither.default
 
-      val value = Map(
-        "foo" -> Left(42),
-        "bar" -> Right(Vector("For", "the", "King!"))
-      )
-      val encoded = Cbor.encode(value).toByteArray
-      val decoded =
-        Cbor
-          .decode(encoded)
-          .withPrintLogging() // just insert this line to enable logging
-          .to[Map[String, Either[Int, Vector[String]]]]
-          .value
-      // #example
-    }
+    val value = Map(
+      "foo" -> Left(42),
+      "bar" -> Right(Vector("For", "the", "King!"))
+    )
+    val encoded = Cbor.encode(value).toByteArray
+    val decoded =
+      Cbor
+        .decode(encoded)
+        .withPrintLogging() // just insert this line to enable logging
+        .to[Map[String, Either[Int, Vector[String]]]]
+        .value
+    // #example
+    decoded
   }
 }

@@ -11,12 +11,10 @@ package io.bullet.borer.derivation
 import scala.language.implicitConversions
 import io.bullet.borer.*
 
-import scala.annotation.threadUnsafe
+import scala.annotation.{threadUnsafe, unused}
 import scala.annotation.tailrec
-import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.deriving.*
-import scala.compiletime.*
 import scala.quoted.*
 import scala.reflect.ClassTag
 
@@ -53,11 +51,11 @@ object Derive {
           } { cycleBreakerVars =>
             // next, we define simple forwarder givens for all cycle breaker types, pointing to the variables
             renderEach[Var, Unit, F[T]](cycleBreakerVars)(_.tpe) {
-              [FX] => (v: Var) => tail => '{ given FX = ${ v.as[FX].get }; ${ tail(()) } }
+              [FX] => (v: Var) => tail => '{ @unused given FX = ${ v.as[FX].get }; ${ tail(()) } }
             } { _ =>
               // next, we define the givens for all "regular" sub types
               renderEach[Type[?], Unit, F[T]](IArray.from(regularSubtypes.map(_.asType)))(identity) {
-                [X] => (_: Type[?]) => tail => '{ given F[X] = ${ macroCall[X] }; ${ tail(()) } }
+                [X] => (_: Type[?]) => tail => '{ @unused given F[X] = ${ macroCall[X] }; ${ tail(()) } }
               } { _ =>
                 // then, we give the cycle breaker variables their actual contents
                 val tuples = IArray.from(cycleBreakers.map(_.asType)).zip(cycleBreakerVars)
@@ -430,7 +428,7 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
       sub.asType match
         case '[t] =>
           Expr.summon[Mirror.Of[t]] match
-            case Some('{ $m: Mirror.Product {type MirroredElemTypes = elementTypes} }) =>
+            case Some('{ $_ : Mirror.Product {type MirroredElemTypes = elementTypes} }) =>
               @tailrec def withRecursiveTypeArgs(remaining: List[TypeRepr], result: List[TypeRepr]): List[TypeRepr] =
                 remaining match
                   case Nil => result
@@ -490,8 +488,8 @@ abstract private[derivation] class Deriver[F[_]: Type, T: Type, Q <: Quotes](usi
     tpe.asType match
       case '[t] =>
         Expr.summon[Mirror.Of[t]].toList.flatMap {
-          case '{ $m: Mirror.SumOf[t] { type MirroredElemTypes = subs } } => typeReprsOf[subs]
-          case x                                                          => Nil
+          case '{ $_ : Mirror.SumOf[t] { type MirroredElemTypes = subs } } => typeReprsOf[subs]
+          case _                                                          => Nil
         }
 
   /**

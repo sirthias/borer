@@ -9,7 +9,7 @@
 package io.bullet.borer.input
 
 import io.bullet.borer.{ByteAccess, Input}
-import io.bullet.borer.internal.{ByteArrayAccess, DirectByteArrayAccess}
+import io.bullet.borer.internal.DirectByteArrayAccess
 
 trait FromByteArrayInput:
 

@@ -41,5 +41,7 @@ class AkkaHttpSupportSpec extends BorerSuite {
         }
       }
     // #example
+
+    assert(route != null)
   }
 }

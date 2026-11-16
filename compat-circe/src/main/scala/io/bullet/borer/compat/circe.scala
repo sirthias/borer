@@ -14,7 +14,6 @@ import io.circe.{Json, JsonNumber, JsonObject}
 
 import scala.annotation.{switch, tailrec}
 import scala.collection.Factory
-import scala.collection.mutable.ArrayBuffer
 
 object circe {
 

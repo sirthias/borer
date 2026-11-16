@@ -8,7 +8,7 @@
 
 package io.bullet.borer
 
-import io.bullet.borer.internal.{ByteArrayAccess, DirectByteArrayAccess}
+import io.bullet.borer.internal.DirectByteArrayAccess
 
 import java.nio.ByteOrder
 

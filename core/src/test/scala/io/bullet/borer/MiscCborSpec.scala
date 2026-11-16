@@ -177,7 +177,7 @@ class MiscCborSpec extends ByteArrayCborSpec:
           .writeBytes(x.bytes)
           .writeBytes(Cbor.encode(x.foo).withConfig(Cbor.EncodingConfig(allowBufferCaching = false)).toByteArray)
       },
-      decoder = { r => ??? }
+      decoder = { _ => ??? }
     )
 
     val qux = Qux2("YEAH".getBytes, Foo(42, "foo", None))
