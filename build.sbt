@@ -135,6 +135,13 @@ val `circe-generic` = Def.setting("io.circe"          %%  "circe-generic"     % 
 val `scodec-bits`   = Def.setting("org.scodec"        %%  "scodec-bits"       % "1.2.5")
 val munit           = Def.setting("org.scalameta"     %%  "munit"             % "1.3.6" % Test)
 val macrolizer      = Def.setting("io.bullet"         %%  "macrolizer"        % "0.6.2" % "compile-internal, test-internal")
+
+// only used by the `benchmarks` module
+val `jsoniter-scala-core`        = Def.setting("com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"        % "2.43.0")
+val `jsoniter-scala-macros`      = Def.setting("com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros"      % "2.43.0" % Provided)
+val `jackson-module-scala`       = Def.setting("tools.jackson.module"                  %% "jackson-module-scala"       % "3.3.0")
+val `jackson-module-afterburner` = Def.setting("tools.jackson.module"                   % "jackson-module-afterburner" % "3.3.0")
+val upickle                      = Def.setting("com.lihaoyi"                           %% "upickle"                    % "4.4.3")
 // format: ON
 
 /////////////////////// PROJECTS /////////////////////////
@@ -147,7 +154,7 @@ lazy val borer = (project in file("."))
   .aggregate(`compat-circe-jvm`, `compat-circe-js`, `compat-circe-native`)
   .aggregate(`compat-scodec-jvm`, `compat-scodec-js`, `compat-scodec-native`)
   .aggregate(`derivation-jvm`, `derivation-js`, `derivation-native`)
-  // .aggregate(benchmarks)
+  .aggregate(benchmarks)
   .aggregate(site)
   .settings(commonSettings)
   .settings(releaseSettings)
@@ -305,12 +312,11 @@ lazy val benchmarks = project
   .settings(
     publish / skip := true,
     libraryDependencies ++= Seq(
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"        % "2.13.36",
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros"      % "2.13.36" % Provided,
-      "com.fasterxml.jackson.module"          %% "jackson-module-scala"       % "2.13.2",
-      "com.fasterxml.jackson.module"           % "jackson-module-afterburner" % "2.13.2",
-      "com.lihaoyi"                           %% "upickle"                    % "1.6.0",
-      "io.spray"                              %% "spray-json"                 % "1.3.6",
+      `jsoniter-scala-core`.value,
+      `jsoniter-scala-macros`.value,
+      `jackson-module-scala`.value,
+      `jackson-module-afterburner`.value,
+      upickle.value,
       `circe-core`.value,
       `circe-parser`.value,
       `circe-generic`.value,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2024 Mathias Doenitz
+ * Copyright (c) 2019-2026 Mathias Doenitz
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,49 +9,49 @@
 package io.bullet.borer.benchmarks
 
 import java.nio.charset.StandardCharsets.UTF_8
+
 import io.bullet.borer.{Default, Nullable}
-import org.openjdk.jmh.annotations._
-import upickle.default._
+import org.openjdk.jmh.annotations.*
+import upickle.default.*
 
-object UPickleCodecs {
-  implicit val fooRW: ReadWriter[Foo] = macroRW
+import scala.compiletime.uninitialized
 
-  implicit val foosWriter: Writer[Map[String, Foo]] = implicitly[Writer[Map[String, Foo]]]
-  implicit val intsWriter: Writer[List[Int]]        = implicitly[Writer[List[Int]]]
+object UPickleCodecs:
+  given ReadWriter[Foo] = macroRW
 
-  implicit val foosReader: Reader[Map[String, Foo]] = implicitly[Reader[Map[String, Foo]]]
-  implicit val intsReader: Reader[List[Int]]        = implicitly[Reader[List[Int]]]
-}
+  val foosWriter: Writer[Map[String, Foo]] = summon[Writer[Map[String, Foo]]]
+  val intsWriter: Writer[List[Int]]        = summon[Writer[List[Int]]]
 
-import io.bullet.borer.benchmarks.UPickleCodecs._
+  val foosReader: Reader[Map[String, Foo]] = summon[Reader[Map[String, Foo]]]
+  val intsReader: Reader[List[Int]]        = summon[Reader[List[Int]]]
 
-class UPickleEncodingBenchmark extends EncodingBenchmark {
+import io.bullet.borer.benchmarks.UPickleCodecs.*
 
-  @Benchmark
-  def encodeFoos: Array[Byte] = write(foos).getBytes(UTF_8)
+class UPickleEncodingBenchmark extends EncodingBenchmark:
 
   @Benchmark
-  def encodeInts: Array[Byte] = write(ints).getBytes(UTF_8)
+  def encodeFoos: Array[Byte] = write(foos)(using foosWriter).getBytes(UTF_8)
 
   @Benchmark
-  def encodeEmptyArray: Array[Byte] = write(List.empty[Int]).getBytes(UTF_8)
-}
-
-class UPickleDecodingBenchmark extends DecodingBenchmark {
+  def encodeInts: Array[Byte] = write(ints)(using intsWriter).getBytes(UTF_8)
 
   @Benchmark
-  def decodeFoos: Map[String, Foo] = read[Map[String, Foo]](new String(foosJson, UTF_8))
+  def encodeEmptyArray: Array[Byte] = write(List.empty[Int])(using intsWriter).getBytes(UTF_8)
+
+class UPickleDecodingBenchmark extends DecodingBenchmark:
 
   @Benchmark
-  def decodeInts: List[Int] = read[List[Int]](new String(intsJson, UTF_8))
+  def decodeFoos: Map[String, Foo] = read[Map[String, Foo]](new String(foosJson, UTF_8))(using foosReader)
 
   @Benchmark
-  def decodeEmptyArray: List[Int] = read[List[Int]](new String(emptyArrayJson, UTF_8))
-}
+  def decodeInts: List[Int] = read[List[Int]](new String(intsJson, UTF_8))(using intsReader)
 
-class UPickleDomBenchmark extends DomBenchmark {
+  @Benchmark
+  def decodeEmptyArray: List[Int] = read[List[Int]](new String(emptyArrayJson, UTF_8))(using intsReader)
 
-  private var root: ujson.Value = _
+class UPickleDomBenchmark extends DomBenchmark:
+
+  private var root: ujson.Value = uninitialized
   def setup(): Unit             = root = read[ujson.Value](new String(fileBytes, UTF_8))
 
   @Benchmark
@@ -59,180 +59,166 @@ class UPickleDomBenchmark extends DomBenchmark {
 
   @Benchmark
   def decodeDom: ujson.Value = read[ujson.Value](new String(fileBytes, UTF_8))
-}
 
-//@nowarn("cat=other-match-analysis")
-class UPickleModelBenchmark extends DomBenchmark {
+class UPickleModelBenchmark extends DomBenchmark:
 
-  private var root: Product = _
+  private var root: Product = uninitialized
 
-  implicit def nullableWriter[T: Writer]: Writer[Nullable[T]] = implicitly[Writer[T]].comap(_.value)
+  given nullableWriter[T: Writer]: Writer[Nullable[T]] = summon[Writer[T]].comap(x => x)
 
-  implicit def nullableReader[T: Reader: Default]: Reader[Nullable[T]] =
-    implicitly[Reader[T]].map(x => Nullable(if (x == null) Default.of[T] else x))
-
-  implicit def OptionWriter[T: Writer]: Writer[Option[T]] =
-    implicitly[Writer[T]].comap[Option[T]] {
-      case None    => null.asInstanceOf[T]
-      case Some(x) => x
-    }
-
-  implicit def OptionReader[T: Reader]: Reader[Option[T]] =
-    implicitly[Reader[T]].mapNulls {
-      case null => None
-      case x    => Some(x)
-    }
+  given nullableReader[T: {Reader, Default}]: Reader[Nullable[T]] =
+    summon[Reader[T]].mapNulls(x => Nullable(if (x == null) Default.of[T] else x))
 
   // format: OFF
-  implicit lazy val codec: ReadWriter[Product] = {
-    val c = fileName match {
+  private lazy val codec: ReadWriter[Product] =
+    val c = fileName match
       case "australia-abc.json" =>
-        implicit val a: ReadWriter[Australia.Geometry] = macroRW[Australia.Geometry]
-        implicit val b: ReadWriter[Australia.Properties] = macroRW[Australia.Properties]
-        implicit val c: ReadWriter[Australia.Properties1] = macroRW[Australia.Properties1]
-        implicit val d: ReadWriter[Australia.Features] = macroRW[Australia.Features]
-        implicit val e: ReadWriter[Australia.Crs] = macroRW[Australia.Crs]
+        given ReadWriter[Australia.Geometry] = macroRW[Australia.Geometry]
+        given ReadWriter[Australia.Properties] = macroRW[Australia.Properties]
+        given ReadWriter[Australia.Properties1] = macroRW[Australia.Properties1]
+        given ReadWriter[Australia.Features] = macroRW[Australia.Features]
+        given ReadWriter[Australia.Crs] = macroRW[Australia.Crs]
         macroRW[Australia.RootInterface]
 
       case "bitcoin.json" =>
-        implicit val a: ReadWriter[Bitcoin.SpendingOutpoints] = macroRW[Bitcoin.SpendingOutpoints]
-        implicit val b: ReadWriter[Bitcoin.PrevOut] = macroRW[Bitcoin.PrevOut]
-        implicit val c: ReadWriter[Bitcoin.Inputs] = macroRW[Bitcoin.Inputs]
-        implicit val d: ReadWriter[Bitcoin.Out] = macroRW[Bitcoin.Out]
-        implicit val e: ReadWriter[Bitcoin.Txs] = macroRW[Bitcoin.Txs]
+        given ReadWriter[Bitcoin.SpendingOutpoints] = macroRW[Bitcoin.SpendingOutpoints]
+        given ReadWriter[Bitcoin.PrevOut] = macroRW[Bitcoin.PrevOut]
+        given ReadWriter[Bitcoin.Inputs] = macroRW[Bitcoin.Inputs]
+        given ReadWriter[Bitcoin.Out] = macroRW[Bitcoin.Out]
+        given ReadWriter[Bitcoin.Txs] = macroRW[Bitcoin.Txs]
         macroRW[Bitcoin.RootInterface]
 
       case "doj-blog.json" =>
-        implicit val a: ReadWriter[DojBlog.ResponseInfo] = macroRW[DojBlog.ResponseInfo]
-        implicit val b: ReadWriter[DojBlog.Resultset] = macroRW[DojBlog.Resultset]
-        implicit val c: ReadWriter[DojBlog.Metadata] = macroRW[DojBlog.Metadata]
-        implicit val d: ReadWriter[DojBlog.Component] = macroRW[DojBlog.Component]
-        implicit val e: ReadWriter[DojBlog.Results] = macroRW[DojBlog.Results]
+        given ReadWriter[DojBlog.ResponseInfo] = macroRW[DojBlog.ResponseInfo]
+        given ReadWriter[DojBlog.Resultset] = macroRW[DojBlog.Resultset]
+        given ReadWriter[DojBlog.Metadata] = macroRW[DojBlog.Metadata]
+        given ReadWriter[DojBlog.Component] = macroRW[DojBlog.Component]
+        given ReadWriter[DojBlog.Results] = macroRW[DojBlog.Results]
         macroRW[DojBlog.RootInterface]
 
       case "eu-lobby-country.json" =>
-        implicit val a: ReadWriter[EuLobbyCountry.Facets] = macroRW[EuLobbyCountry.Facets]
-        implicit val b: ReadWriter[EuLobbyCountry.Results] = macroRW[EuLobbyCountry.Results]
+        given ReadWriter[EuLobbyCountry.Facets] = macroRW[EuLobbyCountry.Facets]
+        given ReadWriter[EuLobbyCountry.Results] = macroRW[EuLobbyCountry.Results]
         macroRW[EuLobbyCountry.RootInterface]
 
       case "eu-lobby-financial.json" =>
-        implicit val a: ReadWriter[EuLobbyFinancial.Facets] = macroRW[EuLobbyFinancial.Facets]
-        implicit val b: ReadWriter[EuLobbyFinancial.CustomIncomes] = macroRW[EuLobbyFinancial.CustomIncomes]
-        implicit val c: ReadWriter[EuLobbyFinancial.Results] = macroRW[EuLobbyFinancial.Results]
+        given ReadWriter[EuLobbyFinancial.Facets] = macroRW[EuLobbyFinancial.Facets]
+        given ReadWriter[EuLobbyFinancial.CustomIncomes] = macroRW[EuLobbyFinancial.CustomIncomes]
+        given ReadWriter[EuLobbyFinancial.Results] = macroRW[EuLobbyFinancial.Results]
         macroRW[EuLobbyFinancial.RootInterface]
 
       case "eu-lobby-repr.json" =>
-        implicit val a: ReadWriter[EuLobbyRepr.Facets] = macroRW[EuLobbyRepr.Facets]
-        implicit val b: ReadWriter[EuLobbyRepr.Results] = macroRW[EuLobbyRepr.Results]
+        given ReadWriter[EuLobbyRepr.Facets] = macroRW[EuLobbyRepr.Facets]
+        given ReadWriter[EuLobbyRepr.Results] = macroRW[EuLobbyRepr.Results]
         macroRW[EuLobbyRepr.RootInterface]
 
       case "github-events.json" =>
-        import GithubEvents._
-        implicit val _a: ReadWriter[Actor] = macroRW[Actor]
-        implicit val _b: ReadWriter[Author] = macroRW[Author]
-        implicit val _c: ReadWriter[Self] = macroRW[Self]
-        implicit val _d: ReadWriter[Owner] = macroRW[Owner]
-        implicit val _e: ReadWriter[Org] = macroRW[Org]
-        implicit val _f: ReadWriter[Links] = macroRW[Links]
-        implicit val _g: ReadWriter[Links1] = macroRW[Links1]
-        implicit val _h: ReadWriter[Labels] = macroRW[Labels]
-        implicit val _i: ReadWriter[License] = macroRW[License]
-        implicit val _j: ReadWriter[Repo] = macroRW[Repo]
-        implicit val _k: ReadWriter[Repo1_64] = macroRW[Repo1_64]
-        implicit val _l: ReadWriter[Comment] = macroRW[Comment]
-        implicit val _m: ReadWriter[Comment1] = macroRW[Comment1]
-        implicit val _n: ReadWriter[Commits] = macroRW[Commits]
-        implicit val _o: ReadWriter[CreateEvent] = macroRW[CreateEvent]
-        implicit val _p: ReadWriter[Forkee_64] = macroRW[Forkee_64]
-        implicit val _q: ReadWriter[ForkEvent[Forkee_64]] = macroRW[ForkEvent[Forkee_64]]
-        implicit val _r: ReadWriter[Head[Repo1_64]] = macroRW[Head[Repo1_64]]
-        implicit val _s: ReadWriter[PullRequest] = macroRW[PullRequest]
-        implicit val _t: ReadWriter[PullRequest1[Head[Repo1_64]]] = macroRW[PullRequest1[Head[Repo1_64]]]
-        implicit val _u: ReadWriter[PullRequest2[Head[Repo1_64]]] = macroRW[PullRequest2[Head[Repo1_64]]]
-        implicit val _v: ReadWriter[PullRequestEvent[Head[Repo1_64]]] = macroRW[PullRequestEvent[Head[Repo1_64]]]
-        implicit val _w: ReadWriter[PullRequestReviewCommentEvent[Head[Repo1_64]]] = macroRW[PullRequestReviewCommentEvent[Head[Repo1_64]]]
-        implicit val _x: ReadWriter[Issue] = macroRW[Issue]
-        implicit val _y: ReadWriter[Issue1] = macroRW[Issue1]
-        implicit val _z: ReadWriter[IssueCommentEvent] = macroRW[IssueCommentEvent]
-        implicit val _A: ReadWriter[IssuesEvent] = macroRW[IssuesEvent]
-        implicit val _B: ReadWriter[PushEvent] = macroRW[PushEvent]
-        implicit val _C: ReadWriter[WatchEvent] = macroRW[WatchEvent]
-        implicit val _D: ReadWriter[RootInterface[Head[Repo1_64], Forkee_64]] = macroRW[RootInterface[Head[Repo1_64], Forkee_64]]
-        ReadWriter.join[List[RootInterface[Head[Repo1_64], Forkee_64]]](SeqLikeReader, SeqLikeWriter)
+        import GithubEvents.*
+        given ReadWriter[Actor] = macroRW[Actor]
+        given ReadWriter[Author] = macroRW[Author]
+        given ReadWriter[Self] = macroRW[Self]
+        given ReadWriter[Owner] = macroRW[Owner]
+        given ReadWriter[Org] = macroRW[Org]
+        given ReadWriter[Links] = macroRW[Links]
+        given ReadWriter[Links1] = macroRW[Links1]
+        given ReadWriter[Labels] = macroRW[Labels]
+        given ReadWriter[License] = macroRW[License]
+        given ReadWriter[Repo] = macroRW[Repo]
+        given ReadWriter[Repo1] = macroRW[Repo1]
+        given ReadWriter[Comment] = macroRW[Comment]
+        given ReadWriter[Comment1] = macroRW[Comment1]
+        given ReadWriter[Commits] = macroRW[Commits]
+        given ReadWriter[CreateEvent] = macroRW[CreateEvent]
+        given ReadWriter[Forkee] = macroRW[Forkee]
+        given ReadWriter[ForkEvent[Forkee]] = macroRW[ForkEvent[Forkee]]
+        given ReadWriter[Head[Repo1]] = macroRW[Head[Repo1]]
+        given ReadWriter[PullRequest] = macroRW[PullRequest]
+        given ReadWriter[PullRequest1[Head[Repo1]]] = macroRW[PullRequest1[Head[Repo1]]]
+        given ReadWriter[PullRequest2[Head[Repo1]]] = macroRW[PullRequest2[Head[Repo1]]]
+        given ReadWriter[PullRequestEvent[Head[Repo1]]] = macroRW[PullRequestEvent[Head[Repo1]]]
+        given ReadWriter[PullRequestReviewCommentEvent[Head[Repo1]]] = macroRW[PullRequestReviewCommentEvent[Head[Repo1]]]
+        given ReadWriter[Issue] = macroRW[Issue]
+        given ReadWriter[Issue1] = macroRW[Issue1]
+        given ReadWriter[IssueCommentEvent] = macroRW[IssueCommentEvent]
+        given ReadWriter[IssuesEvent] = macroRW[IssuesEvent]
+        given ReadWriter[PushEvent] = macroRW[PushEvent]
+        given ReadWriter[WatchEvent] = macroRW[WatchEvent]
+        given ReadWriter[RootInterface[Head[Repo1], Forkee]] = macroRW[RootInterface[Head[Repo1], Forkee]]
+        ReadWriter.join[List[RootInterface[Head[Repo1], Forkee]]]
 
       case "github-gists.json" =>
-        implicit val a: ReadWriter[GithubGists.Owner] = macroRW[GithubGists.Owner]
-        implicit val b: ReadWriter[GithubGists.FileData] = macroRW[GithubGists.FileData]
-        implicit val c: ReadWriter[GithubGists.RootInterface] = macroRW[GithubGists.RootInterface]
-        ReadWriter.join[List[GithubGists.RootInterface]](SeqLikeReader, SeqLikeWriter)
+        given ReadWriter[GithubGists.Owner] = macroRW[GithubGists.Owner]
+        given ReadWriter[GithubGists.FileData] = macroRW[GithubGists.FileData]
+        given ReadWriter[GithubGists.RootInterface] = macroRW[GithubGists.RootInterface]
+        ReadWriter.join[List[GithubGists.RootInterface]]
 
       case "json-generator.json" =>
-        implicit val a: ReadWriter[JsonGenerator.Friends] = macroRW[JsonGenerator.Friends]
-        implicit val b: ReadWriter[JsonGenerator.Name] = macroRW[JsonGenerator.Name]
-        implicit val c: ReadWriter[JsonGenerator.RootInterface] = macroRW[JsonGenerator.RootInterface]
-        ReadWriter.join[List[JsonGenerator.RootInterface]](SeqLikeReader, SeqLikeWriter)
+        given ReadWriter[JsonGenerator.Friends] = macroRW[JsonGenerator.Friends]
+        given ReadWriter[JsonGenerator.Name] = macroRW[JsonGenerator.Name]
+        given ReadWriter[JsonGenerator.RootInterface] = macroRW[JsonGenerator.RootInterface]
+        ReadWriter.join[List[JsonGenerator.RootInterface]]
 
       case "meteorites.json" =>
-        implicit val a: ReadWriter[Meteorites.Geolocation] = macroRW[Meteorites.Geolocation]
-        implicit val b: ReadWriter[Meteorites.RootInterface] = macroRW[Meteorites.RootInterface]
-        ReadWriter.join[List[Meteorites.RootInterface]](SeqLikeReader, SeqLikeWriter)
+        given ReadWriter[Meteorites.Geolocation] = macroRW[Meteorites.Geolocation]
+        given ReadWriter[Meteorites.RootInterface] = macroRW[Meteorites.RootInterface]
+        ReadWriter.join[List[Meteorites.RootInterface]]
 
       case "movies.json" =>
-        implicit val a: ReadWriter[Movies.RootInterface] = macroRW[Movies.RootInterface]
-        ReadWriter.join[List[Movies.RootInterface]](SeqLikeReader, SeqLikeWriter)
+        given ReadWriter[Movies.RootInterface] = macroRW[Movies.RootInterface]
+        ReadWriter.join[List[Movies.RootInterface]]
 
       case "reddit-scala.json" =>
-        implicit val a: ReadWriter[Reddit.Oembed] = macroRW[Reddit.Oembed]
-        implicit val b: ReadWriter[Reddit.SecureMedia] = macroRW[Reddit.SecureMedia]
-        implicit val c: ReadWriter[Reddit.MediaEmbed] = macroRW[Reddit.MediaEmbed]
-        implicit val d: ReadWriter[Reddit.Gildings] = macroRW[Reddit.Gildings]
-        implicit val e: ReadWriter[Reddit.Data_64] = macroRW[Reddit.Data_64]
-        implicit val f: ReadWriter[Reddit.Child[Reddit.Data_64]] = macroRW[Reddit.Child[Reddit.Data_64]]
-        implicit val g: ReadWriter[Reddit.Data0[Reddit.Data_64]] = macroRW[Reddit.Data0[Reddit.Data_64]]
-        macroRW[Reddit.RootInterface[Reddit.Data_64]]
+        given ReadWriter[Reddit.Oembed] = macroRW[Reddit.Oembed]
+        given ReadWriter[Reddit.SecureMedia] = macroRW[Reddit.SecureMedia]
+        given ReadWriter[Reddit.MediaEmbed] = macroRW[Reddit.MediaEmbed]
+        given ReadWriter[Reddit.Gildings] = macroRW[Reddit.Gildings]
+        given ReadWriter[Reddit.Data] = macroRW[Reddit.Data]
+        given ReadWriter[Reddit.Child[Reddit.Data]] = macroRW[Reddit.Child[Reddit.Data]]
+        given ReadWriter[Reddit.Data0[Reddit.Data]] = macroRW[Reddit.Data0[Reddit.Data]]
+        macroRW[Reddit.RootInterface[Reddit.Data]]
 
       case "rick-morty.json" =>
-        implicit val a: ReadWriter[RickMorty.Rating] = macroRW[RickMorty.Rating]
-        implicit val b: ReadWriter[RickMorty.Schedule] = macroRW[RickMorty.Schedule]
-        implicit val c: ReadWriter[RickMorty.Country] = macroRW[RickMorty.Country]
-        implicit val d: ReadWriter[RickMorty.Network] = macroRW[RickMorty.Network]
-        implicit val e: ReadWriter[RickMorty.Image] = macroRW[RickMorty.Image]
-        implicit val f: ReadWriter[RickMorty.Externals] = macroRW[RickMorty.Externals]
-        implicit val g: ReadWriter[RickMorty.Self] = macroRW[RickMorty.Self]
-        implicit val h: ReadWriter[RickMorty.Links] = macroRW[RickMorty.Links]
-        implicit val i: ReadWriter[RickMorty.Links1] = macroRW[RickMorty.Links1]
-        implicit val j: ReadWriter[RickMorty.Episodes] = macroRW[RickMorty.Episodes]
-        implicit val k: ReadWriter[RickMorty.Embedded] = macroRW[RickMorty.Embedded]
+        given ReadWriter[RickMorty.Rating] = macroRW[RickMorty.Rating]
+        given ReadWriter[RickMorty.Schedule] = macroRW[RickMorty.Schedule]
+        given ReadWriter[RickMorty.Country] = macroRW[RickMorty.Country]
+        given ReadWriter[RickMorty.Network] = macroRW[RickMorty.Network]
+        given ReadWriter[RickMorty.Image] = macroRW[RickMorty.Image]
+        given ReadWriter[RickMorty.Externals] = macroRW[RickMorty.Externals]
+        given ReadWriter[RickMorty.Self] = macroRW[RickMorty.Self]
+        given ReadWriter[RickMorty.Links] = macroRW[RickMorty.Links]
+        given ReadWriter[RickMorty.Links1] = macroRW[RickMorty.Links1]
+        given ReadWriter[RickMorty.Episodes] = macroRW[RickMorty.Episodes]
+        given ReadWriter[RickMorty.Embedded] = macroRW[RickMorty.Embedded]
         macroRW[RickMorty.RootInterface]
 
       case "temp-anomaly.json" =>
-        implicit val a: ReadWriter[TempAnomaly.Description] = macroRW[TempAnomaly.Description]
+        given ReadWriter[TempAnomaly.Description] = macroRW[TempAnomaly.Description]
         macroRW[TempAnomaly.RootInterface]
 
       case "thai-cinemas.json" =>
-        implicit val a: ReadWriter[ThaiCinemas.Group] = macroRW[ThaiCinemas.Group]
-        implicit val b: ReadWriter[ThaiCinemas.Results] = macroRW[ThaiCinemas.Results]
+        given ReadWriter[ThaiCinemas.Group] = macroRW[ThaiCinemas.Group]
+        given ReadWriter[ThaiCinemas.Results] = macroRW[ThaiCinemas.Results]
         macroRW[ThaiCinemas.RootInterface]
 
       case "turkish.json" =>
-        implicit val a: ReadWriter[Turkish.Event] = macroRW[Turkish.Event]
-        implicit val b: ReadWriter[Turkish.Result] = macroRW[Turkish.Result]
+        given ReadWriter[Turkish.Event] = macroRW[Turkish.Event]
+        given ReadWriter[Turkish.Result] = macroRW[Turkish.Result]
         macroRW[Turkish.RootInterface]
 
       case "twitter_api_compact_response.json" | "twitter_api_response.json" =>
-        implicit val a: ReadWriter[TwitterApiResponse.Urls] = macroRW[TwitterApiResponse.Urls]
-        implicit val b: ReadWriter[TwitterApiResponse.Url] = macroRW[TwitterApiResponse.Url]
-        implicit val c: ReadWriter[TwitterApiResponse.UserMentions] = macroRW[TwitterApiResponse.UserMentions]
-        implicit val d: ReadWriter[TwitterApiResponse.Entities] = macroRW[TwitterApiResponse.Entities]
-        implicit val e: ReadWriter[TwitterApiResponse.Entities1] = macroRW[TwitterApiResponse.Entities1]
-        implicit val f: ReadWriter[TwitterApiResponse.User] = macroRW[TwitterApiResponse.User]
-        implicit val g: ReadWriter[TwitterApiResponse.RetweetedStatus] = macroRW[TwitterApiResponse.RetweetedStatus]
-        implicit val h: ReadWriter[TwitterApiResponse.RootInterface] = macroRW[TwitterApiResponse.RootInterface]
-        ReadWriter.join[List[TwitterApiResponse.RootInterface]](SeqLikeReader, SeqLikeWriter)
-    }
+        given ReadWriter[TwitterApiResponse.Urls] = macroRW[TwitterApiResponse.Urls]
+        given ReadWriter[TwitterApiResponse.Url] = macroRW[TwitterApiResponse.Url]
+        given ReadWriter[TwitterApiResponse.UserMentions] = macroRW[TwitterApiResponse.UserMentions]
+        given ReadWriter[TwitterApiResponse.Entities] = macroRW[TwitterApiResponse.Entities]
+        given ReadWriter[TwitterApiResponse.Entities1] = macroRW[TwitterApiResponse.Entities1]
+        given ReadWriter[TwitterApiResponse.User] = macroRW[TwitterApiResponse.User]
+        given ReadWriter[TwitterApiResponse.RetweetedStatus] = macroRW[TwitterApiResponse.RetweetedStatus]
+        given ReadWriter[TwitterApiResponse.RootInterface] = macroRW[TwitterApiResponse.RootInterface]
+        ReadWriter.join[List[TwitterApiResponse.RootInterface]]
     c.asInstanceOf[ReadWriter[Product]]
-  }
   // format: ON
+
+  private given ReadWriter[Product] = codec
 
   def setup(): Unit = root = read[Product](fileBytes)
 
@@ -241,4 +227,3 @@ class UPickleModelBenchmark extends DomBenchmark {
 
   @Benchmark
   def decodeModel: Product = read[Product](fileBytes)
-}

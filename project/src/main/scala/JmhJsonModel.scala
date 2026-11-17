@@ -2,7 +2,14 @@ import io.bullet.borer.derivation.MapBasedCodecs
 
 object JmhJsonModel {
   import MapBasedCodecs.*
-  import io.bullet.borer.Codec
+  import io.bullet.borer.{Codec, Decoder}
+
+  // JMH renders non-finite values (e.g. the `scoreError` of single-iteration runs) as strings like "NaN"
+  implicit val lenientDoubleDecoder: Decoder[Double] =
+    Decoder { r =>
+      if (r.hasString) r.readString().toDouble
+      else r.readDouble()
+    }
 
   final case class Params(fileName: String)
   implicit val paramsCodec: Codec[Params] = deriveCodec[Params]

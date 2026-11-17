@@ -34,24 +34,28 @@ object Analysis {
 
       def showLibraryResult(library: String): Unit = {
         val libPerf = perf(library)
-        val factors = borerPerf.map { case (param, borerScore) => param -> (borerScore / libPerf(param)) }
-        val avg     = factors.map(_._2).sum / factors.size
-        val mean = {
-          val sorted = factors.sortBy(_._2)
-          val mid    = factors.size / 2
-          if ((factors.size & 1) == 1) sorted(mid)._2
-          else (sorted(mid)._2 + sorted(mid + 1)._2) / 2
+        val factors = borerPerf.collect {
+          case (param, borerScore) if libPerf.contains(param) => param -> (borerScore / libPerf(param))
         }
-        val (minParam, minFactor) = factors.minBy(_._2)
-        val (maxParam, maxFactor) = factors.maxBy(_._2)
-        println(
-          f"""$library:
-             |  min: $minFactor%.2f ($minParam)
-             |  avg: $avg%.2f
-             |  max: $maxFactor%.2f ($maxParam)
-             |  mean: $mean%.2f
-          """.stripMargin
-        )
+        if (factors.nonEmpty) {
+          val avg    = factors.map(_._2).sum / factors.size
+          val median = {
+            val sorted = factors.sortBy(_._2)
+            val mid    = factors.size / 2
+            if ((factors.size & 1) == 1) sorted(mid)._2
+            else (sorted(mid - 1)._2 + sorted(mid)._2) / 2
+          }
+          val (minParam, minFactor) = factors.minBy(_._2)
+          val (maxParam, maxFactor) = factors.maxBy(_._2)
+          println(
+            f"""$library:
+               |  min: $minFactor%.2f ($minParam)
+               |  avg: $avg%.2f
+               |  max: $maxFactor%.2f ($maxParam)
+               |  median: $median%.2f
+            """.stripMargin
+          )
+        }
       }
 
       println()
@@ -61,7 +65,6 @@ object Analysis {
       showLibraryResult("Circe")
       showLibraryResult("Jackson")
       showLibraryResult("JsoniterScala")
-      showLibraryResult("Spray")
       showLibraryResult("UPickle")
     }
 

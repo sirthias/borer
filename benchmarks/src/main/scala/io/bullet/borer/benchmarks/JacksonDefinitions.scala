@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2024 Mathias Doenitz
+ * Copyright (c) 2019-2026 Mathias Doenitz
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,22 +8,32 @@
 
 package io.bullet.borer.benchmarks
 
-import com.fasterxml.jackson.core.`type`.TypeReference
-import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
-import com.fasterxml.jackson.module.afterburner.AfterburnerModule
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import org.openjdk.jmh.annotations._
+import org.openjdk.jmh.annotations.*
+import tools.jackson.core.`type`.TypeReference
+import tools.jackson.databind.{DeserializationFeature, JsonNode}
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.module.afterburner.AfterburnerModule
+import tools.jackson.module.scala.DefaultScalaModule
 
-object JacksonCodecs {
-  val mapper: ObjectMapper = new ObjectMapper().registerModule(DefaultScalaModule).registerModule(new AfterburnerModule)
+import scala.compiletime.uninitialized
 
-  val foosTypeRef = new TypeReference[Map[String, Foo]] {}
-  val intsTypeRef = new TypeReference[List[Int]] {}
-}
+object JacksonCodecs:
 
-import io.bullet.borer.benchmarks.JacksonCodecs._
+  val mapper: JsonMapper =
+    JsonMapper
+      .builder()
+      .addModule(DefaultScalaModule)
+      .addModule(new AfterburnerModule)
+      // Jackson 3 enables this by default, but our models map JSON `null`s to `Nullable[<primitive>]`
+      .disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
+      .build()
 
-class JacksonEncodingBenchmark extends EncodingBenchmark {
+  val foosTypeRef: TypeReference[Map[String, Foo]] = new TypeReference[Map[String, Foo]] {}
+  val intsTypeRef: TypeReference[List[Int]]        = new TypeReference[List[Int]] {}
+
+import io.bullet.borer.benchmarks.JacksonCodecs.*
+
+class JacksonEncodingBenchmark extends EncodingBenchmark:
 
   @Benchmark
   def encodeFoos: Array[Byte] = mapper.writeValueAsBytes(foos)
@@ -33,9 +43,8 @@ class JacksonEncodingBenchmark extends EncodingBenchmark {
 
   @Benchmark
   def encodeEmptyArray: Array[Byte] = mapper.writeValueAsBytes(List.empty[Int])
-}
 
-class JacksonDecodingBenchmark extends DecodingBenchmark {
+class JacksonDecodingBenchmark extends DecodingBenchmark:
 
   @Benchmark
   def decodeFoos: Map[String, Foo] = mapper.readValue(foosJson, foosTypeRef)
@@ -45,11 +54,10 @@ class JacksonDecodingBenchmark extends DecodingBenchmark {
 
   @Benchmark
   def decodeEmptyArray: List[Int] = mapper.readValue(emptyArrayJson, intsTypeRef)
-}
 
-class JacksonDomBenchmark extends DomBenchmark {
+class JacksonDomBenchmark extends DomBenchmark:
 
-  private var root: JsonNode = _
+  private var root: JsonNode = uninitialized
   def setup(): Unit          = root = mapper.readTree(fileBytes)
 
   @Benchmark
@@ -57,14 +65,13 @@ class JacksonDomBenchmark extends DomBenchmark {
 
   @Benchmark
   def decodeDom: JsonNode = mapper.readTree(fileBytes)
-}
 
-class JacksonModelBenchmark extends DomBenchmark {
+class JacksonModelBenchmark extends DomBenchmark:
 
-  private var root: Product = _
+  private var root: Product = uninitialized
 
-  lazy val typeRef: TypeReference[Product] = {
-    val c = fileName match {
+  lazy val typeRef: TypeReference[Product] =
+    val c = fileName match
       case "australia-abc.json"      => new TypeReference[Australia.RootInterface] {}
       case "bitcoin.json"            => new TypeReference[Bitcoin.RootInterface] {}
       case "doj-blog.json"           => new TypeReference[DojBlog.RootInterface] {}
@@ -87,18 +94,12 @@ class JacksonModelBenchmark extends DomBenchmark {
 
       case "twitter_api_compact_response.json" | "twitter_api_response.json" =>
         new TypeReference[List[TwitterApiResponse.RootInterface]] {}
-    }
     c.asInstanceOf[TypeReference[Product]]
-  }
 
-  def setup(): Unit =
-    root =
-      try mapper.readValue(fileBytes, typeRef)
-      finally ()
+  def setup(): Unit = root = mapper.readValue(fileBytes, typeRef)
 
   @Benchmark
   def encodeModel: Array[Byte] = mapper.writeValueAsBytes(root)
 
   @Benchmark
   def decodeModel: Product = mapper.readValue(fileBytes, typeRef)
-}

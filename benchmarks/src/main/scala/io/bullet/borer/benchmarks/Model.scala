@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2024 Mathias Doenitz
+ * Copyright (c) 2019-2026 Mathias Doenitz
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,7 +13,7 @@ import io.bullet.borer.Nullable
 
 // model for the test JSON files, generated with https://transform.now.sh/json-to-scala-case-class/
 
-object Australia {
+object Australia:
 
   case class Crs(
       `type`: String,
@@ -52,9 +52,8 @@ object Australia {
       features: Seq[Features],
       crs: Crs
   )
-}
 
-object Bitcoin {
+object Bitcoin:
 
   case class Inputs(
       sequence: Long,
@@ -109,9 +108,7 @@ object Bitcoin {
       vout_sz: Int
   )
 
-}
-
-object DojBlog {
+object DojBlog:
 
   case class Component(
       uuid: String,
@@ -155,12 +152,10 @@ object DojBlog {
       metadata: Metadata,
       results: Seq[Results]
   )
-}
 
-object EuLobbyCountry {
+object EuLobbyCountry:
 
-  case class Facets(
-  )
+  case class Facets()
 
   case class Results(
       name: String,
@@ -180,9 +175,8 @@ object EuLobbyCountry {
       offset: Int,
       previous: Boolean
   )
-}
 
-object EuLobbyFinancial {
+object EuLobbyFinancial:
   case class Facets()
 
   case class CustomIncomes(
@@ -240,9 +234,8 @@ object EuLobbyFinancial {
       offset: Int,
       previous: Boolean
   )
-}
 
-object EuLobbyRepr {
+object EuLobbyRepr:
   case class Facets()
 
   @JsonIgnoreProperties(ignoreUnknown = true)
@@ -308,9 +301,8 @@ object EuLobbyRepr {
       offset: Int,
       previous: Boolean
   )
-}
 
-object GithubEvents {
+object GithubEvents:
 
   case class Actor(
       id: Long,
@@ -451,74 +443,6 @@ object GithubEvents {
       open_issues_count: Int,
       license: Nullable[String],
       forks: Int,
-      open_issues: Int,
-      watchers: Int,
-      default_branch: String,
-      public: Boolean
-  )
-
-  // "reduced" copy of `Repo1` with only 64 fields, needed in order to get at _some_ measurement of uPickle
-  case class Forkee_64(
-      id: Long,
-      node_id: String,
-      name: String,
-      full_name: String,
-      `private`: Boolean,
-      owner: Owner,
-      html_url: String,
-      description: Nullable[String],
-      fork: Boolean,
-      url: String,
-      forks_url: String,
-      keys_url: String,
-      collaborators_url: String,
-      teams_url: String,
-      hooks_url: String,
-      issue_events_url: String,
-      events_url: String,
-      assignees_url: String,
-      branches_url: String,
-      tags_url: String,
-      blobs_url: String,
-      git_tags_url: String,
-      git_refs_url: String,
-      trees_url: String,
-      statuses_url: String,
-      languages_url: String,
-      stargazers_url: String,
-      contributors_url: String,
-      subscribers_url: String,
-      subscription_url: String,
-      commits_url: String,
-      git_commits_url: String,
-      comments_url: String,
-      issue_comment_url: String,
-      contents_url: String,
-      compare_url: String,
-      merges_url: String,
-      archive_url: String,
-      downloads_url: String,
-      issues_url: String,
-      pulls_url: String,
-      milestones_url: String,
-      notifications_url: String,
-      labels_url: String,
-      releases_url: String,
-      created_at: String,
-      updated_at: String,
-      pushed_at: String,
-      git_url: String,
-      ssh_url: String,
-      clone_url: String,
-      size: Int,
-      stargazers_count: Int,
-      watchers_count: Int,
-      has_issues: Boolean,
-      has_projects: Boolean,
-      has_downloads: Boolean,
-      has_wiki: Boolean,
-      has_pages: Boolean,
-      open_issues_count: Int,
       open_issues: Int,
       watchers: Int,
       default_branch: String,
@@ -854,74 +778,6 @@ object GithubEvents {
       default_branch: String
   )
 
-  // "reduced" copy of `Repo1` with only 64 fields, needed in order to get at _some_ measurement of uPickle
-  case class Repo1_64(
-      id: Long,
-      node_id: String,
-      name: String,
-      full_name: String,
-      `private`: Boolean,
-      owner: Owner,
-      html_url: String,
-      description: Nullable[String],
-      fork: Boolean,
-      url: String,
-      forks_url: String,
-      keys_url: String,
-      collaborators_url: String,
-      teams_url: String,
-      hooks_url: String,
-      issue_events_url: String,
-      events_url: String,
-      assignees_url: String,
-      branches_url: String,
-      tags_url: String,
-      git_tags_url: String,
-      trees_url: String,
-      statuses_url: String,
-      languages_url: String,
-      stargazers_url: String,
-      contributors_url: String,
-      subscribers_url: String,
-      subscription_url: String,
-      commits_url: String,
-      git_commits_url: String,
-      comments_url: String,
-      issue_comment_url: String,
-      contents_url: String,
-      compare_url: String,
-      merges_url: String,
-      archive_url: String,
-      issues_url: String,
-      pulls_url: String,
-      notifications_url: String,
-      labels_url: String,
-      releases_url: String,
-      created_at: String,
-      updated_at: String,
-      pushed_at: String,
-      git_url: String,
-      ssh_url: String,
-      clone_url: String,
-      size: Int,
-      stargazers_count: Int,
-      watchers_count: Int,
-      language: String,
-      has_issues: Boolean,
-      has_projects: Boolean,
-      has_downloads: Boolean,
-      has_wiki: Boolean,
-      has_pages: Boolean,
-      forks_count: Int,
-      archived: Boolean,
-      open_issues_count: Int,
-      license: License,
-      forks: Int,
-      open_issues: Int,
-      watchers: Int,
-      default_branch: String
-  )
-
   case class RootInterface[THead, TForkee](
       id: String,
       `type`: String,
@@ -947,9 +803,8 @@ object GithubEvents {
   case class WatchEvent(
       action: String
   )
-}
 
-object GithubGists {
+object GithubGists:
 
   case class FileData(
       filename: String,
@@ -1000,9 +855,8 @@ object GithubGists {
       owner: Owner,
       truncated: Boolean
   )
-}
 
-object JsonGenerator {
+object JsonGenerator:
 
   case class Friends(
       id: Int,
@@ -1038,9 +892,8 @@ object JsonGenerator {
       greeting: String,
       favoriteFruit: String
   )
-}
 
-object Meteorites {
+object Meteorites:
 
   case class Geolocation(
       `type`: String,
@@ -1061,9 +914,8 @@ object Meteorites {
       `:@computed_region_cbhk_fwbd`: Option[String] = None,
       `:@computed_region_nnqa_25f4`: Option[String] = None
   )
-}
 
-object Movies {
+object Movies:
 
   case class RootInterface(
       title: String,
@@ -1072,9 +924,7 @@ object Movies {
       genres: Seq[String]
   )
 
-}
-
-object Reddit {
+object Reddit:
 
   case class Oembed(
       provider_url: String,
@@ -1206,73 +1056,6 @@ object Reddit {
       is_video: Boolean
   )
 
-  case class Data_64(
-      approved_at_utc: Nullable[String],
-      subreddit: String,
-      selftext: String,
-      author_fullname: String,
-      saved: Boolean,
-      mod_reason_title: Nullable[String],
-      gilded: Int,
-      clicked: Boolean,
-      title: String,
-      link_flair_richtext: Seq[String],
-      subreddit_name_prefixed: String,
-      hidden: Boolean,
-      pwls: Int,
-      link_flair_css_class: Nullable[String],
-      downs: Int,
-      parent_whitelist_status: String,
-      hide_score: Boolean,
-      name: Option[String] = None,
-      quarantine: Option[Boolean] = None,
-      link_flair_text_color: String,
-      author_flair_background_color: Nullable[String],
-      subreddit_type: String,
-      ups: Int,
-      domain: String,
-      media_embed: List[MediaEmbed],
-      author_flair_template_id: Nullable[String],
-      is_original_content: Boolean,
-      user_reports: Seq[String],
-      secure_media: Nullable[Option[SecureMedia]],
-      is_reddit_media_domain: Boolean,
-      is_meta: Boolean,
-      category: Nullable[String],
-      secure_media_embed: Nullable[Option[MediaEmbed]],
-      link_flair_text: Nullable[String],
-      can_mod_post: Boolean,
-      score: Int,
-      approved_by: Nullable[String],
-      thumbnail: String,
-      edited: Boolean,
-      author_flair_css_class: Nullable[String],
-      author_flair_richtext: Seq[String],
-      gildings: Gildings,
-      content_categories: Nullable[String],
-      is_self: Boolean,
-      mod_note: Nullable[String],
-      created: Double,
-      link_flair_type: String,
-      wls: Int,
-      banned_by: Nullable[String],
-      author_flair_type: String,
-      contest_mode: Boolean,
-      selftext_html: Nullable[String],
-      likes: Nullable[String],
-      suggested_sort: Nullable[String],
-      author_patreon_flair: Boolean,
-      author_flair_text_color: Nullable[String],
-      permalink: String,
-      whitelist_status: String,
-      stickied: Boolean,
-      url: String,
-      subreddit_subscribers: Int,
-      created_utc: Double,
-      media: Option[SecureMedia] = None,
-      is_video: Boolean
-  )
-
   case class Child[TData](
       kind: String,
       data: TData
@@ -1290,9 +1073,8 @@ object Reddit {
       kind: String,
       data: Data0[TData]
   )
-}
 
-object RickMorty {
+object RickMorty:
 
   case class Country(
       name: String,
@@ -1381,9 +1163,8 @@ object RickMorty {
   case class Self(
       href: String
   )
-}
 
-object TempAnomaly {
+object TempAnomaly:
 
   case class Description(
       title: String,
@@ -1396,9 +1177,8 @@ object TempAnomaly {
       description: Description,
       data: Map[String, Float]
   )
-}
 
-object ThaiCinemas {
+object ThaiCinemas:
 
   case class Group(
       code: String,
@@ -1433,9 +1213,8 @@ object ThaiCinemas {
       previous: Nullable[String],
       results: Seq[Results]
   )
-}
 
-object Turkish {
+object Turkish:
 
   case class Event(
       date: String,
@@ -1450,9 +1229,7 @@ object Turkish {
 
   case class RootInterface(result: Result)
 
-}
-
-object TwitterApiResponse {
+object TwitterApiResponse:
 
   @JsonIgnoreProperties(ignoreUnknown = true)
   case class Entities(
@@ -1573,4 +1350,3 @@ object TwitterApiResponse {
       id_str: String,
       indices: Seq[Int]
   )
-}
