@@ -182,20 +182,30 @@ python3 -c 'import json,sys; print(json.dumps([e for f in sys.argv[1:] for e in 
 cp $RUN/meta.txt benchmarks/results/$NAME.meta.txt
 ```
 
-- Name files `YYYY-MM-DD_<sha7>.json` (or `…_v<version>.json` for releases). The sidecar **must not end in
-  `.json`**: `benchmarkResults` decodes every `*.json` in `results/` as a JMH result list and would fail on it.
+- Name files `YYYY-MM-DD_<sha7>.json` (or `…_v<version>.json` for releases). The date prefix matters:
+  `benchmarkResults` without an argument picks the file that sorts last by name. The sidecar **must not end
+  in `.json`**: `benchmarkResults` treats `*.json` in `results/` as JMH result lists and would fail on it.
 - JMH's JSON has no commit info. The sidecar `meta.txt` (full sha, JVM, box, JMH args) is what ties results
   to the project state. Don't drop it.
 - `JmhJsonModel` decodes non-finite doubles rendered as strings (`"NaN"` from single-iteration runs), so
   smoke-run output parses too.
 
-### `benchmarkResults` caveats
+### `benchmarkResults`
 
-`sbt "project benchmarks;benchmarkResults;project /"` reads **all** `*.json` in `results/` together and only
-looks at `*ModelBenchmark` entries. Results from different runs (e.g. the 2019 file and a new run) get
-**mixed**: for duplicate benchmark/param keys the file sorting last by name wins. Until `Analysis` is changed to
-select a single run, analyse a run by temporarily putting only its file in `results/` (or fix `Analysis`
-first).
+```bash
+sbt "project benchmarks;benchmarkResults;project /"                     # newest result file only
+sbt "project benchmarks;benchmarkResults 2026-11-17_316abd8;project /"  # one file (`.json` optional)
+sbt "project benchmarks;benchmarkResults 2026-11-*;project /"          # glob over file names
+```
+
+- It logs which files it analyses and fails with the list of available files if the pattern matches nothing.
+  Patterns match file names only (no paths) and support tab completion in the sbt shell.
+- Only `*ModelBenchmark` entries are evaluated, as Borer-vs-X factors per library over the 18 JSON files.
+- If a glob selects several files, their results are **combined**. For duplicate benchmark/param keys the file
+  sorting last by name wins, so only select several files if they hold disjoint parts of one run (or if
+  that's really what you want).
+- If a library has no results in the selected files, it's skipped. A smoke-run file with only some
+  benchmarks yields factors over fewer than 18 files.
 
 ## Interpreting numbers
 

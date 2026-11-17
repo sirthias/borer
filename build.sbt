@@ -401,6 +401,6 @@ def welcomeMessage = Def.setting {
       |${item("project `coreJS`")} - Descend into the JS core module
       |${item("project `coreNative`")} - Descend into the native core module
       |${item("test")} - Run all tests
-      |${item("project benchmarks;benchmarkResults;project /")} - Show results of latest benchmark runs
+      |${item("project benchmarks;benchmarkResults [<glob>];project /")} - Show results of latest (or selected) benchmark runs
       """.stripMargin
 }
