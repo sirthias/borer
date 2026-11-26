@@ -127,7 +127,7 @@ val `akka-stream`   = Def.setting("com.typesafe.akka" %%  "akka-stream"       % 
 val `akka-http`     = Def.setting("com.typesafe.akka" %%  "akka-http"         % "10.5.3")
 val `pekko-actor`   = Def.setting("org.apache.pekko"  %%  "pekko-actor-typed" % "2.0.0")
 val `pekko-stream`  = Def.setting("org.apache.pekko"  %%  "pekko-stream"      % "2.0.0")
-val `pekko-http`    = Def.setting("org.apache.pekko"  %%  "pekko-http"        % "2.0.0")
+val `pekko-http`    = Def.setting("org.apache.pekko"  %%  "pekko-http"        % "2.0.1")
 val `cats-core`     = Def.setting("org.typelevel"     %%  "cats-core"         % "2.13.0")
 val `circe-core`    = Def.setting("io.circe"          %%  "circe-core"        % "0.14.17")
 val `circe-parser`  = Def.setting("io.circe"          %%  "circe-parser"      % "0.14.17")
@@ -178,13 +178,13 @@ lazy val core          = crossProject(JSPlatform, NativePlatform, JVMPlatform)
   )
   .jvmSettings(
     // `JsonTestSuite` lists the test resources directory, which doesn't work from a jar (sbt 2 default)
-    Test / exportJars := false,
+    Test / exportJars                                := false,
     Compile / specializeJsonParser / sourceDirectory := baseDirectory.value.getParentFile / "src" / "main"
   )
   .nativeSettings(
     Compile / specializeJsonParser / sourceDirectory := baseDirectory.value.getParentFile / "src" / "main"
   )
-  .jsSettings(scalajsSettings*)
+  .jsSettings(scalajsSettings *)
 
 lazy val `compat-akka` = project
   .enablePlugins(AutomateHeaderPlugin)
@@ -235,7 +235,7 @@ lazy val `compat-cats` = crossProject(JSPlatform, NativePlatform, JVMPlatform)
     moduleName := "borer-compat-cats",
     libraryDependencies ++= Seq(`cats-core`.value, munit.value)
   )
-  .jsSettings(scalajsSettings*)
+  .jsSettings(scalajsSettings *)
 
 lazy val `compat-circe-jvm` = `compat-circe`.jvm
   .dependsOn(`core-jvm` % "compile->compile;test->test")
@@ -261,7 +261,7 @@ lazy val `compat-circe` = crossProject(JSPlatform, NativePlatform, JVMPlatform)
       munit.value
     )
   )
-  .jsSettings(scalajsSettings*)
+  .jsSettings(scalajsSettings *)
 
 lazy val `compat-scodec-jvm` = `compat-scodec`.jvm
   .dependsOn(`core-jvm` % "compile->compile;test->test")
@@ -285,7 +285,7 @@ lazy val `compat-scodec` = crossProject(JSPlatform, NativePlatform, JVMPlatform)
       munit.value
     )
   )
-  .jsSettings(scalajsSettings*)
+  .jsSettings(scalajsSettings *)
 
 lazy val `derivation-jvm` = derivation.jvm
   .dependsOn(`core-jvm` % "compile->compile;test->test")
@@ -303,7 +303,7 @@ lazy val derivation = crossProject(JSPlatform, NativePlatform, JVMPlatform)
     moduleName := "borer-derivation",
     libraryDependencies ++= Seq( /* macrolizer.value, */ munit.value), // TODO port macrolizer to scala native
   )
-  .jsSettings(scalajsSettings*)
+  .jsSettings(scalajsSettings *)
 
 lazy val benchmarks = project
   .enablePlugins(AutomateHeaderPlugin, JmhPlugin, BenchmarkResultsPlugin)
@@ -353,7 +353,7 @@ lazy val site = project
     ),
     com.github.sbt.git.SbtGit.GitKeys.gitRemoteRepo := scmInfo.value.get.connection.drop("scm:git:".length),
     ghpagesNoJekyll                                 := true,
-    Compile / paradoxMaterialTheme := {
+    Compile / paradoxMaterialTheme                  := {
       ParadoxMaterialTheme()
         .withFavicon("assets/images/favicon.ico")
         .withColor("indigo", "orange")
@@ -401,6 +401,7 @@ def welcomeMessage = Def.setting {
       |${item("project `coreJS`")} - Descend into the JS core module
       |${item("project `coreNative`")} - Descend into the native core module
       |${item("test")} - Run all tests
-      |${item("project benchmarks;benchmarkResults [<glob>];project /")} - Show results of latest (or selected) benchmark runs
+      |${item(
+       "project benchmarks;benchmarkResults [<glob>];project /")} - Show results of latest (or selected) benchmark runs
       """.stripMargin
 }
